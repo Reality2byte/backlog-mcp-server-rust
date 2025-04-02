@@ -6,6 +6,7 @@ pub struct Client {
     base_url: Url,
     client: reqwest::Client,
     auth_token: Option<String>,
+    api_key: Option<String>,
 }
 
 impl Client {
@@ -15,12 +16,18 @@ impl Client {
             base_url: Url::parse(base_url)?,
             client: reqwest::Client::new(),
             auth_token: None,
+            api_key: None,
         })
     }
 
     /// Sets the authentication token for the client
     pub fn with_auth_token(mut self, token: impl Into<String>) -> Self {
         self.auth_token = Some(token.into());
+        self
+    }
+
+    pub fn with_api_key(mut self, key: impl Into<String>) -> Self {
+        self.api_key = Some(key.into());
         self
     }
 
@@ -34,6 +41,10 @@ impl Client {
 
         if let Some(token) = &self.auth_token {
             req = req.header("Authorization", format!("Bearer {}", token));
+        }
+
+        if let Some(key) = &self.api_key {
+            req = req.query(&[("apiKey", key)]);
         }
 
         let response = req.send().await?.json::<T>().await?;

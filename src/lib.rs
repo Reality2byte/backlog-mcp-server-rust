@@ -1,5 +1,5 @@
 pub mod api;
-mod client;
+pub mod client;
 mod error;
 pub mod models;
 pub mod responses;
