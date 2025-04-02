@@ -1,5 +1,6 @@
 use super::error::Error;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::sync::LazyLock;
 
@@ -13,7 +14,7 @@ static SPACE_KEY_REGEXP: LazyLock<Regex> =
 ///
 /// SpaceKey must be between 3 and 10 characters and should contain
 /// only alphanumerical and hyphen characters.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct SpaceKey(String);
 
 impl SpaceKey {
@@ -53,11 +54,6 @@ impl FromStr for SpaceKey {
 impl From<SpaceKey> for String {
     fn from(key: SpaceKey) -> Self {
         key.0
-    }
-}
-impl From<&str> for SpaceKey {
-    fn from(key: &str) -> Self {
-        SpaceKey(key.to_string())
     }
 }
 

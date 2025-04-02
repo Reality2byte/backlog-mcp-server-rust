@@ -1,6 +1,7 @@
 use super::error::Error;
 use super::ProjectKey;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use std::num::NonZero;
 use std::str::FromStr;
 use std::sync::LazyLock;
@@ -8,7 +9,7 @@ use std::sync::LazyLock;
 static ISSUE_KEY_REGEXP: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^([_A-Z0-9]{1,25})-([1-9][0-9]*)$").unwrap());
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct IssueKey {
     project_key: ProjectKey,
     key_id: NonZero<u32>,

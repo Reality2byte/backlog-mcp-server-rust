@@ -1,12 +1,13 @@
 use super::error::Error;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::sync::LazyLock;
 
 static PROJECT_KEY_REGEXP: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[_A-Z0-9]{1,25}$").unwrap());
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct ProjectKey(pub(crate) String);
 
 /// A type that identify the project, and is unique through the space.
