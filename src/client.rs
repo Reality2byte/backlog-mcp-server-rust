@@ -1,4 +1,4 @@
-use crate::error::{Error, Result};
+use crate::error::Result;
 use url::Url;
 
 #[derive(Debug, Clone)]
@@ -25,50 +25,18 @@ impl Client {
     }
 
     /// Makes a GET request to the specified path
-    pub fn get(&self, path: &str) -> Result<ureq::Request> {
+    pub fn get<T>(&self, path: &str) -> Result<T>
+    where
+        T: serde::de::DeserializeOwned,
+    {
         let url = self.base_url.join(path)?;
         let mut req = self.agent.get(url.as_str());
-        
-        if let Some(token) = &self.auth_token {
-            req = req.set("Authorization", &format!("Bearer {}", token));
-        }
-        
-        Ok(req)
-    }
 
-    /// Makes a POST request to the specified path
-    pub fn post(&self, path: &str) -> Result<ureq::Request> {
-        let url = self.base_url.join(path)?;
-        let mut req = self.agent.post(url.as_str());
-        
         if let Some(token) = &self.auth_token {
-            req = req.set("Authorization", &format!("Bearer {}", token));
+            req = req.header("Authorization", &format!("Bearer {}", token));
         }
-        
-        Ok(req)
-    }
 
-    /// Makes a PUT request to the specified path
-    pub fn put(&self, path: &str) -> Result<ureq::Request> {
-        let url = self.base_url.join(path)?;
-        let mut req = self.agent.put(url.as_str());
-        
-        if let Some(token) = &self.auth_token {
-            req = req.set("Authorization", &format!("Bearer {}", token));
-        }
-        
-        Ok(req)
-    }
-
-    /// Makes a DELETE request to the specified path
-    pub fn delete(&self, path: &str) -> Result<ureq::Request> {
-        let url = self.base_url.join(path)?;
-        let mut req = self.agent.delete(url.as_str());
-        
-        if let Some(token) = &self.auth_token {
-            req = req.set("Authorization", &format!("Bearer {}", token));
-        }
-        
-        Ok(req)
+        let response = req.call()?.body_mut().read_json::<T>()?;
+        Ok(response)
     }
 }

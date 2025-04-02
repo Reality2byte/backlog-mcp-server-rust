@@ -1,6 +1,8 @@
-use serde_repr::{Serialize_repr,Deserialize_repr};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 #[repr(i64)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize_repr, Deserialize_repr)]
+#[derive(
+    Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize_repr, Deserialize_repr,
+)]
 pub enum ActiveTypeId {
     IssueCreated = 1,
     IssueUpdated = 2,
