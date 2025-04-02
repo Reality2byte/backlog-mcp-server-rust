@@ -4,7 +4,7 @@ use url::Url;
 #[derive(Debug, Clone)]
 pub struct Client {
     base_url: Url,
-    agent: ureq::Agent,
+    client: reqwest::Client,
     auth_token: Option<String>,
 }
 
@@ -13,7 +13,7 @@ impl Client {
     pub fn new(base_url: &str) -> Result<Self> {
         Ok(Self {
             base_url: Url::parse(base_url)?,
-            agent: ureq::agent(),
+            client: reqwest::Client::new(),
             auth_token: None,
         })
     }
@@ -25,18 +25,18 @@ impl Client {
     }
 
     /// Makes a GET request to the specified path
-    pub fn get<T>(&self, path: &str) -> Result<T>
+    pub async fn get<T>(&self, path: &str) -> Result<T>
     where
         T: serde::de::DeserializeOwned,
     {
         let url = self.base_url.join(path)?;
-        let mut req = self.agent.get(url.as_str());
+        let mut req = self.client.get(url);
 
         if let Some(token) = &self.auth_token {
-            req = req.header("Authorization", &format!("Bearer {}", token));
+            req = req.header("Authorization", format!("Bearer {}", token));
         }
 
-        let response = req.call()?.body_mut().read_json::<T>()?;
+        let response = req.send().await?.json::<T>().await?;
         Ok(response)
     }
 }
