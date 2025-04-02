@@ -15,3 +15,6 @@ pub use self::issue_key::IssueKey;
 
 pub mod error;
 pub use self::error::Error;
+
+pub mod language;
+pub use self::language::Language;
