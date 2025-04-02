@@ -3,8 +3,8 @@ use regex::Regex;
 use std::str::FromStr;
 use std::sync::LazyLock;
 
-
-static PROJECT_KEY_REGEXP: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[_A-Z0-9]{1,25}$").unwrap());
+static PROJECT_KEY_REGEXP: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^[_A-Z0-9]{1,25}$").unwrap());
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct ProjectKey(pub(crate) String);
@@ -53,17 +53,34 @@ impl From<ProjectKey> for String {
     }
 }
 
-impl ToString for ProjectKey {
-    fn to_string(&self) -> String {
-        self.0.to_string()
+impl std::fmt::Display for ProjectKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
 #[test]
 fn test_project_key_from_str() {
-    assert_eq!(ProjectKey::from_str("BLG"), Ok(ProjectKey::from_str_unchecked("BLG")));
-    assert_eq!(ProjectKey::from_str(""), Err(Error::InvalidProjectKey(String::from(""))));
-    assert_eq!(ProjectKey::from_str("B$G"), Err(Error::InvalidProjectKey(String::from("B$G"))));
-    assert_eq!(ProjectKey::from_str("TOO_LONG_PROJECT_KEY_LN25"), Ok(ProjectKey::from_str_unchecked("TOO_LONG_PROJECT_KEY_LN25")));
-    assert_eq!(ProjectKey::from_str("TOO_LONG_PROJECT_KEY_LEN26"), Err(Error::InvalidProjectKey(String::from("TOO_LONG_PROJECT_KEY_LEN26"))));
+    assert_eq!(
+        ProjectKey::from_str("BLG"),
+        Ok(ProjectKey::from_str_unchecked("BLG"))
+    );
+    assert_eq!(
+        ProjectKey::from_str(""),
+        Err(Error::InvalidProjectKey(String::from("")))
+    );
+    assert_eq!(
+        ProjectKey::from_str("B$G"),
+        Err(Error::InvalidProjectKey(String::from("B$G")))
+    );
+    assert_eq!(
+        ProjectKey::from_str("TOO_LONG_PROJECT_KEY_LN25"),
+        Ok(ProjectKey::from_str_unchecked("TOO_LONG_PROJECT_KEY_LN25"))
+    );
+    assert_eq!(
+        ProjectKey::from_str("TOO_LONG_PROJECT_KEY_LEN26"),
+        Err(Error::InvalidProjectKey(String::from(
+            "TOO_LONG_PROJECT_KEY_LEN26"
+        )))
+    );
 }

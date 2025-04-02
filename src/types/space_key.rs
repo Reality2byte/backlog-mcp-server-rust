@@ -3,7 +3,8 @@ use regex::Regex;
 use std::str::FromStr;
 use std::sync::LazyLock;
 
-static SPACE_KEY_REGEXP: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9-]{3,10}$").unwrap());
+static SPACE_KEY_REGEXP: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9-]{3,10}$").unwrap());
 
 /// A type of Backlog's space identifier, also known as "Space ID" in Backlog's help document,
 /// is used to access the organization's Backlog space. It is found in the
@@ -60,25 +61,45 @@ impl From<&str> for SpaceKey {
     }
 }
 
-impl ToString for SpaceKey {
-    fn to_string(&self) -> String {
-        self.0.to_string()
+impl std::fmt::Display for SpaceKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
-
 
 mod tests {
     #[test]
     fn test_space_key_from_str() {
-        use super::{SpaceKey, Error};
+        use super::{Error, SpaceKey};
         use std::str::FromStr;
 
-        assert_eq!(SpaceKey::from_str("nulab"), Ok(SpaceKey::from_str_unchecked("nulab")));
-        assert_eq!(SpaceKey::from_str("NULAB"), Ok(SpaceKey::from_str_unchecked("NULAB")));
-        assert_eq!(SpaceKey::from_str("nulab-inc"), Ok(SpaceKey::from_str_unchecked("nulab-inc")));
-        assert_eq!(SpaceKey::from_str("nulab_inc"), Err(Error::InvalidSpaceKey(String::from("nulab_inc"))));
-        assert_eq!(SpaceKey::from_str("nu"), Err(Error::InvalidSpaceKey(String::from("nu"))));
-        assert_eq!(SpaceKey::from_str("too-long10"), Ok(SpaceKey::from_str_unchecked("too-long10")));
-        assert_eq!(SpaceKey::from_str("too-long-11"), Err(Error::InvalidSpaceKey(String::from("too-long-11"))));
+        assert_eq!(
+            SpaceKey::from_str("nulab"),
+            Ok(SpaceKey::from_str_unchecked("nulab"))
+        );
+        assert_eq!(
+            SpaceKey::from_str("NULAB"),
+            Ok(SpaceKey::from_str_unchecked("NULAB"))
+        );
+        assert_eq!(
+            SpaceKey::from_str("nulab-inc"),
+            Ok(SpaceKey::from_str_unchecked("nulab-inc"))
+        );
+        assert_eq!(
+            SpaceKey::from_str("nulab_inc"),
+            Err(Error::InvalidSpaceKey(String::from("nulab_inc")))
+        );
+        assert_eq!(
+            SpaceKey::from_str("nu"),
+            Err(Error::InvalidSpaceKey(String::from("nu")))
+        );
+        assert_eq!(
+            SpaceKey::from_str("too-long10"),
+            Ok(SpaceKey::from_str_unchecked("too-long10"))
+        );
+        assert_eq!(
+            SpaceKey::from_str("too-long-11"),
+            Err(Error::InvalidSpaceKey(String::from("too-long-11")))
+        );
     }
 }

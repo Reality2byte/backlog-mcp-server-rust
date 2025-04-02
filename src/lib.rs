@@ -1,9 +1,9 @@
 pub mod api;
 mod client;
 mod error;
-pub mod types;
 pub mod models;
 pub mod responses;
+pub mod types;
 pub use client::Client;
 pub use error::{Error, Result};
 

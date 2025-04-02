@@ -1,5 +1,3 @@
 // TODO
 
-mod test {
-    
-}
+mod test {}

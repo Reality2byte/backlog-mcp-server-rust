@@ -12,5 +12,4 @@ pub enum Error {
     InvalidIssueKey(String),
 }
 
-
 pub type Result<T> = std::result::Result<T, Error>;
