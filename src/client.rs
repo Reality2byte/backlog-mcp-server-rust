@@ -62,6 +62,38 @@ impl Client {
     }
 
     /// Makes a GET request to the specified path
+    pub async fn get_with_params<T>(&self, path: &str, params: &[(String, String)]) -> Result<T>
+    where
+        T: serde::de::DeserializeOwned,
+    {
+        let url = self.base_url.join(path)?;
+        let mut req = self.client.get(url);
+
+        if let Some(token) = &self.auth_token {
+            req = req.header("Authorization", format!("Bearer {}", token));
+        }
+
+        let req = if let Some(key) = &self.api_key {
+            let mut params = params.to_vec();
+            params.push(("apiKey".to_string(), key.clone()));
+            req.query(&params)
+        } else {
+            req.query(params)
+        };
+
+        let response = req.send().await?;
+
+        if let Ok(json) = response.json::<serde_json::Value>().await {
+            println!("JSON parsed: {:?}", json);
+            let entity: T = serde_json::from_value(json).unwrap();
+            Ok(entity)
+        } else {
+            println!("No entity found in response");
+            panic!("test");
+        }
+    }
+
+    /// Makes a GET request to the specified path
     pub async fn get2<T>(&self, path: &str) -> Result<T>
     where
         T: serde::de::DeserializeOwned,

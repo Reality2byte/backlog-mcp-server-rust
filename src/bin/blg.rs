@@ -1,7 +1,8 @@
-use backlog_api_client::api;
+use backlog_api_client::api::{self, GetProjectParams};
 use backlog_api_client::client::Client;
-use backlog_api_client::types::Identifier;
+use backlog_api_client::types::{Identifier, ProjectIdOrKey};
 use std::env;
+use std::str::FromStr;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -27,6 +28,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    println!("------------------------");
     match api::get_own_user(&client).await {
         Ok(user) => {
             println!("User information:");
@@ -34,6 +36,39 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("ID: {}", user.id.value());
             println!("Lang: {:?}", user.lang);
             println!("Mail: {}", user.mail_address);
+        }
+        Err(e) => {
+            eprintln!("Error getting user information: {}", e);
+        }
+    }
+
+    println!("------------------------");
+    match api::get_project(&client, ProjectIdOrKey::from_str("MFP").unwrap()).await {
+        Ok(project) => {
+            println!("Project information:");
+            println!("Name: {}", project.name);
+            println!("Key: {}", project.project_key);
+        }
+        Err(e) => {
+            eprintln!("Error getting user information: {}", e);
+        }
+    }
+
+    println!("------------------------");
+    match api::get_project_list(
+        &client,
+        GetProjectParams {
+            ..Default::default()
+        },
+    )
+    .await
+    {
+        Ok(projects) => {
+            for project in projects {
+                println!("Project information:");
+                println!("Name: {}", project.name);
+                println!("Key: {}", project.project_key);
+            }
         }
         Err(e) => {
             eprintln!("Error getting user information: {}", e);
