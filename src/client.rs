@@ -1,3 +1,5 @@
+use core::panic;
+
 use crate::error::Result;
 use url::Url;
 
@@ -47,7 +49,37 @@ impl Client {
             req = req.query(&[("apiKey", key)]);
         }
 
-        let response = req.send().await?.json::<T>().await?;
-        Ok(response)
+        let response = req.send().await?;
+
+        if let Ok(json) = response.json::<serde_json::Value>().await {
+            println!("JSON parsed: {:?}", json);
+            let entity: T = serde_json::from_value(json).unwrap();
+            Ok(entity)
+        } else {
+            println!("No entity found in response");
+            panic!("test");
+        }
+    }
+
+    /// Makes a GET request to the specified path
+    pub async fn get2<T>(&self, path: &str) -> Result<T>
+    where
+        T: serde::de::DeserializeOwned,
+    {
+        let url = self.base_url.join(path)?;
+        let mut req = self.client.get(url);
+
+        if let Some(token) = &self.auth_token {
+            req = req.header("Authorization", format!("Bearer {}", token));
+        }
+
+        if let Some(key) = &self.api_key {
+            req = req.query(&[("apiKey", key)]);
+        }
+
+        let text = req.send().await.unwrap().text().await?;
+        println!("Raw response body: {}", text);
+
+        panic!("test");
     }
 }

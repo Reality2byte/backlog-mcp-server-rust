@@ -1,14 +1,14 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::types::{Language, SpaceKey, TextFormattingRule};
+use crate::types::{Language, SpaceKey, TextFormattingRule, UserId};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GetSpaceResponse {
     pub space_key: SpaceKey,
     pub name: String,
-    pub owner_id: i64,
+    pub owner_id: UserId,
     pub lang: Language,
     pub timezone: String,
     pub report_send_time: String,

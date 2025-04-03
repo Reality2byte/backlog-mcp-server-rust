@@ -2,7 +2,6 @@ use super::error::Error;
 use super::ProjectKey;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::num::NonZero;
 use std::str::FromStr;
 use std::sync::LazyLock;
 
@@ -12,7 +11,7 @@ static ISSUE_KEY_REGEXP: LazyLock<Regex> =
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct IssueKey {
     project_key: ProjectKey,
-    key_id: NonZero<u32>,
+    key_id: u32,
 }
 
 /// A type that identify the issue, and is unique through the space.
@@ -22,8 +21,11 @@ impl IssueKey {
     /// Creates a new `IssueKey` from `project_key` and `key_id`.
     ///
     /// # Panics
-    /// Panics if key_id <= 0.
-    pub fn new(project_key: ProjectKey, key_id: NonZero<u32>) -> Self {
+    /// Panics if key_id = 0.
+    pub fn new(project_key: ProjectKey, key_id: u32) -> Self {
+        if key_id == 0 {
+            panic!("key_id should not be zero.")
+        }
         IssueKey {
             project_key,
             key_id,
@@ -58,11 +60,8 @@ impl FromStr for IssueKey {
             // safety use from_str_unchecked: the constraint of the regex ISSUE_KEY_REGEXP ensures the project_key is valid
             let project_key = ProjectKey::from_str_unchecked(&m[1]);
 
-            // safety unwrap: the constraint of the regex ISSUE_KEY_REGEXP ensures key_id can be converted into u32
+            // safety unwrap: the constraint of the regex ISSUE_KEY_REGEXP ensures key_id can be converted into u32 and is greater than zero
             let key_id = u32::from_str(&m[2]).unwrap();
-
-            // safety unwrap: the constraint of the regex ISSUE_KEY_REGEXP ensures key_id is greater than zero
-            let key_id = NonZero::<u32>::new(key_id).unwrap();
 
             Ok(IssueKey::new(project_key, key_id))
         } else {
@@ -75,10 +74,7 @@ impl FromStr for IssueKey {
 fn test_issue_key_from_str() {
     assert_eq!(
         IssueKey::from_str("BLG-9"),
-        Ok(IssueKey::new(
-            ProjectKey::from_str_unchecked("BLG"),
-            NonZero::new(9).unwrap()
-        ))
+        Ok(IssueKey::new(ProjectKey::from_str_unchecked("BLG"), 9,))
     );
     assert_eq!(
         IssueKey::from_str("BLG-09"),
@@ -96,7 +92,7 @@ fn test_issue_key_from_str() {
         IssueKey::from_str("TOO_LONG_PROJECT_KEY_LN25-9999"),
         Ok(IssueKey::new(
             ProjectKey::from_str_unchecked("TOO_LONG_PROJECT_KEY_LN25"),
-            NonZero::new(9999).unwrap()
+            9999,
         ))
     );
     assert_eq!(
@@ -110,11 +106,7 @@ fn test_issue_key_from_str() {
 #[test]
 fn test_issue_key_to_string() {
     assert_eq!(
-        IssueKey::new(
-            ProjectKey::from_str_unchecked("BLG"),
-            NonZero::new(123).unwrap()
-        )
-        .to_string(),
+        IssueKey::new(ProjectKey::from_str_unchecked("BLG"), 123,).to_string(),
         "BLG-123".to_string()
     );
 }
