@@ -2,7 +2,7 @@ use crate::client::Client;
 use crate::error::Error;
 use crate::responses::get_recent_updates_response::GetRecentUpdatesResponse;
 use crate::responses::get_space_response::GetSpaceResponse;
-use crate::types::{Project, ProjectIdOrKey, User};
+use crate::types::{Issue, IssueKey, Project, ProjectIdOrKey, User};
 
 pub async fn get_space(client: &Client) -> Result<GetSpaceResponse, Error> {
     client.get("/api/v2/space").await
@@ -39,4 +39,9 @@ pub async fn get_project(
 type GetUserResponse = User;
 pub async fn get_own_user(client: &Client) -> Result<GetUserResponse, Error> {
     client.get("/api/v2/users/myself").await
+}
+
+type GetIssueResponse = Issue;
+pub async fn get_issue(client: &Client, issue_key: IssueKey) -> Result<GetIssueResponse, Error> {
+    client.get(&format!("/api/v2/issues/{}", issue_key)).await
 }

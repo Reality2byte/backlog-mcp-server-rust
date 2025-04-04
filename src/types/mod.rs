@@ -42,3 +42,18 @@ pub use self::issue::Issue;
 
 pub mod issue_type;
 pub use self::issue_type::IssueType;
+
+pub mod resolution;
+pub use self::resolution::Resolution;
+
+pub mod priority;
+pub use self::priority::Priority;
+
+pub mod milestone;
+pub use self::milestone::Milestone;
+
+pub mod status;
+pub use self::status::Status;
+
+pub mod category;
+pub use self::category::Category;

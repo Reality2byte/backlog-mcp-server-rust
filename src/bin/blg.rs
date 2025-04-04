@@ -1,6 +1,6 @@
 use backlog_api_client::api::{self, GetProjectParams};
 use backlog_api_client::client::Client;
-use backlog_api_client::types::{Identifier, ProjectIdOrKey};
+use backlog_api_client::types::{Identifier, IssueKey, ProjectIdOrKey};
 use std::env;
 use std::str::FromStr;
 
@@ -72,6 +72,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Err(e) => {
             eprintln!("Error getting user information: {}", e);
+        }
+    }
+
+    println!("------------------------");
+    match api::get_issue(&client, IssueKey::from_str("MFP-1").unwrap()).await {
+        Ok(issue) => {
+            println!("Issue information:");
+            println!("Name: {}", issue.issue_key);
+            println!("Name: {}", issue.summary);
+            println!("Key: {:?}", issue.assignee);
+        }
+        Err(e) => {
+            eprintln!("Error getting issue information: {}", e);
         }
     }
 
