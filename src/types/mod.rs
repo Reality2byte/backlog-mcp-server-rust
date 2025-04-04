@@ -36,3 +36,9 @@ pub use self::project_id_or_key::ProjectIdOrKey;
 
 pub mod role;
 pub use self::role::Role;
+
+pub mod issue;
+pub use self::issue::Issue;
+
+pub mod issue_type;
+pub use self::issue_type::IssueType;

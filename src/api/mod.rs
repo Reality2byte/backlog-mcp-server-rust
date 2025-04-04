@@ -17,25 +17,13 @@ pub async fn get_project_list(
     client: &Client,
     params: GetProjectParams,
 ) -> Result<GetProjectListResponse, Error> {
-    let params: Vec<(String, String)> = params.into();
     client.get_with_params("/api/v2/projects", &params).await
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug, Default)]
+#[derive(serde::Serialize, Debug, Default)]
 pub struct GetProjectParams {
     pub archived: Option<bool>,
     pub all: bool,
-}
-
-impl From<GetProjectParams> for Vec<(String, String)> {
-    fn from(params: GetProjectParams) -> Self {
-        let mut vec = Vec::new();
-        if let Some(archived) = params.archived {
-            vec.push(("archived".to_string(), archived.to_string()))
-        }
-        vec.push(("all".to_string(), params.all.to_string()));
-        vec
-    }
 }
 
 type GetProjectResponse = Project;
