@@ -57,15 +57,96 @@ checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 name = "backlog-api-client"
 version = "0.1.0"
 dependencies = [
- "chrono",
- "regex",
+ "backlog-api-core",
+ "backlog-core",
+ "backlog-issue",
+ "backlog-project",
+ "backlog-space",
+ "backlog-user",
+ "client",
+ "serde",
+ "serde_json",
+ "tokio",
+ "url",
+]
+
+[[package]]
+name = "backlog-api-core"
+version = "0.1.0"
+dependencies = [
  "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "url",
+]
+
+[[package]]
+name = "backlog-core"
+version = "0.1.0"
+dependencies = [
+ "regex",
  "serde",
  "serde_json",
  "serde_repr",
  "thiserror",
+]
+
+[[package]]
+name = "backlog-issue"
+version = "0.1.0"
+dependencies = [
+ "backlog-api-core",
+ "backlog-core",
+ "chrono",
+ "client",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "backlog-project"
+version = "0.1.0"
+dependencies = [
+ "backlog-api-core",
+ "backlog-core",
+ "chrono",
+ "client",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "backlog-space"
+version = "0.1.0"
+dependencies = [
+ "backlog-api-core",
+ "backlog-core",
+ "chrono",
+ "client",
+ "regex",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "backlog-user"
+version = "0.1.0"
+dependencies = [
+ "backlog-api-core",
+ "backlog-core",
+ "chrono",
+ "client",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
  "tokio",
- "url",
 ]
 
 [[package]]
@@ -135,6 +216,18 @@ dependencies = [
  "serde",
  "wasm-bindgen",
  "windows-link",
+]
+
+[[package]]
+name = "client"
+version = "0.1.0"
+dependencies = [
+ "backlog-api-core",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "url",
 ]
 
 [[package]]

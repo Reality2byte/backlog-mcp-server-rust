@@ -1,0 +1,25 @@
+[package]
+name = "backlog-api-client"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+default = ["issue", "project", "space", "user"]
+issue = ["backlog-issue"]
+project = ["backlog-project"]
+space = ["backlog-space"]
+user = ["backlog-user"]
+
+[dependencies]
+client = { path = "../client" }
+backlog-core = { path = "../backlog-core" }
+backlog-api-core = { path = "../backlog-api-core" }
+backlog-issue = { path = "../backlog-issue", optional = true }
+backlog-project = { path = "../backlog-project", optional = true }
+backlog-space = { path = "../backlog-space", optional = true }
+backlog-user = { path = "../backlog-user", optional = true }
+tokio = { workspace = true }
+url = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

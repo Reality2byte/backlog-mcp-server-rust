@@ -1,11 +1,22 @@
-[package]
-name = "backlog-api-client"
+[workspace]
+resolver = "2"
+members = [
+    "client",
+    "backlog-core",
+    "backlog-api-core",
+    "backlog-issue",
+    "backlog-project",
+    "backlog-space",
+    "backlog-user",
+    "backlog-api-client"
+]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2021"
-description = "A Rust client for the Backlog API"
 license = "MIT"
 
-[dependencies]
+[workspace.dependencies]
 reqwest = { version = "0.12", features = ["json"] }
 tokio = { version = "1.0", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
