@@ -4,6 +4,9 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[features]
+writable = []
+
 [dependencies]
 backlog-api-core = { path = "../backlog-api-core" }
 thiserror = { workspace = true }

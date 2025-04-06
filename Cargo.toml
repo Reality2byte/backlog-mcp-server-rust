@@ -26,3 +26,4 @@ thiserror = "2.0"
 url = "2.5"
 regex = "1.11"
 chrono = { version = "0.4.40", features = ["serde"] }
+derive_builder = "0.20"

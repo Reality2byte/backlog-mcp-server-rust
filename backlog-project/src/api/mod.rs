@@ -1,7 +1,8 @@
-use crate::models::Project;
 use backlog_api_core::Result;
 use backlog_core::ProjectIdOrKey;
 use client::Client;
+
+use crate::requests::{GetProjectListResponse, GetProjectParams, GetProjectResponse};
 
 pub struct ProjectApi(Client);
 
@@ -25,13 +26,4 @@ impl ProjectApi {
             .get(&format!("/api/v2/projects/{}", project_id_or_key))
             .await
     }
-}
-
-type GetProjectListResponse = Vec<Project>;
-type GetProjectResponse = Project;
-
-#[derive(serde::Serialize, Debug, Default)]
-pub struct GetProjectParams {
-    pub archived: Option<bool>,
-    pub all: bool,
 }

@@ -73,4 +73,39 @@ impl Client {
             panic!("test");
         }
     }
+
+    /// Makes a POST request to the specified path with query parameters
+    #[cfg(feature = "writable")]
+    pub async fn post<T, P>(&self, path: &str, params: &P) -> Result<T>
+    where
+        T: serde::de::DeserializeOwned,
+        P: serde::Serialize,
+    {
+        let url = self.base_url.join(path)?;
+        let mut req = self.client.post(url);
+
+        req = req.form(params);
+
+        if let Some(token) = &self.auth_token {
+            req = req.header("Authorization", format!("Bearer {}", token));
+        }
+
+        let mut req = req.build()?;
+
+        if let Some(key) = &self.api_key {
+            let url = req.url_mut();
+            url.query_pairs_mut().append_pair("apiKey", key);
+        }
+
+        let response = self.client.execute(req).await?;
+
+        if let Ok(json) = response.json::<serde_json::Value>().await {
+            println!("JSON parsed: {:?}", json);
+            let entity: T = serde_json::from_value(json).unwrap();
+            Ok(entity)
+        } else {
+            println!("No entity found in response");
+            panic!("test");
+        }
+    }
 }

@@ -1,6 +1,7 @@
 use backlog_api_client::client::BacklogApiClient;
 use backlog_core::{Identifier, IssueKey, ProjectIdOrKey};
-use backlog_project::api::GetProjectParams;
+use backlog_project::requests::GetProjectParams;
+
 use std::env;
 use std::str::FromStr;
 
@@ -89,6 +90,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Name: {}", issue.issue_key);
             println!("Summary: {}", issue.summary);
             println!("Assignee: {:?}", issue.assignee);
+        }
+        Err(e) => {
+            eprintln!("Error getting issue information: {}", e);
+        }
+    }
+
+    println!("------------------------");
+    match client
+        .issue()
+        .add_issue(
+            backlog_issue::requests::AddIssueParamsBuilder::default()
+                .project_id(14165)
+                .summary("Test issue")
+                .issue_type_id(56740)
+                .priority_id(3)
+                .description("Test issue description")
+                .build()
+                .unwrap(),
+        )
+        .await
+    {
+        Ok(issue) => {
+            println!("Issue information:");
+            println!("Name: {}", issue.issue_key);
+            println!("Summary: {}", issue.summary);
+            println!("Desc: {:?}", issue.description);
         }
         Err(e) => {
             eprintln!("Error getting issue information: {}", e);

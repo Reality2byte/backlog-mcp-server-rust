@@ -28,6 +28,12 @@ macro_rules! impl_identifier {
                     self.0
                 }
             }
+
+            impl From<u32> for $type_name {
+                fn from(value: u32) -> Self {
+                    $type_name(value)
+                }
+            }
         )*
     };
 }
@@ -38,6 +44,11 @@ impl_identifier!(
     IssueId,
     SpaceId,
     MilestoneId,
+    CategoryId,
+    IssueTypeId,
+    StatusId,
+    PriorityId,
+    ResolutionId,
     CommentId,
     AttachmentId,
     PullRequestId
