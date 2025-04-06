@@ -1,5 +1,4 @@
 use backlog_api_core::Result;
-use core::panic;
 use url::Url;
 
 #[derive(Debug, Clone)]
@@ -46,31 +45,8 @@ impl Client {
         T: serde::de::DeserializeOwned,
         P: serde::Serialize,
     {
-        let url = self.base_url.join(path)?;
-        let mut req = self.client.get(url);
-
-        req = req.query(params);
-
-        if let Some(token) = &self.auth_token {
-            req = req.bearer_auth(token);
-        }
-
-        let mut req = req.build()?;
-
-        if let Some(key) = &self.api_key {
-            let url = req.url_mut();
-            url.query_pairs_mut().append_pair("apiKey", key);
-        }
-
-        let response = self.client.execute(req).await?;
-
-        if let Ok(json) = response.json::<serde_json::Value>().await {
-            let entity: T = serde_json::from_value(json)?;
-            Ok(entity)
-        } else {
-            println!("No entity found in response");
-            panic!("test");
-        }
+        let request = self.prepare_request(reqwest::Method::GET, path, params)?;
+        self.execute_request(request).await
     }
 
     /// Makes a POST request to the specified path with query parameters
@@ -80,60 +56,57 @@ impl Client {
         T: serde::de::DeserializeOwned,
         P: serde::Serialize,
     {
-        let url = self.base_url.join(path)?;
-        let mut req = self.client.post(url);
-
-        req = req.form(params);
-
-        if let Some(token) = &self.auth_token {
-            req = req.bearer_auth(token);
-        }
-
-        let mut req = req.build()?;
-
-        if let Some(key) = &self.api_key {
-            let url = req.url_mut();
-            url.query_pairs_mut().append_pair("apiKey", key);
-        }
-
-        let response = self.client.execute(req).await?;
-
-        if let Ok(json) = response.json::<serde_json::Value>().await {
-            let entity: T = serde_json::from_value(json)?;
-            Ok(entity)
-        } else {
-            println!("No entity found in response");
-            panic!("test");
-        }
+        let request = self.prepare_request(reqwest::Method::POST, path, params)?;
+        self.execute_request(request).await
     }
 
-    /// Makes a DELETE request to the specified path with query parameters
+    /// Makes a DELETE request to the specified path
     pub async fn delete<T>(&self, path: &str) -> Result<T>
     where
         T: serde::de::DeserializeOwned,
     {
+        let request = self.prepare_request(reqwest::Method::DELETE, path, &())?;
+        self.execute_request(request).await
+    }
+
+    // Helper methods
+
+    fn prepare_request<P: serde::Serialize>(
+        &self,
+        method: reqwest::Method,
+        path: &str,
+        params: &P,
+    ) -> Result<reqwest::Request> {
         let url = self.base_url.join(path)?;
-        let mut req = self.client.delete(url);
+        let mut builder = self.client.request(method.clone(), url);
+        builder = builder.header("Accept", "application/json");
+        builder = match method {
+            reqwest::Method::GET => builder.query(params),
+            reqwest::Method::POST => builder.form(params),
+            _ => builder,
+        };
 
         if let Some(token) = &self.auth_token {
-            req = req.bearer_auth(token);
+            builder = builder.bearer_auth(token);
         }
 
-        let mut req = req.build()?;
+        let mut req = builder.build()?;
 
         if let Some(key) = &self.api_key {
             let url = req.url_mut();
             url.query_pairs_mut().append_pair("apiKey", key);
         }
 
-        let response = self.client.execute(req).await?;
+        Ok(req)
+    }
 
-        if let Ok(json) = response.json::<serde_json::Value>().await {
-            let entity: T = serde_json::from_value(json)?;
-            Ok(entity)
-        } else {
-            println!("No entity found in response");
-            panic!("test");
-        }
+    async fn execute_request<T: serde::de::DeserializeOwned>(
+        &self,
+        request: reqwest::Request,
+    ) -> Result<T> {
+        let response = self.client.execute(request).await?;
+        let json = response.json::<serde_json::Value>().await?;
+        let entity = serde_json::from_value(json)?;
+        Ok(entity)
     }
 }
