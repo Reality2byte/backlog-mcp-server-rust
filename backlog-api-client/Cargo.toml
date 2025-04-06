@@ -5,11 +5,16 @@ edition.workspace = true
 license.workspace = true
 
 [features]
-default = ["issue", "project", "space", "user"]
+default = ["issue", "project", "space", "user", "all_writable"]
 issue = ["backlog-issue"]
 project = ["backlog-project"]
 space = ["backlog-space"]
 user = ["backlog-user"]
+all_writable = ["backlog-issue/writable", "backlog-project/writable", "backlog-space/writable", "backlog-user/writable"] 
+issue_writable = ["backlog-issue/writable"]
+project_writable = ["backlog-project/writable"]
+space_writable = ["backlog-space/writable"]
+user_writable = ["backlog-user/writable"]
 
 [dependencies]
 client = { path = "../client" }
