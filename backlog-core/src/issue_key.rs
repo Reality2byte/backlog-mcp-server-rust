@@ -8,7 +8,7 @@ use std::sync::LazyLock;
 static ISSUE_KEY_REGEXP: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^([_A-Z0-9]{1,25})-([1-9][0-9]*)$").unwrap());
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct IssueKey {
     project_key: ProjectKey,
     key_id: u32,
@@ -70,6 +70,25 @@ impl FromStr for IssueKey {
     }
 }
 
+impl Serialize for IssueKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for IssueKey {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Self::from_str(&s).map_err(serde::de::Error::custom)
+    }
+}
+
 #[test]
 fn test_issue_key_from_str() {
     assert_eq!(
@@ -109,4 +128,24 @@ fn test_issue_key_to_string() {
         IssueKey::new(ProjectKey::from_str_unchecked("BLG"), 123,).to_string(),
         "BLG-123".to_string()
     );
+}
+
+#[test]
+fn test_issue_key_serialize() {
+    let issue_key = IssueKey::new(ProjectKey::from_str_unchecked("BLG"), 123);
+    let serialized = serde_json::to_string(&issue_key).unwrap();
+    assert_eq!(serialized, "\"BLG-123\"");
+}
+
+#[test]
+fn test_issue_key_deserialize() {
+    let issue_key: IssueKey = serde_json::from_str("\"BLG-123\"").unwrap();
+    assert_eq!(
+        issue_key,
+        IssueKey::new(ProjectKey::from_str_unchecked("BLG"), 123)
+    );
+
+    // Test invalid issue key
+    let result: Result<IssueKey, _> = serde_json::from_str("\"invalid-key\"");
+    assert!(result.is_err());
 }

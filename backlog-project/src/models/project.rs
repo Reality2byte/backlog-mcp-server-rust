@@ -1,11 +1,11 @@
-use backlog_core::TextFormattingRule;
+use backlog_core::{identifier::ProjectId, ProjectKey, TextFormattingRule};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Project {
-    pub id: i32,
-    pub project_key: String,
+    pub id: ProjectId,
+    pub project_key: ProjectKey,
     pub name: String,
     pub chart_enabled: bool,
     pub subtasking_enabled: bool,

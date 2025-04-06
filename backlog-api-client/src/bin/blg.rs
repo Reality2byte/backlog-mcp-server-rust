@@ -58,6 +58,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     println!("Created issue: {:?}", issue);
 
+    let issue = client.issue().delete_issue(issue.issue_key.clone()).await?;
+    println!("Deleted issue: {:?}", issue);
+
     /*match api::get_recent_updates(&client).await {
         Ok(updates) => {
             println!("Recent updates:");

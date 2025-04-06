@@ -106,4 +106,34 @@ impl Client {
             panic!("test");
         }
     }
+
+    /// Makes a DELETE request to the specified path with query parameters
+    pub async fn delete<T>(&self, path: &str) -> Result<T>
+    where
+        T: serde::de::DeserializeOwned,
+    {
+        let url = self.base_url.join(path)?;
+        let mut req = self.client.delete(url);
+
+        if let Some(token) = &self.auth_token {
+            req = req.bearer_auth(token);
+        }
+
+        let mut req = req.build()?;
+
+        if let Some(key) = &self.api_key {
+            let url = req.url_mut();
+            url.query_pairs_mut().append_pair("apiKey", key);
+        }
+
+        let response = self.client.execute(req).await?;
+
+        if let Ok(json) = response.json::<serde_json::Value>().await {
+            let entity: T = serde_json::from_value(json)?;
+            Ok(entity)
+        } else {
+            println!("No entity found in response");
+            panic!("test");
+        }
+    }
 }

@@ -1,13 +1,20 @@
-use backlog_core::User;
+use backlog_core::{
+    identifier::{
+        CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ProjectId, ResolutionId,
+        StatusId,
+    },
+    IssueKey, User,
+};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Issue {
-    pub id: i32,
-    pub project_id: i32,
-    pub issue_key: String,
-    pub key_id: i32,
+    pub id: IssueId,
+    pub project_id: ProjectId,
+    pub issue_key: IssueKey,
+    pub key_id: u32,
     pub issue_type: Box<IssueType>,
     pub summary: String,
     pub description: String,
@@ -32,8 +39,8 @@ pub struct Issue {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IssueType {
-    pub id: i32,
-    pub project_id: i32,
+    pub id: IssueTypeId,
+    pub project_id: ProjectId,
     pub name: String,
     pub color: String,
     pub display_order: i32,
@@ -42,28 +49,28 @@ pub struct IssueType {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Resolution {
-    pub id: i32,
+    pub id: ResolutionId,
     pub name: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Priority {
-    pub id: i32,
+    pub id: PriorityId,
     pub name: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Status {
-    pub id: i32,
+    pub id: StatusId,
     pub name: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Category {
-    pub id: i32,
+    pub id: CategoryId,
     pub name: String,
     pub display_order: i32,
 }
@@ -71,11 +78,11 @@ pub struct Category {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Milestone {
-    pub id: i32,
-    pub project_id: i32,
+    pub id: MilestoneId,
+    pub project_id: ProjectId,
     pub name: String,
     pub description: Option<String>,
-    pub start_date: Option<String>,
-    pub release_due_date: Option<String>,
+    pub start_date: Option<DateTime<Utc>>,
+    pub release_due_date: Option<DateTime<Utc>>,
     pub archived: bool,
 }
