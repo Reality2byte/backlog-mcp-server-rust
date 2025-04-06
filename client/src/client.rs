@@ -52,7 +52,7 @@ impl Client {
         req = req.query(params);
 
         if let Some(token) = &self.auth_token {
-            req = req.header("Authorization", format!("Bearer {}", token));
+            req = req.bearer_auth(token);
         }
 
         let mut req = req.build()?;
@@ -65,8 +65,7 @@ impl Client {
         let response = self.client.execute(req).await?;
 
         if let Ok(json) = response.json::<serde_json::Value>().await {
-            println!("JSON parsed: {:?}", json);
-            let entity: T = serde_json::from_value(json).unwrap();
+            let entity: T = serde_json::from_value(json)?;
             Ok(entity)
         } else {
             println!("No entity found in response");
@@ -87,7 +86,7 @@ impl Client {
         req = req.form(params);
 
         if let Some(token) = &self.auth_token {
-            req = req.header("Authorization", format!("Bearer {}", token));
+            req = req.bearer_auth(token);
         }
 
         let mut req = req.build()?;
@@ -100,8 +99,7 @@ impl Client {
         let response = self.client.execute(req).await?;
 
         if let Ok(json) = response.json::<serde_json::Value>().await {
-            println!("JSON parsed: {:?}", json);
-            let entity: T = serde_json::from_value(json).unwrap();
+            let entity: T = serde_json::from_value(json)?;
             Ok(entity)
         } else {
             println!("No entity found in response");
