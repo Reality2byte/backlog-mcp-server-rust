@@ -115,6 +115,7 @@ dependencies = [
  "backlog-core",
  "chrono",
  "client",
+ "derive_builder",
  "reqwest",
  "serde",
  "serde_json",
@@ -129,6 +130,7 @@ dependencies = [
  "backlog-core",
  "chrono",
  "client",
+ "derive_builder",
  "regex",
  "serde",
  "serde_json",
@@ -224,6 +226,7 @@ name = "client"
 version = "0.1.0"
 dependencies = [
  "backlog-api-core",
+ "derive_builder",
  "reqwest",
  "serde",
  "serde_json",
