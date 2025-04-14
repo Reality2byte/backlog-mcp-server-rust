@@ -18,7 +18,7 @@ impl ProjectKey {
     /// Converts a string slice to a key without checking
     /// that the string contains valid characters.
     ///
-    /// # Domain Safety
+    /// # Safety
     ///
     /// The key passed in must be valid characters.
     pub(crate) fn from_str_unchecked(key: &str) -> Self {

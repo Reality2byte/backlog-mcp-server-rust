@@ -1,9 +1,8 @@
 use backlog_api_client::client::BacklogApiClient;
+use backlog_core::identifier::ProjectId;
 use backlog_core::{IssueKey, ProjectIdOrKey};
 use backlog_project::requests::GetProjectParams;
-
 use std::env;
-use std::str::FromStr;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -15,7 +14,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let client = BacklogApiClient::new(&base_url)?.with_api_key(api_key);
 
-    let space = client.space().get_space().await?;
+    /*let space = client.space().get_space().await?;
     println!("Space information: {:?}", space);
 
     let user = client.user().get_own_user().await?;
@@ -41,9 +40,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .issue()
         .get_issue(IssueKey::from_str("MFP-1").unwrap())
         .await?;
-    println!("Issue information: {:?}", issue);
+    println!("Issue information: {:?}", issue);*/
 
-    let issue = client
+    let filter = backlog_issue::requests::CountIssueParamsBuilder::default()
+        .project_id(vec![14165.into()])
+        .build()
+        .unwrap();
+    println!("Count of issues: {:?}", filter);
+    let count = client.issue().count_issue(filter).await?;
+
+    println!("Count of issues: {:?}", count);
+
+    /*let issue = client
         .issue()
         .add_issue(
             backlog_issue::requests::AddIssueParamsBuilder::default()
@@ -60,6 +68,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let issue = client.issue().delete_issue(issue.issue_key.clone()).await?;
     println!("Deleted issue: {:?}", issue);
+    */
 
     /*match api::get_recent_updates(&client).await {
         Ok(updates) => {
