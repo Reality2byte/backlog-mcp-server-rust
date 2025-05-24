@@ -35,7 +35,7 @@
 
 
 ## Issues
-- [ ] GetIssueList: Returns list of issues: GET /api/v2/issues
+- [x] GetIssueList: Returns list of issues: GET /api/v2/issues
 - [x] GetIssue: Returns information about issue: GET /api/v2/issues/:issueIdOrKey
 - [x] AddIssue: Adds new issue: POST /api/v2/issues
 - [x] DeleteIssue: Deletes issue: DELETE /api/v2/issues/:issueIdOrKey

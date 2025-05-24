@@ -1,19 +1,20 @@
 # Active Context
 
 ## Current Work Focus
--   Completed implementation of `IssueIdOrKey` enum in the `backlog-core` crate.
+-   Completed implementation of `get_issue_list` functionality for the Backlog API client.
 
 ## Recent Changes
 -   Read all core Memory Bank files.
--   Updated `activeContext.md` and `progress.md` for the `IssueIdOrKey` implementation task.
--   Analyzed `project_id_or_key.rs`, `identifier.rs`, and `issue_key.rs` from `backlog-core`.
--   Created `backlog-core/src/issue_id_or_key.rs` and implemented the `IssueIdOrKey` enum with `FromStr`, `Display`, `From<IssueId>`, `From<IssueKey>`, `Into<String>`, `Serialize`, and `Deserialize` traits, along with unit tests.
--   Updated `backlog-core/src/lib.rs` to declare and re-export the `issue_id_or_key` module and `IssueIdOrKey` type.
--   Corrected the import path for `IssueIdOrKey` in `backlog-issue/src/api/mod.rs`.
+-   Updated `activeContext.md` and `progress.md` for the `get_issue_list` task.
+-   Analyzed API documentation for `get_issue_list` using the browser.
+-   Reviewed and updated `GetIssueListParams` struct in `backlog-issue/src/requests/mod.rs` to include new parameters and correct types (e.g., `StatusId`).
+-   Updated the `From<GetIssueListParams> for Vec<(String, String)>` implementation to handle the new parameters.
+-   Implemented the `get_issue_list` method in `IssueApi` within `backlog-issue/src/api/mod.rs`.
+-   Added `GetIssueListResponse = Vec<Issue>` type alias.
 
 ## Next Steps
 -   Task complete. Awaiting review or next task.
--   The `update_issue` functionality in `backlog-issue` should now compile correctly with the new `IssueIdOrKey` type.
+-   (Future considerations if requested: Add tests for `get_issue_list`, update rustdoc and README).
 
 ## Active Decisions & Considerations
 -   The project is a Rust workspace for a Backlog API client and CLI.

@@ -3,7 +3,7 @@ use backlog_core::{IssueIdOrKey, IssueKey};
 use client::Client;
 
 use crate::{
-    requests::{AddIssueParams, CountIssueParams, UpdateIssueParams},
+    requests::{AddIssueParams, CountIssueParams, GetIssueListParams, UpdateIssueParams}, // Added GetIssueListParams
     responses::CountIssueResponse,
     Issue,
 };
@@ -17,6 +17,13 @@ impl IssueApi {
 
     pub async fn get_issue(&self, issue_key: impl Into<IssueKey>) -> Result<GetIssueResponse> {
         self.0.get(&format!("/api/v2/issues/{}", issue_key.into())).await
+    }
+
+    pub async fn get_issue_list(&self, params: GetIssueListParams) -> Result<GetIssueListResponse> {
+        let params_vec: Vec<(String, String)> = params.into();
+        self.0
+            .get_with_params("/api/v2/issues", &params_vec)
+            .await
     }
 
     pub async fn count_issue(&self, params: CountIssueParams) -> Result<CountIssueResponse> {
@@ -55,3 +62,4 @@ type GetIssueResponse = Issue;
 type AddIssueResponse = Issue;
 type DeleteIssueResponse = Issue;
 type UpdateIssueResponse = Issue;
+type GetIssueListResponse = Vec<Issue>;
