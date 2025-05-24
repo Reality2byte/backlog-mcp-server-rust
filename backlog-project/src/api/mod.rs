@@ -20,10 +20,10 @@ impl ProjectApi {
 
     pub async fn get_project(
         &self,
-        project_id_or_key: ProjectIdOrKey,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
     ) -> Result<GetProjectResponse> {
         self.0
-            .get(&format!("/api/v2/projects/{}", project_id_or_key))
+            .get(&format!("/api/v2/projects/{}", project_id_or_key.into()))
             .await
     }
 }

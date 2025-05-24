@@ -15,8 +15,8 @@ impl IssueApi {
         Self(client)
     }
 
-    pub async fn get_issue(&self, issue_key: IssueKey) -> Result<GetIssueResponse> {
-        self.0.get(&format!("/api/v2/issues/{}", issue_key)).await
+    pub async fn get_issue(&self, issue_key: impl Into<IssueKey>) -> Result<GetIssueResponse> {
+        self.0.get(&format!("/api/v2/issues/{}", issue_key.into())).await
     }
 
     pub async fn count_issue(&self, params: CountIssueParams) -> Result<CountIssueResponse> {
@@ -32,9 +32,9 @@ impl IssueApi {
     }
 
     #[cfg(feature = "writable")]
-    pub async fn delete_issue(&self, issue_key: IssueKey) -> Result<DeleteIssueResponse> {
+    pub async fn delete_issue(&self, issue_key: impl Into<IssueKey>) -> Result<DeleteIssueResponse> {
         self.0
-            .delete(&format!("/api/v2/issues/{}", issue_key))
+            .delete(&format!("/api/v2/issues/{}", issue_key.into()))
             .await
     }
 
