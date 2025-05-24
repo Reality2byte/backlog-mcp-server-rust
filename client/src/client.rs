@@ -69,6 +69,17 @@ impl Client {
         self.execute_request(request).await
     }
 
+    /// Makes a PATCH request to the specified path with form parameters
+    #[cfg(feature = "writable")]
+    pub async fn patch<T, P>(&self, path: &str, params: &P) -> Result<T>
+    where
+        T: serde::de::DeserializeOwned,
+        P: serde::Serialize,
+    {
+        let request = self.prepare_request(reqwest::Method::PATCH, path, params)?;
+        self.execute_request(request).await
+    }
+
     // Helper methods
 
     fn prepare_request<P: serde::Serialize>(
@@ -82,7 +93,7 @@ impl Client {
         builder = builder.header("Accept", "application/json");
         builder = match method {
             reqwest::Method::GET => builder.query(params),
-            reqwest::Method::POST => builder.form(params),
+            reqwest::Method::POST | reqwest::Method::PATCH => builder.form(params),
             _ => builder,
         };
 

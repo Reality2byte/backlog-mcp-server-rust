@@ -1,37 +1,19 @@
 # Active Context
 
 ## Current Work Focus
--   Initializing the Memory Bank for the Backlog API Client project.
--   Populating core Memory Bank files (`projectbrief.md`, `productContext.md`, `activeContext.md`, `systemPatterns.md`, `techContext.md`, `progress.md`) based on initial analysis of the existing project structure and files.
+-   Completed implementation of `IssueIdOrKey` enum in the `backlog-core` crate.
 
 ## Recent Changes
--   Created all six core Memory Bank files with initial placeholder content.
--   Read the initial content of all six core Memory Bank files.
--   Analyzed project structure by listing files in:
-    -   `backlog-api-client/`
-    -   `backlog-api-core/`
-    -   `backlog-core/`
-    -   `backlog-issue/`
-    -   `backlog-project/`
-    -   `backlog-space/`
-    -   `backlog-user/`
-    -   `client/`
-    -   `src/`
--   Read the content of the main `Cargo.toml` file.
--   Collected code definitions from:
-    -   `backlog-api-client/src/`
-    -   `backlog-api-core/src/`
-    -   `backlog-core/src/`
-    -   `client/src/`
-    -   (Noted that `backlog-issue/src/`, `backlog-project/src/`, `backlog-space/src/`, `backlog-user/src/`, and `src/` did not yield top-level definitions directly, likely due to module structures).
--   Populated `projectbrief.md` with an overview of the project.
--   Populated `productContext.md` with the problem solved, how it should work, and user experience goals.
+-   Read all core Memory Bank files.
+-   Updated `activeContext.md` and `progress.md` for the `IssueIdOrKey` implementation task.
+-   Analyzed `project_id_or_key.rs`, `identifier.rs`, and `issue_key.rs` from `backlog-core`.
+-   Created `backlog-core/src/issue_id_or_key.rs` and implemented the `IssueIdOrKey` enum with `FromStr`, `Display`, `From<IssueId>`, `From<IssueKey>`, `Into<String>`, `Serialize`, and `Deserialize` traits, along with unit tests.
+-   Updated `backlog-core/src/lib.rs` to declare and re-export the `issue_id_or_key` module and `IssueIdOrKey` type.
+-   Corrected the import path for `IssueIdOrKey` in `backlog-issue/src/api/mod.rs`.
 
 ## Next Steps
--   Populate `systemPatterns.md` with details about the system architecture, key technical decisions, and component relationships.
--   Populate `techContext.md` with information about technologies used, development setup, and dependencies.
--   Populate `progress.md` with the current status of the project (initial memory bank population).
--   Confirm completion of the memory bank initialization task.
+-   Task complete. Awaiting review or next task.
+-   The `update_issue` functionality in `backlog-issue` should now compile correctly with the new `IssueIdOrKey` type.
 
 ## Active Decisions & Considerations
 -   The project is a Rust workspace for a Backlog API client and CLI.

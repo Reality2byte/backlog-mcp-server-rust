@@ -1,9 +1,9 @@
 use backlog_api_core::Result;
-use backlog_core::IssueKey;
+use backlog_core::{IssueIdOrKey, IssueKey};
 use client::Client;
 
 use crate::{
-    requests::{AddIssueParams, CountIssueParams},
+    requests::{AddIssueParams, CountIssueParams, UpdateIssueParams},
     responses::CountIssueResponse,
     Issue,
 };
@@ -37,8 +37,21 @@ impl IssueApi {
             .delete(&format!("/api/v2/issues/{}", issue_key))
             .await
     }
+
+    #[cfg(feature = "writable")]
+    pub async fn update_issue(
+        &self,
+        issue_id_or_key: impl Into<IssueIdOrKey>,
+        params: &UpdateIssueParams,
+    ) -> Result<UpdateIssueResponse> {
+        let issue_id_or_key_str: String = issue_id_or_key.into().into();
+        self.0
+            .patch(&format!("/api/v2/issues/{}", issue_id_or_key_str), params)
+            .await
+    }
 }
 
 type GetIssueResponse = Issue;
 type AddIssueResponse = Issue;
 type DeleteIssueResponse = Issue;
+type UpdateIssueResponse = Issue;

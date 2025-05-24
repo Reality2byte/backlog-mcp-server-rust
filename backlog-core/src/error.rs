@@ -11,6 +11,9 @@ pub enum Error {
     #[error("Invalid project id or key: {0}")]
     InvalidProjectIdOrKey(String),
 
+    #[error("Invalid issue id or key: {0}")]
+    InvalidIssueIdOrKey(String),
+
     #[error("Invalid issue key: {0}")]
     InvalidIssueKey(String),
 

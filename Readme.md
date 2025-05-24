@@ -40,7 +40,7 @@
 - [x] AddIssue: Adds new issue: POST /api/v2/issues
 - [x] DeleteIssue: Deletes issue: DELETE /api/v2/issues/:issueIdOrKey
 - [x] CountIssue: Returns number of issues: GET /api/v2/issues/count
-- [ ] UpdateIssue: Updates information about issue: PATCH /api/v2/issues/:issueIdOrKey
+- [x] UpdateIssue: Updates information about issue: PATCH /api/v2/issues/:issueIdOrKey
 
 ### Attachements
 - [ ] GetListOfIssueAttachments: Returns the list of issue attachments: GET /api/v2/issues/:issueIdOrKey/attachments

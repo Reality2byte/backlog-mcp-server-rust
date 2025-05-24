@@ -8,7 +8,7 @@ use std::sync::LazyLock;
 static ISSUE_KEY_REGEXP: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^([_A-Z0-9]{1,25})-([1-9][0-9]*)$").unwrap());
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Hash, Eq)]
 pub struct IssueKey {
     project_key: ProjectKey,
     key_id: u32,

@@ -28,5 +28,8 @@ pub use self::issue_key::IssueKey;
 pub mod project_id_or_key;
 pub use self::project_id_or_key::ProjectIdOrKey;
 
+pub mod issue_id_or_key;
+pub use self::issue_id_or_key::IssueIdOrKey;
+
 mod text_formatting_rule;
 pub use text_formatting_rule::TextFormattingRule;

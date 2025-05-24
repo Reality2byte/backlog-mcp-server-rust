@@ -40,6 +40,12 @@ macro_rules! impl_identifier {
                     write!(f, "{}", self.0)
                 }
             }
+
+            impl std::hash::Hash for $type_name {
+                fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+                    self.0.hash(state);
+                }
+            }
         )*
     };
 }
