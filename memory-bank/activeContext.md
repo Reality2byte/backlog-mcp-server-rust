@@ -1,20 +1,21 @@
 # Active Context
 
 ## Current Work Focus
--   Completed implementation of `get_issue_list` functionality for the Backlog API client.
+-   Completed writing mock server tests for the `get_issue_list` functionality using `wiremock`.
 
 ## Recent Changes
 -   Read all core Memory Bank files.
--   Updated `activeContext.md` and `progress.md` for the `get_issue_list` task.
--   Analyzed API documentation for `get_issue_list` using the browser.
--   Reviewed and updated `GetIssueListParams` struct in `backlog-issue/src/requests/mod.rs` to include new parameters and correct types (e.g., `StatusId`).
--   Updated the `From<GetIssueListParams> for Vec<(String, String)>` implementation to handle the new parameters.
--   Implemented the `get_issue_list` method in `IssueApi` within `backlog-issue/src/api/mod.rs`.
--   Added `GetIssueListResponse = Vec<Issue>` type alias.
+-   Updated `activeContext.md` and `progress.md` for the `get_issue_list` mock tests task.
+-   Added `wiremock`, `tokio` (with features), and `serde_json` to `[dev-dependencies]` in `backlog-issue/Cargo.toml`.
+-   Added a `tests` module to `backlog-issue/src/api/mod.rs`.
+-   Implemented initial mock tests for `get_issue_list`, including:
+    -   Successful retrieval with empty parameters.
+    -   Successful retrieval with `projectId` query parameter.
+    -   Handling of a server error (500).
 
 ## Next Steps
 -   Task complete. Awaiting review or next task.
--   (Future considerations if requested: Add tests for `get_issue_list`, update rustdoc and README).
+-   (Future considerations: Expand test coverage for more query parameters and edge cases).
 
 ## Active Decisions & Considerations
 -   The project is a Rust workspace for a Backlog API client and CLI.

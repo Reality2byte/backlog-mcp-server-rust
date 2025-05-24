@@ -11,21 +11,22 @@
 -   A baseline understanding of the project's architecture, technology stack, and purpose is documented.
 
 ## What's Left to Build (for this task)
--   The `get_issue_list` API functionality has been implemented.
+-   Mock server tests for `get_issue_list` have been implemented.
 -   Further work could include:
-    -   Adding comprehensive tests.
-    -   Updating user-facing documentation (READMEs, examples).
+    -   Expanding test coverage for more query parameter combinations.
+    -   Testing more specific error conditions and response bodies.
+    -   Refining mocked `Issue` data to be more complete.
 
 ## Known Issues (from initialization process)
 -   None directly related to the memory bank files themselves.
 -   The `list_code_definition_names` tool did not find top-level definitions in the `src` directories of several module-specific crates (e.g., `backlog-issue/src`, `backlog-project/src`). This is noted in `techContext.md` and implies that detailed API endpoint definitions are likely within submodules (e.g., `api/`, `models/`) of those crates, requiring deeper dives if specific endpoint details are needed in the future.
 
-## Evolution of Project Decisions (current task: get_issue_list)
--   Task initiated: Implement `get_issue_list`.
+## Evolution of Project Decisions (current task: get_issue_list mock tests)
+-   Task initiated: Write mock server tests for `get_issue_list`.
 -   Plan executed:
     1.  Read all memory bank files.
     2.  Updated `activeContext.md` and `progress.md` for the new task.
-    3.  Analyzed API documentation for `get_issue_list`.
-    4.  Reviewed and updated `GetIssueListParams` in `backlog-issue/src/requests/mod.rs`.
-    5.  Implemented `get_issue_list` method in `IssueApi` in `backlog-issue/src/api/mod.rs`.
+    3.  Added `wiremock`, `tokio`, and `serde_json` as dev-dependencies to `backlog-issue/Cargo.toml`.
+    4.  Added an inline test module `tests` to `backlog-issue/src/api/mod.rs`.
+    5.  Implemented initial test cases for success (empty params, with projectId param) and server error.
     6.  Updated `activeContext.md` and `progress.md` to reflect task completion (this step).

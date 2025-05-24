@@ -108,7 +108,7 @@ impl From<GetIssueListParams> for Vec<(String, String)> {
                 }
             };
         }
-        
+
         macro_rules! push_vec {
             ($field:expr, $key:expr) => {
                 if let Some(values) = $field {
@@ -150,7 +150,7 @@ impl From<GetIssueListParams> for Vec<(String, String)> {
         push_val!(params.updated_since, "updatedSince"); // Added
         push_val!(params.updated_until, "updatedUntil"); // Added
         push_val!(params.keyword, "keyword"); // Added
-        
+
         // Custom fields would be handled here if implemented
         // e.g., params.custom_fields.iter().for_each(|(k,v)| seq.push((k.clone(), v.clone())));
 

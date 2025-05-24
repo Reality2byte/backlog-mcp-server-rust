@@ -18,3 +18,8 @@ thiserror = { workspace = true }
 reqwest = { workspace = true }
 chrono = { workspace = true }
 derive_builder = { workspace = true }
+
+[dev-dependencies]
+wiremock = "0.6.1"
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+serde_json = { workspace = true }
