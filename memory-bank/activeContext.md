@@ -1,39 +1,27 @@
-# Active Context
-
 ## Current Work Focus
-<<<<<<< HEAD
--   Completed initial implementation of Backlog MCP Server and the `get_issue_details` tool.
+-   Updating Memory Bank to reflect the existing `mcp-backlog-server` implementation and its tools (`get_issue_details`, `get_document_details`).
 
 ## Recent Changes
 -   Read all core Memory Bank files.
--   Updated `activeContext.md` and `progress.md` for the `backlog-document` task.
--   Analyzed user-provided API details and curl examples for Document API.
--   User created the `backlog-document` crate.
--   Verified `backlog-document` was added to workspace members in root `Cargo.toml`.
--   Created and populated `backlog-document/Cargo.toml` with dependencies.
--   Created `backlog-document/src/lib.rs` to declare modules.
--   Created `backlog-document/src/models.rs` with `Document`, `DocumentDetail`, `DocumentTreeResponse`, `DocumentTreeNode` structs.
--   Created `backlog-document/src/requests.rs` with `ListDocumentsParams`, `GetDocumentTreeParams` structs and `DocumentSortKey` enum, along with `From` trait implementations.
--   Addressed `Default` trait issues for request structs and `Debug/Clone/PartialEq/Eq/Hash/Serialize/Deserialize` for `ProjectIdOrKey`.
--   Created `backlog-document/src/api.rs` with `DocumentApi` struct and methods: `list_documents`, `get_document_tree`, `get_document`, and a placeholder `download_attachment`.
--   Fixed import paths and added `reqwest` dependency to `backlog-document/Cargo.toml`.
--   Added `backlog-document` as an optional dependency and feature to `backlog-api-client/Cargo.toml`.
--   Added `document()` method to `BacklogApiClient` in `backlog-api-client/src/client.rs`.
--   Read all core Memory Bank files.
--   Updated `activeContext.md` and `progress.md` for the Backlog MCP Server task.
--   Loaded and reviewed MCP Rust SDK documentation.
--   User created new crate `mcp-backlog-server`.
--   Created initial file structure within `mcp-backlog-server/src/`:
-    -   `main.rs` with placeholder server logic.
-    -   `tools/mod.rs`
-    -   `tools/get_issue_details_tool.rs` with schema and initial `call` logic for `GetIssueDetailsTool`.
--   Updated `mcp-backlog-server/Cargo.toml` with necessary dependencies including `model-context-protocol`, `tokio`, `serde`, `serde_json`, and local workspace crates (`backlog-api-client`, `backlog-core`, `backlog-issue`).
--   Updated `mcp-backlog-server/src/main.rs` with basic MCP server setup using `model-context-protocol` SDK components and registered `GetIssueDetailsTool`.
--   Updated MCP settings file (`cline_mcp_settings.json`) to include configuration for the new `backlog_mcp_server`.
+-   Initiated task to create a Backlog MCP server and `get_issue_details` tool.
+-   Discovered that a `mcp-backlog-server` crate already exists with implementations for `get_issue_details` and `get_document_details` tools.
+-   Read source files of `mcp-backlog-server` crate:
+    -   `Cargo.toml` (dependencies include `rmcp` SDK, `backlog-api-client`, etc.)
+    -   `src/main.rs` (server startup logic using `rmcp` and `tokio`)
+    -   `src/lib.rs` (module declarations)
+    -   `src/server.rs` (defines `Server` struct, tool methods like `get_issue_details`, `get_document_details`, and `ServerHandler` impl)
+    -   `src/issue.rs` (contains `get_issue_details` helper function)
+    -   `src/document.rs` (contains `get_document_details` helper function)
+    -   `src/error.rs` (custom error handling for the MCP server)
+-   Noted the use of `rmcp` SDK and environment variables (`BACKLOG_BASE_URL`, `BACKLOG_API_KEY`) for server configuration.
 
 ## Next Steps
--   Task complete. Awaiting review or next task.
--   (Future considerations: Fully implement `download_attachment`, add tests for `backlog-document`, refine error handling and model details).
+-   Update `projectbrief.md` to include the MCP server.
+-   Update `productContext.md` regarding MCP server capabilities.
+-   Update `systemPatterns.md` with `mcp-backlog-server` architecture and tool implementation patterns.
+-   Update `techContext.md` with `rmcp` SDK dependency and MCP server configuration details.
+-   Update `progress.md` to reflect the current state and discovery.
+-   Confirm with the user that the existing `get_issue_details` tool (and `get_document_details`) meets their requirements or if modifications/new tools are needed.
 
 
 ## Active Decisions & Considerations

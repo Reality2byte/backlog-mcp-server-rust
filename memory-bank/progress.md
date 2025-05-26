@@ -2,40 +2,28 @@
 
 ## Current Status
 -   **Memory Bank Initialized**: All six core Memory Bank files (`projectbrief.md`, `productContext.md`, `activeContext.md`, `systemPatterns.md`, `techContext.md`, `progress.md`) have been created and populated with initial content derived from analyzing the existing project structure.
--   **Project Structure Analyzed**: The file structure of the main workspace and its member crates (`client`, `backlog-core`, `backlog-api-core`, `backlog-issue`, `backlog-project`, `backlog-space`, `backlog-user`, `backlog-api-client`) has been listed.
+-   **Project Structure Analyzed**: The file structure of the main workspace and its member crates has been listed.
 -   **Dependencies Identified**: Key dependencies have been identified from the workspace `Cargo.toml`.
--   **High-Level Code Structure Understood**: An initial understanding of the roles of different crates and some key public structs/methods has been gained through `list_code_definition_names`.
+-   **High-Level Code Structure Understood**: An initial understanding of the roles of different crates and some key public structs/methods has been gained.
+-   **`mcp-backlog-server` Crate Exists**: A dedicated crate for the Backlog MCP server (`mcp-backlog-server`) with tools like `get_issue_details` and `get_document_details` has been found to be already implemented.
 
 ## What Works
--   The Memory Bank system is now established with foundational information about the project.
+-   The Memory Bank system is established with foundational information about the project.
 -   A baseline understanding of the project's architecture, technology stack, and purpose is documented.
+-   The `backlog-api-client` library provides core functionality for Backlog API interaction.
+-   The `mcp-backlog-server` provides MCP tools for issue and document details.
 
 ## What's Left to Build (for this task)
--   The initial Backlog MCP Server with the `get_issue_details` tool has been implemented.
--   The user needs to build and test the server.
--   Further work could include:
-    -   Adding more tools to the MCP server.
-    -   Refining error handling and tool schemas.
-    -   Implementing server-side tests.
--   The `backlog-document` crate has been created and initial Document API functionality implemented.
--   Further work could include:
-    -   Full implementation of `download_attachment` (requires `client::Client` modification).
-    -   Adding comprehensive tests for the `backlog-document` crate.
-    -   Refining model details based on more extensive API usage.
-    -   Adding support for any missing query parameters or Document API features.
+-   This task (update memory-bank) is currently in progress.
+-   The goal is to ensure all memory bank files accurately reflect the current state of the project, including the `mcp-backlog-server`.
 
-## Known Issues (from initialization process)
--   None directly related to the memory bank files themselves.
--   The `list_code_definition_names` tool did not find top-level definitions in the `src` directories of several module-specific crates (e.g., `backlog-issue/src`, `backlog-project/src`). This is noted in `techContext.md` and implies that detailed API endpoint definitions are likely within submodules (e.g., `api/`, `models/`) of those crates, requiring deeper dives if specific endpoint details are needed in the future.
+## Known Issues (from initialization process and ongoing work)
+-   The `list_code_definition_names` tool did not find top-level definitions in the `src` directories of several module-specific crates (e.g., `backlog-issue/src`, `backlog-project/src`). This is noted in `techContext.md`.
+-   The `download_attachment` method in `backlog-document/src/api.rs` is a placeholder and requires `client::Client` modification for full functionality.
 
-## Evolution of Project Decisions (current task: backlog-document crate)
--   Task initiated: Implement Backlog Document API and create `backlog-document` crate.
--   Plan executed:
-    1.  Read all memory bank files.
-    2.  Updated `activeContext.md` and `progress.md` for the new task.
-    3.  Analyzed API details from user input.
-    4.  User created `backlog-document` crate.
-    5.  Verified workspace `Cargo.toml` update.
-    6.  Implemented `Cargo.toml`, `lib.rs`, `models.rs`, `requests.rs`, and `api.rs` for `backlog-document` crate, including initial API methods for listing, getting tree, getting a document, and a placeholder for attachment download. Addressed various compilation issues during this process.
-    7.  Integrated `backlog-document` into `backlog-api-client` by updating its `Cargo.toml` and adding a `document()` method to `BacklogApiClient`.
-    8.  Updated `activeContext.md` and `progress.md` to reflect task completion (this step).
+## Evolution of Project Decisions
+-   **Initial Project Setup**: Focused on creating the Backlog API client library and CLI.
+-   **`backlog-document` Crate**: Implemented based on user request for Document API features.
+-   **MCP Server Request**: User requested creation of an MCP server with a `get_issue_details` tool.
+-   **Discovery of Existing MCP Server**: During the "update memory-bank" task (current), it was discovered that the `mcp-backlog-server` crate with the requested tool (and more) already exists.
+-   **Current Task Focus**: Shifted from creating the MCP server to accurately documenting its existing structure and functionality within the Memory Bank.

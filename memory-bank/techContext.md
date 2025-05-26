@@ -16,6 +16,8 @@
 -   **Regular Expressions**: `regex` (version 1.11) - Potentially used for parsing or validating string patterns (e.g., `IssueKey`, `ProjectKey`).
 -   **Date and Time**: `chrono` (version 0.4.40, with `serde` feature) - For handling date and time values from the API and enabling their serialization/deserialization.
 -   **Builder Pattern**: `derive_builder` (version 0.20) - For easily creating builder patterns for complex structs, often used for request objects.
+-   **MCP SDK**: `rmcp` (git = "https://github.com/modelcontextprotocol/rust-sdk", branch = "main", features = ["transport-io"]) - For building MCP servers. (Used by `mcp-backlog-server`)
+-   **Schema Generation (for MCP tools)**: `schemars` (likely a dependency of `rmcp` or used with it) - For generating JSON schemas for tool inputs.
 
 ## Development Setup
 -   **Rust Toolchain**: Requires a Rust installation compatible with Edition 2021.
@@ -23,10 +25,14 @@
     -   `cargo build` to compile the workspace.
     -   `cargo test` to run tests.
     -   `cargo run --bin blg` (or similar) to run the CLI tool.
+    -   `cargo run --bin mcp-backlog-server` to run the MCP server locally for testing (requires `BACKLOG_BASE_URL` and `BACKLOG_API_KEY` env vars to be set).
 
 ## Technical Constraints
 -   The library and CLI must interact with the Backlog API, so network connectivity to the Backlog instance is required at runtime.
 -   API rate limits imposed by Backlog need to be considered (the `ApiRateLimit` struct in `backlog-api-core` suggests this is being handled).
+-   **MCP Server Configuration**:
+    -   The `mcp-backlog-server` requires `BACKLOG_BASE_URL` and `BACKLOG_API_KEY` environment variables to be set for its `BacklogApiClient` instance. These are typically provided by the MCP client system via the server's registration in `cline_mcp_settings.json` (or similar).
+    -   The server itself is registered in `cline_mcp_settings.json` with its command path, arguments, and environment variables.
 
 ## Tool Usage Patterns
 -   **`list_code_definition_names`**: Useful for getting a high-level overview of structs, enums, and functions within each module, especially for understanding the public API of each crate.
