@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct User {
     pub id: UserId,
-    pub user_id: String,
+    pub user_id: Option<String>,
     pub name: String,
     pub role_type: Role,
     pub lang: Option<Language>,
@@ -33,7 +33,7 @@ mod tests {
         }"#;
         let user: super::User = serde_json::from_str(json_str).unwrap();
         assert_eq!(user.id.value(), 1);
-        assert_eq!(user.user_id, "admin");
+        assert_eq!(user.user_id, Some("admin".to_string()));
         assert_eq!(user.name, "John Doe");
         assert_eq!(user.role_type, super::Role::Admin);
         assert_eq!(user.lang, Some(super::Language::Japanese));
@@ -46,7 +46,7 @@ mod tests {
     fn serializable() {
         let user = super::User {
             id: super::UserId::new(1),
-            user_id: "admin".to_string(),
+            user_id: Some("admin".to_string()),
             name: "John Doe".to_string(),
             role_type: super::Role::Admin,
             lang: Some(super::Language::Japanese),

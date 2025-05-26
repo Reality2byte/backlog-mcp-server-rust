@@ -16,7 +16,8 @@ pub struct ListDocumentsParams {
     pub keyword: Option<String>,
     #[builder(default, setter(into))]
     pub sort: Option<DocumentSortKey>, // Enum to be defined
-    pub offset: Option<u32>,
+    #[builder(default)]
+    pub offset: u32,
     pub count: Option<u32>,
 }
 
@@ -57,9 +58,7 @@ impl From<ListDocumentsParams> for Vec<(String, String)> {
         if let Some(sort) = params.sort {
             query_params.push(("sort".to_string(), sort.to_string()));
         }
-        if let Some(offset) = params.offset {
-            query_params.push(("offset".to_string(), offset.to_string()));
-        }
+        query_params.push(("offset".to_string(), params.offset.to_string()));
         if let Some(count) = params.count {
             query_params.push(("count".to_string(), count.to_string()));
         }
@@ -69,8 +68,9 @@ impl From<ListDocumentsParams> for Vec<(String, String)> {
 
 impl From<GetDocumentTreeParams> for Vec<(String, String)> {
     fn from(params: GetDocumentTreeParams) -> Self {
-        vec![
-            ("projectIdOrKey".to_string(), params.project_id_or_key.to_string())
-        ]
+        vec![(
+            "projectIdOrKey".to_string(),
+            params.project_id_or_key.to_string(),
+        )]
     }
 }

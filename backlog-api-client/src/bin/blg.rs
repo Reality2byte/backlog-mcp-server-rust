@@ -1,6 +1,7 @@
 use backlog_api_client::client::BacklogApiClient;
-use backlog_core::identifier::ProjectId;
-use std::env;
+use backlog_core::{IssueKey, ProjectIdOrKey, identifier::ProjectId};
+use backlog_project::requests::GetProjectParams;
+use std::{env, str::FromStr};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -20,7 +21,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let project = client
         .project()
-        .get_project(ProjectIdOrKey::from_str("MFP").unwrap())
+        .get_project(ProjectIdOrKey::from_str("PASTA").unwrap())
         .await?;
     println!("Project information: {:?}", project);
 
@@ -36,9 +37,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let issue = client
         .issue()
-        .get_issue(IssueKey::from_str("MFP-1").unwrap())
+        .get_issue(IssueKey::from_str("PASTA-1212").unwrap())
         .await?;
-    println!("Issue information: {:?}", issue);*/
+    println!("Issue information: {:?}", issue);
 
     let filter = backlog_issue::requests::CountIssueParamsBuilder::default()
         .project_id(vec![14165.into()])
@@ -47,12 +48,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Count of issues: {:?}", filter);
     let count = client.issue().count_issue(filter).await?;
 
-    println!("Count of issues: {:?}", count);
+    println!("Count of issues: {:?}", count);*/
 
     let params = backlog_document::requests::ListDocumentsParamsBuilder::default()
-        .project_id(ProjectId::from(601486))
-        .offset(0)
-        .count(10)
+        .project_id(ProjectId::from(1073957945))
+        .offset(3)
+        .count(1)
         .build()
         .unwrap();
     let documents = client.document().list_documents(params).await?;

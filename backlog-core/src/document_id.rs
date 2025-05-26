@@ -1,12 +1,11 @@
-use std::{str::FromStr, sync::LazyLock};
 use super::error::Error;
+use crate::identifier::Identifier;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use crate::identifier::Identifier;
+use std::{str::FromStr, sync::LazyLock};
 
 static DOCUMENT_ID_REGEXP: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[0-9a-f]{32}$").unwrap());
-
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DocumentId(pub String);

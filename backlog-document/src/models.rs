@@ -18,7 +18,7 @@ pub struct Document {
     pub updated_user_id: UserId,
     pub updated: DateTime<Utc>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub tags: Vec<String>, // Or Vec<Tag> if a Tag struct is defined
+    pub tags: Vec<DocumentTag>, // Or Vec<Tag> if a Tag struct is defined
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -36,10 +36,14 @@ pub struct DocumentDetail {
     pub created: DateTime<Utc>,
     pub updated_user_id: UserId,
     pub updated: DateTime<Utc>,
-    // `tags` field was not in the curl example for single document,
-    // but might be present. Adding it as optional for now.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub tags: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<DocumentTag>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct DocumentTag {
+    pub id: u32, // Assuming ID is a numeric type
+    pub name: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
