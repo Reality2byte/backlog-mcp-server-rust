@@ -51,6 +51,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Count of issues: {:?}", count);
 
+    let params = backlog_document::requests::ListDocumentsParamsBuilder::default()
+        .project_id(ProjectId::from(601486))
+        .offset(0)
+        .count(10)
+        .build()
+        .unwrap();
+    let documents = client.document().list_documents(params).await?;
+    println!("documents: {:?}", documents);
+
     /*let issue = client
         .issue()
         .add_issue(

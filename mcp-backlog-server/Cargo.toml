@@ -14,9 +14,10 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 
 # Dependencies on other workspace crates
-backlog-api-client = { path = "../backlog-api-client", features = ["issue"] }
+backlog-api-client = { path = "../backlog-api-client", features = ["issue", "document"] }
 backlog-core = { path = "../backlog-core" }
 backlog-issue = { path = "../backlog-issue" } # For the Issue struct
+backlog-document = { path = "../backlog-document" } # For the Document struct
 
 [dev-dependencies]
 # wiremock = "0.6.1" # If adding tests later

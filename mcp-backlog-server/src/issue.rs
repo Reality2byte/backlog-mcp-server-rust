@@ -14,10 +14,7 @@ pub async fn get_issue_details(
     let client = client.lock().await;
     let issue_key = IssueKey::from_str(issue_key.trim())?;
 
-    let issue = client
-        .issue()
-        .get_issue(issue_key.clone())
-        .await?;
+    let issue = client.issue().get_issue(issue_key.clone()).await?;
 
     Ok(issue)
 }

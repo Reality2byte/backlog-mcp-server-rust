@@ -33,3 +33,6 @@ pub use self::issue_id_or_key::IssueIdOrKey;
 
 mod text_formatting_rule;
 pub use text_formatting_rule::TextFormattingRule;
+
+mod document_id;
+pub use document_id::DocumentId;

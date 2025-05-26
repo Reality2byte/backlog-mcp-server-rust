@@ -1,9 +1,24 @@
 # Active Context
 
 ## Current Work Focus
+<<<<<<< HEAD
 -   Completed initial implementation of Backlog MCP Server and the `get_issue_details` tool.
 
 ## Recent Changes
+-   Read all core Memory Bank files.
+-   Updated `activeContext.md` and `progress.md` for the `backlog-document` task.
+-   Analyzed user-provided API details and curl examples for Document API.
+-   User created the `backlog-document` crate.
+-   Verified `backlog-document` was added to workspace members in root `Cargo.toml`.
+-   Created and populated `backlog-document/Cargo.toml` with dependencies.
+-   Created `backlog-document/src/lib.rs` to declare modules.
+-   Created `backlog-document/src/models.rs` with `Document`, `DocumentDetail`, `DocumentTreeResponse`, `DocumentTreeNode` structs.
+-   Created `backlog-document/src/requests.rs` with `ListDocumentsParams`, `GetDocumentTreeParams` structs and `DocumentSortKey` enum, along with `From` trait implementations.
+-   Addressed `Default` trait issues for request structs and `Debug/Clone/PartialEq/Eq/Hash/Serialize/Deserialize` for `ProjectIdOrKey`.
+-   Created `backlog-document/src/api.rs` with `DocumentApi` struct and methods: `list_documents`, `get_document_tree`, `get_document`, and a placeholder `download_attachment`.
+-   Fixed import paths and added `reqwest` dependency to `backlog-document/Cargo.toml`.
+-   Added `backlog-document` as an optional dependency and feature to `backlog-api-client/Cargo.toml`.
+-   Added `document()` method to `BacklogApiClient` in `backlog-api-client/src/client.rs`.
 -   Read all core Memory Bank files.
 -   Updated `activeContext.md` and `progress.md` for the Backlog MCP Server task.
 -   Loaded and reviewed MCP Rust SDK documentation.
@@ -17,11 +32,9 @@
 -   Updated MCP settings file (`cline_mcp_settings.json`) to include configuration for the new `backlog_mcp_server`.
 
 ## Next Steps
--   Task complete. The user will need to:
-    1.  Build the `mcp-backlog-server` binary (`cargo build --bin mcp-backlog-server`).
-    2.  Ensure the `command` path in `cline_mcp_settings.json` correctly points to the compiled binary.
-    3.  Test the MCP server and the `get_issue_details` tool.
--   (Future considerations: Implement more tools, refine error handling, add server-side tests).
+-   Task complete. Awaiting review or next task.
+-   (Future considerations: Fully implement `download_attachment`, add tests for `backlog-document`, refine error handling and model details).
+
 
 ## Active Decisions & Considerations
 -   The project is a Rust workspace for a Backlog API client and CLI.

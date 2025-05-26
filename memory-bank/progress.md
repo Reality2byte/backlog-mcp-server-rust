@@ -17,21 +17,25 @@
     -   Adding more tools to the MCP server.
     -   Refining error handling and tool schemas.
     -   Implementing server-side tests.
+-   The `backlog-document` crate has been created and initial Document API functionality implemented.
+-   Further work could include:
+    -   Full implementation of `download_attachment` (requires `client::Client` modification).
+    -   Adding comprehensive tests for the `backlog-document` crate.
+    -   Refining model details based on more extensive API usage.
+    -   Adding support for any missing query parameters or Document API features.
 
 ## Known Issues (from initialization process)
 -   None directly related to the memory bank files themselves.
 -   The `list_code_definition_names` tool did not find top-level definitions in the `src` directories of several module-specific crates (e.g., `backlog-issue/src`, `backlog-project/src`). This is noted in `techContext.md` and implies that detailed API endpoint definitions are likely within submodules (e.g., `api/`, `models/`) of those crates, requiring deeper dives if specific endpoint details are needed in the future.
 
-## Evolution of Project Decisions (current task: Backlog MCP Server)
--   Task initiated: Create Backlog MCP Server and `get_issue_details` tool.
+## Evolution of Project Decisions (current task: backlog-document crate)
+-   Task initiated: Implement Backlog Document API and create `backlog-document` crate.
 -   Plan executed:
     1.  Read all memory bank files.
     2.  Updated `activeContext.md` and `progress.md` for the new task.
-    3.  Loaded MCP Rust SDK documentation.
-    4.  Clarified with user to create a new dedicated crate `mcp-backlog-server`. User created the crate.
-    5.  Created initial file structure (`main.rs`, `tools/mod.rs`, `tools/get_issue_details_tool.rs`) within `mcp-backlog-server/src/`.
-    6.  Updated `mcp-backlog-server/Cargo.toml` with necessary dependencies.
-    7.  Implemented placeholder and initial logic for `GetIssueDetailsTool` including schema and `call` method.
-    8.  Implemented basic MCP server setup in `mcp-backlog-server/src/main.rs`.
-    9.  Updated `cline_mcp_settings.json` to register the new server.
-    10. Updated `activeContext.md` and `progress.md` to reflect task completion (this step).
+    3.  Analyzed API details from user input.
+    4.  User created `backlog-document` crate.
+    5.  Verified workspace `Cargo.toml` update.
+    6.  Implemented `Cargo.toml`, `lib.rs`, `models.rs`, `requests.rs`, and `api.rs` for `backlog-document` crate, including initial API methods for listing, getting tree, getting a document, and a placeholder for attachment download. Addressed various compilation issues during this process.
+    7.  Integrated `backlog-document` into `backlog-api-client` by updating its `Cargo.toml` and adding a `document()` method to `BacklogApiClient`.
+    8.  Updated `activeContext.md` and `progress.md` to reflect task completion (this step).

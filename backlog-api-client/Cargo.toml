@@ -5,11 +5,12 @@ edition.workspace = true
 license.workspace = true
 
 [features]
-default = ["issue", "project", "space", "user", "all_writable"]
+default = ["issue", "project", "space", "user", "document", "all_writable"] # Added "document"
 issue = ["backlog-issue"]
 project = ["backlog-project"]
 space = ["backlog-space"]
 user = ["backlog-user"]
+document = ["backlog-document"] # Added document feature
 all_writable = ["backlog-issue/writable", "backlog-project/writable", "backlog-space/writable", "backlog-user/writable"] 
 issue_writable = ["backlog-issue/writable"]
 project_writable = ["backlog-project/writable"]
@@ -24,6 +25,7 @@ backlog-issue = { path = "../backlog-issue", optional = true }
 backlog-project = { path = "../backlog-project", optional = true }
 backlog-space = { path = "../backlog-space", optional = true }
 backlog-user = { path = "../backlog-user", optional = true }
+backlog-document = { path = "../backlog-document", optional = true } # Added backlog-document
 tokio = { workspace = true }
 url = { workspace = true }
 serde = { workspace = true }

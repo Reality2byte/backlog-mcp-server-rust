@@ -44,4 +44,9 @@ impl BacklogApiClient {
     pub fn user(&self) -> backlog_user::UserApi {
         backlog_user::UserApi::new(self.client.clone())
     }
+
+    #[cfg(feature = "document")]
+    pub fn document(&self) -> backlog_document::DocumentApi {
+        backlog_document::DocumentApi::new(self.client.clone())
+    }
 }

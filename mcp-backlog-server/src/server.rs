@@ -4,7 +4,7 @@ use std::env;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use crate::issue;
+use crate::{document, issue};
 
 #[derive(Clone)]
 pub struct Server {
@@ -17,6 +17,15 @@ pub struct GetIssueDetailsRequest {
     This should be in the format 'PROJECT-123', where 'PROJECT' is the project key and '123' is the issue number. 
     Ensure there are no leading or trailing spaces.")]
     pub issue_key: String,
+}
+
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub struct GetDocumentDetailsRequest {
+    #[schemars(description = "The document id to retrieve details for. 
+    This should be in the format 32 digit hex string. Ensure there are no leading or trailing spaces.
+    When you access https://example.backlog.com/document/PROJECT/0195faa11fcb7aaab4c4005a7ada4b6f,
+    the document id is '0195faa11fcb7aaab4c4005a7ada4b6f'.")]
+    pub document_id: String,
 }
 
 #[tool(tool_box)]
@@ -33,13 +42,25 @@ impl Server {
         })
     }
 
-    #[tool(description = "Get details for a specific Backlog issue")]
+    #[tool(description = "Get details for a specific Backlog issue.")]
     async fn get_issue_details(
         &self,
         #[tool(aggr)] GetIssueDetailsRequest { issue_key }: GetIssueDetailsRequest,
     ) -> Result<CallToolResult, McpError> {
         let issue = issue::get_issue_details(self.client.clone(), issue_key).await?;
         Ok(CallToolResult::success(vec![Content::json(issue).unwrap()]))
+    }
+
+    #[tool(description = "Get details for a specific Backlog document.
+     This API returns the document details including its title, `plain` as Markdown and `json` as ProseMirror json, and other metadata.")]
+    async fn get_document_details(
+        &self,
+        #[tool(aggr)] GetDocumentDetailsRequest { document_id }: GetDocumentDetailsRequest,
+    ) -> Result<CallToolResult, McpError> {
+        let document = document::get_document_details(self.client.clone(), document_id).await?;
+        Ok(CallToolResult::success(vec![
+            Content::json(document).unwrap(),
+        ]))
     }
 }
 

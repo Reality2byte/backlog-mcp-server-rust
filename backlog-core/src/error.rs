@@ -19,6 +19,9 @@ pub enum Error {
 
     #[error("Invalid role type: {0}")]
     InvalidRole(String),
+
+    #[error("Invalid document id: {0}")]
+    InvalidDocumentId(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

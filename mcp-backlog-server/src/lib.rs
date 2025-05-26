@@ -1,3 +1,4 @@
+mod document;
 mod error;
 mod issue;
 mod server;

@@ -1,5 +1,5 @@
-use backlog_core::Error as CoreError;
 use backlog_api_client::ApiError;
+use backlog_core::Error as CoreError;
 use rmcp::Error as McpError;
 use thiserror::Error as ThisError;
 

@@ -80,6 +80,7 @@ version = "0.1.0"
 dependencies = [
  "backlog-api-core",
  "backlog-core",
+ "backlog-document",
  "backlog-issue",
  "backlog-project",
  "backlog-space",
@@ -111,6 +112,21 @@ dependencies = [
  "serde_json",
  "serde_repr",
  "thiserror",
+]
+
+[[package]]
+name = "backlog-document"
+version = "0.1.0"
+dependencies = [
+ "backlog-api-core",
+ "backlog-core",
+ "chrono",
+ "client",
+ "derive_builder",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "url",
 ]
 
 [[package]]
@@ -946,6 +962,7 @@ version = "0.1.0"
 dependencies = [
  "backlog-api-client",
  "backlog-core",
+ "backlog-document",
  "backlog-issue",
  "rmcp",
  "serde",
