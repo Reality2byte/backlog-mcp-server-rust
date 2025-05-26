@@ -3,9 +3,9 @@ use backlog_core::{IssueIdOrKey, IssueKey};
 use client::Client;
 
 use crate::{
+    Issue,
     requests::{AddIssueParams, CountIssueParams, GetIssueListParams, UpdateIssueParams}, // Added GetIssueListParams
     responses::CountIssueResponse,
-    Issue,
 };
 
 pub struct IssueApi(Client);

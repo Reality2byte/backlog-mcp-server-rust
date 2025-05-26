@@ -1,9 +1,9 @@
 use backlog_core::{
+    IssueKey, User,
     identifier::{
         CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ProjectId, ResolutionId,
         StatusId,
     },
-    IssueKey, User,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};

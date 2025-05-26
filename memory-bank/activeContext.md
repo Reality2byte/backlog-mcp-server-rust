@@ -1,21 +1,27 @@
 # Active Context
 
 ## Current Work Focus
--   Completed writing mock server tests for the `get_issue_list` functionality using `wiremock`.
+-   Completed initial implementation of Backlog MCP Server and the `get_issue_details` tool.
 
 ## Recent Changes
 -   Read all core Memory Bank files.
--   Updated `activeContext.md` and `progress.md` for the `get_issue_list` mock tests task.
--   Added `wiremock`, `tokio` (with features), and `serde_json` to `[dev-dependencies]` in `backlog-issue/Cargo.toml`.
--   Added a `tests` module to `backlog-issue/src/api/mod.rs`.
--   Implemented initial mock tests for `get_issue_list`, including:
-    -   Successful retrieval with empty parameters.
-    -   Successful retrieval with `projectId` query parameter.
-    -   Handling of a server error (500).
+-   Updated `activeContext.md` and `progress.md` for the Backlog MCP Server task.
+-   Loaded and reviewed MCP Rust SDK documentation.
+-   User created new crate `mcp-backlog-server`.
+-   Created initial file structure within `mcp-backlog-server/src/`:
+    -   `main.rs` with placeholder server logic.
+    -   `tools/mod.rs`
+    -   `tools/get_issue_details_tool.rs` with schema and initial `call` logic for `GetIssueDetailsTool`.
+-   Updated `mcp-backlog-server/Cargo.toml` with necessary dependencies including `model-context-protocol`, `tokio`, `serde`, `serde_json`, and local workspace crates (`backlog-api-client`, `backlog-core`, `backlog-issue`).
+-   Updated `mcp-backlog-server/src/main.rs` with basic MCP server setup using `model-context-protocol` SDK components and registered `GetIssueDetailsTool`.
+-   Updated MCP settings file (`cline_mcp_settings.json`) to include configuration for the new `backlog_mcp_server`.
 
 ## Next Steps
--   Task complete. Awaiting review or next task.
--   (Future considerations: Expand test coverage for more query parameters and edge cases).
+-   Task complete. The user will need to:
+    1.  Build the `mcp-backlog-server` binary (`cargo build --bin mcp-backlog-server`).
+    2.  Ensure the `command` path in `cline_mcp_settings.json` correctly points to the compiled binary.
+    3.  Test the MCP server and the `get_issue_details` tool.
+-   (Future considerations: Implement more tools, refine error handling, add server-side tests).
 
 ## Active Decisions & Considerations
 -   The project is a Rust workspace for a Backlog API client and CLI.

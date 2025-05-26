@@ -1,5 +1,5 @@
-use super::error::Error;
 use super::ProjectKey;
+use super::error::Error;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;

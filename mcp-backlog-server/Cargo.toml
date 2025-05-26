@@ -1,0 +1,21 @@
+[package]
+name = "mcp-backlog-server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk", branch = "main", features = ["transport-io"] }
+tokio = { workspace = true, features = ["full"] } # Using full for server, can be rt-multi-thread, macros
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+
+# Dependencies on other workspace crates
+backlog-api-client = { path = "../backlog-api-client", features = ["issue"] }
+backlog-core = { path = "../backlog-core" }
+backlog-issue = { path = "../backlog-issue" } # For the Issue struct
+
+[dev-dependencies]
+# wiremock = "0.6.1" # If adding tests later

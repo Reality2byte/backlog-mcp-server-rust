@@ -1,4 +1,4 @@
-use crate::{identifier::ProjectId, Error, Identifier, ProjectKey};
+use crate::{Error, Identifier, ProjectKey, identifier::ProjectId};
 use std::str::FromStr;
 
 pub enum ProjectIdOrKey {

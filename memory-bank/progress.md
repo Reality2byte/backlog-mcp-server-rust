@@ -11,22 +11,27 @@
 -   A baseline understanding of the project's architecture, technology stack, and purpose is documented.
 
 ## What's Left to Build (for this task)
--   Mock server tests for `get_issue_list` have been implemented.
+-   The initial Backlog MCP Server with the `get_issue_details` tool has been implemented.
+-   The user needs to build and test the server.
 -   Further work could include:
-    -   Expanding test coverage for more query parameter combinations.
-    -   Testing more specific error conditions and response bodies.
-    -   Refining mocked `Issue` data to be more complete.
+    -   Adding more tools to the MCP server.
+    -   Refining error handling and tool schemas.
+    -   Implementing server-side tests.
 
 ## Known Issues (from initialization process)
 -   None directly related to the memory bank files themselves.
 -   The `list_code_definition_names` tool did not find top-level definitions in the `src` directories of several module-specific crates (e.g., `backlog-issue/src`, `backlog-project/src`). This is noted in `techContext.md` and implies that detailed API endpoint definitions are likely within submodules (e.g., `api/`, `models/`) of those crates, requiring deeper dives if specific endpoint details are needed in the future.
 
-## Evolution of Project Decisions (current task: get_issue_list mock tests)
--   Task initiated: Write mock server tests for `get_issue_list`.
+## Evolution of Project Decisions (current task: Backlog MCP Server)
+-   Task initiated: Create Backlog MCP Server and `get_issue_details` tool.
 -   Plan executed:
     1.  Read all memory bank files.
     2.  Updated `activeContext.md` and `progress.md` for the new task.
-    3.  Added `wiremock`, `tokio`, and `serde_json` as dev-dependencies to `backlog-issue/Cargo.toml`.
-    4.  Added an inline test module `tests` to `backlog-issue/src/api/mod.rs`.
-    5.  Implemented initial test cases for success (empty params, with projectId param) and server error.
-    6.  Updated `activeContext.md` and `progress.md` to reflect task completion (this step).
+    3.  Loaded MCP Rust SDK documentation.
+    4.  Clarified with user to create a new dedicated crate `mcp-backlog-server`. User created the crate.
+    5.  Created initial file structure (`main.rs`, `tools/mod.rs`, `tools/get_issue_details_tool.rs`) within `mcp-backlog-server/src/`.
+    6.  Updated `mcp-backlog-server/Cargo.toml` with necessary dependencies.
+    7.  Implemented placeholder and initial logic for `GetIssueDetailsTool` including schema and `call` method.
+    8.  Implemented basic MCP server setup in `mcp-backlog-server/src/main.rs`.
+    9.  Updated `cline_mcp_settings.json` to register the new server.
+    10. Updated `activeContext.md` and `progress.md` to reflect task completion (this step).

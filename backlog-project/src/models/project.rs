@@ -1,4 +1,4 @@
-use backlog_core::{identifier::ProjectId, ProjectKey, TextFormattingRule};
+use backlog_core::{ProjectKey, TextFormattingRule, identifier::ProjectId};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

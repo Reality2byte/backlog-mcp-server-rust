@@ -1,4 +1,4 @@
-use backlog_core::{identifier::UserId, Language, SpaceKey, TextFormattingRule};
+use backlog_core::{Language, SpaceKey, TextFormattingRule, identifier::UserId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
