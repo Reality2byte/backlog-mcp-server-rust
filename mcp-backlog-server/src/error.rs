@@ -6,39 +6,39 @@ use thiserror::Error as ThisError;
 #[derive(Debug, ThisError)]
 pub enum Error {
     #[error("API error: {0}")]
-    CoreError(CoreError),
+    Core(CoreError),
 
     #[error("API error: {0}")]
-    ApiError(ApiError),
+    Api(ApiError),
 
     #[error("Parameter error: {0}")]
-    ParameterError(String),
+    Parameter(String),
 
     #[error("Server error: {0}")]
-    ServerError(String),
+    Server(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
 
 impl From<CoreError> for Error {
     fn from(err: CoreError) -> Self {
-        Error::CoreError(err)
+        Error::Core(err)
     }
 }
 
 impl From<ApiError> for Error {
     fn from(err: ApiError) -> Self {
-        Error::ApiError(err)
+        Error::Api(err)
     }
 }
 
 impl From<Error> for McpError {
     fn from(err: Error) -> Self {
         match err {
-            Error::CoreError(err) => McpError::invalid_request(err.to_string(), None),
-            Error::ServerError(msg) => McpError::internal_error(msg, None),
-            Error::ParameterError(msg) => McpError::invalid_params(msg, None),
-            Error::ApiError(error) => McpError::invalid_request(error.to_string(), None),
+            Error::Core(err) => McpError::invalid_request(err.to_string(), None),
+            Error::Server(msg) => McpError::internal_error(msg, None),
+            Error::Parameter(msg) => McpError::invalid_params(msg, None),
+            Error::Api(error) => McpError::invalid_request(error.to_string(), None),
         }
     }
 }

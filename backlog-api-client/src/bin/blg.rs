@@ -1,7 +1,5 @@
 use backlog_api_client::client::BacklogApiClient;
 use backlog_core::identifier::ProjectId;
-use backlog_core::{IssueKey, ProjectIdOrKey};
-use backlog_project::requests::GetProjectParams;
 use std::env;
 
 #[tokio::main]
