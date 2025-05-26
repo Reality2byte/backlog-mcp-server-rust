@@ -1,7 +1,6 @@
 use rmcp::{ServiceExt, transport::stdio};
 
-mod server;
-use server::Server;
+use mcp_backlog_server::Server;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

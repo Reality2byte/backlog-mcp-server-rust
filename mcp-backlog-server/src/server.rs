@@ -1,12 +1,10 @@
 use backlog_api_client::client::BacklogApiClient;
-use backlog_core::IssueKey;
 use rmcp::{Error as McpError, model::*, schemars, tool};
 use std::env;
-use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-//use crate::tools;
+use crate::issue;
 
 #[derive(Clone)]
 pub struct Server {
@@ -40,21 +38,8 @@ impl Server {
         &self,
         #[tool(aggr)] GetIssueDetailsRequest { issue_key }: GetIssueDetailsRequest,
     ) -> Result<CallToolResult, McpError> {
-        let client = self.client.lock().await;
-
-        let issue_key = IssueKey::from_str(issue_key.trim()).map_err(|e| {
-            McpError::invalid_request(
-                format!("Invalid issue key: {:?}", issue_key),
-                Some(serde_json::Value::String(e.to_string())),
-            )
-        })?;
-        match client.issue().get_issue(issue_key.clone()).await {
-            Ok(issue) => Ok(CallToolResult::success(vec![Content::json(issue)?])),
-            Err(e) => Err(McpError::resource_not_found(
-                format!("No such issue found: {:?}", issue_key),
-                Some(serde_json::Value::String(e.to_string())),
-            )),
-        }
+        let issue = issue::get_issue_details(self.client.clone(), issue_key).await?;
+        Ok(CallToolResult::success(vec![Content::json(issue).unwrap()]))
     }
 }
 
