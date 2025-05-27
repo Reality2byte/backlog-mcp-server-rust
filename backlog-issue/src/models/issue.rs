@@ -85,4 +85,5 @@ pub struct Milestone {
     pub start_date: Option<DateTime<Utc>>,
     pub release_due_date: Option<DateTime<Utc>>,
     pub archived: bool,
+    pub display_order: Option<i32>,
 }

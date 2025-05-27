@@ -1,27 +1,22 @@
 ## Current Work Focus
--   Updating Memory Bank to reflect the existing `mcp-backlog-server` implementation and its tools (`get_issue_details`, `get_document_details`).
+-   Implemented `get_version_milestone_list` API in the `backlog-issue` crate.
+-   Updating Memory Bank to reflect this new API implementation.
 
 ## Recent Changes
--   Read all core Memory Bank files.
--   Initiated task to create a Backlog MCP server and `get_issue_details` tool.
--   Discovered that a `mcp-backlog-server` crate already exists with implementations for `get_issue_details` and `get_document_details` tools.
--   Read source files of `mcp-backlog-server` crate:
-    -   `Cargo.toml` (dependencies include `rmcp` SDK, `backlog-api-client`, etc.)
-    -   `src/main.rs` (server startup logic using `rmcp` and `tokio`)
-    -   `src/lib.rs` (module declarations)
-    -   `src/server.rs` (defines `Server` struct, tool methods like `get_issue_details`, `get_document_details`, and `ServerHandler` impl)
-    -   `src/issue.rs` (contains `get_issue_details` helper function)
-    -   `src/document.rs` (contains `get_document_details` helper function)
-    -   `src/error.rs` (custom error handling for the MCP server)
--   Noted the use of `rmcp` SDK and environment variables (`BACKLOG_BASE_URL`, `BACKLOG_API_KEY`) for server configuration.
+-   Reviewed Backlog API documentation for `get_version_milestone_list`.
+-   Modified `backlog-issue/src/models/issue.rs`:
+    -   Added `display_order: Option<i32>` to the `Milestone` struct.
+-   Modified `backlog-issue/src/api/mod.rs`:
+    -   Added the `get_version_milestone_list` async method to `IssueApi`.
+    -   Added `GetVersionMilestoneListResponse = Vec<Milestone>` type alias.
+    -   Added unit tests for `get_version_milestone_list` (success and error cases) using `wiremock`.
+-   Resolved compilation errors related to `ProjectIdOrKey` conversion to `String` by using `.to_string()` and by using `.parse().unwrap()` and `.clone()` in test code.
+-   Confirmed project-wide compilation with `cargo check`.
+-   Previous work involved understanding and documenting the existing `mcp-backlog-server`.
 
 ## Next Steps
--   Update `projectbrief.md` to include the MCP server.
--   Update `productContext.md` regarding MCP server capabilities.
--   Update `systemPatterns.md` with `mcp-backlog-server` architecture and tool implementation patterns.
--   Update `techContext.md` with `rmcp` SDK dependency and MCP server configuration details.
--   Update `progress.md` to reflect the current state and discovery.
--   Confirm with the user that the existing `get_issue_details` tool (and `get_document_details`) meets their requirements or if modifications/new tools are needed.
+-   Update `progress.md` to reflect the implementation of `get_version_milestone_list`.
+-   Confirm completion of the task with the user.
 
 
 ## Active Decisions & Considerations

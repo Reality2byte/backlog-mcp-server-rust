@@ -1,9 +1,9 @@
 use backlog_api_core::Result;
-use backlog_core::{IssueIdOrKey, IssueKey};
+use backlog_core::{IssueIdOrKey, IssueKey, ProjectIdOrKey};
 use client::Client;
 
 use crate::{
-    Issue,
+    Issue, Milestone,
     requests::{AddIssueParams, CountIssueParams, GetIssueListParams, UpdateIssueParams},
     responses::CountIssueResponse,
 };
@@ -59,6 +59,20 @@ impl IssueApi {
             .patch(&format!("/api/v2/issues/{}", issue_id_or_key_str), params)
             .await
     }
+
+    pub async fn get_version_milestone_list(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+    ) -> Result<GetVersionMilestoneListResponse> {
+        let project_id_or_key_val = project_id_or_key.into();
+        let project_id_or_key_str: String = project_id_or_key_val.to_string();
+        self.0
+            .get(&format!(
+                "/api/v2/projects/{}/versions",
+                project_id_or_key_str
+            ))
+            .await
+    }
 }
 
 type GetIssueResponse = Issue;
@@ -66,13 +80,15 @@ type AddIssueResponse = Issue;
 type DeleteIssueResponse = Issue;
 type UpdateIssueResponse = Issue;
 type GetIssueListResponse = Vec<Issue>;
+type GetVersionMilestoneListResponse = Vec<Milestone>;
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::requests::GetIssueListParamsBuilder;
-    use backlog_core::identifier::ProjectId;
+    use crate::{models::issue::Milestone, requests::GetIssueListParamsBuilder};
+    use backlog_core::identifier::{ProjectId, MilestoneId};
     use client::Client;
+    use chrono::TimeZone;
     use serde_json::json;
     use wiremock::matchers::{method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -202,5 +218,88 @@ mod tests {
         // Assert
         assert!(result.is_err());
         // Further error type inspection could be done here
+    }
+
+    #[tokio::test]
+    async fn test_get_version_milestone_list_success() {
+        // Arrange
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let project_id_or_key_str = "TEST_PROJECT";
+        let project_id_or_key: ProjectIdOrKey = project_id_or_key_str.parse().unwrap();
+        let project_id_numeric = ProjectId::new(1); // Assuming project ID 1 for mock
+
+        let expected_versions: Vec<Milestone> = vec![
+            Milestone {
+                id: MilestoneId::new(1),
+                project_id: project_id_numeric.clone(),
+                name: "Version 1.0".to_string(),
+                description: Some("Initial release".to_string()),
+                start_date: Some(chrono::Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap()),
+                release_due_date: Some(chrono::Utc.with_ymd_and_hms(2023, 1, 31, 0, 0, 0).unwrap()),
+                archived: false,
+                display_order: Some(1),
+            },
+            Milestone {
+                id: MilestoneId::new(2),
+                project_id: project_id_numeric.clone(),
+                name: "Version 1.1".to_string(),
+                description: None,
+                start_date: None,
+                release_due_date: None,
+                archived: true,
+                display_order: Some(2),
+            },
+        ];
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/projects/{}/versions",
+                project_id_or_key.clone().to_string()
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_versions))
+            .mount(&mock_server)
+            .await;
+
+        // Act
+        let result = issue_api
+            .get_version_milestone_list(project_id_or_key.clone())
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let versions = result.unwrap();
+        assert_eq!(versions.len(), 2);
+        assert_eq!(versions[0].name, "Version 1.0");
+        assert_eq!(versions[1].archived, true);
+        assert_eq!(versions[0].display_order, Some(1));
+    }
+
+    #[tokio::test]
+    async fn test_get_version_milestone_list_error() {
+        // Arrange
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let project_id_or_key_str = "TEST_PROJECT_ERROR";
+        let project_id_or_key: ProjectIdOrKey = project_id_or_key_str.parse().unwrap();
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/projects/{}/versions",
+                project_id_or_key.clone().to_string()
+            )))
+            .respond_with(ResponseTemplate::new(500))
+            .mount(&mock_server)
+            .await;
+
+        // Act
+        let result = issue_api
+            .get_version_milestone_list(project_id_or_key.clone())
+            .await;
+
+        // Assert
+        assert!(result.is_err());
     }
 }

@@ -98,7 +98,7 @@
 - [ ] DeleteStatus: Deletes Status: DELETE /api/v2/projects/:projectIdOrKey/statuses/:id
 
 ### Version/Milestone
-- [ ] GetVersionMilestoneList: Returns list of Versions/Milestones in the project: GET /api/v2/projects/:projectIdOrKey/versions
+- [x] GetVersionMilestoneList: Returns list of Versions/Milestones in the project: GET /api/v2/projects/:projectIdOrKey/versions
 - [ ] AddVersionMilestone: Adds new Version/Milestone to the project: POST /api/v2/projects/:projectIdOrKey/versions
 - [ ] DeleteVersion: Deletes Version: DELETE /api/v2/projects/:projectIdOrKey/versions/:id
 - [ ] UpdateVersionMilestone: Updates information about Version/Milestone: PATCH /api/v2/projects/:projectIdOrKey/versions/:id
