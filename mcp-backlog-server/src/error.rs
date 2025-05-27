@@ -16,6 +16,9 @@ pub enum Error {
 
     #[error("Server error: {0}")]
     Server(String),
+
+    #[error("Milestone named '{name}' not found in project '{project}'.")]
+    MilestoneNotFoundByName { project: String, name: String },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -39,6 +42,10 @@ impl From<Error> for McpError {
             Error::Server(msg) => McpError::internal_error(msg, None),
             Error::Parameter(msg) => McpError::invalid_params(msg, None),
             Error::Api(error) => McpError::invalid_request(error.to_string(), None),
+            Error::MilestoneNotFoundByName { project, name } => McpError::invalid_params(
+                format!("Milestone named '{}' not found in project '{}'.", name, project),
+                None,
+            ),
         }
     }
 }

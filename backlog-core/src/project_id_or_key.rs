@@ -31,3 +31,15 @@ impl std::fmt::Display for ProjectIdOrKey {
         }
     }
 }
+
+impl From<ProjectId> for ProjectIdOrKey {
+    fn from(id: ProjectId) -> Self {
+        ProjectIdOrKey::Id(id)
+    }
+}
+
+impl From<ProjectKey> for ProjectIdOrKey {
+    fn from(key: ProjectKey) -> Self {
+        ProjectIdOrKey::Key(key)
+    }
+}

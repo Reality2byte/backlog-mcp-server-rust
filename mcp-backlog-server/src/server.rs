@@ -36,6 +36,14 @@ pub struct GetVersionMilestoneListRequest {
     pub project_id_or_key: String,
 }
 
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub struct GetIssuesByMilestoneNameRequest {
+    #[schemars(description = "The project ID or project key where the milestone belongs. Examples: 'MYPROJECTKEY', '123'.")]
+    pub project_id_or_key: String,
+    #[schemars(description = "The name of the milestone to retrieve issues for.")]
+    pub milestone_name: String,
+}
+
 #[tool(tool_box)]
 impl Server {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
@@ -86,6 +94,24 @@ impl Server {
             milestones,
         )
         .unwrap()]))
+    }
+
+    #[tool(description = "Get a list of issues for a specified milestone name within a project.")]
+    async fn get_issues_by_milestone_name(
+        &self,
+        #[tool(aggr)]
+        GetIssuesByMilestoneNameRequest {
+            project_id_or_key,
+            milestone_name,
+        }: GetIssuesByMilestoneNameRequest,
+    ) -> Result<CallToolResult, McpError> {
+        let issues = issue::get_issues_by_milestone_name_impl(
+            self.client.clone(),
+            project_id_or_key,
+            milestone_name,
+        )
+        .await?;
+        Ok(CallToolResult::success(vec![Content::json(issues).unwrap()]))
     }
 }
 
