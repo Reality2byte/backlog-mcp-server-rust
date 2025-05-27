@@ -86,9 +86,9 @@ type GetVersionMilestoneListResponse = Vec<Milestone>;
 mod tests {
     use super::*;
     use crate::{models::issue::Milestone, requests::GetIssueListParamsBuilder};
-    use backlog_core::identifier::{ProjectId, MilestoneId};
-    use client::Client;
+    use backlog_core::identifier::{MilestoneId, ProjectId};
     use chrono::TimeZone;
+    use client::Client;
     use serde_json::json;
     use wiremock::matchers::{method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};

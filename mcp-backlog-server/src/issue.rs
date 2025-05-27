@@ -1,6 +1,6 @@
 use backlog_api_client::client::BacklogApiClient;
 use backlog_core::{IssueKey, ProjectIdOrKey};
-use backlog_issue::{requests::GetIssueListParamsBuilder, Issue, Milestone};
+use backlog_issue::{Issue, Milestone, requests::GetIssueListParamsBuilder};
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -13,7 +13,10 @@ pub async fn get_issue_details(
 ) -> Result<Issue> {
     let client_guard = client.lock().await; // Renamed for clarity
     let parsed_issue_key = IssueKey::from_str(issue_key.trim())?;
-    let issue = client_guard.issue().get_issue(parsed_issue_key.clone()).await?;
+    let issue = client_guard
+        .issue()
+        .get_issue(parsed_issue_key.clone())
+        .await?;
     Ok(issue)
 }
 
@@ -37,14 +40,12 @@ pub async fn get_issues_by_milestone_name_impl(
 ) -> Result<Vec<Issue>> {
     let client_guard = client.lock().await;
 
-    let proj_id_or_key = ProjectIdOrKey::from_str(project_id_or_key_str.trim())
-        .map_err(McpError::Core)?;
+    let proj_id_or_key =
+        ProjectIdOrKey::from_str(project_id_or_key_str.trim()).map_err(McpError::Core)?;
 
     let project_id_numeric = match proj_id_or_key.clone() {
         ProjectIdOrKey::Id(id) => id,
-        ProjectIdOrKey::Key(key_val) => { 
-            client_guard.project().get_project(key_val).await?.id
-        }
+        ProjectIdOrKey::Key(key_val) => client_guard.project().get_project(key_val).await?.id,
         ProjectIdOrKey::EitherIdOrKey(id, _) => id,
     };
 

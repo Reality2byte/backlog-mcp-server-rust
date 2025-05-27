@@ -30,15 +30,19 @@ pub struct GetDocumentDetailsRequest {
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
 pub struct GetVersionMilestoneListRequest {
-    #[schemars(description = "The project ID or project key to retrieve versions (milestones) for. 
+    #[schemars(
+        description = "The project ID or project key to retrieve versions (milestones) for. 
     Examples: 'MYPROJECTKEY', '123'. 
-    Ensure there are no leading or trailing spaces.")]
+    Ensure there are no leading or trailing spaces."
+    )]
     pub project_id_or_key: String,
 }
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
 pub struct GetIssuesByMilestoneNameRequest {
-    #[schemars(description = "The project ID or project key where the milestone belongs. Examples: 'MYPROJECTKEY', '123'.")]
+    #[schemars(
+        description = "The project ID or project key where the milestone belongs. Examples: 'MYPROJECTKEY', '123'."
+    )]
     pub project_id_or_key: String,
     #[schemars(description = "The name of the milestone to retrieve issues for.")]
     pub milestone_name: String,
@@ -88,19 +92,16 @@ impl Server {
         }: GetVersionMilestoneListRequest,
     ) -> Result<CallToolResult, McpError> {
         let milestones =
-            issue::get_version_milestone_list_impl(self.client.clone(), project_id_or_key)
-                .await?;
-        Ok(CallToolResult::success(vec![Content::json(
-            milestones,
-        )
-        .unwrap()]))
+            issue::get_version_milestone_list_impl(self.client.clone(), project_id_or_key).await?;
+        Ok(CallToolResult::success(vec![
+            Content::json(milestones).unwrap(),
+        ]))
     }
 
     #[tool(description = "Get a list of issues for a specified milestone name within a project.")]
     async fn get_issues_by_milestone_name(
         &self,
-        #[tool(aggr)]
-        GetIssuesByMilestoneNameRequest {
+        #[tool(aggr)] GetIssuesByMilestoneNameRequest {
             project_id_or_key,
             milestone_name,
         }: GetIssuesByMilestoneNameRequest,
@@ -111,7 +112,9 @@ impl Server {
             milestone_name,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(issues).unwrap()]))
+        Ok(CallToolResult::success(vec![
+            Content::json(issues).unwrap(),
+        ]))
     }
 }
 

@@ -43,7 +43,10 @@ impl From<Error> for McpError {
             Error::Parameter(msg) => McpError::invalid_params(msg, None),
             Error::Api(error) => McpError::invalid_request(error.to_string(), None),
             Error::MilestoneNotFoundByName { project, name } => McpError::invalid_params(
-                format!("Milestone named '{}' not found in project '{}'.", name, project),
+                format!(
+                    "Milestone named '{}' not found in project '{}'. You can list available milestones using the 'get_version_milestone_list' tool for project '{}'.",
+                    name, project, project
+                ),
                 None,
             ),
         }
