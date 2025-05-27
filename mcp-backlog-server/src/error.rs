@@ -17,8 +17,12 @@ pub enum Error {
     #[error("Server error: {0}")]
     Server(String),
 
-    #[error("Milestone named '{name}' not found in project '{project}'.")]
-    MilestoneNotFoundByName { project: String, name: String },
+    #[error("Milestone named '{original_name}' not found in project '{project}'.")]
+    MilestoneNotFoundByName {
+        project: String,
+        original_name: String,            // ユーザーが入力した元の名前
+        suggestions: Option<Vec<String>>, // 提案するマイルストーン名のリスト
+    },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -42,13 +46,23 @@ impl From<Error> for McpError {
             Error::Server(msg) => McpError::internal_error(msg, None),
             Error::Parameter(msg) => McpError::invalid_params(msg, None),
             Error::Api(error) => McpError::invalid_request(error.to_string(), None),
-            Error::MilestoneNotFoundByName { project, name } => McpError::invalid_params(
-                format!(
-                    "Milestone named '{}' not found in project '{}'. You can list available milestones using the 'get_version_milestone_list' tool for project '{}'.",
-                    name, project, project
-                ),
-                None,
-            ),
+            Error::MilestoneNotFoundByName {
+                project,
+                original_name,
+                suggestions,
+            } => {
+                let mut message = format!(
+                    "Milestone named '{}' not found in project '{}'.",
+                    original_name, project
+                );
+                if let Some(suggs) = suggestions {
+                    if !suggs.is_empty() {
+                        message.push_str(&format!(" Did you mean one of: {:?}?", suggs));
+                    }
+                }
+                message.push_str(&format!(" You can list all available milestones using the 'get_version_milestone_list' tool for project '{}'.", project));
+                McpError::invalid_params(message, None)
+            }
         }
     }
 }

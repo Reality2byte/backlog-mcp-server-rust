@@ -18,6 +18,7 @@ backlog-api-client = { path = "../backlog-api-client", features = ["issue", "doc
 backlog-core = { path = "../backlog-core" }
 backlog-issue = { path = "../backlog-issue" } # For the Issue struct
 backlog-document = { path = "../backlog-document" } # For the Document struct
+strsim = "0.10"
 
 [dev-dependencies]
 # wiremock = "0.6.1" # If adding tests later

@@ -10,6 +10,7 @@
 -   **`get_version_milestone_list` MCP Tool Implemented**: The `get_version_milestone_list` MCP tool has been successfully implemented in the `mcp-backlog-server` crate.
 -   **`get_issues_by_milestone_name` MCP Tool Implemented**: The `get_issues_by_milestone_name` MCP tool has been successfully implemented in the `mcp-backlog-server` crate.
 -   **Improved Error Messaging**: The error message for `MilestoneNotFoundByName` in `mcp-backlog-server` has been improved to suggest using `get_version_milestone_list`.
+-   **Suggestion Feature for MilestoneNotFoundByName**: Implemented a feature in `mcp-backlog-server` to provide suggestions of similar milestone names if an exact match is not found. This uses preprocessing and Levenshtein distance.
 
 ## What Works
 -   The Memory Bank system is established with foundational information about the project.
@@ -20,11 +21,11 @@
     - Document details (`get_document_details`)
     - Project versions/milestones list (`get_version_milestone_list`)
     - Issues by milestone name (`get_issues_by_milestone_name`)
--   The `mcp-backlog-server` now provides more helpful error messages when a milestone is not found by name.
+-   The `mcp-backlog-server` now provides more helpful error messages when a milestone is not found by name, including suggestions for similar names.
 -   The `backlog-issue` crate can retrieve a list of versions (milestones) for a project.
 
 ## What's Left to Build (for this task)
--   Finalizing Memory Bank updates for the recent MCP tool implementations and error message improvements.
+-   Finalizing Memory Bank updates for the suggestion feature.
 -   Confirming task completion with the user.
 
 ## Known Issues (from initialization process and ongoing work)
@@ -54,4 +55,10 @@
     -   Adding `From` traits to `ProjectIdOrKey` in `backlog-core` to fix compilation errors.
 -   **Error Message Improvement**: User requested more helpful error messages when a milestone is not found by name.
     -   Updated `From<Error> for McpError` for `MilestoneNotFoundByName` in `mcp-backlog-server/src/error.rs` to suggest using `get_version_milestone_list`.
+-   **Suggestion Feature Implementation for `MilestoneNotFoundByName`**: User requested that when a milestone name is not found, the error should include suggestions for similar names.
+    -   Discussed string similarity algorithms (Levenshtein, Jaro-Winkler, N-gram, etc.).
+    -   Decided on a two-step approach: 1. Preprocessing + exact match. 2. If not found, Levenshtein distance (<=2) on preprocessed names, sorted by distance then common prefix length.
+    -   Added `strsim` dependency to `mcp-backlog-server/Cargo.toml`.
+    -   Updated `MilestoneNotFoundByName` error in `mcp-backlog-server/src/error.rs` to include an optional `suggestions: Vec<String>` field and updated the `From<Error> for McpError` implementation to format these suggestions into the error message.
+    -   Modified `get_issues_by_milestone_name_impl` in `mcp-backlog-server/src/issue.rs` to implement the suggestion logic. If a preprocessed exact match is found, issues are fetched. Otherwise, Levenshtein suggestions are generated and returned within the `MilestoneNotFoundByName` error.
 -   **Current Task Focus**: Updating Memory Bank to reflect these recent changes.
