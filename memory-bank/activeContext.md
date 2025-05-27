@@ -1,21 +1,22 @@
 ## Current Work Focus
--   Implemented `get_version_milestone_list` API in the `backlog-issue` crate.
--   Updating Memory Bank to reflect this new API implementation.
+-   Implemented `get_version_milestone_list` MCP tool in the `mcp-backlog-server` crate.
+-   Updating Memory Bank to reflect this new MCP tool implementation.
 
 ## Recent Changes
--   Reviewed Backlog API documentation for `get_version_milestone_list`.
--   Modified `backlog-issue/src/models/issue.rs`:
-    -   Added `display_order: Option<i32>` to the `Milestone` struct.
--   Modified `backlog-issue/src/api/mod.rs`:
-    -   Added the `get_version_milestone_list` async method to `IssueApi`.
-    -   Added `GetVersionMilestoneListResponse = Vec<Milestone>` type alias.
-    -   Added unit tests for `get_version_milestone_list` (success and error cases) using `wiremock`.
--   Resolved compilation errors related to `ProjectIdOrKey` conversion to `String` by using `.to_string()` and by using `.parse().unwrap()` and `.clone()` in test code.
--   Confirmed project-wide compilation with `cargo check`.
--   Previous work involved understanding and documenting the existing `mcp-backlog-server`.
+-   **`mcp-backlog-server` crate changes for `get_version_milestone_list` tool:**
+    -   Defined `GetVersionMilestoneListRequest` struct in `mcp-backlog-server/src/server.rs`.
+    -   Implemented `get_version_milestone_list_impl` helper function in `mcp-backlog-server/src/issue.rs` to call the `backlog-issue` client library.
+    -   Added `get_version_milestone_list` tool method to `Server` in `mcp-backlog-server/src/server.rs`, exposing it as an MCP tool.
+    -   Confirmed `mcp-backlog-server` crate compilation with `cargo check`.
+-   **Previous (`backlog-issue` crate) changes for `get_version_milestone_list` API:**
+    -   Reviewed Backlog API documentation for `get_version_milestone_list`.
+    -   Modified `backlog-issue/src/models/issue.rs`: Added `display_order: Option<i32>` to `Milestone` struct.
+    -   Modified `backlog-issue/src/api/mod.rs`: Added `get_version_milestone_list` async method to `IssueApi`, type alias, and unit tests.
+    -   Resolved compilation errors and confirmed project-wide compilation.
+-   Previous work also involved understanding and documenting the existing `mcp-backlog-server`.
 
 ## Next Steps
--   Update `progress.md` to reflect the implementation of `get_version_milestone_list`.
+-   Update `progress.md` to reflect the implementation of the `get_version_milestone_list` MCP tool.
 -   Confirm completion of the task with the user.
 
 

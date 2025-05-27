@@ -7,16 +7,17 @@
 -   **High-Level Code Structure Understood**: An initial understanding of the roles of different crates and some key public structs/methods has been gained.
 -   **`mcp-backlog-server` Crate Exists**: A dedicated crate for the Backlog MCP server (`mcp-backlog-server`) with tools like `get_issue_details` and `get_document_details` has been found to be already implemented.
 -   **`get_version_milestone_list` API Implemented**: The `get_version_milestone_list` API has been successfully implemented in the `backlog-issue` crate, including model updates and tests.
+-   **`get_version_milestone_list` MCP Tool Implemented**: The `get_version_milestone_list` MCP tool has been successfully implemented in the `mcp-backlog-server` crate, utilizing the aforementioned API.
 
 ## What Works
 -   The Memory Bank system is established with foundational information about the project.
 -   A baseline understanding of the project's architecture, technology stack, and purpose is documented.
 -   The `backlog-api-client` library provides core functionality for Backlog API interaction.
--   The `mcp-backlog-server` provides MCP tools for issue and document details.
+-   The `mcp-backlog-server` provides MCP tools for issue and document details, and now also for retrieving project versions (milestones).
 -   The `backlog-issue` crate can now retrieve a list of versions (milestones) for a project.
 
 ## What's Left to Build (for this task)
--   Finalizing Memory Bank updates for the `get_version_milestone_list` implementation.
+-   Finalizing Memory Bank updates for the `get_version_milestone_list` MCP tool implementation.
 -   Confirming task completion with the user.
 
 ## Known Issues (from initialization process and ongoing work)
@@ -34,4 +35,8 @@
     -   Updating the `Milestone` model in `backlog-issue/src/models/issue.rs` to include `display_order`.
     -   Adding the `get_version_milestone_list` method and tests to `backlog-issue/src/api/mod.rs`.
     -   Resolving associated compilation errors.
--   **Current Task Focus**: Updating Memory Bank to reflect the `get_version_milestone_list` implementation.
+-   **`get_version_milestone_list` MCP Tool Implementation**: User requested implementation of `get_version_milestone_list` tool in `mcp-backlog-server`. This involved:
+    -   Defining `GetVersionMilestoneListRequest` in `mcp-backlog-server/src/server.rs`.
+    -   Implementing `get_version_milestone_list_impl` helper in `mcp-backlog-server/src/issue.rs`.
+    -   Adding the `get_version_milestone_list` tool method to `Server` in `mcp-backlog-server/src/server.rs`.
+-   **Current Task Focus**: Updating Memory Bank to reflect the `get_version_milestone_list` MCP tool implementation.

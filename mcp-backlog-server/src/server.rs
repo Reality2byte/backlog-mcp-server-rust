@@ -28,6 +28,14 @@ pub struct GetDocumentDetailsRequest {
     pub document_id: String,
 }
 
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub struct GetVersionMilestoneListRequest {
+    #[schemars(description = "The project ID or project key to retrieve versions (milestones) for. 
+    Examples: 'MYPROJECTKEY', '123'. 
+    Ensure there are no leading or trailing spaces.")]
+    pub project_id_or_key: String,
+}
+
 #[tool(tool_box)]
 impl Server {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
@@ -61,6 +69,23 @@ impl Server {
         Ok(CallToolResult::success(vec![
             Content::json(document).unwrap(),
         ]))
+    }
+
+    #[tool(description = "Get a list of versions (milestones) for a specified project.")]
+    async fn get_version_milestone_list(
+        &self,
+        #[tool(aggr)]
+        GetVersionMilestoneListRequest {
+            project_id_or_key,
+        }: GetVersionMilestoneListRequest,
+    ) -> Result<CallToolResult, McpError> {
+        let milestones =
+            issue::get_version_milestone_list_impl(self.client.clone(), project_id_or_key)
+                .await?;
+        Ok(CallToolResult::success(vec![Content::json(
+            milestones,
+        )
+        .unwrap()]))
     }
 }
 
