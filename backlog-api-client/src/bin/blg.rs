@@ -1,7 +1,6 @@
 use backlog_api_client::client::BacklogApiClient;
-use backlog_core::{IssueKey, ProjectIdOrKey, identifier::ProjectId};
-use backlog_project::requests::GetProjectParams;
-use std::{env, str::FromStr};
+use backlog_core::identifier::ProjectId;
+use std::env;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

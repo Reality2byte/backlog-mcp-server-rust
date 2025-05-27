@@ -2,7 +2,7 @@ use crate::{Error, Identifier, ProjectKey, identifier::ProjectId};
 use serde::{Deserialize, Serialize}; // Added serde
 use std::str::FromStr;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)] // Added derives
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 // #[serde(untagged)] might be useful if serializing/deserializing from a plain string or number
 pub enum ProjectIdOrKey {
     Id(ProjectId),

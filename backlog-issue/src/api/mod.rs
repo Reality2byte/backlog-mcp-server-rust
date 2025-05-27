@@ -4,7 +4,7 @@ use client::Client;
 
 use crate::{
     Issue,
-    requests::{AddIssueParams, CountIssueParams, GetIssueListParams, UpdateIssueParams}, // Added GetIssueListParams
+    requests::{AddIssueParams, CountIssueParams, GetIssueListParams, UpdateIssueParams},
     responses::CountIssueResponse,
 };
 

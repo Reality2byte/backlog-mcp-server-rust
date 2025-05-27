@@ -2,7 +2,7 @@ use crate::Identifier;
 use crate::error::Error;
 use crate::identifier::IssueId;
 use crate::issue_key::IssueKey;
-use serde::{Deserialize, Serialize}; // Added for Serialize/Deserialize derive
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;
 

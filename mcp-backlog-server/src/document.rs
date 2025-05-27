@@ -13,8 +13,6 @@ pub async fn get_document_details(
 ) -> Result<DocumentDetail> {
     let client = client.lock().await;
     let document_id = DocumentId::from_str(document_id.trim())?;
-
     let document = client.document().get_document(document_id.clone()).await?;
-
     Ok(document)
 }
