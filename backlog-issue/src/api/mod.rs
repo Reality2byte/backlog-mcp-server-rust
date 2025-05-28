@@ -183,7 +183,7 @@ mod tests {
             .await;
 
         let params = GetIssueListParamsBuilder::default()
-            .project_id(vec![project_id.clone()])
+            .project_id(vec![project_id])
             .build()
             .unwrap();
 
@@ -233,7 +233,7 @@ mod tests {
         let expected_versions: Vec<Milestone> = vec![
             Milestone {
                 id: MilestoneId::new(1),
-                project_id: project_id_numeric.clone(),
+                project_id: project_id_numeric,
                 name: "Version 1.0".to_string(),
                 description: Some("Initial release".to_string()),
                 start_date: Some(chrono::Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap()),
@@ -243,7 +243,7 @@ mod tests {
             },
             Milestone {
                 id: MilestoneId::new(2),
-                project_id: project_id_numeric.clone(),
+                project_id: project_id_numeric,
                 name: "Version 1.1".to_string(),
                 description: None,
                 start_date: None,
@@ -256,7 +256,7 @@ mod tests {
         Mock::given(method("GET"))
             .and(path(format!(
                 "/api/v2/projects/{}/versions",
-                project_id_or_key.clone().to_string()
+                project_id_or_key.clone()
             )))
             .respond_with(ResponseTemplate::new(200).set_body_json(&expected_versions))
             .mount(&mock_server)
@@ -272,7 +272,7 @@ mod tests {
         let versions = result.unwrap();
         assert_eq!(versions.len(), 2);
         assert_eq!(versions[0].name, "Version 1.0");
-        assert_eq!(versions[1].archived, true);
+        assert!(versions[1].archived);
         assert_eq!(versions[0].display_order, Some(1));
     }
 
@@ -288,7 +288,7 @@ mod tests {
         Mock::given(method("GET"))
             .and(path(format!(
                 "/api/v2/projects/{}/versions",
-                project_id_or_key.clone().to_string()
+                project_id_or_key.clone()
             )))
             .respond_with(ResponseTemplate::new(500))
             .mount(&mock_server)

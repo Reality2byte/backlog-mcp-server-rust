@@ -1,22 +1,23 @@
 ## Current Work Focus
--   Implemented `update_issue` MCP tool in `mcp-backlog-server`.
--   Updating Memory Bank to reflect this new tool and its feature flag.
+-   Addressed Clippy warnings and formatted the codebase.
+-   Updating Memory Bank to reflect these code quality improvements.
 
 ## Recent Changes
--   **`update_issue` MCP Tool Implementation in `mcp-backlog-server`:**
-    -   Added `issue_writable = ["backlog-api-client/issue_writable"]` feature to `mcp-backlog-server/Cargo.toml`.
-    -   Defined `UpdateIssueRequest` struct (fields: `issue_id_or_key`, `summary`, `description`) in `mcp-backlog-server/src/server.rs`.
-    -   Added `NothingToUpdate` error variant to `mcp-backlog-server/src/error.rs` and updated its `From<Error> for McpError` impl.
-    -   Implemented `update_issue_impl` helper function in `mcp-backlog-server/src/issue.rs`, guarded by `#[cfg(feature = "issue_writable")]`. This function checks if both summary and description are None, returning `NothingToUpdate` error if so. Otherwise, it calls the client library's `update_issue`.
-    -   Added `update_issue` tool method to `Server` in `mcp-backlog-server/src/server.rs`, guarded by `#[cfg(feature = "issue_writable")]`.
-    -   Corrected `Cargo.toml` format error.
-    -   Confirmed compilation with `cargo check --features issue_writable` (though output capture failed, command reported success).
--   **Previous Suggestion Feature for `MilestoneNotFoundByName` in `mcp-backlog-server`:**
-    -   Added `strsim` crate.
-    -   Modified `MilestoneNotFoundByName` error to include `suggestions`.
-    -   Updated `get_issues_by_milestone_name_impl` to use preprocessing and Levenshtein distance for suggestions.
+-   **Code Quality Improvements:**
+    -   Ran `cargo clippy --all-targets --all-features -- -D warnings`.
+    -   Fixed Clippy warnings in `backlog-issue/src/api/mod.rs` related to `clone_on_copy`, `to_string_in_format_args`, and `bool_assert_comparison`.
+    -   Ran `cargo fmt --all` to format the entire project.
+    -   Confirmed no new issues with `cargo clippy` and `cargo check --all-targets --all-features`.
+-   **Previous `update_issue` MCP Tool Implementation in `mcp-backlog-server`:**
+    -   Added `issue_writable` feature.
+    -   Defined `UpdateIssueRequest` struct and `update_issue` tool method.
+    -   Added `NothingToUpdate` error.
+    -   Implemented `update_issue_impl` helper function.
+    -   Corrected `Cargo.toml` format and confirmed compilation.
+-   **Further Previous Suggestion Feature for `MilestoneNotFoundByName` in `mcp-backlog-server`:**
+    -   Added `strsim` crate and updated error handling for suggestions.
 -   **Further Previous Error Message Improvement in `mcp-backlog-server`:**
-    -   Improved `MilestoneNotFoundByName` error message to suggest `get_version_milestone_list`.
+    -   Improved `MilestoneNotFoundByName` error message.
 -   **`mcp-backlog-server` crate changes for `get_issues_by_milestone_name` tool (further prior):**
     -   Defined `GetIssuesByMilestoneNameRequest` struct.
     -   Implemented initial `get_issues_by_milestone_name_impl` helper.
