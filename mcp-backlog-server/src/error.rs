@@ -23,6 +23,9 @@ pub enum Error {
         original_name: String,            // ユーザーが入力した元の名前
         suggestions: Option<Vec<String>>, // 提案するマイルストーン名のリスト
     },
+
+    #[error("Nothing to update. Please provide a summary and/or a description.")]
+    NothingToUpdate,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -63,6 +66,7 @@ impl From<Error> for McpError {
                 message.push_str(&format!(" You can list all available milestones using the 'get_version_milestone_list' tool for project '{}'.", project));
                 McpError::invalid_params(message, None)
             }
+            Error::NothingToUpdate => McpError::invalid_params(err.to_string(), None),
         }
     }
 }

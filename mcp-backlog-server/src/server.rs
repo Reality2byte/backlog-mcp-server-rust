@@ -48,6 +48,22 @@ pub struct GetIssuesByMilestoneNameRequest {
     pub milestone_name: String,
 }
 
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub struct UpdateIssueRequest {
+    #[schemars(
+        description = "The issue ID or issue key to update. Example: 'MYPROJECTKEY-123' or '12345'."
+    )]
+    pub issue_id_or_key: String,
+    #[schemars(
+        description = "The new summary for the issue. Set to null or omit to keep unchanged."
+    )]
+    pub summary: Option<String>,
+    #[schemars(
+        description = "The new description for the issue. Set to null or omit to keep unchanged."
+    )]
+    pub description: Option<String>,
+}
+
 #[tool(tool_box)]
 impl Server {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
@@ -114,6 +130,24 @@ impl Server {
         .await?;
         Ok(CallToolResult::success(vec![
             Content::json(issues).unwrap(),
+        ]))
+    }
+
+    #[cfg(feature = "issue_writable")]
+    #[tool(description = "Update the summary and/or description of a Backlog issue.")]
+    async fn update_issue(
+        &self,
+        #[tool(aggr)] req: UpdateIssueRequest,
+    ) -> Result<CallToolResult, McpError> {
+        let updated_issue = issue::update_issue_impl(
+            self.client.clone(),
+            req.issue_id_or_key,
+            req.summary,
+            req.description,
+        )
+        .await?;
+        Ok(CallToolResult::success(vec![
+            Content::json(updated_issue).unwrap(),
         ]))
     }
 }

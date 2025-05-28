@@ -6,6 +6,10 @@ license.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["issue_writable"]
+issue_writable = ["backlog-api-client/issue_writable"]
+
 [dependencies]
 rmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk", branch = "main", features = ["transport-io"] }
 tokio = { workspace = true, features = ["full"] } # Using full for server, can be rt-multi-thread, macros

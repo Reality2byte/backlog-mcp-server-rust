@@ -1,6 +1,9 @@
 use backlog_api_client::client::BacklogApiClient;
-use backlog_core::{IssueKey, ProjectIdOrKey};
-use backlog_issue::{Issue, Milestone, requests::GetIssueListParamsBuilder};
+use backlog_core::{IssueIdOrKey, IssueKey, ProjectIdOrKey};
+use backlog_issue::{
+    Issue, Milestone,
+    requests::{GetIssueListParamsBuilder, UpdateIssueParamsBuilder},
+};
 use std::cmp::Ordering;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -134,4 +137,38 @@ fn find_by_name_from_array<T: Clone>(
                 .collect(),
         )
     }
+}
+
+#[cfg(feature = "issue_writable")]
+pub async fn update_issue_impl(
+    client: Arc<Mutex<BacklogApiClient>>,
+    issue_id_or_key_str: String,
+    summary: Option<String>,
+    description: Option<String>,
+) -> Result<backlog_issue::Issue> {
+    if summary.is_none() && description.is_none() {
+        return Err(McpError::NothingToUpdate);
+    }
+
+    let client_guard = client.lock().await;
+
+    let issue_id_or_key =
+        IssueIdOrKey::from_str(issue_id_or_key_str.trim()).map_err(McpError::Core)?;
+
+    let mut params_builder = UpdateIssueParamsBuilder::default();
+    if let Some(s) = summary {
+        params_builder.summary(s);
+    }
+    if let Some(d) = description {
+        params_builder.description(d);
+    }
+    let update_params = params_builder
+        .build()
+        .map_err(|e| McpError::Parameter(e.to_string()))?;
+
+    let updated_issue = client_guard
+        .issue()
+        .update_issue(issue_id_or_key, &update_params)
+        .await?;
+    Ok(updated_issue)
 }
