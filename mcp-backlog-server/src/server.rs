@@ -4,7 +4,7 @@ use std::env;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use crate::{document, issue};
+use crate::{document, issue, git_tools}; // Added git_tools
 
 #[derive(Clone)]
 pub struct Server {
@@ -64,6 +64,10 @@ pub struct UpdateIssueRequest {
     pub description: Option<String>,
 }
 
+// Request struct for get_repository_list is now in git_tools.rs
+// We need to import it if it's not already covered by `use crate::git_tools;`
+// For clarity, let's assume git_tools::GetRepositoryListRequest will be used directly.
+
 #[tool(tool_box)]
 impl Server {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
@@ -76,6 +80,54 @@ impl Server {
         Ok(Self {
             client: Arc::new(Mutex::new(client)),
         })
+    }
+
+    #[tool(description = "Get a list of Git repositories for a specified project.")]
+    async fn get_repository_list(
+        &self,
+        #[tool(aggr)] request: git_tools::GetRepositoryListRequest,
+    ) -> Result<CallToolResult, McpError> {
+        let repositories =
+            git_tools::get_repository_list_impl(self.client.clone(), request).await?;
+        Ok(CallToolResult::success(vec![
+            Content::json(repositories).unwrap(),
+        ]))
+    }
+
+    #[tool(description = "Get details for a specific Git repository.")]
+    async fn get_repository_details(
+        &self,
+        #[tool(aggr)] request: git_tools::GetRepositoryDetailsRequest,
+    ) -> Result<CallToolResult, McpError> {
+        let repository =
+            git_tools::get_repository_details_impl(self.client.clone(), request).await?;
+        Ok(CallToolResult::success(vec![
+            Content::json(repository).unwrap(),
+        ]))
+    }
+
+    #[tool(description = "Get a list of pull requests for a specified repository.")]
+    async fn list_pull_requests(
+        &self,
+        #[tool(aggr)] request: git_tools::ListPullRequestsRequest,
+    ) -> Result<CallToolResult, McpError> {
+        let pull_requests =
+            git_tools::list_pull_requests_impl(self.client.clone(), request).await?;
+        Ok(CallToolResult::success(vec![
+            Content::json(pull_requests).unwrap(),
+        ]))
+    }
+
+    #[tool(description = "Get details for a specific pull request.")]
+    async fn get_pull_request_details(
+        &self,
+        #[tool(aggr)] request: git_tools::GetPullRequestDetailsRequest,
+    ) -> Result<CallToolResult, McpError> {
+        let pull_request =
+            git_tools::get_pull_request_details_impl(self.client.clone(), request).await?;
+        Ok(CallToolResult::success(vec![
+            Content::json(pull_request).unwrap(),
+        ]))
     }
 
     #[tool(description = "Get details for a specific Backlog issue.")]

@@ -5,12 +5,14 @@ edition.workspace = true
 license.workspace = true
 
 [features]
-default = ["issue", "project", "space", "user", "document", "all_writable"] # Added "document"
+default = ["issue", "project", "space", "user", "document", "git", "all_writable"] # Added "document", "git"
 issue = ["backlog-issue"]
 project = ["backlog-project"]
 space = ["backlog-space"]
 user = ["backlog-user"]
 document = ["backlog-document"] # Added document feature
+git = ["backlog-git"] # Added git feature
+cli = ["clap"] # Added cli feature for clap dependency
 all_writable = ["backlog-issue/writable", "backlog-project/writable", "backlog-space/writable", "backlog-user/writable"] 
 issue_writable = ["backlog-issue/writable"]
 project_writable = ["backlog-project/writable"]
@@ -26,7 +28,14 @@ backlog-project = { path = "../backlog-project", optional = true }
 backlog-space = { path = "../backlog-space", optional = true }
 backlog-user = { path = "../backlog-user", optional = true }
 backlog-document = { path = "../backlog-document", optional = true } # Added backlog-document
+backlog-git = { path = "../backlog-git", optional = true } # Added backlog-git
+clap = { version = "4.5", features = ["derive"], optional = true } # For CLI arg parsing
 tokio = { workspace = true }
 url = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+
+[[bin]]
+name = "blg"
+path = "src/bin/blg.rs"
+required-features = ["cli", "git"]

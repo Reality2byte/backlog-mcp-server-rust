@@ -13,24 +13,41 @@
 -   **Suggestion Feature for MilestoneNotFoundByName**: Implemented a feature in `mcp-backlog-server` to provide suggestions of similar milestone names if an exact match is not found. This uses preprocessing and Levenshtein distance.
 -   **`update_issue` MCP Tool Implemented**: The `update_issue` MCP tool has been implemented in `mcp-backlog-server`, allowing updates to issue summary and description. This tool is available when the `issue_writable` feature is enabled.
 -   **Code Quality Improved**: Addressed Clippy warnings and formatted the entire project codebase.
+-   **Git and Pull Request Viewing Implemented**: Added functionality to view Git repositories and pull requests.
+    -   New `backlog-git` crate created with data models (`Repository`, `PullRequest`, etc.) and API handlers (`GitHandler`).
+    -   `backlog-api-client` library extended with `git()` accessor.
+    -   `blg` CLI tool enhanced with `repo` and `pr` subcommands (`list`, `show`).
+    -   `mcp-backlog-server` extended with tools: `get_repository_list`, `get_repository_details`, `list_pull_requests`, `get_pull_request_details`.
+    -   Dependent crates (`backlog-core`) updated for `JsonSchema` support.
 
 ## What Works
--   The Memory Bank system is established with foundational information about the project.
+-   The Memory Bank system is established and updated with foundational information about the project.
 -   A baseline understanding of the project's architecture, technology stack, and purpose is documented.
--   The `backlog-api-client` library provides core functionality for Backlog API interaction.
+-   The `backlog-api-client` library provides core functionality for Backlog API interaction, now including:
+    -   Git repository listing and details.
+    -   Pull request listing and details.
+-   The `blg` CLI tool provides commands for:
+    -   Listing and showing Git repositories.
+    -   Listing and showing Pull Requests.
 -   The `mcp-backlog-server` provides MCP tools for:
     - Issue details (`get_issue_details`)
     - Document details (`get_document_details`)
     - Project versions/milestones list (`get_version_milestone_list`)
     - Issues by milestone name (`get_issues_by_milestone_name`)
     - Updating issues (`update_issue`) (when `issue_writable` feature is enabled)
+    - Listing Git repositories (`get_repository_list`)
+    - Getting Git repository details (`get_repository_details`)
+    - Listing pull requests (`list_pull_requests`)
+    - Getting pull request details (`get_pull_request_details`)
 -   The `mcp-backlog-server` now provides more helpful error messages when a milestone is not found by name, including suggestions for similar names.
 -   The `backlog-issue` crate can retrieve a list of versions (milestones) for a project and update issues (when `writable` feature is enabled).
--   The codebase is now free of Clippy warnings (when run with `-D warnings`) and consistently formatted.
+-   The codebase is free of Clippy warnings (when run with `-D warnings`) and consistently formatted.
 
 ## What's Left to Build (for this task)
--   Finalizing Memory Bank updates for the code quality improvements.
--   Confirming task completion with the user.
+-   Update `API.md` to mark implemented Git/PR API endpoints.
+-   Add Rustdoc comments to new public items in `backlog-git`.
+-   Consider adding tests for the new Git/PR functionality.
+-   Confirm completion of the Git/PR feature implementation task with the user.
 
 ## Known Issues (from initialization process and ongoing work)
 -   The `list_code_definition_names` tool did not find top-level definitions in the `src` directories of several module-specific crates (e.g., `backlog-issue/src`, `backlog-project/src`). This is noted in `techContext.md`.
@@ -77,4 +94,14 @@
     -   Fixed identified warnings in `backlog-issue/src/api/mod.rs`.
     -   Ran `cargo fmt --all`.
     -   Confirmed no further issues with `cargo clippy` and `cargo check`.
+-   **Git and Pull Request Feature Implementation**: User requested to add functionality to view Git PRs and files.
+    -   Clarified scope to initially focus on Git repositories and Pull Requests, excluding direct Git file browsing.
+    -   Created `backlog-git` crate with `GitHandler` and API methods for repositories and PRs.
+    -   Defined data models (`Repository`, `PullRequest`, etc.) in `backlog-git`, deriving `Serialize`, `Deserialize`, and `JsonSchema`.
+    -   Updated `backlog-core` (`User`, ID types, enums) to derive `JsonSchema` and added `schemars` dependency.
+    -   Enabled `chrono` feature for `schemars` in `backlog-git` for `DateTime` schema generation.
+    -   Integrated `backlog-git` into `backlog-api-client` library via a `git` feature and `git()` accessor method.
+    -   Refactored `blg` CLI tool to use `clap`, adding `repo` and `pr` subcommands.
+    -   Added new Git/PR tools to `mcp-backlog-server`, including request/response structs and helper implementations in a new `git_tools.rs` module.
+    -   Ensured correct client handling (`Arc<Mutex<...>>`) and error mapping (`McpError`) in MCP server.
 -   **Current Task Focus**: Updating Memory Bank to reflect these recent changes.

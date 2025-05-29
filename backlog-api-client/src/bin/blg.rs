@@ -1,118 +1,149 @@
 use backlog_api_client::client::BacklogApiClient;
-use backlog_core::identifier::ProjectId;
+use backlog_core::project_id_or_key::ProjectIdOrKey; // Ensure this is the correct import
+use clap::Parser;
 use std::env;
+
+#[derive(Parser)]
+#[clap(author, version, about, long_about = None)]
+struct Cli {
+    #[clap(subcommand)]
+    command: Commands,
+}
+
+#[derive(Parser)]
+enum Commands {
+    /// Manage repositories
+    Repo(RepoArgs),
+    /// Manage pull requests
+    Pr(PrArgs),
+}
+
+#[derive(Parser)]
+struct RepoArgs {
+    #[clap(subcommand)]
+    command: RepoCommands,
+}
+
+#[derive(Parser)]
+enum RepoCommands {
+    /// List repositories in a project
+    List {
+        /// Project ID or Key
+        #[clap(short, long)]
+        project_id: String,
+    },
+    /// Show details of a specific repository
+    Show {
+        /// Project ID or Key
+        #[clap(short, long)]
+        project_id: String,
+        /// Repository ID or Name
+        #[clap(short, long)]
+        repo_id: String,
+    },
+}
+
+#[derive(Parser)]
+struct PrArgs {
+    #[clap(subcommand)]
+    command: PrCommands,
+}
+
+#[derive(Parser)]
+enum PrCommands {
+    /// List pull requests in a repository
+    List {
+        /// Project ID or Key
+        #[clap(short, long)]
+        project_id: String,
+        /// Repository ID or Name
+        #[clap(short, long)]
+        repo_id: String,
+    },
+    /// Show details of a specific pull request
+    Show {
+        /// Project ID or Key
+        #[clap(short, long)]
+        project_id: String,
+        /// Repository ID or Name
+        #[clap(short, long)]
+        repo_id: String,
+        /// Pull Request number
+        #[clap(short, long)]
+        pr_number: u64,
+    },
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let base_url =
         env::var("BACKLOG_BASE_URL").expect("BACKLOG_BASE_URL environment variable is required");
-
     let api_key =
         env::var("BACKLOG_API_KEY").expect("BACKLOG_API_KEY environment variable is required");
 
+    // Ensure client is built with the 'git' feature for git() method to be available.
+    // This binary should be compiled with `cargo run --bin blg --features git,cli`
     let client = BacklogApiClient::new(&base_url)?.with_api_key(api_key);
 
-    /*let space = client.space().get_space().await?;
-    println!("Space information: {:?}", space);
+    let cli = Cli::parse();
 
-    let user = client.user().get_own_user().await?;
-    println!("User information: {:?}", user);
-
-    let project = client
-        .project()
-        .get_project(ProjectIdOrKey::from_str("PASTA").unwrap())
-        .await?;
-    println!("Project information: {:?}", project);
-
-    let projects = client
-        .project()
-        .get_project_list(GetProjectParams {
-            ..Default::default()
-        })
-        .await?;
-    projects.iter().for_each(|project| {
-        println!("Project information: {:?}", project);
-    });
-
-    let issue = client
-        .issue()
-        .get_issue(IssueKey::from_str("PASTA-1212").unwrap())
-        .await?;
-    println!("Issue information: {:?}", issue);
-
-    let filter = backlog_issue::requests::CountIssueParamsBuilder::default()
-        .project_id(vec![14165.into()])
-        .build()
-        .unwrap();
-    println!("Count of issues: {:?}", filter);
-    let count = client.issue().count_issue(filter).await?;
-
-    println!("Count of issues: {:?}", count);*/
-
-    let params = backlog_document::requests::ListDocumentsParamsBuilder::default()
-        .project_id(ProjectId::from(1073957945))
-        .offset(3)
-        .count(1)
-        .build()
-        .unwrap();
-    let documents = client.document().list_documents(params).await?;
-    println!("documents: {:?}", documents);
-
-    /*let issue = client
-        .issue()
-        .add_issue(
-            backlog_issue::requests::AddIssueParamsBuilder::default()
-                .project_id(14165)
-                .summary("Test issue")
-                .issue_type_id(56740)
-                .priority_id(3)
-                .description("Test issue description")
-                .build()
-                .unwrap(),
-        )
-        .await?;
-    println!("Created issue: {:?}", issue);
-
-    let issue = client.issue().delete_issue(issue.issue_key.clone()).await?;
-    println!("Deleted issue: {:?}", issue);
-    */
-
-    /*match api::get_recent_updates(&client).await {
-        Ok(updates) => {
-            println!("Recent updates:");
-            for update in updates {
-                println!("Update ID: {}", update.id);
-                //println!("Content: {}", update.content);
-                println!("Created at: {}", update.created);
+    match cli.command {
+        Commands::Repo(repo_args) => match repo_args.command {
+            RepoCommands::List { project_id } => {
+                println!("Listing repositories for project: {}", project_id);
+                let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
+                // Assumes backlog_git is enabled via features for the client build
+                let repos = client.git().list_repositories(&proj_id_or_key).await?;
+                // TODO: Pretty print repositories
+                println!("{:?}", repos);
             }
-        }
-        Err(e) => {
-            eprintln!("Error getting recent updates: {}", e);
-
-            match e {
-                Error::Url(e) => {
-                    println!("Url error: {}", e);
-                }
-                Error::Client(e) => {
-                    println!("Client error: {}", e);
-                }
-                Error::Json(e) => {
-                    println!("JSON error: {}", e);
-                }
-                Error::Http(e) => {
-                    println!("HTTP error: {}", e);
-                }
+            RepoCommands::Show { project_id, repo_id } => {
+                println!(
+                    "Showing repository {} in project: {}",
+                    repo_id, project_id
+                );
+                let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
+                let repo = client
+                    .git()
+                    .get_repository(&proj_id_or_key, &repo_id)
+                    .await?;
+                // TODO: Pretty print repository
+                println!("{:?}", repo);
             }
-
-            /*if let Some(source) = e.get_ref() {
-                if let Some(location) = source.downcast_ref::<serde_json::Error>() {
-                    if let Some((line, column)) = location.line_col() {
-                        println!("Error occurred at line {}, column {}", line, column);
-                    }
-                }
-            } */
-        }
-    }*/
+        },
+        Commands::Pr(pr_args) => match pr_args.command {
+            PrCommands::List { project_id, repo_id } => {
+                println!(
+                    "Listing pull requests for repo {} in project: {}",
+                    repo_id, project_id
+                );
+                let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
+                let prs = client
+                    .git()
+                    .list_pull_requests(&proj_id_or_key, &repo_id)
+                    .await?;
+                // TODO: Pretty print pull requests
+                println!("{:?}", prs);
+            }
+            PrCommands::Show {
+                project_id,
+                repo_id,
+                pr_number,
+            } => {
+                println!(
+                    "Showing PR #{} for repo {} in project: {}",
+                    pr_number, repo_id, project_id
+                );
+                let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
+                let pr = client
+                    .git()
+                    .get_pull_request(&proj_id_or_key, &repo_id, pr_number)
+                    .await?;
+                // TODO: Pretty print pull request
+                println!("{:?}", pr);
+            }
+        },
+    }
 
     Ok(())
 }

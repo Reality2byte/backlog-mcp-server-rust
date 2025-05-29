@@ -133,8 +133,8 @@
 
 
 ## Git
-- [ ] GetGitRepository: Returns Git repository: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName
-- [ ] GetListOfGitRepositories: Returns list of Git repositories: GET /api/v2/projects/:projectIdOrKey/git/repositories
+- [x] GetGitRepository: Returns Git repository: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName
+- [x] GetListOfGitRepositories: Returns list of Git repositories: GET /api/v2/projects/:projectIdOrKey/git/repositories
 
 ### Pull Request
 - [ ] UpdatePullRequestCommentInformation: Updates pull request comment information: PATCH /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/comments/:commentId
@@ -143,8 +143,8 @@
 - [ ] GetNumberOfPullRequests: Returns number of pull requests: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/count
 - [ ] GetListOfPullRequestAttachment: Returns list of attached files on pull requests: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/attachments
 - [ ] GetPullRequestComment: Returns list of pull request comments: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/comments
-- [ ] GetPullRequestList: Returns list of pull requests: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests
-- [ ] GetPullRequest: Returns pull reuqest: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number
+- [x] GetPullRequestList: Returns list of pull requests: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests
+- [x] GetPullRequest: Returns pull reuqest: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number
 - [ ] DownloadPullRequestAttachment: Downloads attached files on pull requests: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/attachments/:attachmentId
 - [ ] DeletePullRequestAttachments: Deletes attached files on pull requests: DELETE /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/attachments/:attachmentId
 - [ ] AddPullRequestComment: Adds comments on pull requests: POST /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/comments

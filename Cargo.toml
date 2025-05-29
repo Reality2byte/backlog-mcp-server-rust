@@ -10,7 +10,8 @@ members = [
     "backlog-user",
     "backlog-api-client",
     "mcp-backlog-server",
-    "backlog-document"]
+    "backlog-document",
+    "backlog-git"]
 
 [workspace.package]
 version = "0.1.0"

@@ -1,0 +1,36 @@
+[package]
+name = "backlog-git"
+version = "0.1.0"
+edition = "2024"
+description = "A Rust crate for interacting with the Git and Pull Request features of the Backlog API."
+license = "MIT OR Apache-2.0" # Assuming same license as other workspace crates
+repository = "https://github.com/your-username/backlog-api-client-rs" # Placeholder, update as needed
+
+[dependencies]
+# For serializing and deserializing API responses
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# For custom error types
+thiserror = "2.0"
+
+# For handling date and time values from the API
+chrono = { version = "0.4.40", features = ["serde"] }
+
+# For URL parsing/manipulation, if needed directly
+url = { version = "2.5", optional = true } # Making it optional for now
+
+# For defining traits with async methods, common for API client patterns
+async-trait = "0.1"
+schemars = { version = "0.8", features = ["chrono"] } # For generating JSON schemas for MCP tools, with chrono support
+
+# Workspace dependencies
+backlog-core = { path = "../backlog-core" }
+backlog-api-core = { path = "../backlog-api-core" }
+client = { path = "../client" }
+# The `client` crate (generic HTTP client) will be used by passing an instance to api functions.
+
+# Dependencies required by the `client` crate, but listed here for clarity if `backlog-git`
+# were to make its own direct calls or define many async functions.
+# reqwest = { version = "0.12", features = ["json"], optional = true }
+# tokio = { version = "1.44", features = ["rt-multi-thread", "macros"], optional = true }

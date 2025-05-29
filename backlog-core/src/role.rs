@@ -1,12 +1,13 @@
 use super::Error;
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use schemars::JsonSchema; // Added for JsonSchema
 use std::convert::TryFrom;
 use std::fmt;
 use std::str::FromStr;
 use std::vec::Vec;
 
 #[repr(i8)]
-#[derive(Eq, PartialEq, Debug, Clone, Serialize_repr, Deserialize_repr)]
+#[derive(Eq, PartialEq, Debug, Clone, Serialize_repr, Deserialize_repr, JsonSchema)] // Added JsonSchema
 pub enum Role {
     Admin = 1,
     Developer = 2,

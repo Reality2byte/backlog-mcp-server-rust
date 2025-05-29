@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use schemars::JsonSchema; // Added for JsonSchema
 
 pub trait Identifier {
     type Id;
@@ -13,7 +14,7 @@ pub trait Entity {
 macro_rules! impl_identifier {
     ($($type_name:ident),*) => {
         $(
-            #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+            #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)] // Added JsonSchema
             pub struct $type_name(pub u32);
 
             impl $type_name {

@@ -1,30 +1,33 @@
 # Tech Context
 
 ## Core Technologies
--   **Programming Language**: Rust (Edition 2021, as per `Cargo.toml`)
+-   **Programming Language**: Rust (Edition 2024, as per workspace `Cargo.toml`)
 -   **Build System/Package Manager**: Cargo
 
-## Key Dependencies (from workspace `Cargo.toml`)
--   **HTTP Client**: `reqwest` (version 0.12, with `json` feature) - For making HTTP requests to the Backlog API.
--   **Asynchronous Runtime**: `tokio` (version 1.44, with `full` features) - For managing asynchronous operations, likely used by `reqwest` and the overall client.
+## Key Dependencies (versions from workspace `Cargo.toml` where specified)
+-   **HTTP Client**: `reqwest` (version 0.12.17, with `json` feature) - For making HTTP requests to the Backlog API.
+-   **Asynchronous Runtime**: `tokio` (version 1.45, with `full` features) - For managing asynchronous operations.
 -   **Serialization/Deserialization**:
     -   `serde` (version 1.0, with `derive` feature) - Core library for serializing and deserializing Rust data structures.
     -   `serde_json` (version 1.0) - For JSON-specific serialization/deserialization.
-    -   `serde_repr` (version 0.1) - For serializing/deserializing enums as their integer representations.
+    -   `serde_repr` (version 0.1) - For serializing/deserializing enums as their integer representations (used in `backlog-core`).
 -   **Error Handling**: `thiserror` (version 2.0) - For easily creating custom error types.
--   **URL Parsing/Manipulation**: `url` (version 2.5) - For handling URLs, likely for constructing API endpoint paths.
--   **Regular Expressions**: `regex` (version 1.11) - Potentially used for parsing or validating string patterns (e.g., `IssueKey`, `ProjectKey`).
--   **Date and Time**: `chrono` (version 0.4.40, with `serde` feature) - For handling date and time values from the API and enabling their serialization/deserialization.
--   **Builder Pattern**: `derive_builder` (version 0.20) - For easily creating builder patterns for complex structs, often used for request objects.
--   **MCP SDK**: `rmcp` (git = "https://github.com/modelcontextprotocol/rust-sdk", branch = "main", features = ["transport-io"]) - For building MCP servers. (Used by `mcp-backlog-server`)
--   **Schema Generation (for MCP tools)**: `schemars` (likely a dependency of `rmcp` or used with it) - For generating JSON schemas for tool inputs.
+-   **URL Parsing/Manipulation**: `url` (version 2.5) - For handling URLs.
+-   **Regular Expressions**: `regex` (version 1.11) - Potentially used for parsing or validating string patterns.
+-   **Date and Time**: `chrono` (version 0.4.41, with `serde` feature) - For handling date and time values.
+-   **Builder Pattern**: `derive_builder` (version 0.20) - For easily creating builder patterns.
+-   **CLI Argument Parsing**: `clap` (version 4.5, with `derive` feature) - Used by the `blg` binary in `backlog-api-client` (enabled via `cli` feature).
+-   **MCP SDK**: `rmcp` (git = "https://github.com/modelcontextprotocol/rust-sdk", branch = "main", features = ["transport-io"]) - For building MCP servers (used by `mcp-backlog-server`).
+-   **Schema Generation (for MCP tools)**: `schemars` (version 0.8) - Used for generating JSON schemas for tool inputs/outputs.
+    -   `backlog-git` uses `schemars` with the `chrono` feature for its models.
+    -   `backlog-core` uses `schemars` for its core data types like `User`, `UserId`, `Role`, `Language`.
 
 ## Development Setup
--   **Rust Toolchain**: Requires a Rust installation compatible with Edition 2021.
+-   **Rust Toolchain**: Requires a Rust installation compatible with Edition 2024.
 -   **Cargo**: Used for building, testing, and managing dependencies.
-    -   `cargo build` to compile the workspace.
-    -   `cargo test` to run tests.
-    -   `cargo run --bin blg` (or similar) to run the CLI tool.
+    -   `cargo build --all-targets --all-features` to compile the entire workspace with all features.
+    -   `cargo test --all-targets --all-features` to run tests for the entire workspace.
+    -   `cargo run --bin blg --features git,cli -- <subcommand> <args>` to run the CLI tool (e.g., `cargo run --bin blg --features git,cli -- repo list --project-id MYPROJ`).
     -   `cargo run --bin mcp-backlog-server` to run the MCP server locally for testing (requires `BACKLOG_BASE_URL` and `BACKLOG_API_KEY` env vars to be set).
 
 ## Technical Constraints
