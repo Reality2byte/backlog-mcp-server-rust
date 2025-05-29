@@ -53,28 +53,32 @@ pub async fn get_issues_by_milestone_name_impl(
         .get_version_milestone_list(proj_id_or_key.clone())
         .await?;
 
-    let result =
-        find_by_name_from_array(&all_project_milestones, &milestone_name, |m| {
-            &m.name
-        });
-    match result {
-        MatchResult::Exact(milestone) => {
-            let params = GetIssueListParamsBuilder::default()
-                .project_id(vec![milestone.project_id])
-                .milestone_id(vec![milestone.id])
-                .build()
-                .map_err(|e| McpError::Parameter(e.to_string()))?;
-            let issues = client_guard.issue().get_issue_list(params).await?;
-            Ok(issues)
-        }
+    let milestone =
+        find_milestone_by_name(&all_project_milestones, &milestone_name, proj_id_or_key)?;
+    let params = GetIssueListParamsBuilder::default()
+        .project_id(vec![milestone.project_id])
+        .milestone_id(vec![milestone.id])
+        .build()
+        .map_err(|e| McpError::Parameter(e.to_string()))?;
+    let issues = client_guard.issue().get_issue_list(params).await?;
+    Ok(issues)
+}
+
+fn find_milestone_by_name(
+    milestones: &[Milestone],
+    milestone_name: &str,
+    project_id_or_key: ProjectIdOrKey,
+) -> Result<Milestone> {
+    match find_by_name_from_array(milestones, milestone_name, |m| &m.name) {
+        MatchResult::Exact(milestone) => Ok(milestone),
         MatchResult::Suggestion(suggestions) => Err(McpError::MilestoneNotFoundByName {
-            project: project_id_or_key_str,
-            original_name: milestone_name,
+            project_id_or_key,
+            original_name: milestone_name.to_string(),
             suggestions: Some(suggestions),
         }),
         MatchResult::None => Err(McpError::MilestoneNotFoundByName {
-            project: project_id_or_key_str,
-            original_name: milestone_name,
+            project_id_or_key,
+            original_name: milestone_name.to_string(),
             suggestions: None,
         }),
     }

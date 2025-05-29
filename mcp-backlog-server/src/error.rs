@@ -1,5 +1,5 @@
 use backlog_api_client::ApiError;
-use backlog_core::Error as CoreError;
+use backlog_core::{Error as CoreError, ProjectIdOrKey};
 use rmcp::Error as McpError;
 use thiserror::Error as ThisError;
 
@@ -17,11 +17,11 @@ pub enum Error {
     #[error("Server error: {0}")]
     Server(String),
 
-    #[error("Milestone named '{original_name}' not found in project '{project}'.")]
+    #[error("Milestone named '{original_name}' not found in project '{project_id_or_key}'.")]
     MilestoneNotFoundByName {
-        project: String,
-        original_name: String,            // ユーザーが入力した元の名前
-        suggestions: Option<Vec<String>>, // 提案するマイルストーン名のリスト
+        project_id_or_key: ProjectIdOrKey,
+        original_name: String,
+        suggestions: Option<Vec<String>>,
     },
 
     #[error("Nothing to update. Please provide a summary and/or a description.")]
@@ -50,20 +50,20 @@ impl From<Error> for McpError {
             Error::Parameter(msg) => McpError::invalid_params(msg, None),
             Error::Api(error) => McpError::invalid_request(error.to_string(), None),
             Error::MilestoneNotFoundByName {
-                project,
+                project_id_or_key,
                 original_name,
                 suggestions,
             } => {
                 let mut message = format!(
                     "Milestone named '{}' not found in project '{}'.",
-                    original_name, project
+                    original_name, project_id_or_key
                 );
                 if let Some(suggs) = suggestions {
                     if !suggs.is_empty() {
                         message.push_str(&format!(" Did you mean one of: {:?}?", suggs));
                     }
                 }
-                message.push_str(&format!(" You can list all available milestones using the 'get_version_milestone_list' tool for project '{}'.", project));
+                message.push_str(&format!(" You can list all available milestones using the 'get_version_milestone_list' tool for project '{}'.", project_id_or_key));
                 McpError::invalid_params(message, None)
             }
             Error::NothingToUpdate => McpError::invalid_params(err.to_string(), None),
