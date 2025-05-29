@@ -1,6 +1,6 @@
 use backlog_api_client::client::BacklogApiClient;
 use backlog_core::{
-    identifier::{ProjectId, UserId, StatusId}, // Added for issue list params
+    identifier::{ProjectId, StatusId, UserId}, // Added for issue list params
     issue_id_or_key::IssueIdOrKey,             // For issue show
     project_id_or_key::ProjectIdOrKey,
 };
@@ -207,18 +207,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let mut builder = GetIssueListParamsBuilder::default();
 
                 if let Some(p_ids) = params.project_id {
-                    let parsed_ids: std::result::Result<Vec<ProjectId>, _> =
-                        p_ids.iter().map(|s| s.parse::<u32>().map(ProjectId::from)).collect();
+                    let parsed_ids: std::result::Result<Vec<ProjectId>, _> = p_ids
+                        .iter()
+                        .map(|s| s.parse::<u32>().map(ProjectId::from))
+                        .collect();
                     builder.project_id(parsed_ids?);
                 }
                 if let Some(a_ids) = params.assignee_id {
-                    let parsed_ids: std::result::Result<Vec<UserId>, _> =
-                        a_ids.iter().map(|s| s.parse::<u32>().map(UserId::from)).collect();
+                    let parsed_ids: std::result::Result<Vec<UserId>, _> = a_ids
+                        .iter()
+                        .map(|s| s.parse::<u32>().map(UserId::from))
+                        .collect();
                     builder.assignee_id(parsed_ids?);
                 }
                 if let Some(s_ids) = params.status_id {
-                    let parsed_ids: std::result::Result<Vec<StatusId>, _> =
-                        s_ids.iter().map(|s| s.parse::<u32>().map(StatusId::from)).collect();
+                    let parsed_ids: std::result::Result<Vec<StatusId>, _> = s_ids
+                        .iter()
+                        .map(|s| s.parse::<u32>().map(StatusId::from))
+                        .collect();
                     builder.status_id(parsed_ids?);
                 }
                 if let Some(keyword) = params.keyword {

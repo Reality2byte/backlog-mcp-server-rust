@@ -4,9 +4,8 @@ use backlog_api_client::client::BacklogApiClient;
 use backlog_core::project_id_or_key::ProjectIdOrKey;
 use backlog_git::{PullRequest, Repository};
 use rmcp::{Error as McpError, schemars, serde};
-// use std::str::FromStr; // Removed as parse() infers it
-use std::sync::Arc; // Added for Arc
-use tokio::sync::Mutex; // Added for Mutex
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
 pub struct GetRepositoryListRequest {

@@ -1,7 +1,5 @@
-mod document;
 mod error;
-mod git_tools; // Added git_tools module
-mod issue;
 mod server;
+pub mod tools;
 
 pub use server::Server;

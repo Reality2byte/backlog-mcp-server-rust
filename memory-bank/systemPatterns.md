@@ -101,7 +101,7 @@ graph TD
     *   Exposes tools (e.g., `get_issue_details`, `get_document_details`, `get_repository_list`) that wrap functionalities of the `backlog-api-client`.
     *   Configured via environment variables (`BACKLOG_BASE_URL`, `BACKLOG_API_KEY`) passed by the MCP system.
     *   Communicates with MCP clients over stdio.
-    *   Tool logic is organized into modules (e.g., `issue.rs`, `document.rs`) within the crate, called from methods in `server.rs`.
+    *   Tool logic (helper implementations) is organized into modules within a `src/tools/` directory (e.g., `tools/issue.rs`, `tools/document.rs`, `tools/git.rs`), called from methods in `server.rs`.
 
 ## Design Patterns
 -   **Workspace Structure**: Manages multiple interdependent crates.

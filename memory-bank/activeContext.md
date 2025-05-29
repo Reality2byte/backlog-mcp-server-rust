@@ -1,23 +1,24 @@
 ## Current Work Focus
--   Adding issue-related commands (list, show) to the `blg` CLI tool.
--   Updating Memory Bank to reflect these CLI enhancements.
+-   Refactoring `mcp-backlog-server` to organize tool helper modules into a `tools/` subdirectory.
+-   Updating Memory Bank to reflect this refactoring.
 
 ## Recent Changes
--   **CLI Enhancements for Issues (`blg` tool):**
-    -   Added `Issue` subcommand to `blg.rs` with `List` and `Show` actions.
-    -   Defined `IssueListCliParams` for `issue list` command, supporting filters like project ID, assignee ID, status ID, keyword, and count.
-    -   Implemented logic to parse CLI arguments, build `GetIssueListParams` (from `backlog-issue` crate), and call `client.issue().get_issue_list()`.
-    -   Implemented logic for `issue show` to parse `IssueIdOrKey` and call `client.issue().get_issue()`.
-    -   Updated `backlog-api-client/Cargo.toml` to include `issue` in `required-features` for the `blg` binary.
--   **Previous Task (Git/PR Feature Implementation):**
-    -   Successfully implemented and documented features for viewing Git Repositories and Pull Requests across the library, CLI (`blg repo/pr` subcommands), and MCP server. This involved creating the `backlog-git` crate, updating `backlog-core` for `JsonSchema`, and integrating these into `backlog-api-client` and `mcp-backlog-server`. Memory Bank files were updated accordingly.
+-   **`mcp-backlog-server` Refactoring:**
+    -   Created `mcp-backlog-server/src/tools/` directory.
+    -   Moved `document.rs`, `issue.rs` into `src/tools/`.
+    -   Moved and renamed `git_tools.rs` to `src/tools/git.rs`.
+    -   Created `mcp-backlog-server/src/tools/mod.rs` to declare these modules.
+    -   Updated `mcp-backlog-server/src/lib.rs` to use `pub mod tools;`.
+    -   Updated `mcp-backlog-server/src/server.rs` to use new module paths (e.g., `use crate::tools::git;`, `git::get_repository_list_impl`).
+    -   Emptied original module files at `mcp-backlog-server/src/`.
+-   **Previous Task (CLI Issue Commands):**
+    -   Added `issue list` and `issue show` commands to the `blg` CLI tool.
+    -   Updated `backlog-issue` API for `get_issue` to accept `IssueIdOrKey`.
+    -   Updated relevant Memory Bank files.
 
 ## Next Steps
--   Update `progress.md` to reflect the new CLI issue commands.
--   Consider adding more filter options to `blg issue list` if requested.
--   Consider adding other issue commands (`create`, `update`, `delete`) to `blg` if requested.
--   Add tests for the new CLI commands.
--   Confirm completion of the "add issue commands to blg.rs" task with the user.
+-   Update `progress.md` to reflect the `mcp-backlog-server` refactoring.
+-   Confirm completion of the refactoring task with the user.
 
 
 ## Active Decisions & Considerations
@@ -25,7 +26,7 @@
 -   The modular structure (crates for core, issue, project, git, etc.) is a key architectural pattern. Each API module crate (`backlog-issue`, `backlog-git`, etc.) now typically exposes a `Handler` struct (e.g., `IssueApi`, `GitHandler`) that takes a `client::Client` instance.
 -   The `client` crate is a generic HTTP client, while `backlog-api-client` (library) is the specific Backlog API orchestrator.
 -   CLI tool (`blg`) uses `clap` for argument parsing.
--   MCP server tools are implemented as methods on `Server`, calling helper functions that manage `BacklogApiClient` interaction.
+-   MCP server tools are implemented as methods on `Server`. Helper functions for these tools are now organized under `mcp-backlog-server/src/tools/`.
 
 ## Important Patterns & Preferences
 -   The project follows standard Rust project structure and conventions.

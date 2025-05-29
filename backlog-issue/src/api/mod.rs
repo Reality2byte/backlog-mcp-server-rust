@@ -15,7 +15,10 @@ impl IssueApi {
         Self(client)
     }
 
-    pub async fn get_issue(&self, issue_id_or_key: impl Into<IssueIdOrKey>) -> Result<GetIssueResponse> {
+    pub async fn get_issue(
+        &self,
+        issue_id_or_key: impl Into<IssueIdOrKey>,
+    ) -> Result<GetIssueResponse> {
         let issue_id_or_key_str: String = issue_id_or_key.into().into();
         self.0
             .get(&format!("/api/v2/issues/{}", issue_id_or_key_str))

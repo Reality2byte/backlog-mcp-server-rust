@@ -20,6 +20,7 @@
     -   `mcp-backlog-server` extended with tools: `get_repository_list`, `get_repository_details`, `list_pull_requests`, `get_pull_request_details`.
     -   Dependent crates (`backlog-core`) updated for `JsonSchema` support.
 -   **CLI Issue Commands Implemented**: Added `issue list` and `issue show` commands to the `blg` CLI tool.
+-   **`mcp-backlog-server` Refactored**: Tool helper modules (`document.rs`, `issue.rs`, `git_tools.rs` renamed to `git.rs`) moved into a new `src/tools/` subdirectory for better organization.
 
 ## What Works
 -   The Memory Bank system is established and updated with foundational information about the project.
@@ -48,10 +49,7 @@
 -   The codebase is free of Clippy warnings (when run with `-D warnings`) and consistently formatted.
 
 ## What's Left to Build (for this task)
--   Consider adding more filter options to `blg issue list`.
--   Consider adding other issue commands (`create`, `update`, `delete`) to `blg` if requested by the user.
--   Add tests for the new CLI issue commands.
--   Confirm completion of the "add issue commands to blg.rs" task with the user.
+-   Confirm completion of the "mcp-backlog-server refactoring" task with the user.
 
 ## Known Issues (from initialization process and ongoing work)
 -   The `list_code_definition_names` tool did not find top-level definitions in the `src` directories of several module-specific crates (e.g., `backlog-issue/src`, `backlog-project/src`). This is noted in `techContext.md`.
@@ -114,4 +112,8 @@
     -   Implemented `issue list` with basic filters (project ID, assignee ID, status ID, keyword, count) by mapping CLI params to `GetIssueListParams`.
     -   Implemented `issue show` by parsing `IssueIdOrKey`.
     -   Updated `backlog-api-client/Cargo.toml` to include `issue` in `required-features` for `blg` binary.
--   **Current Task Focus**: Updating Memory Bank to reflect these CLI enhancements for issues.
+-   **`mcp-backlog-server` Refactoring**: User requested to refactor tool modules for better organization.
+    -   Created `mcp-backlog-server/src/tools/` directory and `mcp-backlog-server/src/tools/mod.rs`.
+    -   Moved `document.rs`, `issue.rs`, and `git_tools.rs` (renamed to `git.rs`) into the `tools/` directory.
+    -   Updated `mcp-backlog-server/src/lib.rs` and `mcp-backlog-server/src/server.rs` to use the new module paths.
+-   **Current Task Focus**: Updating Memory Bank to reflect the `mcp-backlog-server` refactoring.
