@@ -27,6 +27,25 @@ The following tools are currently available:
         -   `issue_id_or_key` (Issue ID or issue key, e.g., "MYPROJECTKEY-123", "12345")
         -   `summary` (Optional: New summary)
         -   `description` (Optional: New description)
+-   **`get_repository_list`**
+    -   Description: Get a list of Git repositories for a specified project.
+    -   Input: `project_id_or_key` (Project ID or project key)
+-   **`get_repository_details`**
+    -   Description: Get details for a specific Git repository.
+    -   Input:
+        -   `project_id_or_key` (Project ID or project key)
+        -   `repo_id_or_name` (Repository ID (as string) or repository name)
+-   **`list_pull_requests`**
+    -   Description: Get a list of pull requests for a specified repository.
+    -   Input:
+        -   `project_id_or_key` (Project ID or project key)
+        -   `repo_id_or_name` (Repository ID (as string) or repository name)
+-   **`get_pull_request_details`**
+    -   Description: Get details for a specific pull request.
+    -   Input:
+        -   `project_id_or_key` (Project ID or project key)
+        -   `repo_id_or_name` (Repository ID (as string) or repository name)
+        -   `pr_number` (Pull request number)
 
 ## Feature Flags
 
