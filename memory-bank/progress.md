@@ -19,6 +19,7 @@
     -   `blg` CLI tool enhanced with `repo` and `pr` subcommands (`list`, `show`).
     -   `mcp-backlog-server` extended with tools: `get_repository_list`, `get_repository_details`, `list_pull_requests`, `get_pull_request_details`.
     -   Dependent crates (`backlog-core`) updated for `JsonSchema` support.
+-   **CLI Issue Commands Implemented**: Added `issue list` and `issue show` commands to the `blg` CLI tool.
 
 ## What Works
 -   The Memory Bank system is established and updated with foundational information about the project.
@@ -26,9 +27,12 @@
 -   The `backlog-api-client` library provides core functionality for Backlog API interaction, now including:
     -   Git repository listing and details.
     -   Pull request listing and details.
+    -   Issue listing and details (via `backlog-issue` crate).
 -   The `blg` CLI tool provides commands for:
     -   Listing and showing Git repositories.
     -   Listing and showing Pull Requests.
+    -   Listing issues with basic filters (project, assignee, status, keyword, count).
+    -   Showing issue details by ID or key.
 -   The `mcp-backlog-server` provides MCP tools for:
     - Issue details (`get_issue_details`)
     - Document details (`get_document_details`)
@@ -44,10 +48,10 @@
 -   The codebase is free of Clippy warnings (when run with `-D warnings`) and consistently formatted.
 
 ## What's Left to Build (for this task)
--   Update `API.md` to mark implemented Git/PR API endpoints.
--   Add Rustdoc comments to new public items in `backlog-git`.
--   Consider adding tests for the new Git/PR functionality.
--   Confirm completion of the Git/PR feature implementation task with the user.
+-   Consider adding more filter options to `blg issue list`.
+-   Consider adding other issue commands (`create`, `update`, `delete`) to `blg` if requested by the user.
+-   Add tests for the new CLI issue commands.
+-   Confirm completion of the "add issue commands to blg.rs" task with the user.
 
 ## Known Issues (from initialization process and ongoing work)
 -   The `list_code_definition_names` tool did not find top-level definitions in the `src` directories of several module-specific crates (e.g., `backlog-issue/src`, `backlog-project/src`). This is noted in `techContext.md`.
@@ -104,4 +108,10 @@
     -   Refactored `blg` CLI tool to use `clap`, adding `repo` and `pr` subcommands.
     -   Added new Git/PR tools to `mcp-backlog-server`, including request/response structs and helper implementations in a new `git_tools.rs` module.
     -   Ensured correct client handling (`Arc<Mutex<...>>`) and error mapping (`McpError`) in MCP server.
--   **Current Task Focus**: Updating Memory Bank to reflect these recent changes.
+-   **CLI Issue Command Implementation**: User requested to add issue-related commands to `blg.rs`.
+    -   Focused on read-only commands (`list`, `show`) initially.
+    -   Added `Issue` subcommand structure to `blg.rs` using `clap`.
+    -   Implemented `issue list` with basic filters (project ID, assignee ID, status ID, keyword, count) by mapping CLI params to `GetIssueListParams`.
+    -   Implemented `issue show` by parsing `IssueIdOrKey`.
+    -   Updated `backlog-api-client/Cargo.toml` to include `issue` in `required-features` for `blg` binary.
+-   **Current Task Focus**: Updating Memory Bank to reflect these CLI enhancements for issues.

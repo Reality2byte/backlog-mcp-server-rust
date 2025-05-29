@@ -1,39 +1,23 @@
 ## Current Work Focus
--   Implemented functionality to view Git Repositories and Pull Requests from Backlog.
--   Updating Memory Bank to reflect these new features.
+-   Adding issue-related commands (list, show) to the `blg` CLI tool.
+-   Updating Memory Bank to reflect these CLI enhancements.
 
 ## Recent Changes
--   **Git and Pull Request Feature Implementation:**
-    -   Created new crate `backlog-git` for Git/PR API interactions.
-        -   Defined data models: `Repository`, `PullRequest`, `PullRequestStatus`, `IssueLink`.
-        -   Implemented `GitHandler` with methods: `list_repositories`, `get_repository`, `list_pull_requests`, `get_pull_request`.
-        -   Added `schemars` for `JsonSchema` derivation (with `chrono` feature) to models.
-    -   Updated `backlog-core` to support `JsonSchema` for `User`, `UserId`, `Role`, `Language`.
-    -   Integrated `backlog-git` into `backlog-api-client` library:
-        -   Added `git` feature and dependency.
-        -   Added `git()` method to `BacklogApiClient`.
-    -   Enhanced `blg` CLI tool (`backlog-api-client/src/bin/blg.rs`):
-        -   Added `clap` dependency and `cli` feature.
-        -   Implemented subcommands: `repo list`, `repo show`, `pr list`, `pr show`.
-        -   Corrected `ProjectIdOrKey` parsing using `.parse()`.
-    -   Enhanced `mcp-backlog-server`:
-        -   Enabled `git` feature for `backlog-api-client` dependency.
-        -   Added `backlog-git` as a direct dependency for its models.
-        -   Created `git_tools.rs` module for new tool request/response structs and helper implementations.
-        -   Added MCP tools: `get_repository_list`, `get_repository_details`, `list_pull_requests`, `get_pull_request_details`.
-        -   Ensured consistent client handling (`Arc<Mutex<...>>` and internal locking) in helper functions.
-        -   Corrected `McpError` construction in `git_tools.rs`.
--   **Previous Work (Code Quality & MCP Tooling):**
-    -   Addressed Clippy warnings and formatted the codebase.
-    -   Implemented/improved various MCP tools in `mcp-backlog-server` for issues and milestones.
-
+-   **CLI Enhancements for Issues (`blg` tool):**
+    -   Added `Issue` subcommand to `blg.rs` with `List` and `Show` actions.
+    -   Defined `IssueListCliParams` for `issue list` command, supporting filters like project ID, assignee ID, status ID, keyword, and count.
+    -   Implemented logic to parse CLI arguments, build `GetIssueListParams` (from `backlog-issue` crate), and call `client.issue().get_issue_list()`.
+    -   Implemented logic for `issue show` to parse `IssueIdOrKey` and call `client.issue().get_issue()`.
+    -   Updated `backlog-api-client/Cargo.toml` to include `issue` in `required-features` for the `blg` binary.
+-   **Previous Task (Git/PR Feature Implementation):**
+    -   Successfully implemented and documented features for viewing Git Repositories and Pull Requests across the library, CLI (`blg repo/pr` subcommands), and MCP server. This involved creating the `backlog-git` crate, updating `backlog-core` for `JsonSchema`, and integrating these into `backlog-api-client` and `mcp-backlog-server`. Memory Bank files were updated accordingly.
 
 ## Next Steps
--   Update `progress.md` to reflect the new Git/PR features.
--   Update `API.md` to mark implemented Git/PR API endpoints.
--   Add Rustdoc comments to new public items in `backlog-git`.
--   Consider adding tests for the new functionality.
--   Confirm completion of the Git/PR feature implementation task with the user.
+-   Update `progress.md` to reflect the new CLI issue commands.
+-   Consider adding more filter options to `blg issue list` if requested.
+-   Consider adding other issue commands (`create`, `update`, `delete`) to `blg` if requested.
+-   Add tests for the new CLI commands.
+-   Confirm completion of the "add issue commands to blg.rs" task with the user.
 
 
 ## Active Decisions & Considerations

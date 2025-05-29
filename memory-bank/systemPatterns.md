@@ -93,7 +93,7 @@ graph TD
 
 7.  **`backlog-api-client` (crate - binary `blg`)**:
     *   The command-line interface tool, now using `clap` for argument parsing.
-    *   Provides subcommands for various Backlog operations, including Git and PRs.
+    *   Provides subcommands for various Backlog operations, including Git, PRs, and Issues (e.g., `issue list`, `issue show`).
     *   Uses the `backlog-api-client` library.
 
 8.  **`mcp-backlog-server` (crate - binary)**:

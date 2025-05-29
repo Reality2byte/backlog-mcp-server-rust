@@ -38,4 +38,4 @@ serde_json = { workspace = true }
 [[bin]]
 name = "blg"
 path = "src/bin/blg.rs"
-required-features = ["cli", "git"]
+required-features = ["cli", "git", "issue"]

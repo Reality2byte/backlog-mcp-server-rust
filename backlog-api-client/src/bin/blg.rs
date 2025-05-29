@@ -1,5 +1,10 @@
 use backlog_api_client::client::BacklogApiClient;
-use backlog_core::project_id_or_key::ProjectIdOrKey; // Ensure this is the correct import
+use backlog_core::{
+    identifier::{ProjectId, UserId, StatusId}, // Added for issue list params
+    issue_id_or_key::IssueIdOrKey,             // For issue show
+    project_id_or_key::ProjectIdOrKey,
+};
+use backlog_issue::requests::GetIssueListParamsBuilder; // For building list params
 use clap::Parser;
 use std::env;
 
@@ -16,6 +21,8 @@ enum Commands {
     Repo(RepoArgs),
     /// Manage pull requests
     Pr(PrArgs),
+    /// Manage issues
+    Issue(IssueArgs),
 }
 
 #[derive(Parser)]
@@ -72,6 +79,47 @@ enum PrCommands {
         #[clap(short, long)]
         pr_number: u64,
     },
+}
+
+#[derive(Parser)]
+struct IssueArgs {
+    #[clap(subcommand)]
+    command: IssueCommands,
+}
+
+#[derive(Parser)]
+enum IssueCommands {
+    /// List issues
+    List {
+        #[clap(flatten)]
+        params: IssueListCliParams,
+    },
+    /// Show details of a specific issue
+    Show {
+        /// Issue ID or Key (e.g., "PROJECT-123" or "12345")
+        #[clap(name = "ISSUE_ID_OR_KEY")]
+        issue_id_or_key: String,
+    },
+}
+
+#[derive(Parser, Debug, Default)]
+struct IssueListCliParams {
+    /// Filter by project ID(s)
+    #[clap(long)]
+    project_id: Option<Vec<String>>,
+    /// Filter by assignee ID(s)
+    #[clap(long)]
+    assignee_id: Option<Vec<String>>,
+    /// Filter by status ID(s)
+    #[clap(long)]
+    status_id: Option<Vec<String>>,
+    /// Keyword to search for in summary or description
+    #[clap(long)]
+    keyword: Option<String>,
+    /// Number of issues to retrieve (1-100, default 20)
+    #[clap(long, default_value_t = 20)]
+    count: u32,
+    // TODO: Add more filters like sort, order, offset, issue_type_id, etc.
 }
 
 #[tokio::main]
@@ -144,6 +192,44 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .await?;
                 // TODO: Pretty print pull request
                 println!("{:?}", pr);
+            }
+        },
+        Commands::Issue(issue_args) => match issue_args.command {
+            IssueCommands::Show { issue_id_or_key } => {
+                println!("Showing issue: {}", issue_id_or_key);
+                let parsed_issue_id_or_key = issue_id_or_key.parse::<IssueIdOrKey>()?;
+                let issue = client.issue().get_issue(parsed_issue_id_or_key).await?;
+                // TODO: Pretty print issue
+                println!("{:?}", issue);
+            }
+            IssueCommands::List { params } => {
+                println!("Listing issues with params: {:?}", params);
+                let mut builder = GetIssueListParamsBuilder::default();
+
+                if let Some(p_ids) = params.project_id {
+                    let parsed_ids: std::result::Result<Vec<ProjectId>, _> =
+                        p_ids.iter().map(|s| s.parse::<u32>().map(ProjectId::from)).collect();
+                    builder.project_id(parsed_ids?);
+                }
+                if let Some(a_ids) = params.assignee_id {
+                    let parsed_ids: std::result::Result<Vec<UserId>, _> =
+                        a_ids.iter().map(|s| s.parse::<u32>().map(UserId::from)).collect();
+                    builder.assignee_id(parsed_ids?);
+                }
+                if let Some(s_ids) = params.status_id {
+                    let parsed_ids: std::result::Result<Vec<StatusId>, _> =
+                        s_ids.iter().map(|s| s.parse::<u32>().map(StatusId::from)).collect();
+                    builder.status_id(parsed_ids?);
+                }
+                if let Some(keyword) = params.keyword {
+                    builder.keyword(keyword);
+                }
+                builder.count(params.count); // count has a default_value_t
+
+                let list_params = builder.build()?;
+                let issues = client.issue().get_issue_list(list_params).await?;
+                // TODO: Pretty print issues
+                println!("{:?}", issues);
             }
         },
     }
