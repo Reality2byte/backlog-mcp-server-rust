@@ -160,7 +160,6 @@ name = "backlog-core"
 version = "0.1.0"
 dependencies = [
  "regex",
- "schemars",
  "serde",
  "serde_json",
  "serde_repr",
@@ -186,16 +185,13 @@ dependencies = [
 name = "backlog-git"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "backlog-api-core",
  "backlog-core",
  "chrono",
  "client",
- "schemars",
  "serde",
  "serde_json",
  "thiserror",
- "url",
 ]
 
 [[package]]

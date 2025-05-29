@@ -41,7 +41,6 @@ pub enum Error {
     /// distinct from API-level parameter errors.
     #[error("Invalid argument: {0}")]
     InvalidArgument(String),
-
     // Add other specific error types as needed.
     // For example:
     // #[error("Pull request #{number} already merged")]

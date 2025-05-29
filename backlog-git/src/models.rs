@@ -1,12 +1,11 @@
 //! Data models for Backlog Git and Pull Request entities.
 
-use serde::{Deserialize, Serialize};
-use schemars::JsonSchema;
+use backlog_core::User;
 use chrono::{DateTime, Utc};
-use backlog_core::User; // Assuming User is defined in backlog-core and public, and implements Serialize, JsonSchema
+use serde::{Deserialize, Serialize}; // Assuming User is defined in backlog-core and public, and implements Serialize, JsonSchema
 
 /// Represents a Git repository in Backlog.
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, JsonSchema)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Repository {
     /// The ID of the repository.
@@ -46,7 +45,7 @@ pub struct Repository {
 }
 
 /// Represents a Pull Request in Backlog.
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, JsonSchema)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct PullRequest {
     /// The ID of the pull request.
@@ -101,7 +100,7 @@ pub struct PullRequest {
 }
 
 /// Represents the status of a Pull Request.
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, JsonSchema)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct PullRequestStatus {
     /// The ID of the pull request status.
@@ -111,7 +110,7 @@ pub struct PullRequestStatus {
 }
 
 /// Represents a simplified link to an issue, often used in Pull Request details.
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, JsonSchema)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct IssueLink {
     /// The ID of the linked issue.

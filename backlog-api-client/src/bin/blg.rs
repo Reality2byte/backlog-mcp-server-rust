@@ -97,11 +97,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // TODO: Pretty print repositories
                 println!("{:?}", repos);
             }
-            RepoCommands::Show { project_id, repo_id } => {
-                println!(
-                    "Showing repository {} in project: {}",
-                    repo_id, project_id
-                );
+            RepoCommands::Show {
+                project_id,
+                repo_id,
+            } => {
+                println!("Showing repository {} in project: {}", repo_id, project_id);
                 let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
                 let repo = client
                     .git()
@@ -112,7 +112,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         },
         Commands::Pr(pr_args) => match pr_args.command {
-            PrCommands::List { project_id, repo_id } => {
+            PrCommands::List {
+                project_id,
+                repo_id,
+            } => {
                 println!(
                     "Listing pull requests for repo {} in project: {}",
                     repo_id, project_id

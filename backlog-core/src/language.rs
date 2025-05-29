@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
-use schemars::JsonSchema; // Added for JsonSchema
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize, JsonSchema)] // Added JsonSchema
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Language {
     #[serde(rename = "ja")]
     Japanese,

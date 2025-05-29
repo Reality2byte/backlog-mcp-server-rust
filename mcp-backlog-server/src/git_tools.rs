@@ -26,12 +26,19 @@ pub async fn get_repository_list_impl(
     client: Arc<Mutex<BacklogApiClient>>, // Changed signature
     request: GetRepositoryListRequest,
 ) -> Result<Vec<Repository>, McpError> {
-    let project_id = request.project_id_or_key.parse::<ProjectIdOrKey>().map_err(|e| {
-        McpError::invalid_params(format!( // Corrected to invalid_params and added None
-            "Invalid project_id_or_key '{}': {}",
-            request.project_id_or_key, e
-        ), None)
-    })?;
+    let project_id = request
+        .project_id_or_key
+        .parse::<ProjectIdOrKey>()
+        .map_err(|e| {
+            McpError::invalid_params(
+                format!(
+                    // Corrected to invalid_params and added None
+                    "Invalid project_id_or_key '{}': {}",
+                    request.project_id_or_key, e
+                ),
+                None,
+            )
+        })?;
 
     let client_guard = client.lock().await; // Added lock
     client_guard
@@ -58,18 +65,27 @@ pub async fn get_repository_details_impl(
     client: Arc<Mutex<BacklogApiClient>>, // Changed signature
     request: GetRepositoryDetailsRequest,
 ) -> Result<Repository, McpError> {
-    let project_id = request.project_id_or_key.parse::<ProjectIdOrKey>().map_err(|e| {
-        McpError::invalid_params(format!( // Corrected to invalid_params and added None
-            "Invalid project_id_or_key '{}': {}",
-            request.project_id_or_key, e
-        ), None)
-    })?;
+    let project_id = request
+        .project_id_or_key
+        .parse::<ProjectIdOrKey>()
+        .map_err(|e| {
+            McpError::invalid_params(
+                format!(
+                    // Corrected to invalid_params and added None
+                    "Invalid project_id_or_key '{}': {}",
+                    request.project_id_or_key, e
+                ),
+                None,
+            )
+        })?;
     let client_guard = client.lock().await; // Added lock
     client_guard
         .git()
         .get_repository(&project_id, &request.repo_id_or_name)
         .await
-        .map_err(|e| McpError::internal_error(format!("Failed to get repository details: {}", e), None)) // Added None
+        .map_err(|e| {
+            McpError::internal_error(format!("Failed to get repository details: {}", e), None)
+        }) // Added None
 }
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
@@ -85,12 +101,19 @@ pub async fn list_pull_requests_impl(
     client: Arc<Mutex<BacklogApiClient>>, // Changed signature
     request: ListPullRequestsRequest,
 ) -> Result<Vec<PullRequest>, McpError> {
-    let project_id = request.project_id_or_key.parse::<ProjectIdOrKey>().map_err(|e| {
-        McpError::invalid_params(format!( // Corrected to invalid_params and added None
-            "Invalid project_id_or_key '{}': {}",
-            request.project_id_or_key, e
-        ), None)
-    })?;
+    let project_id = request
+        .project_id_or_key
+        .parse::<ProjectIdOrKey>()
+        .map_err(|e| {
+            McpError::invalid_params(
+                format!(
+                    // Corrected to invalid_params and added None
+                    "Invalid project_id_or_key '{}': {}",
+                    request.project_id_or_key, e
+                ),
+                None,
+            )
+        })?;
     let client_guard = client.lock().await; // Added lock
     client_guard
         .git()
@@ -113,20 +136,25 @@ pub async fn get_pull_request_details_impl(
     client: Arc<Mutex<BacklogApiClient>>, // Changed signature
     request: GetPullRequestDetailsRequest,
 ) -> Result<PullRequest, McpError> {
-    let project_id = request.project_id_or_key.parse::<ProjectIdOrKey>().map_err(|e| {
-        McpError::invalid_params(format!( // Corrected to invalid_params and added None
-            "Invalid project_id_or_key '{}': {}",
-            request.project_id_or_key, e
-        ), None)
-    })?;
+    let project_id = request
+        .project_id_or_key
+        .parse::<ProjectIdOrKey>()
+        .map_err(|e| {
+            McpError::invalid_params(
+                format!(
+                    // Corrected to invalid_params and added None
+                    "Invalid project_id_or_key '{}': {}",
+                    request.project_id_or_key, e
+                ),
+                None,
+            )
+        })?;
     let client_guard = client.lock().await; // Added lock
     client_guard
         .git()
-        .get_pull_request(
-            &project_id,
-            &request.repo_id_or_name,
-            request.pr_number,
-        )
+        .get_pull_request(&project_id, &request.repo_id_or_name, request.pr_number)
         .await
-        .map_err(|e| McpError::internal_error(format!("Failed to get pull request details: {}", e), None)) // Added None
+        .map_err(|e| {
+            McpError::internal_error(format!("Failed to get pull request details: {}", e), None)
+        }) // Added None
 }

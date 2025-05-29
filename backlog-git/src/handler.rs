@@ -1,9 +1,9 @@
 //! Handler for Git related API endpoints.
 
-use client::Client; // The generic HTTP client from the `client` crate
-use crate::models::{PullRequest, Repository};
 use crate::error::Result; // This crate's Result type
+use crate::models::{PullRequest, Repository};
 use backlog_core::ProjectIdOrKey;
+use client::Client; // The generic HTTP client from the `client` crate
 
 /// Provides access to the Git and Pull Request related API functions.
 #[derive(Debug, Clone)]
@@ -34,10 +34,7 @@ impl GitHandler {
         &self,
         project_id_or_key: &ProjectIdOrKey,
     ) -> Result<Vec<Repository>> {
-        let path = format!(
-            "/api/v2/projects/{}/git/repositories",
-            project_id_or_key
-        );
+        let path = format!("/api/v2/projects/{}/git/repositories", project_id_or_key);
         self.client.get(&path).await.map_err(Into::into)
     }
 

@@ -4,7 +4,7 @@ use std::env;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use crate::{document, issue, git_tools}; // Added git_tools
+use crate::{document, git_tools, issue}; // Added git_tools
 
 #[derive(Clone)]
 pub struct Server {

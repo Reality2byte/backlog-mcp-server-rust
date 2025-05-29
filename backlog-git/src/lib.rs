@@ -9,5 +9,5 @@ pub mod models;
 
 // Re-export key types for easier access by users of this crate.
 pub use error::{Error, Result};
-pub use models::{IssueLink, PullRequest, PullRequestStatus, Repository};
-pub use handler::GitHandler; // Re-export GitHandler instead of individual functions
+pub use handler::GitHandler;
+pub use models::{IssueLink, PullRequest, PullRequestStatus, Repository}; // Re-export GitHandler instead of individual functions
