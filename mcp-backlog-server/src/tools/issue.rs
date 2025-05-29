@@ -41,18 +41,12 @@ pub async fn get_version_milestone_list_impl(
 pub async fn get_issues_by_milestone_name_impl(
     client: Arc<Mutex<BacklogApiClient>>,
     project_id_or_key_str: String,
-    milestone_name_user_input: String, // Corrected argument name
+    milestone_name: String,
 ) -> Result<Vec<Issue>> {
-    let client_guard = client.lock().await;
-
     let proj_id_or_key =
         ProjectIdOrKey::from_str(project_id_or_key_str.trim()).map_err(McpError::Core)?;
 
-    let project_id_numeric = match proj_id_or_key.clone() {
-        ProjectIdOrKey::Id(id) => id,
-        ProjectIdOrKey::Key(key_val) => client_guard.project().get_project(key_val).await?.id,
-        ProjectIdOrKey::EitherIdOrKey(id, _) => id,
-    };
+    let client_guard = client.lock().await;
 
     let all_project_milestones = client_guard
         .issue()
@@ -60,13 +54,13 @@ pub async fn get_issues_by_milestone_name_impl(
         .await?;
 
     let result =
-        find_by_name_from_array(&all_project_milestones, &milestone_name_user_input, |m| {
+        find_by_name_from_array(&all_project_milestones, &milestone_name, |m| {
             &m.name
         });
     match result {
         MatchResult::Exact(milestone) => {
             let params = GetIssueListParamsBuilder::default()
-                .project_id(vec![project_id_numeric])
+                .project_id(vec![milestone.project_id])
                 .milestone_id(vec![milestone.id])
                 .build()
                 .map_err(|e| McpError::Parameter(e.to_string()))?;
@@ -75,12 +69,12 @@ pub async fn get_issues_by_milestone_name_impl(
         }
         MatchResult::Suggestion(suggestions) => Err(McpError::MilestoneNotFoundByName {
             project: project_id_or_key_str,
-            original_name: milestone_name_user_input,
+            original_name: milestone_name,
             suggestions: Some(suggestions),
         }),
         MatchResult::None => Err(McpError::MilestoneNotFoundByName {
             project: project_id_or_key_str,
-            original_name: milestone_name_user_input,
+            original_name: milestone_name,
             suggestions: None,
         }),
     }
