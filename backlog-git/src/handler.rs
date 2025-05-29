@@ -2,7 +2,7 @@
 
 use crate::error::Result; // This crate's Result type
 use crate::models::{PullRequest, Repository};
-use backlog_core::ProjectIdOrKey;
+use backlog_core::{ProjectIdOrKey, RepositoryIdOrName};
 use client::Client; // The generic HTTP client from the `client` crate
 
 /// Provides access to the Git and Pull Request related API functions.
@@ -32,9 +32,12 @@ impl GitHandler {
     /// * `project_id_or_key` - The ID or key of the project.
     pub async fn list_repositories(
         &self,
-        project_id_or_key: &ProjectIdOrKey,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
     ) -> Result<Vec<Repository>> {
-        let path = format!("/api/v2/projects/{}/git/repositories", project_id_or_key);
+        let path = format!(
+            "/api/v2/projects/{}/git/repositories",
+            project_id_or_key.into()
+        );
         self.client.get(&path).await.map_err(Into::into)
     }
 
@@ -48,12 +51,13 @@ impl GitHandler {
     /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
     pub async fn get_repository(
         &self,
-        project_id_or_key: &ProjectIdOrKey,
-        repo_id_or_name: &str,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        repo_id_or_name: impl Into<RepositoryIdOrName>,
     ) -> Result<Repository> {
         let path = format!(
             "/api/v2/projects/{}/git/repositories/{}",
-            project_id_or_key, repo_id_or_name
+            project_id_or_key.into(),
+            repo_id_or_name.into()
         );
         self.client.get(&path).await.map_err(Into::into)
     }
@@ -69,12 +73,13 @@ impl GitHandler {
     /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
     pub async fn list_pull_requests(
         &self,
-        project_id_or_key: &ProjectIdOrKey,
-        repo_id_or_name: &str,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        repo_id_or_name: impl Into<RepositoryIdOrName>,
     ) -> Result<Vec<PullRequest>> {
         let path = format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests",
-            project_id_or_key, repo_id_or_name
+            project_id_or_key.into(),
+            repo_id_or_name.into()
         );
         // For now, no query parameters. If params were added:
         // self.client.get_with_params(&path, params_struct_ref).await.map_err(Into::into)
@@ -92,13 +97,15 @@ impl GitHandler {
     /// * `pr_number` - The pull request number.
     pub async fn get_pull_request(
         &self,
-        project_id_or_key: &ProjectIdOrKey,
-        repo_id_or_name: &str,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        repo_id_or_name: impl Into<RepositoryIdOrName>,
         pr_number: u64,
     ) -> Result<PullRequest> {
         let path = format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}",
-            project_id_or_key, repo_id_or_name, pr_number
+            project_id_or_key.into(),
+            repo_id_or_name.into(),
+            pr_number
         );
         self.client.get(&path).await.map_err(Into::into)
     }

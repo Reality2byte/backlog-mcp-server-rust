@@ -63,5 +63,6 @@ impl_identifier!(
     ResolutionId,
     CommentId,
     AttachmentId,
+    RepositoryId,
     PullRequestId
 );

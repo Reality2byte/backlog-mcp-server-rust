@@ -1,5 +1,6 @@
 use backlog_api_client::client::BacklogApiClient;
 use backlog_core::{
+    RepositoryIdOrName,
     identifier::{ProjectId, StatusId, UserId}, // Added for issue list params
     issue_id_or_key::IssueIdOrKey,             // For issue show
     project_id_or_key::ProjectIdOrKey,
@@ -141,7 +142,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Listing repositories for project: {}", project_id);
                 let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
                 // Assumes backlog_git is enabled via features for the client build
-                let repos = client.git().list_repositories(&proj_id_or_key).await?;
+                let repos = client.git().list_repositories(proj_id_or_key).await?;
                 // TODO: Pretty print repositories
                 println!("{:?}", repos);
             }
@@ -151,9 +152,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             } => {
                 println!("Showing repository {} in project: {}", repo_id, project_id);
                 let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
+                let repo_id_or_name = repo_id.parse::<RepositoryIdOrName>()?;
                 let repo = client
                     .git()
-                    .get_repository(&proj_id_or_key, &repo_id)
+                    .get_repository(proj_id_or_key, repo_id_or_name)
                     .await?;
                 // TODO: Pretty print repository
                 println!("{:?}", repo);
@@ -169,9 +171,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     repo_id, project_id
                 );
                 let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
+                let repo_id_or_name = repo_id.parse::<RepositoryIdOrName>()?;
                 let prs = client
                     .git()
-                    .list_pull_requests(&proj_id_or_key, &repo_id)
+                    .list_pull_requests(proj_id_or_key, repo_id_or_name)
                     .await?;
                 // TODO: Pretty print pull requests
                 println!("{:?}", prs);
@@ -186,9 +189,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     pr_number, repo_id, project_id
                 );
                 let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
+                let repo_id_or_name = repo_id.parse::<RepositoryIdOrName>()?;
+
                 let pr = client
                     .git()
-                    .get_pull_request(&proj_id_or_key, &repo_id, pr_number)
+                    .get_pull_request(proj_id_or_key, repo_id_or_name, pr_number)
                     .await?;
                 // TODO: Pretty print pull request
                 println!("{:?}", pr);

@@ -22,6 +22,12 @@ pub enum Error {
 
     #[error("Invalid document id: {0}")]
     InvalidDocumentId(String),
+
+    #[error("Invalid repository name: {0}")]
+    InvalidRepositoryName(String),
+
+    #[error("Invalid repository id or name: {0}")]
+    InvalidRepositoryIdOrName(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

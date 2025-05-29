@@ -36,3 +36,9 @@ pub use text_formatting_rule::TextFormattingRule;
 
 mod document_id;
 pub use document_id::DocumentId;
+
+mod repository_id_or_name;
+pub use repository_id_or_name::RepositoryIdOrName;
+
+pub mod repository_name;
+pub use repository_name::RepositoryName;

@@ -1,6 +1,9 @@
 //! Data models for Backlog Git and Pull Request entities.
 
-use backlog_core::User;
+use backlog_core::{
+    User,
+    identifier::{IssueId, ProjectId, PullRequestId, RepositoryId},
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize}; // Assuming User is defined in backlog-core and public, and implements Serialize, JsonSchema
 
@@ -9,7 +12,7 @@ use serde::{Deserialize, Serialize}; // Assuming User is defined in backlog-core
 #[serde(rename_all = "camelCase")]
 pub struct Repository {
     /// The ID of the repository.
-    pub id: u64,
+    pub id: RepositoryId,
     /// The ID of the project that the repository belongs to.
     #[serde(rename = "projectId")]
     pub project_id: u64,
@@ -49,13 +52,13 @@ pub struct Repository {
 #[serde(rename_all = "camelCase")]
 pub struct PullRequest {
     /// The ID of the pull request.
-    pub id: u64,
+    pub id: PullRequestId,
     /// The ID of the project that the pull request belongs to.
     #[serde(rename = "projectId")]
-    pub project_id: u64,
+    pub project_id: ProjectId,
     /// The ID of the repository that the pull request belongs to.
     #[serde(rename = "repositoryId")]
-    pub repository_id: u64,
+    pub repository_id: RepositoryId,
     /// The number of the pull request, unique within the repository.
     pub number: u64,
     /// The summary (title) of the pull request.
@@ -114,7 +117,7 @@ pub struct PullRequestStatus {
 #[serde(rename_all = "camelCase")]
 pub struct IssueLink {
     /// The ID of the linked issue.
-    pub id: u64,
+    pub id: IssueId,
     // Add more fields if the API provides them, like issueKey, summary
 }
 
