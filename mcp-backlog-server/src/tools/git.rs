@@ -1,196 +1,69 @@
-//! MCP tools for interacting with Backlog Git repositories and Pull Requests.
-
+use crate::error::Result;
 use backlog_api_client::client::BacklogApiClient;
 use backlog_core::{RepositoryIdOrName, project_id_or_key::ProjectIdOrKey};
 use backlog_git::{PullRequest, Repository};
-use rmcp::{Error as McpError, schemars, serde};
 use std::{str::FromStr, sync::Arc};
 use tokio::sync::Mutex;
-
-#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-pub struct GetRepositoryListRequest {
-    /// The project ID or project key to retrieve repositories for.
-    /// Examples: "MYPROJECTKEY", "123".
-    pub project_id_or_key: String,
-}
-
-// The response for get_repository_list will be Vec<Repository>.
-// The Repository struct from backlog_git already derives Serialize and JsonSchema.
-
-// Tool implementation will be methods on the Server struct in server.rs,
-// which will call helper functions defined here or directly use the BacklogApiClient.
 
 /// Helper function to implement the get_repository_list tool.
 pub async fn get_repository_list_impl(
     client: Arc<Mutex<BacklogApiClient>>, // Changed signature
-    request: GetRepositoryListRequest,
-) -> Result<Vec<Repository>, McpError> {
-    let project_id = request
-        .project_id_or_key
-        .parse::<ProjectIdOrKey>()
-        .map_err(|e| {
-            McpError::invalid_params(
-                format!(
-                    // Corrected to invalid_params and added None
-                    "Invalid project_id_or_key '{}': {}",
-                    request.project_id_or_key, e
-                ),
-                None,
-            )
-        })?;
+    project_id_or_key: String,
+) -> Result<Vec<Repository>> {
+    let project_id = project_id_or_key.parse::<ProjectIdOrKey>()?;
 
-    let client_guard = client.lock().await; // Added lock
-    client_guard
-        .git()
-        .list_repositories(project_id)
-        .await
-        .map_err(|e| McpError::internal_error(format!("Failed to list repositories: {}", e), None)) // Added None
-}
-
-// TODO: Add other request structs and impl functions:
-// GetRepositoryDetailsRequest -> Repository
-// ListPullRequestsRequest -> Vec<PullRequest>
-// GetPullRequestDetailsRequest -> PullRequest
-
-#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-pub struct GetRepositoryDetailsRequest {
-    /// The project ID or project key.
-    pub project_id_or_key: String,
-    /// The repository ID (as a string) or repository name.
-    pub repo_id_or_name: String,
+    let client_guard = client.lock().await;
+    let repositories = client_guard.git().list_repositories(project_id).await?;
+    Ok(repositories)
 }
 
 pub async fn get_repository_details_impl(
     client: Arc<Mutex<BacklogApiClient>>, // Changed signature
-    request: GetRepositoryDetailsRequest,
-) -> Result<Repository, McpError> {
-    let proj_id_or_key = request
-        .project_id_or_key
-        .parse::<ProjectIdOrKey>()
-        .map_err(|e| {
-            McpError::invalid_params(
-                format!(
-                    // Corrected to invalid_params and added None
-                    "Invalid project_id_or_key '{}': {}",
-                    request.project_id_or_key, e
-                ),
-                None,
-            )
-        })?;
-    let repo_id_or_name =
-        RepositoryIdOrName::from_str(request.repo_id_or_name.trim()).map_err(|e| {
-            McpError::invalid_params(
-                format!(
-                    // Corrected to invalid_params and added None
-                    "Invalid repo_id_or_name '{}': {}",
-                    request.repo_id_or_name, e
-                ),
-                None,
-            )
-        })?;
+    project_id_or_key: String,
+    repo_id_or_name: String,
+) -> Result<Repository> {
+    let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+    let repo_id_or_name = RepositoryIdOrName::from_str(repo_id_or_name.trim())?;
 
     let client_guard = client.lock().await; // Added lock
 
-    client_guard
+    let repository = client_guard
         .git()
         .get_repository(proj_id_or_key, repo_id_or_name)
-        .await
-        .map_err(|e| {
-            McpError::internal_error(format!("Failed to get repository details: {}", e), None)
-        }) // Added None
-}
-
-#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-pub struct ListPullRequestsRequest {
-    /// The project ID or project key.
-    pub project_id_or_key: String,
-    /// The repository ID (as a string) or repository name.
-    pub repo_id_or_name: String,
-    // TODO: Add query parameters like status, assignee, etc.
+        .await?;
+    Ok(repository)
 }
 
 pub async fn list_pull_requests_impl(
     client: Arc<Mutex<BacklogApiClient>>, // Changed signature
-    request: ListPullRequestsRequest,
-) -> Result<Vec<PullRequest>, McpError> {
-    let proj_id_or_key = request
-        .project_id_or_key
-        .parse::<ProjectIdOrKey>()
-        .map_err(|e| {
-            McpError::invalid_params(
-                format!(
-                    // Corrected to invalid_params and added None
-                    "Invalid project_id_or_key '{}': {}",
-                    request.project_id_or_key, e
-                ),
-                None,
-            )
-        })?;
-    let repo_id_or_name =
-        RepositoryIdOrName::from_str(request.repo_id_or_name.trim()).map_err(|e| {
-            McpError::invalid_params(
-                format!(
-                    // Corrected to invalid_params and added None
-                    "Invalid repo_id_or_name '{}': {}",
-                    request.repo_id_or_name, e
-                ),
-                None,
-            )
-        })?;
+    project_id_or_key: String,
+    repo_id_or_name: String,
+) -> Result<Vec<PullRequest>> {
+    let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+    let repo_id_or_name = RepositoryIdOrName::from_str(repo_id_or_name.trim())?;
 
     let client_guard = client.lock().await; // Added lock
-    client_guard
+    let pull_requests = client_guard
         .git()
         .list_pull_requests(proj_id_or_key, repo_id_or_name)
-        .await
-        .map_err(|e| McpError::internal_error(format!("Failed to list pull requests: {}", e), None)) // Added None
-}
-
-#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-pub struct GetPullRequestDetailsRequest {
-    /// The project ID or project key.
-    pub project_id_or_key: String,
-    /// The repository ID (as a string) or repository name.
-    pub repo_id_or_name: String,
-    /// The pull request number.
-    pub pr_number: u64,
+        .await?;
+    Ok(pull_requests)
 }
 
 pub async fn get_pull_request_details_impl(
-    client: Arc<Mutex<BacklogApiClient>>, // Changed signature
-    request: GetPullRequestDetailsRequest,
-) -> Result<PullRequest, McpError> {
-    let proj_id_or_key = request
-        .project_id_or_key
-        .parse::<ProjectIdOrKey>()
-        .map_err(|e| {
-            McpError::invalid_params(
-                format!(
-                    // Corrected to invalid_params and added None
-                    "Invalid project_id_or_key '{}': {}",
-                    request.project_id_or_key, e
-                ),
-                None,
-            )
-        })?;
-    let repo_id_or_name =
-        RepositoryIdOrName::from_str(request.repo_id_or_name.trim()).map_err(|e| {
-            McpError::invalid_params(
-                format!(
-                    // Corrected to invalid_params and added None
-                    "Invalid repo_id_or_name '{}': {}",
-                    request.repo_id_or_name, e
-                ),
-                None,
-            )
-        })?;
+    client: Arc<Mutex<BacklogApiClient>>,
+    project_id_or_key: String,
+    repo_id_or_name: String,
+    pr_number: u64,
+) -> Result<PullRequest> {
+    let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+
+    let repo_id_or_name = RepositoryIdOrName::from_str(repo_id_or_name.trim())?;
 
     let client_guard = client.lock().await; // Added lock
-    client_guard
+    let pull_request = client_guard
         .git()
-        .get_pull_request(proj_id_or_key, repo_id_or_name, request.pr_number)
-        .await
-        .map_err(|e| {
-            McpError::internal_error(format!("Failed to get pull request details: {}", e), None)
-        }) // Added None
+        .get_pull_request(proj_id_or_key, repo_id_or_name, pr_number)
+        .await?;
+    Ok(pull_request)
 }

@@ -64,10 +64,43 @@ pub struct UpdateIssueRequest {
     pub description: Option<String>,
 }
 
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub struct GetRepositoryListRequest {
+    /// The project ID or project key to retrieve repositories for.
+    /// Examples: "MYPROJECTKEY", "123".
+    pub project_id_or_key: String,
+}
+
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub struct GetRepositoryDetailsRequest {
+    /// The project ID or project key.
+    pub project_id_or_key: String,
+    /// The repository ID (as a string) or repository name.
+    pub repo_id_or_name: String,
+}
+
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub struct ListPullRequestsRequest {
+    /// The project ID or project key.
+    pub project_id_or_key: String,
+    /// The repository ID (as a string) or repository name.
+    pub repo_id_or_name: String,
+    // TODO: Add query parameters like status, assignee, etc.
+}
+
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub struct GetPullRequestDetailsRequest {
+    /// The project ID or project key.
+    pub project_id_or_key: String,
+    /// The repository ID (as a string) or repository name.
+    pub repo_id_or_name: String,
+    /// The pull request number.
+    pub pr_number: u64,
+}
+
 // Request struct for get_repository_list is now in git_tools.rs
 // We need to import it if it's not already covered by `use crate::git_tools;`
 // For clarity, let's assume git_tools::GetRepositoryListRequest will be used directly.
-
 #[tool(tool_box)]
 impl Server {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
@@ -85,9 +118,10 @@ impl Server {
     #[tool(description = "Get a list of Git repositories for a specified project.")]
     async fn get_repository_list(
         &self,
-        #[tool(aggr)] request: git::GetRepositoryListRequest, // Changed from git_tools
+        #[tool(aggr)] request: GetRepositoryListRequest, // Changed from git_tools
     ) -> Result<CallToolResult, McpError> {
-        let repositories = git::get_repository_list_impl(self.client.clone(), request).await?; // Changed from git_tools
+        let repositories =
+            git::get_repository_list_impl(self.client.clone(), request.project_id_or_key).await?;
         Ok(CallToolResult::success(vec![
             Content::json(repositories).unwrap(),
         ]))
@@ -96,9 +130,14 @@ impl Server {
     #[tool(description = "Get details for a specific Git repository.")]
     async fn get_repository_details(
         &self,
-        #[tool(aggr)] request: git::GetRepositoryDetailsRequest, // Changed from git_tools
+        #[tool(aggr)] request: GetRepositoryDetailsRequest, // Changed from git_tools
     ) -> Result<CallToolResult, McpError> {
-        let repository = git::get_repository_details_impl(self.client.clone(), request).await?; // Changed from git_tools
+        let repository = git::get_repository_details_impl(
+            self.client.clone(),
+            request.project_id_or_key,
+            request.repo_id_or_name,
+        )
+        .await?;
         Ok(CallToolResult::success(vec![
             Content::json(repository).unwrap(),
         ]))
@@ -107,9 +146,14 @@ impl Server {
     #[tool(description = "Get a list of pull requests for a specified repository.")]
     async fn list_pull_requests(
         &self,
-        #[tool(aggr)] request: git::ListPullRequestsRequest, // Changed from git_tools
+        #[tool(aggr)] request: ListPullRequestsRequest, // Changed from git_tools
     ) -> Result<CallToolResult, McpError> {
-        let pull_requests = git::list_pull_requests_impl(self.client.clone(), request).await?; // Changed from git_tools
+        let pull_requests = git::list_pull_requests_impl(
+            self.client.clone(),
+            request.project_id_or_key,
+            request.repo_id_or_name,
+        )
+        .await?;
         Ok(CallToolResult::success(vec![
             Content::json(pull_requests).unwrap(),
         ]))
@@ -118,9 +162,15 @@ impl Server {
     #[tool(description = "Get details for a specific pull request.")]
     async fn get_pull_request_details(
         &self,
-        #[tool(aggr)] request: git::GetPullRequestDetailsRequest, // Changed from git_tools
+        #[tool(aggr)] request: GetPullRequestDetailsRequest, // Changed from git_tools
     ) -> Result<CallToolResult, McpError> {
-        let pull_request = git::get_pull_request_details_impl(self.client.clone(), request).await?; // Changed from git_tools
+        let pull_request = git::get_pull_request_details_impl(
+            self.client.clone(),
+            request.project_id_or_key,
+            request.repo_id_or_name,
+            request.pr_number,
+        )
+        .await?;
         Ok(CallToolResult::success(vec![
             Content::json(pull_request).unwrap(),
         ]))
