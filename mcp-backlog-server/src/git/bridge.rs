@@ -1,7 +1,6 @@
 use crate::error::Result;
 use backlog_api_client::client::BacklogApiClient;
-use backlog_core::{RepositoryIdOrName, project_id_or_key::ProjectIdOrKey};
-use backlog_git::{PullRequest, Repository};
+use backlog_api_client::{ProjectIdOrKey, PullRequest, Repository, RepositoryIdOrName};
 use std::{str::FromStr, sync::Arc};
 use tokio::sync::Mutex;
 

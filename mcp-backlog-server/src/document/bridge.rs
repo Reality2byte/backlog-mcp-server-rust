@@ -1,6 +1,6 @@
+use backlog_api_client::DocumentDetail;
+use backlog_api_client::DocumentId;
 use backlog_api_client::client::BacklogApiClient;
-use backlog_core::DocumentId;
-use backlog_document::DocumentDetail;
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;

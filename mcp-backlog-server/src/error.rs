@@ -1,5 +1,6 @@
 use backlog_api_client::ApiError;
-use backlog_core::{Error as CoreError, ProjectIdOrKey};
+use backlog_api_client::ProjectIdOrKey;
+use backlog_core::Error as CoreError;
 use rmcp::Error as McpError;
 use thiserror::Error as ThisError;
 

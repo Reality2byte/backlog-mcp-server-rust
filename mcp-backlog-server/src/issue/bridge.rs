@@ -1,9 +1,7 @@
 use backlog_api_client::client::BacklogApiClient;
-use backlog_core::{IssueIdOrKey, IssueKey, ProjectIdOrKey};
-use backlog_issue::{
-    Issue, Milestone,
-    requests::{GetIssueListParamsBuilder, UpdateIssueParamsBuilder},
-};
+use backlog_api_client::{Issue, Milestone};
+use backlog_api_client::{IssueIdOrKey, IssueKey, ProjectIdOrKey};
+use backlog_issue::requests::{GetIssueListParamsBuilder, UpdateIssueParamsBuilder};
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
