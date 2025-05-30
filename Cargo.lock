@@ -138,8 +138,6 @@ dependencies = [
  "backlog-user",
  "clap",
  "client",
- "serde",
- "serde_json",
  "tokio",
  "url",
 ]
@@ -203,7 +201,6 @@ dependencies = [
  "chrono",
  "client",
  "derive_builder",
- "reqwest",
  "serde",
  "serde_json",
  "serde_repr",
@@ -218,13 +215,9 @@ version = "0.1.0"
 dependencies = [
  "backlog-api-core",
  "backlog-core",
- "chrono",
  "client",
- "derive_builder",
- "reqwest",
  "serde",
  "serde_json",
- "thiserror",
 ]
 
 [[package]]
@@ -250,7 +243,6 @@ dependencies = [
  "backlog-core",
  "chrono",
  "client",
- "reqwest",
  "serde",
  "serde_json",
  "thiserror",
@@ -371,7 +363,6 @@ name = "client"
 version = "0.1.0"
 dependencies = [
  "backlog-api-core",
- "derive_builder",
  "reqwest",
  "serde",
  "serde_json",

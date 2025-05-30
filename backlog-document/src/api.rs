@@ -3,7 +3,7 @@ use backlog_core::DocumentId;
 use backlog_core::Identifier;
 use backlog_core::identifier::AttachmentId;
 use client::Client;
-use reqwest; // For reqwest::Response type
+use reqwest; // For attachment download
 
 use crate::models::{Document, DocumentDetail, DocumentTreeResponse};
 use crate::requests::{GetDocumentTreeParams, ListDocumentsParams};

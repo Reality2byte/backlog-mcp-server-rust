@@ -27,13 +27,11 @@ backlog-issue = { path = "../backlog-issue", optional = true }
 backlog-project = { path = "../backlog-project", optional = true }
 backlog-space = { path = "../backlog-space", optional = true }
 backlog-user = { path = "../backlog-user", optional = true }
-backlog-document = { path = "../backlog-document", optional = true } # Added backlog-document
-backlog-git = { path = "../backlog-git", optional = true } # Added backlog-git
+backlog-document = { path = "../backlog-document", optional = true }
+backlog-git = { path = "../backlog-git", optional = true }
 clap = { version = "4.5", features = ["derive"], optional = true } # For CLI arg parsing
 tokio = { workspace = true }
 url = { workspace = true }
-serde = { workspace = true }
-serde_json = { workspace = true }
 
 [[bin]]
 name = "blg"
