@@ -19,8 +19,6 @@ thiserror = { workspace = true }
 
 # Dependencies on other workspace crates
 backlog-api-client = { path = "../backlog-api-client", features = ["issue", "document", "git"] }
-backlog-core = { path = "../backlog-core" }
-backlog-issue = { path = "../backlog-issue" } # For the Issue struct
 backlog-document = { path = "../backlog-document" } # For the Document struct
 backlog-git = { path = "../backlog-git" } # Added backlog-git for its models
 strsim = "0.11.1"

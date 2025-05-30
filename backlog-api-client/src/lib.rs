@@ -4,6 +4,7 @@ pub use backlog_api_core::Error as ApiError;
 // Core types (from backlog_core)
 pub use backlog_core::{
     DocumentId,
+    Error as BacklogCoreError,
     IssueIdOrKey,
     IssueKey,
     ProjectIdOrKey,
@@ -23,6 +24,8 @@ pub use backlog_document::models::DocumentDetail;
 // Issue module (from backlog_issue)
 #[cfg(feature = "issue")]
 pub use backlog_issue::IssueApi;
+#[cfg(feature = "issue")]
+pub use backlog_issue::requests::{GetIssueListParamsBuilder, UpdateIssueParamsBuilder};
 #[cfg(feature = "issue")]
 pub use backlog_issue::{Issue, Milestone};
 

@@ -1091,10 +1091,8 @@ name = "mcp-backlog-server"
 version = "0.1.0"
 dependencies = [
  "backlog-api-client",
- "backlog-core",
  "backlog-document",
  "backlog-git",
- "backlog-issue",
  "rmcp",
  "serde",
  "serde_json",

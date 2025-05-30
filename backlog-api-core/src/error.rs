@@ -10,9 +10,6 @@ pub enum Error {
 
     #[error("URL error: {0}")]
     Url(#[from] url::ParseError),
-
-    #[error("Client error: {0}")]
-    Client(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

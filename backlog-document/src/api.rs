@@ -1,4 +1,4 @@
-use backlog_api_core::{Error as ApiError, Result};
+use backlog_api_core::Result;
 use backlog_core::DocumentId;
 use backlog_core::Identifier;
 use backlog_core::identifier::AttachmentId;
@@ -55,11 +55,7 @@ impl DocumentApi {
             document_id.into().value(),
             attachment_id.into().value()
         );
-        // Placeholder: Actual implementation requires modification to client::Client
-        // to expose raw reqwest::Response or a streaming body.
-        Err(ApiError::Client(
-            "download_attachment feature not fully implemented: requires client modification"
-                .to_string(),
-        ))
+
+        todo!("Implement download_attachment method");
     }
 }

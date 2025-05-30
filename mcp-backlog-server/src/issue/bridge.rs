@@ -1,7 +1,8 @@
 use backlog_api_client::client::BacklogApiClient;
-use backlog_api_client::{Issue, Milestone};
-use backlog_api_client::{IssueIdOrKey, IssueKey, ProjectIdOrKey};
-use backlog_issue::requests::{GetIssueListParamsBuilder, UpdateIssueParamsBuilder};
+use backlog_api_client::{
+    GetIssueListParamsBuilder, Issue, IssueIdOrKey, IssueKey, Milestone, ProjectIdOrKey,
+    UpdateIssueParamsBuilder,
+};
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -88,7 +89,7 @@ pub async fn update_issue_impl(
     issue_id_or_key_str: String,
     summary: Option<String>,
     description: Option<String>,
-) -> Result<backlog_issue::Issue> {
+) -> Result<Issue> {
     if summary.is_none() && description.is_none() {
         return Err(McpError::NothingToUpdate);
     }
