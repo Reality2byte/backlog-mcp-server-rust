@@ -1,101 +1,29 @@
+use crate::issue::request::UpdateIssueRequest;
+use crate::{
+    document::{self, request::GetDocumentDetailsRequest},
+    git::{
+        self,
+        request::{
+            GetPullRequestDetailsRequest, GetRepositoryDetailsRequest, GetRepositoryListRequest,
+            ListPullRequestsRequest,
+        },
+    },
+    issue::{
+        self,
+        request::{
+            GetIssueDetailsRequest, GetIssuesByMilestoneNameRequest, GetVersionMilestoneListRequest,
+        },
+    },
+};
 use backlog_api_client::client::BacklogApiClient;
-use rmcp::{Error as McpError, model::*, schemars, tool};
+use rmcp::{Error as McpError, model::*, tool};
 use std::env;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use crate::tools::{document, git, issue};
-
 #[derive(Clone)]
 pub struct Server {
     client: Arc<Mutex<BacklogApiClient>>,
-}
-
-#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-pub struct GetIssueDetailsRequest {
-    #[schemars(description = "The issue key to retrieve details for. 
-    This should be in the format 'PROJECT-123', where 'PROJECT' is the project key and '123' is the issue number. 
-    Ensure there are no leading or trailing spaces.")]
-    pub issue_key: String,
-}
-
-#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-pub struct GetDocumentDetailsRequest {
-    #[schemars(description = "The document id to retrieve details for. 
-    This should be in the format 32 digit hex string. Ensure there are no leading or trailing spaces.
-    When you access https://example.backlog.com/document/PROJECT/0195faa11fcb7aaab4c4005a7ada4b6f,
-    the document id is '0195faa11fcb7aaab4c4005a7ada4b6f'.")]
-    pub document_id: String,
-}
-
-#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-pub struct GetVersionMilestoneListRequest {
-    #[schemars(
-        description = "The project ID or project key to retrieve versions (milestones) for. 
-    Examples: 'MYPROJECTKEY', '123'. 
-    Ensure there are no leading or trailing spaces."
-    )]
-    pub project_id_or_key: String,
-}
-
-#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-pub struct GetIssuesByMilestoneNameRequest {
-    #[schemars(
-        description = "The project ID or project key where the milestone belongs. Examples: 'MYPROJECTKEY', '123'."
-    )]
-    pub project_id_or_key: String,
-    #[schemars(description = "The name of the milestone to retrieve issues for.")]
-    pub milestone_name: String,
-}
-
-#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-pub struct UpdateIssueRequest {
-    #[schemars(
-        description = "The issue ID or issue key to update. Example: 'MYPROJECTKEY-123' or '12345'."
-    )]
-    pub issue_id_or_key: String,
-    #[schemars(
-        description = "The new summary for the issue. Set to null or omit to keep unchanged."
-    )]
-    pub summary: Option<String>,
-    #[schemars(
-        description = "The new description for the issue. Set to null or omit to keep unchanged."
-    )]
-    pub description: Option<String>,
-}
-
-#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-pub struct GetRepositoryListRequest {
-    /// The project ID or project key to retrieve repositories for.
-    /// Examples: "MYPROJECTKEY", "123".
-    pub project_id_or_key: String,
-}
-
-#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-pub struct GetRepositoryDetailsRequest {
-    /// The project ID or project key.
-    pub project_id_or_key: String,
-    /// The repository ID (as a string) or repository name.
-    pub repo_id_or_name: String,
-}
-
-#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-pub struct ListPullRequestsRequest {
-    /// The project ID or project key.
-    pub project_id_or_key: String,
-    /// The repository ID (as a string) or repository name.
-    pub repo_id_or_name: String,
-    // TODO: Add query parameters like status, assignee, etc.
-}
-
-#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-pub struct GetPullRequestDetailsRequest {
-    /// The project ID or project key.
-    pub project_id_or_key: String,
-    /// The repository ID (as a string) or repository name.
-    pub repo_id_or_name: String,
-    /// The pull request number.
-    pub pr_number: u64,
 }
 
 // Request struct for get_repository_list is now in git_tools.rs
@@ -118,10 +46,11 @@ impl Server {
     #[tool(description = "Get a list of Git repositories for a specified project.")]
     async fn get_repository_list(
         &self,
-        #[tool(aggr)] request: GetRepositoryListRequest, // Changed from git_tools
+        #[tool(aggr)] request: GetRepositoryListRequest,
     ) -> Result<CallToolResult, McpError> {
         let repositories =
-            git::get_repository_list_impl(self.client.clone(), request.project_id_or_key).await?;
+            git::bridge::get_repository_list_impl(self.client.clone(), request.project_id_or_key)
+                .await?;
         Ok(CallToolResult::success(vec![
             Content::json(repositories).unwrap(),
         ]))
@@ -130,9 +59,9 @@ impl Server {
     #[tool(description = "Get details for a specific Git repository.")]
     async fn get_repository_details(
         &self,
-        #[tool(aggr)] request: GetRepositoryDetailsRequest, // Changed from git_tools
+        #[tool(aggr)] request: GetRepositoryDetailsRequest,
     ) -> Result<CallToolResult, McpError> {
-        let repository = git::get_repository_details_impl(
+        let repository = git::bridge::get_repository_details_impl(
             self.client.clone(),
             request.project_id_or_key,
             request.repo_id_or_name,
@@ -146,9 +75,9 @@ impl Server {
     #[tool(description = "Get a list of pull requests for a specified repository.")]
     async fn list_pull_requests(
         &self,
-        #[tool(aggr)] request: ListPullRequestsRequest, // Changed from git_tools
+        #[tool(aggr)] request: ListPullRequestsRequest,
     ) -> Result<CallToolResult, McpError> {
-        let pull_requests = git::list_pull_requests_impl(
+        let pull_requests = git::bridge::list_pull_requests_impl(
             self.client.clone(),
             request.project_id_or_key,
             request.repo_id_or_name,
@@ -162,9 +91,9 @@ impl Server {
     #[tool(description = "Get details for a specific pull request.")]
     async fn get_pull_request_details(
         &self,
-        #[tool(aggr)] request: GetPullRequestDetailsRequest, // Changed from git_tools
+        #[tool(aggr)] request: GetPullRequestDetailsRequest,
     ) -> Result<CallToolResult, McpError> {
-        let pull_request = git::get_pull_request_details_impl(
+        let pull_request = git::bridge::get_pull_request_details_impl(
             self.client.clone(),
             request.project_id_or_key,
             request.repo_id_or_name,
@@ -181,7 +110,7 @@ impl Server {
         &self,
         #[tool(aggr)] GetIssueDetailsRequest { issue_key }: GetIssueDetailsRequest,
     ) -> Result<CallToolResult, McpError> {
-        let issue = issue::get_issue_details(self.client.clone(), issue_key).await?;
+        let issue = issue::bridge::get_issue_details(self.client.clone(), issue_key).await?;
         Ok(CallToolResult::success(vec![Content::json(issue).unwrap()]))
     }
 
@@ -191,7 +120,8 @@ impl Server {
         &self,
         #[tool(aggr)] GetDocumentDetailsRequest { document_id }: GetDocumentDetailsRequest,
     ) -> Result<CallToolResult, McpError> {
-        let document = document::get_document_details(self.client.clone(), document_id).await?;
+        let document =
+            document::bridge::get_document_details(self.client.clone(), document_id).await?;
         Ok(CallToolResult::success(vec![
             Content::json(document).unwrap(),
         ]))
@@ -206,7 +136,8 @@ impl Server {
         }: GetVersionMilestoneListRequest,
     ) -> Result<CallToolResult, McpError> {
         let milestones =
-            issue::get_version_milestone_list_impl(self.client.clone(), project_id_or_key).await?;
+            issue::bridge::get_version_milestone_list_impl(self.client.clone(), project_id_or_key)
+                .await?;
         Ok(CallToolResult::success(vec![
             Content::json(milestones).unwrap(),
         ]))
@@ -220,7 +151,7 @@ impl Server {
             milestone_name,
         }: GetIssuesByMilestoneNameRequest,
     ) -> Result<CallToolResult, McpError> {
-        let issues = issue::get_issues_by_milestone_name_impl(
+        let issues = issue::bridge::get_issues_by_milestone_name_impl(
             self.client.clone(),
             project_id_or_key,
             milestone_name,
@@ -237,7 +168,7 @@ impl Server {
         &self,
         #[tool(aggr)] req: UpdateIssueRequest,
     ) -> Result<CallToolResult, McpError> {
-        let updated_issue = issue::update_issue_impl(
+        let updated_issue = issue::bridge::update_issue_impl(
             self.client.clone(),
             req.issue_id_or_key,
             req.summary,
