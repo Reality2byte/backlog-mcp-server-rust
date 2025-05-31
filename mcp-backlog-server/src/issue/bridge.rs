@@ -58,8 +58,8 @@ pub async fn get_issues_by_milestone_name(
     let params = GetIssueListParamsBuilder::default()
         .project_id(vec![milestone.project_id])
         .milestone_id(vec![milestone.id])
-        .build()
-        .map_err(|e| McpError::Parameter(e.to_string()))?;
+        .build()?;
+
     let issues = client_guard.issue().get_issue_list(params).await?;
     Ok(issues)
 }
@@ -104,9 +104,7 @@ pub async fn update_issue_impl(
     if let Some(d) = req.description {
         params_builder.description(d);
     }
-    let update_params = params_builder
-        .build()
-        .map_err(|e| McpError::Parameter(e.to_string()))?;
+    let update_params = params_builder.build()?;
 
     let updated_issue = client_guard
         .issue()

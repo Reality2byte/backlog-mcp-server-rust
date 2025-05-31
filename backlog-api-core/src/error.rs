@@ -1,4 +1,6 @@
+use derive_builder::UninitializedFieldError;
 use thiserror::Error;
+
 // Add use statement for backlog_core so its Error type can be referenced.
 // use backlog_core; // This line is redundant as backlog_core::Error is used with its full path.
 
@@ -15,6 +17,15 @@ pub enum Error {
 
     #[error("Validation error: {0}")]
     Validation(#[from] backlog_core::Error),
+
+    #[error("Invalid build parameter error: {0}")]
+    InvalidBuildParameter(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+impl From<UninitializedFieldError> for Error {
+    fn from(err: UninitializedFieldError) -> Self {
+        Self::InvalidBuildParameter(err.to_string())
+    }
+}

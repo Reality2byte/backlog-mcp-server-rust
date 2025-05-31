@@ -1,4 +1,5 @@
 use crate::models::parent_child::ParentChildCondition;
+use backlog_api_core::Error as ApiError;
 use backlog_core::identifier::{
     AttachmentId, CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ProjectId,
     ResolutionId, StatusId, UserId,
@@ -8,6 +9,7 @@ use derive_builder::Builder;
 
 #[derive(serde::Serialize, Debug, Builder)]
 #[serde(rename_all = "camelCase")]
+#[builder(build_fn(error = "ApiError"))]
 pub struct AddIssueParams {
     #[builder(setter(into))]
     pub project_id: ProjectId,
@@ -44,6 +46,7 @@ pub struct AddIssueParams {
 }
 
 #[derive(Debug, Builder)]
+#[builder(build_fn(error = "ApiError"))]
 pub struct GetIssueListParams {
     #[builder(default, setter(into, strip_option))]
     pub project_id: Option<Vec<ProjectId>>,
@@ -162,7 +165,7 @@ pub type CountIssueParams = GetIssueListParams; // This might need to be a subse
 pub type CountIssueParamsBuilder = GetIssueListParamsBuilder;
 
 #[derive(serde::Serialize, Debug, Builder, Default)]
-#[builder(default)]
+#[builder(default, build_fn(error = "ApiError"))]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateIssueParams {
     #[builder(setter(into, strip_option))]
