@@ -5,12 +5,12 @@ use client::Client; // The generic HTTP client from the `client` crate
 
 /// Provides access to the Git and Pull Request related API functions.
 #[derive(Debug, Clone)]
-pub struct GitHandler {
+pub struct GitApi {
     client: Client,
 }
 
-impl GitHandler {
-    /// Creates a new GitHandler.
+impl GitApi {
+    /// Creates a new GitApi.
     ///
     /// This is typically called by `BacklogApiClient::git()`.
     ///

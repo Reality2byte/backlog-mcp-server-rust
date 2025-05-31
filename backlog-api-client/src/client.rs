@@ -51,7 +51,7 @@ impl BacklogApiClient {
     }
 
     #[cfg(feature = "git")]
-    pub fn git(&self) -> backlog_git::GitHandler {
-        backlog_git::GitHandler::new(self.client.clone())
+    pub fn git(&self) -> backlog_git::GitApi {
+        backlog_git::GitApi::new(self.client.clone())
     }
 }

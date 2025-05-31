@@ -7,5 +7,5 @@ pub mod api;
 pub mod models;
 
 // Re-export key types for easier access by users of this crate.
-pub use api::GitHandler;
+pub use api::GitApi;
 pub use models::{IssueLink, PullRequest, PullRequestStatus, Repository};
