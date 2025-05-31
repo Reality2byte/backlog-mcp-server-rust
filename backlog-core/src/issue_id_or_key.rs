@@ -84,9 +84,18 @@ mod tests {
 
     #[test]
     fn test_issue_id_or_key_from_str_invalid() {
-        assert!(IssueIdOrKey::from_str("INVALID-KEY-FORMAT").is_err());
-        assert!(IssueIdOrKey::from_str("0").is_err()); // Assuming ID 0 is invalid
-        assert!(IssueIdOrKey::from_str("-123").is_err());
+        assert_eq!(
+            IssueIdOrKey::from_str("INVALID-KEY-FORMAT"),
+            Err(Error::InvalidIssueIdOrKey("INVALID-KEY-FORMAT".to_string()))
+        );
+        assert_eq!(
+            IssueIdOrKey::from_str("0"),
+            Err(Error::InvalidIssueIdOrKey("0".to_string()))
+        );
+        assert_eq!(
+            IssueIdOrKey::from_str("-123"),
+            Err(Error::InvalidIssueIdOrKey("-123".to_string()))
+        );
     }
 
     #[test]

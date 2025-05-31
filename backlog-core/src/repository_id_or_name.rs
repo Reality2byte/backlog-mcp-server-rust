@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;
 
-/// Represents either a RepositoryId or a RepositoryName, allowing for flexible identification of repositories.
+/// A type of string represents either a RepositoryId or a RepositoryName,
+/// allowing for flexible identification of repositories.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum RepositoryIdOrName {
