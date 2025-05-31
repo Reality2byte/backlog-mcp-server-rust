@@ -21,35 +21,35 @@
     -   Dependent crates (`backlog-core`) updated for `JsonSchema` support.
 -   **CLI Issue Commands Implemented**: Added `issue list` and `issue show` commands to the `blg` CLI tool.
 -   **`mcp-backlog-server` Refactored**: Tool helper modules (`document.rs`, `issue.rs`, `git_tools.rs` renamed to `git.rs`) moved into a new `src/tools/` subdirectory for better organization.
+-   **Comprehensive Error Handling & Dependency Refactoring ("100-Point Plan")**:
+    -   Unified `backlog_api_core::Error` (`ApiError`) to wrap `backlog_core::Error` (validation errors), making `ApiError` the primary error type for `backlog-api-client`.
+    -   Standardized API handlers in sub-crates to return `Result<_, ApiError>`.
+    -   Refactored `mcp-backlog-server`'s error handling to align with the unified `ApiError`.
+    -   Expanded type re-exports from `backlog-api-client` (e.g., `BacklogCoreError`, request builders, specific ID types).
+    -   Updated `mcp-backlog-server` and `blg` CLI to use these re-exported types.
+    -   Removed direct dependencies of `mcp-backlog-server` on `backlog-core`, `backlog-issue`, `backlog-document`, and `backlog-git` in its `Cargo.toml`.
+    -   Verified all changes with `cargo check`, `test`, `clippy`, and `fmt`.
 
 ## What Works
--   The Memory Bank system is established and updated with foundational information about the project.
+-   The Memory Bank system is established and updated.
 -   A baseline understanding of the project's architecture, technology stack, and purpose is documented.
--   The `backlog-api-client` library provides core functionality for Backlog API interaction, now including:
+-   **Unified Error Handling**: The `backlog-api-client` library now provides a more consistent error handling experience, with `backlog_api_core::Error` (`ApiError`) serving as the central error type that wraps various underlying error sources (HTTP, JSON, URL, core type validation).
+-   **Improved API Facade**: `backlog-api-client` acts as a stronger facade, re-exporting a comprehensive set of types (models, IDs, request builders, errors) from underlying crates. This simplifies usage for consumers.
+-   **Simplified Consumer Dependencies**: `mcp-backlog-server` now depends primarily on `backlog-api-client` for Backlog-related functionalities and types, with direct dependencies on sub-crates (`backlog-core`, `backlog-issue`, `backlog-document`, `backlog-git`) removed from its `Cargo.toml`.
+-   The `backlog-api-client` library provides core functionality for Backlog API interaction, including:
     -   Git repository listing and details.
     -   Pull request listing and details.
-    -   Issue listing and details (via `backlog-issue` crate).
--   The `blg` CLI tool provides commands for:
-    -   Listing and showing Git repositories.
-    -   Listing and showing Pull Requests.
-    -   Listing issues with basic filters (project, assignee, status, keyword, count).
-    -   Showing issue details by ID or key.
--   The `mcp-backlog-server` provides MCP tools for:
-    - Issue details (`get_issue_details`)
-    - Document details (`get_document_details`)
-    - Project versions/milestones list (`get_version_milestone_list`)
-    - Issues by milestone name (`get_issues_by_milestone_name`)
-    - Updating issues (`update_issue`) (when `issue_writable` feature is enabled)
-    - Listing Git repositories (`get_repository_list`)
-    - Getting Git repository details (`get_repository_details`)
-    - Listing pull requests (`list_pull_requests`)
-    - Getting pull request details (`get_pull_request_details`)
--   The `mcp-backlog-server` now provides more helpful error messages when a milestone is not found by name, including suggestions for similar names.
--   The `backlog-issue` crate can retrieve a list of versions (milestones) for a project and update issues (when `writable` feature is enabled).
+    -   Issue listing, details, and updates (via `backlog-issue` crate, exposed through `backlog-api-client`).
+    -   Document listing and details.
+    -   Project listing and details.
+    -   Space details.
+    -   User details.
+-   The `blg` CLI tool provides commands for various operations, using the improved `backlog-api-client` library.
+-   The `mcp-backlog-server` provides a suite of MCP tools, also leveraging the improved `backlog-api-client`.
 -   The codebase is free of Clippy warnings (when run with `-D warnings`) and consistently formatted.
 
 ## What's Left to Build (for this task)
--   Confirm completion of the "mcp-backlog-server refactoring" task with the user.
+-   This refactoring task is complete. Awaiting next instructions.
 
 ## Known Issues (from initialization process and ongoing work)
 -   The `list_code_definition_names` tool did not find top-level definitions in the `src` directories of several module-specific crates (e.g., `backlog-issue/src`, `backlog-project/src`). This is noted in `techContext.md`.
@@ -117,3 +117,17 @@
     -   Moved `document.rs`, `issue.rs`, and `git_tools.rs` (renamed to `git.rs`) into the `tools/` directory.
     -   Updated `mcp-backlog-server/src/lib.rs` and `mcp-backlog-server/src/server.rs` to use the new module paths.
 -   **Current Task Focus**: Updating Memory Bank to reflect the `mcp-backlog-server` refactoring.
+-   **Error Handling and Dependency Refactoring ("100-Point Plan")**:
+    -   **Goal**: Make `mcp-backlog-server` depend only on `backlog-api-client` for all Backlog-related functionalities and types, removing direct dependencies on other sub-crates (`backlog-core`, `backlog-issue`, etc.).
+    -   **Error Unification**: Decided to enhance `backlog_api_core::Error` (`ApiError`) to wrap `backlog_core::Error` (validation errors). This makes `ApiError` the single, comprehensive error type exposed by `backlog-api-client`.
+        -   Added `Validation(#[from] backlog_core::Error)` variant to `backlog_api_core::Error`.
+        -   Updated `backlog-api-core/Cargo.toml` to depend on `backlog-core`.
+        -   Ensured API handlers in sub-crates return `Result<_, ApiError>`.
+        -   Refactored `mcp-backlog-server/src/error.rs` to remove its `CoreError` variant and rely on `ApiError` for all errors from `backlog-api-client`.
+    -   **Type Re-export Expansion**: Expanded the set of types re-exported by `backlog-api-client/src/lib.rs` to include:
+        - `backlog_core::Error` as `BacklogCoreError`.
+        - Request builders (`GetIssueListParamsBuilder`, `UpdateIssueParamsBuilder`) from `backlog_issue::requests`.
+        - Specific ID types from `backlog_core::identifier` (`ProjectId`, `StatusId`, `UserId`).
+    -   **Consumer Updates**: Modified `use` statements in `mcp-backlog-server` and `blg` (CLI) to source these types from `backlog-api-client`.
+    -   **Dependency Removal**: Updated `mcp-backlog-server/Cargo.toml` to remove direct dependencies on `backlog-core`, `backlog-issue`, `backlog-document`, and `backlog-git`.
+    -   **Verification**: Confirmed all changes with `cargo check`, `test`, `clippy`, and `fmt`.

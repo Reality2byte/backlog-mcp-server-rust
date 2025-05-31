@@ -57,7 +57,8 @@ graph TD
     API_Git --> Core_Types_Models
     API_Core_Util --> Core_Types_Models
     LibClient --> Core_Types_Models
-    MCP_Srv --> Core_Types_Models # For types like IssueIdOrKey
+    API_Core_Util --> Core_Types_Models # backlog-api-core now depends on backlog-core for error wrapping
+    # MCP_Srv no longer directly depends on Core_Types_Models for types; it gets them via LibClient.
 ```
 
 ## Key Crates and Their Roles
@@ -73,7 +74,7 @@ graph TD
     *   Ensures consistency in data representation.
 
 3.  **`backlog-api-core` (crate)**:
-    *   Provides common API-related utilities (e.g., `ApiRateLimit`, `Error`, `Result` types) used by other API-interacting crates.
+    *   Provides common API-related utilities. Its `Error` type (often aliased as `ApiError`) is central to the library's error handling, now capable of wrapping `backlog_core::Error` (validation errors) in addition to HTTP, JSON, and URL errors. Defines the `Result` type used throughout the API client library.
 
 4.  **`backlog-issue`, `backlog-project`, `backlog-space`, `backlog-user`, `backlog-document` (API module crates)**:
     *   Each crate is responsible for a specific domain of the Backlog API.
@@ -87,9 +88,9 @@ graph TD
     *   Depends on `backlog-core` and `client`.
 
 6.  **`backlog-api-client` (crate - library part)**:
-    *   Acts as the main entry point or facade for the Backlog API library.
+    *   Acts as the main entry point or facade for the Backlog API library. It re-exports key data models, ID types, request builders, error types (`ApiError`, `BacklogCoreError`), and API handlers from the underlying crates.
     *   The `BacklogApiClient` struct aggregates or provides accessors for the individual API module clients (e.g., `issue()`, `project()`, `document()`, `git()`).
-    *   Simplifies usage for library consumers.
+    *   Simplifies usage for library consumers by providing a unified API surface.
 
 7.  **`backlog-api-client` (crate - binary `blg`)**:
     *   The command-line interface tool, now using `clap` for argument parsing.
@@ -99,6 +100,7 @@ graph TD
 8.  **`mcp-backlog-server` (crate - binary)**:
     *   Implements an MCP server using the `rmcp` Rust SDK.
     *   Exposes tools (e.g., `get_issue_details`, `get_document_details`, `get_repository_list`) that wrap functionalities of the `backlog-api-client`.
+    *   Primarily depends on `backlog-api-client` for Backlog functionalities and types, minimizing direct dependencies on other `backlog-*` sub-crates.
     *   Configured via environment variables (`BACKLOG_BASE_URL`, `BACKLOG_API_KEY`) passed by the MCP system.
     *   Communicates with MCP clients over stdio.
     *   Tool logic (helper implementations) is organized into modules within a `src/tools/` directory (e.g., `tools/issue.rs`, `tools/document.rs`, `tools/git.rs`), called from methods in `server.rs`.
@@ -117,16 +119,16 @@ graph TD
     -   Foundational: `backlog-core` (Data Models), `backlog-api-core` (API Utilities)
 
 ## Component Relationships
--   `blg` (CLI) depends on `backlog-api-client` (library).
--   `mcp-backlog-server` depends on `rmcp` SDK and `backlog-api-client` (library).
--   `backlog-api-client` (library) depends on API module crates (`backlog-issue`, `backlog-project`, `backlog-document`, `backlog-git`, etc.) and `backlog-core`.
--   API module crates (including `backlog-git`) depend on `client` (for HTTP) and `backlog-core` (for types). `backlog-git` also depends on `backlog-api-core` for error types and `schemars` for MCP schema generation.
--   `client` depends on `backlog-api-core`.
--   Most API-related crates depend on `backlog-core`.
+-   `blg` (CLI) depends on `backlog-api-client` (library) for all Backlog-related types and functionalities.
+-   `mcp-backlog-server` depends on `rmcp` SDK and `backlog-api-client` (library) for all Backlog-related types and functionalities. Direct dependencies on `backlog-core`, `backlog-issue`, `backlog-document`, and `backlog-git` have been removed from `mcp-backlog-server`.
+-   `backlog-api-client` (library) depends on API module crates (`backlog-issue`, `backlog-project`, `backlog-document`, `backlog-git`, etc., as optional features) and directly on `backlog-core` and `backlog-api-core`.
+-   API module crates (e.g., `backlog-issue`, `backlog-git`) depend on `client` (for HTTP), `backlog-core` (for types), and `backlog-api-core` (for `Result` and `ApiError`).
+-   `client` (generic HTTP client) depends on `backlog-api-core` (for `Result` and `ApiError`).
+-   `backlog-api-core` now depends on `backlog-core` to allow `ApiError` to wrap `backlog_core::Error`.
 
 ## Critical Implementation Paths
 -   **Authentication**: Handling API keys/tokens in `client` and `mcp-backlog-server` (via env vars).
 -   **Request/Response Handling**: Serialization/deserialization (`serde`), URL construction, HTTP method mapping in `client` and API module crates.
--   **Error Handling**: Consistent error propagation from HTTP/API calls up to the user/MCP client, using `thiserror` and custom error enums.
+-   **Error Handling**: Unified error propagation. Errors from HTTP (`reqwest`), JSON parsing (`serde_json`), URL parsing (`url`), and core type validation (`backlog_core::Error`) are all converted to or wrapped by `backlog_api_core::Error` (`ApiError`). Consumers of `backlog-api-client` primarily handle `ApiError`.
 -   **MCP Tool Definition**: Correctly defining tool schemas and implementing the `call` logic in `mcp-backlog-server`.
 -   **API Endpoint Coverage**: Systematically implementing methods for Backlog API endpoints.
