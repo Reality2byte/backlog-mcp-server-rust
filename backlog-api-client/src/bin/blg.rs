@@ -1,8 +1,7 @@
 use backlog_api_client::{
-    GetIssueListParamsBuilder, IssueIdOrKey, ProjectIdOrKey, RepositoryIdOrName,
-    client::BacklogApiClient,
+    GetIssueListParamsBuilder, IssueIdOrKey, ProjectId, ProjectIdOrKey, RepositoryIdOrName,
+    StatusId, UserId, client::BacklogApiClient,
 };
-use backlog_core::identifier::{ProjectId, StatusId, UserId};
 use clap::Parser;
 use std::env;
 

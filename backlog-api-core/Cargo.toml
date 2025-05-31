@@ -10,3 +10,4 @@ reqwest = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 url = { workspace = true }
+backlog-core = { path = "../backlog-core" }

@@ -2,6 +2,7 @@ pub mod client;
 pub use backlog_api_core::Error as ApiError;
 
 // Core types (from backlog_core)
+pub use backlog_core::identifier::{ProjectId, StatusId, UserId};
 pub use backlog_core::{
     DocumentId,
     Error as BacklogCoreError,

@@ -146,6 +146,7 @@ dependencies = [
 name = "backlog-api-core"
 version = "0.1.0"
 dependencies = [
+ "backlog-core",
  "reqwest",
  "serde",
  "serde_json",
@@ -1091,8 +1092,6 @@ name = "mcp-backlog-server"
 version = "0.1.0"
 dependencies = [
  "backlog-api-client",
- "backlog-document",
- "backlog-git",
  "rmcp",
  "serde",
  "serde_json",

@@ -1,6 +1,6 @@
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
-    GetIssueListParamsBuilder, Issue, IssueIdOrKey, IssueKey, Milestone, ProjectIdOrKey,
+    ApiError, GetIssueListParamsBuilder, Issue, IssueIdOrKey, IssueKey, Milestone, ProjectIdOrKey,
     UpdateIssueParamsBuilder,
 };
 use std::str::FromStr;
@@ -15,7 +15,7 @@ pub async fn get_issue_details(
     issue_key: String,
 ) -> Result<Issue> {
     let client_guard = client.lock().await;
-    let parsed_issue_key = IssueKey::from_str(issue_key.trim())?;
+    let parsed_issue_key = IssueKey::from_str(issue_key.trim()).map_err(ApiError::from)?;
     let issue = client_guard
         .issue()
         .get_issue(parsed_issue_key.clone())
@@ -29,7 +29,7 @@ pub async fn get_version_milestone_list_impl(
 ) -> Result<Vec<Milestone>> {
     let client_guard = client.lock().await;
     let proj_id_or_key =
-        ProjectIdOrKey::from_str(project_id_or_key_str.trim()).map_err(McpError::Core)?;
+        ProjectIdOrKey::from_str(project_id_or_key_str.trim()).map_err(ApiError::from)?;
     let versions = client_guard
         .issue()
         .get_version_milestone_list(proj_id_or_key)
@@ -43,7 +43,7 @@ pub async fn get_issues_by_milestone_name_impl(
     milestone_name: String,
 ) -> Result<Vec<Issue>> {
     let proj_id_or_key =
-        ProjectIdOrKey::from_str(project_id_or_key_str.trim()).map_err(McpError::Core)?;
+        ProjectIdOrKey::from_str(project_id_or_key_str.trim()).map_err(ApiError::from)?;
 
     let client_guard = client.lock().await;
 
@@ -97,7 +97,7 @@ pub async fn update_issue_impl(
     let client_guard = client.lock().await;
 
     let issue_id_or_key =
-        IssueIdOrKey::from_str(issue_id_or_key_str.trim()).map_err(McpError::Core)?;
+        IssueIdOrKey::from_str(issue_id_or_key_str.trim()).map_err(ApiError::from)?;
 
     let mut params_builder = UpdateIssueParamsBuilder::default();
     if let Some(s) = summary {
