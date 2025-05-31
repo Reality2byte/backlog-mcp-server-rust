@@ -1,7 +1,7 @@
 use rmcp::schemars;
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-pub struct GetDocumentDetailsRequest {
+pub(crate) struct GetDocumentDetailsRequest {
     #[schemars(description = "The document id to retrieve details for. 
     This should be in the format 32 digit hex string. Ensure there are no leading or trailing spaces.
     When you access https://example.backlog.com/document/PROJECT/0195faa11fcb7aaab4c4005a7ada4b6f,

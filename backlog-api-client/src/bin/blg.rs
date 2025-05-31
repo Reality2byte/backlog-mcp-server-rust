@@ -121,24 +121,19 @@ struct IssueListCliParams {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let base_url =
-        env::var("BACKLOG_BASE_URL").expect("BACKLOG_BASE_URL environment variable is required");
-    let api_key =
-        env::var("BACKLOG_API_KEY").expect("BACKLOG_API_KEY environment variable is required");
+    let base_url = env::var("BACKLOG_BASE_URL")?;
+    let api_key = env::var("BACKLOG_API_KEY")?;
 
-    // Ensure client is built with the 'git' feature for git() method to be available.
-    // This binary should be compiled with `cargo run --bin blg --features git,cli`
     let client = BacklogApiClient::new(&base_url)?.with_api_key(api_key);
 
     let cli = Cli::parse();
-
     match cli.command {
         Commands::Repo(repo_args) => match repo_args.command {
             RepoCommands::List { project_id } => {
                 println!("Listing repositories for project: {}", project_id);
                 let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
                 // Assumes backlog_git is enabled via features for the client build
-                let repos = client.git().list_repositories(proj_id_or_key).await?;
+                let repos = client.git().get_repository_list(proj_id_or_key).await?;
                 // TODO: Pretty print repositories
                 println!("{:?}", repos);
             }
@@ -170,7 +165,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let repo_id_or_name = repo_id.parse::<RepositoryIdOrName>()?;
                 let prs = client
                     .git()
-                    .list_pull_requests(proj_id_or_key, repo_id_or_name)
+                    .get_pull_request_list(proj_id_or_key, repo_id_or_name)
                     .await?;
                 // TODO: Pretty print pull requests
                 println!("{:?}", prs);

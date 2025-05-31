@@ -28,7 +28,7 @@ impl GitApi {
     /// # Arguments
     ///
     /// * `project_id_or_key` - The ID or key of the project.
-    pub async fn list_repositories(
+    pub async fn get_repository_list(
         &self,
         project_id_or_key: impl Into<ProjectIdOrKey>,
     ) -> Result<Vec<Repository>> {
@@ -69,7 +69,7 @@ impl GitApi {
     ///
     /// * `project_id_or_key` - The ID or key of the project.
     /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
-    pub async fn list_pull_requests(
+    pub async fn get_pull_request_list(
         &self,
         project_id_or_key: impl Into<ProjectIdOrKey>,
         repo_id_or_name: impl Into<RepositoryIdOrName>,

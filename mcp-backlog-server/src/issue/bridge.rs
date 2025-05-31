@@ -1,3 +1,9 @@
+use super::request::{
+    GetIssueDetailsRequest, GetIssuesByMilestoneNameRequest, GetVersionMilestoneListRequest,
+    UpdateIssueRequest,
+};
+use crate::error::{Error as McpError, Result};
+use crate::util::{MatchResult, find_by_name_from_array};
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
     GetIssueListParamsBuilder, Issue, IssueIdOrKey, IssueKey, Milestone, ProjectIdOrKey,
@@ -7,14 +13,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use super::request::{
-    GetIssueDetailsRequest, GetIssuesByMilestoneNameRequest, GetVersionMilestoneListRequest,
-    UpdateIssueRequest,
-};
-use crate::error::{Error as McpError, Result};
-use crate::util::{MatchResult, find_by_name_from_array};
-
-pub async fn get_issue_details(
+pub(crate) async fn get_issue_details(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetIssueDetailsRequest,
 ) -> Result<Issue> {
@@ -27,7 +26,7 @@ pub async fn get_issue_details(
     Ok(issue)
 }
 
-pub async fn get_version_milestone_list(
+pub(crate) async fn get_version_milestone_list(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetVersionMilestoneListRequest,
 ) -> Result<Vec<Milestone>> {
@@ -40,7 +39,7 @@ pub async fn get_version_milestone_list(
     Ok(versions)
 }
 
-pub async fn get_issues_by_milestone_name(
+pub(crate) async fn get_issues_by_milestone_name(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetIssuesByMilestoneNameRequest,
 ) -> Result<Vec<Issue>> {
@@ -85,7 +84,7 @@ fn find_milestone_by_name(
 }
 
 #[cfg(feature = "issue_writable")]
-pub async fn update_issue_impl(
+pub(crate) async fn update_issue_impl(
     client: Arc<Mutex<BacklogApiClient>>,
     req: UpdateIssueRequest,
 ) -> Result<Issue> {
@@ -93,19 +92,10 @@ pub async fn update_issue_impl(
         return Err(McpError::NothingToUpdate);
     }
 
-    let client_guard = client.lock().await;
-
     let issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
+    let update_params = UpdateIssueParamsBuilder::from(req).build()?;
 
-    let mut params_builder = UpdateIssueParamsBuilder::default();
-    if let Some(s) = req.summary {
-        params_builder.summary(s);
-    }
-    if let Some(d) = req.description {
-        params_builder.description(d);
-    }
-    let update_params = params_builder.build()?;
-
+    let client_guard = client.lock().await;
     let updated_issue = client_guard
         .issue()
         .update_issue(issue_id_or_key, &update_params)

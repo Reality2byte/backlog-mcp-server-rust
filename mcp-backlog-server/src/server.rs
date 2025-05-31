@@ -28,17 +28,11 @@ pub struct Server {
 
 type McpResult = Result<CallToolResult, McpError>;
 
-// Request struct for get_repository_list is now in git_tools.rs
-// We need to import it if it's not already covered by `use crate::git_tools;`
-// For clarity, let's assume git_tools::GetRepositoryListRequest will be used directly.
 #[tool(tool_box)]
 impl Server {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        let base_url = env::var("BACKLOG_BASE_URL")
-            .expect("BACKLOG_BASE_URL environment variable is required");
-        let api_key =
-            env::var("BACKLOG_API_KEY").expect("BACKLOG_API_KEY environment variable is required");
-
+        let base_url = env::var("BACKLOG_BASE_URL")?;
+        let api_key = env::var("BACKLOG_API_KEY")?;
         let client = BacklogApiClient::new(&base_url)?.with_api_key(api_key);
         Ok(Self {
             client: Arc::new(Mutex::new(client)),
@@ -51,17 +45,17 @@ impl Server {
         #[tool(aggr)] request: GetRepositoryListRequest,
     ) -> McpResult {
         let repositories =
-            git::bridge::get_repository_list_impl(self.client.clone(), request.project_id_or_key)
+            git::bridge::get_repository_list(self.client.clone(), request.project_id_or_key)
                 .await?;
         Ok(CallToolResult::success(vec![Content::json(repositories)?]))
     }
 
     #[tool(description = "Get details for a specific Git repository.")]
-    async fn get_repository_details(
+    async fn get_repository(
         &self,
         #[tool(aggr)] request: GetRepositoryDetailsRequest,
     ) -> McpResult {
-        let repository = git::bridge::get_repository_details_impl(
+        let repository = git::bridge::get_repository(
             self.client.clone(),
             request.project_id_or_key,
             request.repo_id_or_name,
@@ -71,11 +65,11 @@ impl Server {
     }
 
     #[tool(description = "Get a list of pull requests for a specified repository.")]
-    async fn list_pull_requests(
+    async fn get_pull_request_list(
         &self,
         #[tool(aggr)] request: ListPullRequestsRequest,
     ) -> McpResult {
-        let pull_requests = git::bridge::list_pull_requests_impl(
+        let pull_requests = git::bridge::get_pull_request_list(
             self.client.clone(),
             request.project_id_or_key,
             request.repo_id_or_name,
@@ -85,11 +79,11 @@ impl Server {
     }
 
     #[tool(description = "Get details for a specific pull request.")]
-    async fn get_pull_request_details(
+    async fn get_pull_request(
         &self,
         #[tool(aggr)] request: GetPullRequestDetailsRequest,
     ) -> McpResult {
-        let pull_request = git::bridge::get_pull_request_details_impl(
+        let pull_request = git::bridge::get_pull_request(
             self.client.clone(),
             request.project_id_or_key,
             request.repo_id_or_name,
@@ -100,7 +94,7 @@ impl Server {
     }
 
     #[tool(description = "Get details for a specific Backlog issue.")]
-    async fn get_issue_details(&self, #[tool(aggr)] req: GetIssueDetailsRequest) -> McpResult {
+    async fn get_issue(&self, #[tool(aggr)] req: GetIssueDetailsRequest) -> McpResult {
         let issue = issue::bridge::get_issue_details(self.client.clone(), req).await?;
         Ok(CallToolResult::success(vec![Content::json(issue)?]))
     }

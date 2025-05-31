@@ -1,7 +1,8 @@
+use backlog_api_client::UpdateIssueParamsBuilder;
 use rmcp::schemars;
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-pub struct GetIssueDetailsRequest {
+pub(crate) struct GetIssueDetailsRequest {
     #[schemars(description = "The issue key to retrieve details for. 
     This should be in the format 'PROJECT-123', where 'PROJECT' is the project key and '123' is the issue number. 
     Ensure there are no leading or trailing spaces.")]
@@ -9,7 +10,7 @@ pub struct GetIssueDetailsRequest {
 }
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-pub struct GetVersionMilestoneListRequest {
+pub(crate) struct GetVersionMilestoneListRequest {
     #[schemars(
         description = "The project ID or project key to retrieve versions (milestones) for. 
     Examples: 'MYPROJECTKEY', '123'. 
@@ -19,7 +20,7 @@ pub struct GetVersionMilestoneListRequest {
 }
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-pub struct GetIssuesByMilestoneNameRequest {
+pub(crate) struct GetIssuesByMilestoneNameRequest {
     #[schemars(
         description = "The project ID or project key where the milestone belongs. Examples: 'MYPROJECTKEY', '123'."
     )]
@@ -29,7 +30,7 @@ pub struct GetIssuesByMilestoneNameRequest {
 }
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-pub struct UpdateIssueRequest {
+pub(crate) struct UpdateIssueRequest {
     #[schemars(
         description = "The issue ID or issue key to update. Example: 'MYPROJECTKEY-123' or '12345'."
     )]
@@ -42,4 +43,17 @@ pub struct UpdateIssueRequest {
         description = "The new description for the issue. Set to null or omit to keep unchanged."
     )]
     pub description: Option<String>,
+}
+
+impl From<UpdateIssueRequest> for UpdateIssueParamsBuilder {
+    fn from(req: UpdateIssueRequest) -> Self {
+        let mut builder = UpdateIssueParamsBuilder::default();
+        if let Some(summary) = req.summary {
+            builder.summary(summary);
+        }
+        if let Some(description) = req.description {
+            builder.description(description);
+        }
+        builder
+    }
 }

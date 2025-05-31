@@ -7,7 +7,7 @@ use tokio::sync::Mutex;
 use super::request::GetDocumentDetailsRequest;
 use crate::error::Result;
 
-pub async fn get_document_details(
+pub(crate) async fn get_document_details(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetDocumentDetailsRequest,
 ) -> Result<DocumentDetail> {
