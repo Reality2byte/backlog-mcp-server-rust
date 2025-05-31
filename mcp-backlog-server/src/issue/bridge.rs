@@ -1,6 +1,6 @@
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
-    ApiError, GetIssueListParamsBuilder, Issue, IssueIdOrKey, IssueKey, Milestone, ProjectIdOrKey,
+    GetIssueListParamsBuilder, Issue, IssueIdOrKey, IssueKey, Milestone, ProjectIdOrKey,
     UpdateIssueParamsBuilder,
 };
 use std::str::FromStr;
@@ -19,7 +19,7 @@ pub async fn get_issue_details(
     req: GetIssueDetailsRequest,
 ) -> Result<Issue> {
     let client_guard = client.lock().await;
-    let parsed_issue_key = IssueKey::from_str(req.issue_key.trim()).map_err(ApiError::from)?;
+    let parsed_issue_key = IssueKey::from_str(req.issue_key.trim())?;
     let issue = client_guard
         .issue()
         .get_issue(parsed_issue_key.clone())
@@ -27,13 +27,12 @@ pub async fn get_issue_details(
     Ok(issue)
 }
 
-pub async fn get_version_milestone_list_impl(
+pub async fn get_version_milestone_list(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetVersionMilestoneListRequest,
 ) -> Result<Vec<Milestone>> {
     let client_guard = client.lock().await;
-    let proj_id_or_key =
-        ProjectIdOrKey::from_str(req.project_id_or_key.trim()).map_err(ApiError::from)?;
+    let proj_id_or_key = ProjectIdOrKey::from_str(req.project_id_or_key.trim())?;
     let versions = client_guard
         .issue()
         .get_version_milestone_list(proj_id_or_key)
@@ -41,12 +40,11 @@ pub async fn get_version_milestone_list_impl(
     Ok(versions)
 }
 
-pub async fn get_issues_by_milestone_name_impl(
+pub async fn get_issues_by_milestone_name(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetIssuesByMilestoneNameRequest,
 ) -> Result<Vec<Issue>> {
-    let proj_id_or_key =
-        ProjectIdOrKey::from_str(req.project_id_or_key.trim()).map_err(ApiError::from)?;
+    let proj_id_or_key = ProjectIdOrKey::from_str(req.project_id_or_key.trim())?;
 
     let client_guard = client.lock().await;
 
@@ -97,8 +95,7 @@ pub async fn update_issue_impl(
 
     let client_guard = client.lock().await;
 
-    let issue_id_or_key =
-        IssueIdOrKey::from_str(req.issue_id_or_key.trim()).map_err(ApiError::from)?;
+    let issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
 
     let mut params_builder = UpdateIssueParamsBuilder::default();
     if let Some(s) = req.summary {

@@ -1,6 +1,6 @@
 use crate::error::Result;
 use backlog_api_client::client::BacklogApiClient;
-use backlog_api_client::{ApiError, ProjectIdOrKey, PullRequest, Repository, RepositoryIdOrName};
+use backlog_api_client::{ProjectIdOrKey, PullRequest, Repository, RepositoryIdOrName};
 use std::{str::FromStr, sync::Arc};
 use tokio::sync::Mutex;
 
@@ -9,9 +9,7 @@ pub async fn get_repository_list_impl(
     client: Arc<Mutex<BacklogApiClient>>, // Changed signature
     project_id_or_key: String,
 ) -> Result<Vec<Repository>> {
-    let project_id = project_id_or_key
-        .parse::<ProjectIdOrKey>()
-        .map_err(ApiError::from)?;
+    let project_id = project_id_or_key.parse::<ProjectIdOrKey>()?;
 
     let client_guard = client.lock().await;
     let repositories = client_guard.git().list_repositories(project_id).await?;
@@ -23,11 +21,8 @@ pub async fn get_repository_details_impl(
     project_id_or_key: String,
     repo_id_or_name: String,
 ) -> Result<Repository> {
-    let proj_id_or_key = project_id_or_key
-        .parse::<ProjectIdOrKey>()
-        .map_err(ApiError::from)?;
-    let repo_id_or_name =
-        RepositoryIdOrName::from_str(repo_id_or_name.trim()).map_err(ApiError::from)?;
+    let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+    let repo_id_or_name = RepositoryIdOrName::from_str(repo_id_or_name.trim())?;
 
     let client_guard = client.lock().await; // Added lock
 
@@ -43,11 +38,8 @@ pub async fn list_pull_requests_impl(
     project_id_or_key: String,
     repo_id_or_name: String,
 ) -> Result<Vec<PullRequest>> {
-    let proj_id_or_key = project_id_or_key
-        .parse::<ProjectIdOrKey>()
-        .map_err(ApiError::from)?;
-    let repo_id_or_name =
-        RepositoryIdOrName::from_str(repo_id_or_name.trim()).map_err(ApiError::from)?;
+    let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+    let repo_id_or_name = RepositoryIdOrName::from_str(repo_id_or_name.trim())?;
 
     let client_guard = client.lock().await; // Added lock
     let pull_requests = client_guard
@@ -63,12 +55,8 @@ pub async fn get_pull_request_details_impl(
     repo_id_or_name: String,
     pr_number: u64,
 ) -> Result<PullRequest> {
-    let proj_id_or_key = project_id_or_key
-        .parse::<ProjectIdOrKey>()
-        .map_err(ApiError::from)?;
-
-    let repo_id_or_name =
-        RepositoryIdOrName::from_str(repo_id_or_name.trim()).map_err(ApiError::from)?;
+    let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+    let repo_id_or_name = RepositoryIdOrName::from_str(repo_id_or_name.trim())?;
 
     let client_guard = client.lock().await; // Added lock
     let pull_request = client_guard

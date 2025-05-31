@@ -121,7 +121,7 @@ impl Server {
         #[tool(aggr)] req: GetVersionMilestoneListRequest,
     ) -> McpResult {
         let milestones =
-            issue::bridge::get_version_milestone_list_impl(self.client.clone(), req).await?;
+            issue::bridge::get_version_milestone_list(self.client.clone(), req).await?;
         Ok(CallToolResult::success(vec![Content::json(milestones)?]))
     }
 
@@ -130,8 +130,7 @@ impl Server {
         &self,
         #[tool(aggr)] req: GetIssuesByMilestoneNameRequest,
     ) -> McpResult {
-        let issues =
-            issue::bridge::get_issues_by_milestone_name_impl(self.client.clone(), req).await?;
+        let issues = issue::bridge::get_issues_by_milestone_name(self.client.clone(), req).await?;
         Ok(CallToolResult::success(vec![Content::json(issues)?]))
     }
 

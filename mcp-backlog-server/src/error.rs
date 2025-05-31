@@ -1,5 +1,5 @@
-use backlog_api_client::ApiError;
 use backlog_api_client::ProjectIdOrKey;
+use backlog_api_client::{ApiError, CoreError};
 use rmcp::Error as McpError;
 use thiserror::Error as ThisError;
 
@@ -30,6 +30,12 @@ pub type Result<T> = std::result::Result<T, Error>;
 impl From<ApiError> for Error {
     fn from(err: ApiError) -> Self {
         Error::Api(err)
+    }
+}
+
+impl From<CoreError> for Error {
+    fn from(err: CoreError) -> Self {
+        Error::Api(err.into())
     }
 }
 
