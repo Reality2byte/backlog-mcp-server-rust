@@ -7,15 +7,19 @@ use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
+use super::request::{
+    GetIssueDetailsRequest, GetIssuesByMilestoneNameRequest, GetVersionMilestoneListRequest,
+    UpdateIssueRequest,
+};
 use crate::error::{Error as McpError, Result};
 use crate::util::{MatchResult, find_by_name_from_array};
 
 pub async fn get_issue_details(
     client: Arc<Mutex<BacklogApiClient>>,
-    issue_key: String,
+    req: GetIssueDetailsRequest,
 ) -> Result<Issue> {
     let client_guard = client.lock().await;
-    let parsed_issue_key = IssueKey::from_str(issue_key.trim()).map_err(ApiError::from)?;
+    let parsed_issue_key = IssueKey::from_str(req.issue_key.trim()).map_err(ApiError::from)?;
     let issue = client_guard
         .issue()
         .get_issue(parsed_issue_key.clone())
@@ -25,11 +29,11 @@ pub async fn get_issue_details(
 
 pub async fn get_version_milestone_list_impl(
     client: Arc<Mutex<BacklogApiClient>>,
-    project_id_or_key_str: String,
+    req: GetVersionMilestoneListRequest,
 ) -> Result<Vec<Milestone>> {
     let client_guard = client.lock().await;
     let proj_id_or_key =
-        ProjectIdOrKey::from_str(project_id_or_key_str.trim()).map_err(ApiError::from)?;
+        ProjectIdOrKey::from_str(req.project_id_or_key.trim()).map_err(ApiError::from)?;
     let versions = client_guard
         .issue()
         .get_version_milestone_list(proj_id_or_key)
@@ -39,11 +43,10 @@ pub async fn get_version_milestone_list_impl(
 
 pub async fn get_issues_by_milestone_name_impl(
     client: Arc<Mutex<BacklogApiClient>>,
-    project_id_or_key_str: String,
-    milestone_name: String,
+    req: GetIssuesByMilestoneNameRequest,
 ) -> Result<Vec<Issue>> {
     let proj_id_or_key =
-        ProjectIdOrKey::from_str(project_id_or_key_str.trim()).map_err(ApiError::from)?;
+        ProjectIdOrKey::from_str(req.project_id_or_key.trim()).map_err(ApiError::from)?;
 
     let client_guard = client.lock().await;
 
@@ -53,7 +56,7 @@ pub async fn get_issues_by_milestone_name_impl(
         .await?;
 
     let milestone =
-        find_milestone_by_name(&all_project_milestones, &milestone_name, proj_id_or_key)?;
+        find_milestone_by_name(&all_project_milestones, &req.milestone_name, proj_id_or_key)?;
     let params = GetIssueListParamsBuilder::default()
         .project_id(vec![milestone.project_id])
         .milestone_id(vec![milestone.id])
@@ -86,24 +89,22 @@ fn find_milestone_by_name(
 #[cfg(feature = "issue_writable")]
 pub async fn update_issue_impl(
     client: Arc<Mutex<BacklogApiClient>>,
-    issue_id_or_key_str: String,
-    summary: Option<String>,
-    description: Option<String>,
+    req: UpdateIssueRequest,
 ) -> Result<Issue> {
-    if summary.is_none() && description.is_none() {
+    if req.summary.is_none() && req.description.is_none() {
         return Err(McpError::NothingToUpdate);
     }
 
     let client_guard = client.lock().await;
 
     let issue_id_or_key =
-        IssueIdOrKey::from_str(issue_id_or_key_str.trim()).map_err(ApiError::from)?;
+        IssueIdOrKey::from_str(req.issue_id_or_key.trim()).map_err(ApiError::from)?;
 
     let mut params_builder = UpdateIssueParamsBuilder::default();
-    if let Some(s) = summary {
+    if let Some(s) = req.summary {
         params_builder.summary(s);
     }
-    if let Some(d) = description {
+    if let Some(d) = req.description {
         params_builder.description(d);
     }
     let update_params = params_builder

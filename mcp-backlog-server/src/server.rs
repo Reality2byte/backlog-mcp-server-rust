@@ -26,6 +26,8 @@ pub struct Server {
     client: Arc<Mutex<BacklogApiClient>>,
 }
 
+type McpResult = Result<CallToolResult, McpError>;
+
 // Request struct for get_repository_list is now in git_tools.rs
 // We need to import it if it's not already covered by `use crate::git_tools;`
 // For clarity, let's assume git_tools::GetRepositoryListRequest will be used directly.
@@ -47,52 +49,46 @@ impl Server {
     async fn get_repository_list(
         &self,
         #[tool(aggr)] request: GetRepositoryListRequest,
-    ) -> Result<CallToolResult, McpError> {
+    ) -> McpResult {
         let repositories =
             git::bridge::get_repository_list_impl(self.client.clone(), request.project_id_or_key)
                 .await?;
-        Ok(CallToolResult::success(vec![
-            Content::json(repositories).unwrap(),
-        ]))
+        Ok(CallToolResult::success(vec![Content::json(repositories)?]))
     }
 
     #[tool(description = "Get details for a specific Git repository.")]
     async fn get_repository_details(
         &self,
         #[tool(aggr)] request: GetRepositoryDetailsRequest,
-    ) -> Result<CallToolResult, McpError> {
+    ) -> McpResult {
         let repository = git::bridge::get_repository_details_impl(
             self.client.clone(),
             request.project_id_or_key,
             request.repo_id_or_name,
         )
         .await?;
-        Ok(CallToolResult::success(vec![
-            Content::json(repository).unwrap(),
-        ]))
+        Ok(CallToolResult::success(vec![Content::json(repository)?]))
     }
 
     #[tool(description = "Get a list of pull requests for a specified repository.")]
     async fn list_pull_requests(
         &self,
         #[tool(aggr)] request: ListPullRequestsRequest,
-    ) -> Result<CallToolResult, McpError> {
+    ) -> McpResult {
         let pull_requests = git::bridge::list_pull_requests_impl(
             self.client.clone(),
             request.project_id_or_key,
             request.repo_id_or_name,
         )
         .await?;
-        Ok(CallToolResult::success(vec![
-            Content::json(pull_requests).unwrap(),
-        ]))
+        Ok(CallToolResult::success(vec![Content::json(pull_requests)?]))
     }
 
     #[tool(description = "Get details for a specific pull request.")]
     async fn get_pull_request_details(
         &self,
         #[tool(aggr)] request: GetPullRequestDetailsRequest,
-    ) -> Result<CallToolResult, McpError> {
+    ) -> McpResult {
         let pull_request = git::bridge::get_pull_request_details_impl(
             self.client.clone(),
             request.project_id_or_key,
@@ -100,84 +96,50 @@ impl Server {
             request.pr_number,
         )
         .await?;
-        Ok(CallToolResult::success(vec![
-            Content::json(pull_request).unwrap(),
-        ]))
+        Ok(CallToolResult::success(vec![Content::json(pull_request)?]))
     }
 
     #[tool(description = "Get details for a specific Backlog issue.")]
-    async fn get_issue_details(
-        &self,
-        #[tool(aggr)] GetIssueDetailsRequest { issue_key }: GetIssueDetailsRequest,
-    ) -> Result<CallToolResult, McpError> {
-        let issue = issue::bridge::get_issue_details(self.client.clone(), issue_key).await?;
-        Ok(CallToolResult::success(vec![Content::json(issue).unwrap()]))
+    async fn get_issue_details(&self, #[tool(aggr)] req: GetIssueDetailsRequest) -> McpResult {
+        let issue = issue::bridge::get_issue_details(self.client.clone(), req).await?;
+        Ok(CallToolResult::success(vec![Content::json(issue)?]))
     }
 
     #[tool(description = "Get details for a specific Backlog document.
      This API returns the document details including its title, `plain` as Markdown and `json` as ProseMirror json, and other metadata.")]
     async fn get_document_details(
         &self,
-        #[tool(aggr)] GetDocumentDetailsRequest { document_id }: GetDocumentDetailsRequest,
-    ) -> Result<CallToolResult, McpError> {
-        let document =
-            document::bridge::get_document_details(self.client.clone(), document_id).await?;
-        Ok(CallToolResult::success(vec![
-            Content::json(document).unwrap(),
-        ]))
+        #[tool(aggr)] req: GetDocumentDetailsRequest,
+    ) -> McpResult {
+        let document = document::bridge::get_document_details(self.client.clone(), req).await?;
+        Ok(CallToolResult::success(vec![Content::json(document)?]))
     }
 
     #[tool(description = "Get a list of versions (milestones) for a specified project.")]
     async fn get_version_milestone_list(
         &self,
-        #[tool(aggr)]
-        GetVersionMilestoneListRequest {
-            project_id_or_key,
-        }: GetVersionMilestoneListRequest,
-    ) -> Result<CallToolResult, McpError> {
+        #[tool(aggr)] req: GetVersionMilestoneListRequest,
+    ) -> McpResult {
         let milestones =
-            issue::bridge::get_version_milestone_list_impl(self.client.clone(), project_id_or_key)
-                .await?;
-        Ok(CallToolResult::success(vec![
-            Content::json(milestones).unwrap(),
-        ]))
+            issue::bridge::get_version_milestone_list_impl(self.client.clone(), req).await?;
+        Ok(CallToolResult::success(vec![Content::json(milestones)?]))
     }
 
     #[tool(description = "Get a list of issues for a specified milestone name within a project.")]
     async fn get_issues_by_milestone_name(
         &self,
-        #[tool(aggr)] GetIssuesByMilestoneNameRequest {
-            project_id_or_key,
-            milestone_name,
-        }: GetIssuesByMilestoneNameRequest,
-    ) -> Result<CallToolResult, McpError> {
-        let issues = issue::bridge::get_issues_by_milestone_name_impl(
-            self.client.clone(),
-            project_id_or_key,
-            milestone_name,
-        )
-        .await?;
-        Ok(CallToolResult::success(vec![
-            Content::json(issues).unwrap(),
-        ]))
+        #[tool(aggr)] req: GetIssuesByMilestoneNameRequest,
+    ) -> McpResult {
+        let issues =
+            issue::bridge::get_issues_by_milestone_name_impl(self.client.clone(), req).await?;
+        Ok(CallToolResult::success(vec![Content::json(issues)?]))
     }
 
     #[cfg(feature = "issue_writable")]
     #[tool(description = "Update the summary and/or description of a Backlog issue.")]
-    async fn update_issue(
-        &self,
-        #[tool(aggr)] req: UpdateIssueRequest,
-    ) -> Result<CallToolResult, McpError> {
-        let updated_issue = issue::bridge::update_issue_impl(
-            self.client.clone(),
-            req.issue_id_or_key,
-            req.summary,
-            req.description,
-        )
-        .await?;
-        Ok(CallToolResult::success(vec![
-            Content::json(updated_issue).unwrap(),
-        ]))
+    async fn update_issue(&self, #[tool(aggr)] req: UpdateIssueRequest) -> McpResult {
+        let updated_issue = issue::bridge::update_issue_impl(self.client.clone(), req).await?;
+        Ok(CallToolResult::success(vec![Content::json(updated_issue)?]))
     }
 }
 
