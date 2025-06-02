@@ -1,25 +1,31 @@
 ## Current Work Focus
--   Completed a significant refactoring of error handling and type re-exports across the workspace.
--   Currently updating the Memory Bank to reflect these architectural improvements.
+-   Updating Memory Bank to reflect new builder pattern convention and ensure all files are up-to-date.
 
 ## Recent Changes
--   **Error Handling and Dependency Refactoring (The "100-Point Plan"):**
-    -   **Unified Error Type**: `backlog-api-core::Error` (aliased as `ApiError` by `backlog-api-client`) was enhanced to wrap `backlog_core::Error` (validation errors for IDs, etc.) as a new `Validation` variant. This makes `ApiError` the primary error type returned by `backlog-api-client` and its API handlers.
-    -   **API Handler Standardization**: Ensured all API handlers (e.g., `IssueApi`, `DocumentApi`, `GitHandler`) consistently return `Result<T, ApiError>`. Internal errors like `backlog_core::Error` are now mapped to `ApiError::Validation`.
-    -   **Consumer Error Handling Simplification**: `mcp-backlog-server`'s local error type (`mcp_backlog_server::error::Error`) was refactored to remove direct handling of `backlog_core::Error`. It now primarily converts `ApiError` (which includes wrapped core errors) into its own error variants.
-    -   **Comprehensive Type Re-exports**: `backlog-api-client/src/lib.rs` was updated to re-export a wider range of types from sub-crates, including:
-        - `backlog_core::Error` as `BacklogCoreError`.
-        - Request builder types like `GetIssueListParamsBuilder` and `UpdateIssueParamsBuilder` from `backlog_issue::requests`.
-        - Specific ID types from `backlog_core::identifier` (e.g., `ProjectId`, `StatusId`, `UserId`).
-    -   **Consumer `use` Statement Updates**: `mcp-backlog-server` and `blg` (CLI tool) were updated to import these types primarily through `backlog-api-client`.
-    -   **Dependency Simplification**: `mcp-backlog-server/Cargo.toml` was modified to remove direct dependencies on `backlog-core`, `backlog-issue`, `backlog-document`, and `backlog-git`. It now relies on `backlog-api-client` for these functionalities, making the sub-crates transitive dependencies.
-    -   **Verification**: All changes were verified with `cargo check`, `cargo test`, `cargo clippy -D warnings`, and `cargo fmt`.
--   **Previous: `mcp-backlog-server` Tool Module Refactoring:**
-    -   Organized tool helper modules into a `tools/` subdirectory within `mcp-backlog-server`.
+-   **Established New Builder Pattern Convention**:
+    -   Adopted the convention to use `#[builder(..., build_fn(error = "ApiError"))]` for request parameter structs using `derive_builder`. This ensures that the `build()` method returns `Result<Self, backlog_api_core::Error>`.
+    -   Verified that `backlog-api-core/src/error.rs` correctly implements `From<derive_builder::UninitializedFieldError>` for `ApiError`. (User confirmed `SetFieldError` conversion is not needed for this project's `derive_builder` version/usage).
+    -   Verified that relevant request parameter structs in `backlog-issue` (e.g., `GetCommentListParams`, `AddIssueParams`, `GetIssueListParams`, `UpdateIssueParams`) adhere to this new convention.
+-   **Previous: Implemented `get_comment_list` API for Issues:**
+    -   Defined new data models (`Comment`, `ChangeLogEntry`, `Star`, `Notification`) in `backlog-issue/src/models/comment.rs`. These models derive `Deserialize`, `Serialize`, `Debug`, `Clone`, `PartialEq`, and conditionally `JsonSchema`.
+    -   Defined request parameters (`GetCommentListParams`, `CommentOrder`) with a builder pattern in `backlog-issue/src/requests/get_comment_list.rs`.
+    -   Added the `get_comment_list` async method to `IssueApi` in `backlog-issue/src/api/mod.rs`.
+    -   Added comprehensive unit tests with mocking for `get_comment_list` in `backlog-issue/src/api/mod.rs`.
+    -   Added Rustdoc comments for all new public types and methods.
+    -   Updated `backlog-api-client/src/lib.rs` to re-export the new comment-related types under the `issue` feature.
+-   **Previous: Workspace-wide Build Fixes & Refinements (necessitated by `get_comment_list` and previous stubbing):**
+    -   Added `schemars` as an optional dependency and feature to `backlog-issue/Cargo.toml` and `backlog-core/Cargo.toml`.
+    -   Updated `User` (in `backlog-core/src/user.rs`), `Role` (in `backlog-core/src/role.rs`), `Language` (in `backlog-core/src/language.rs`), and all ID types (in `backlog-core/src/identifier.rs` via macro) to conditionally derive `JsonSchema` when the `schemars` feature of `backlog-core` is active.
+    -   Corrected the `create_mock_user` test helper in `backlog-issue/src/api/mod.rs` regarding `UserId` type (u32) and the correct variants for `Role` (`Developer`) and `Language` (`Japanese`).
+    -   Corrected the usage of `IssueIdOrKey::Key` and `IssueIdOrKey::Id` variants in `backlog-issue` tests.
+    -   Populated previously stubbed request parameter structs (`GetIssueListParams`, `UpdateIssueParams`) in `backlog-issue/src/requests/mod.rs` with necessary fields to resolve build errors in `blg` (CLI) and `mcp-backlog-server`.
+    -   Implemented `From<GetIssueListParams> for Vec<(String, String)>` in `backlog-issue/src/requests/mod.rs` to correctly serialize query parameters, fixing a failing test.
+    -   Enhanced error handling in `mcp-backlog-server/src/error.rs` to include `From` implementations for `GetIssueListParamsBuilderError` and `UpdateIssueParamsBuilderError` from `backlog-api-client`.
+-   **Previous: Verification**: All changes related to `get_comment_list` were successfully verified with `cargo fmt --all`, `cargo clippy --all-targets --all-features -- -D warnings`, and `cargo test --all-targets --all-features`.
 
 ## Next Steps
--   Finalize Memory Bank updates for the recent refactoring.
--   Await further instructions from the user for the next development task.
+-   Finalize Memory Bank updates for the new builder pattern convention.
+-   Await further instructions from the user.
 
 
 ## Active Decisions & Considerations
@@ -32,6 +38,7 @@
 ## Important Patterns & Preferences
 -   **Centralized Facade (`backlog-api-client`)**: Consumers should primarily interact with `backlog-api-client` rather than directly with sub-crates like `backlog-core`, `backlog-issue`, etc.
 -   **Consistent Error Propagation**: Errors from underlying operations (HTTP, JSON parsing, core type validation) are expected to be propagated or converted into `backlog_api_core::Error` by the `backlog-api-client` library layer.
+-   **Builder Pattern for Request Params**: Request parameter structs using `derive_builder` should specify `#[builder(..., build_fn(error = "ApiError"))]` to ensure builder errors are `backlog_api_core::Error`. This requires `ApiError` to implement `From<derive_builder::UninitializedFieldError>`.
 -   Standard Rust project structure, workspace for multiple crates, feature flags for optionality, `thiserror` for error definitions, and `schemars` for MCP schemas remain key patterns.
 
 ## Learnings & Project Insights

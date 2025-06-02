@@ -76,13 +76,20 @@ graph TD
 3.  **`backlog-api-core` (crate)**:
     *   Provides common API-related utilities. Its `Error` type (often aliased as `ApiError`) is central to the library's error handling, now capable of wrapping `backlog_core::Error` (validation errors) in addition to HTTP, JSON, and URL errors. Defines the `Result` type used throughout the API client library.
 
-4.  **`backlog-issue`, `backlog-project`, `backlog-space`, `backlog-user`, `backlog-document` (API module crates)**:
-    *   Each crate is responsible for a specific domain of the Backlog API.
+4.  **`backlog-issue` (API module crate)**:
+    *   Responsible for the Issue domain of the Backlog API, including issue details, listing, milestones, and comments.
+    *   Defines domain-specific models like `Issue`, `Milestone`, `Comment`, `ChangeLogEntry`, `Star`, `Notification`.
+    *   Defines request parameter structs like `GetIssueListParams`, `UpdateIssueParams`, `GetCommentListParams`.
+    *   Implements API endpoint wrappers in `IssueApi` (e.g., `get_issue`, `get_issue_list`, `update_issue`, `get_comment_list`, `get_version_milestone_list`).
+    *   Depends on `backlog-core` for shared types (e.g., `User`, `IssueIdOrKey`) and `client` for HTTP communication.
+
+5.  **`backlog-project`, `backlog-space`, `backlog-user`, `backlog-document` (other API module crates)**:
+    *   Each crate is responsible for a specific domain of the Backlog API (Projects, Space, Users, Documents respectively).
     *   Define domain-specific request and response structs/models.
     *   Implement API endpoint wrappers/methods using the generic `client` crate.
     *   Depend on `backlog-core` for shared types and `client` for HTTP communication.
 
-5.  **`backlog-git` (API module crate)**:
+6.  **`backlog-git` (API module crate)**:
     *   Responsible for the Git and Pull Request domains of the Backlog API.
     *   Defines domain-specific models (`Repository`, `PullRequest`) and API interaction logic (`GitHandler`).
     *   Depends on `backlog-core` and `client`.
@@ -109,6 +116,7 @@ graph TD
 -   **Workspace Structure**: Manages multiple interdependent crates.
 -   **Facade Pattern**: `backlog-api-client` library simplifies access to API modules.
 -   **Modular Design**: Functionality broken down by Backlog entity into separate crates.
+-   **Builder Pattern for Request Parameters**: `derive_builder` is used for request parameter structs. Conventionally, these are configured with `#[builder(..., build_fn(error = "ApiError"))]` so that their `build()` method returns `Result<Self, backlog_api_core::Error>`.
 -   **Centralized Core Types**: `backlog-core` for common data models.
 -   **MCP Tool Implementation**: In `mcp-backlog-server`, tools are methods on a `Server` struct, using `#[tool(tool_box)]` and `#[tool(aggr)]` attributes from the `rmcp` SDK. Input/output schemas are defined via struct derives (`schemars::JsonSchema`) or `serde_json::json!`.
 -   **Layered Architecture**:

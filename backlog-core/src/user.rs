@@ -2,7 +2,11 @@ use super::{Language, Role};
 use crate::identifier::UserId;
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "schemars")]
+use schemars::JsonSchema;
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct User {
     pub id: UserId,

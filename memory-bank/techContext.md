@@ -5,7 +5,7 @@
 -   **Build System/Package Manager**: Cargo
 
 ## Key Dependencies (versions from workspace `Cargo.toml` where specified)
--   **HTTP Client**: `reqwest` (version 0.12.17, with `json` feature) - For making HTTP requests to the Backlog API.
+-   **HTTP Client**: `reqwest` (version 0.12.18, with `json` feature) - For making HTTP requests to the Backlog API.
 -   **Asynchronous Runtime**: `tokio` (version 1.45, with `full` features) - For managing asynchronous operations.
 -   **Serialization/Deserialization**:
     -   `serde` (version 1.0, with `derive` feature) - Core library for serializing and deserializing Rust data structures.
@@ -15,12 +15,14 @@
 -   **URL Parsing/Manipulation**: `url` (version 2.5) - For handling URLs.
 -   **Regular Expressions**: `regex` (version 1.11) - Potentially used for parsing or validating string patterns.
 -   **Date and Time**: `chrono` (version 0.4.41, with `serde` feature) - For handling date and time values.
--   **Builder Pattern**: `derive_builder` (version 0.20) - For easily creating builder patterns.
+-   **Builder Pattern**: `derive_builder` (version 0.20) - Used for creating builder patterns for request parameter structs.
+    -   Convention: Use `#[builder(..., build_fn(error = "ApiError"))]` to make the `build()` method return `Result<Self, backlog_api_core::Error>`.
+    -   This requires `backlog_api_core::Error` to implement `From<derive_builder::UninitializedFieldError>`. (Note: `SetFieldError` conversion was deemed unnecessary for the current `derive_builder` version/usage in this project).
 -   **CLI Argument Parsing**: `clap` (version 4.5, with `derive` feature) - Used by the `blg` binary in `backlog-api-client` (enabled via `cli` feature).
 -   **MCP SDK**: `rmcp` (git = "https://github.com/modelcontextprotocol/rust-sdk", branch = "main", features = ["transport-io"]) - For building MCP servers (used by `mcp-backlog-server`).
--   **Schema Generation (for MCP tools)**: `schemars` (version 0.8) - Used for generating JSON schemas for tool inputs/outputs.
-    -   `backlog-git` uses `schemars` with the `chrono` feature for its models.
-    -   `backlog-core` uses `schemars` for its core data types like `User`, `UserId`, `Role`, `Language`.
+-   **Schema Generation (for MCP tools)**: `schemars` (version 0.8, typically with `chrono` feature enabled via workspace dependency) - Used for generating JSON schemas for tool inputs/outputs, and for models that might be serialized by MCP tools.
+    -   It's an optional dependency in `backlog-core`, `backlog-issue`, and `backlog-git`, enabled via a `schemars` feature in each of those crates.
+    -   When this feature is active, relevant models (e.g., `User`, `IssueId` in `backlog-core`; `Comment` in `backlog-issue`; `Repository`, `PullRequest` in `backlog-git`) derive `JsonSchema`.
 
 ## Development Setup
 -   **Rust Toolchain**: Requires a Rust installation compatible with Edition 2024.

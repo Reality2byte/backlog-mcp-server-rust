@@ -1,6 +1,10 @@
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "schemars")]
+use schemars::JsonSchema;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
 pub enum Language {
     #[serde(rename = "ja")]
     Japanese,

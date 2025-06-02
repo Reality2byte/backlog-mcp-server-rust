@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "schemars")]
+use schemars::JsonSchema;
+
 pub trait Identifier {
     type Id;
     fn value(&self) -> Self::Id;
@@ -14,6 +17,7 @@ macro_rules! impl_identifier {
     ($($type_name:ident),*) => {
         $(
             #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+            #[cfg_attr(feature = "schemars", derive(JsonSchema))]
             pub struct $type_name(pub u32);
 
             impl $type_name {

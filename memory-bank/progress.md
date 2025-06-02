@@ -29,6 +29,7 @@
     -   Updated `mcp-backlog-server` and `blg` CLI to use these re-exported types.
     -   Removed direct dependencies of `mcp-backlog-server` on `backlog-core`, `backlog-issue`, `backlog-document`, and `backlog-git` in its `Cargo.toml`.
     -   Verified all changes with `cargo check`, `test`, `clippy`, and `fmt`.
+-   **`get_comment_list` API Implemented**: The `get_comment_list` API has been successfully implemented in the `backlog-issue` crate, including models, request parameters, API client method, tests, and documentation. This also involved several workspace-wide fixes for dependencies (`schemars`), type definitions, and error handling in `mcp-backlog-server` to ensure all tests pass.
 
 ## What Works
 -   The Memory Bank system is established and updated.
@@ -39,7 +40,7 @@
 -   The `backlog-api-client` library provides core functionality for Backlog API interaction, including:
     -   Git repository listing and details.
     -   Pull request listing and details.
-    -   Issue listing, details, and updates (via `backlog-issue` crate, exposed through `backlog-api-client`).
+    -   Issue listing, details, updates, and **comment listing** (via `backlog-issue` crate, exposed through `backlog-api-client`).
     -   Document listing and details.
     -   Project listing and details.
     -   Space details.
@@ -49,7 +50,11 @@
 -   The codebase is free of Clippy warnings (when run with `-D warnings`) and consistently formatted.
 
 ## What's Left to Build (for this task)
--   This refactoring task is complete. Awaiting next instructions.
+-   The library implementation for `get_comment_list` is complete.
+-   Potential next steps, if requested:
+    -   Integrate `get_comment_list` into the `blg` CLI tool.
+    -   Integrate `get_comment_list` into the `mcp-backlog-server` as a new tool.
+-   Complete full definitions for stubbed request parameter structs in `backlog-issue/src/requests/mod.rs` (e.g., `AddIssueParams`, `CountIssueParams`, `UpdateIssueParams`, and remaining fields for `GetIssueListParams`).
 
 ## Known Issues (from initialization process and ongoing work)
 -   The `list_code_definition_names` tool did not find top-level definitions in the `src` directories of several module-specific crates (e.g., `backlog-issue/src`, `backlog-project/src`). This is noted in `techContext.md`.
@@ -131,3 +136,9 @@
     -   **Consumer Updates**: Modified `use` statements in `mcp-backlog-server` and `blg` (CLI) to source these types from `backlog-api-client`.
     -   **Dependency Removal**: Updated `mcp-backlog-server/Cargo.toml` to remove direct dependencies on `backlog-core`, `backlog-issue`, `backlog-document`, and `backlog-git`.
     -   **Verification**: Confirmed all changes with `cargo check`, `test`, `clippy`, and `fmt`.
+-   **`get_comment_list` Library Implementation**: User requested to implement issue comment retrieval.
+    -   Defined `Comment` and related models in `backlog-issue`.
+    -   Defined `GetCommentListParams` and `CommentOrder` in `backlog-issue`.
+    -   Implemented `IssueApi::get_comment_list` method and tests.
+    -   Updated `backlog-api-client` to re-export new types.
+    -   Addressed various workspace-wide build issues (Schemars, Serialize, request stubs, error handling) to ensure all checks and tests pass.

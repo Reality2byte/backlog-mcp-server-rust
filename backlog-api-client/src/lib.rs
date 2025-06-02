@@ -24,7 +24,11 @@ pub use backlog_document::{DocumentApi, DocumentDetail};
 #[cfg(feature = "issue")]
 pub use backlog_issue::{
     Issue, IssueApi, Milestone,
-    requests::{GetIssueListParamsBuilder, UpdateIssueParamsBuilder},
+    models::comment::{ChangeLogEntry, Comment, Notification, Star},
+    requests::{
+        GetIssueListParamsBuilder, UpdateIssueParamsBuilder,
+        get_comment_list::{CommentOrder, GetCommentListParams, GetCommentListParamsBuilder},
+    },
 };
 
 // Git module (from backlog_git)

@@ -6,6 +6,7 @@ license.workspace = true
 
 [features]
 writable = [ "client/writable" ]
+schemars = ["dep:schemars"]
 
 [dependencies]
 client = { path = "../client" }
@@ -17,6 +18,7 @@ serde_repr = { workspace = true }
 thiserror = { workspace = true }
 chrono = { workspace = true }
 derive_builder = { workspace = true }
+schemars = { workspace = true, features = ["chrono04"], optional = true }
 
 [dev-dependencies]
 wiremock = "0.6.1"

@@ -6,6 +6,11 @@ use backlog_core::identifier::{
 };
 use chrono::{DateTime, Utc};
 use derive_builder::Builder;
+use serde::Serialize;
+pub mod get_comment_list;
+
+// --- Placeholder definitions for other request parameter structs ---
+// These were likely defined here before and are needed by api/mod.rs
 
 #[derive(serde::Serialize, Debug, Builder)]
 #[serde(rename_all = "camelCase")]
@@ -164,9 +169,9 @@ impl From<GetIssueListParams> for Vec<(String, String)> {
 pub type CountIssueParams = GetIssueListParams; // This might need to be a subset if count doesn't support all list params
 pub type CountIssueParamsBuilder = GetIssueListParamsBuilder;
 
-#[derive(serde::Serialize, Debug, Builder, Default)]
-#[builder(default, build_fn(error = "ApiError"))]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, Default, Builder, Serialize)]
+#[builder(default, setter(strip_option, into))]
+#[builder(build_fn(error = "ApiError"))]
 pub struct UpdateIssueParams {
     #[builder(setter(into, strip_option))]
     pub summary: Option<String>,

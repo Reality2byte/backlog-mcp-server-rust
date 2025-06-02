@@ -2,11 +2,15 @@ use super::Error;
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::convert::TryFrom;
 use std::fmt;
+
+#[cfg(feature = "schemars")]
+use schemars::JsonSchema;
 use std::str::FromStr;
 use std::vec::Vec;
 
 #[repr(i8)]
 #[derive(Eq, PartialEq, Debug, Clone, Serialize_repr, Deserialize_repr)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
 pub enum Role {
     Admin = 1,
     Developer = 2,
