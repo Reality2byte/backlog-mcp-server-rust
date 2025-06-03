@@ -1,8 +1,8 @@
 use crate::models::parent_child::ParentChildCondition;
 use backlog_api_core::Error as ApiError;
 use backlog_core::identifier::{
-    CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ProjectId,
-    ResolutionId, StatusId, UserId,
+    CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ProjectId, ResolutionId, StatusId,
+    UserId,
 };
 use derive_builder::Builder;
 
@@ -121,4 +121,3 @@ impl From<GetIssueListParams> for Vec<(String, String)> {
         seq
     }
 }
-

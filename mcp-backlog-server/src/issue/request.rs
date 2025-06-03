@@ -1,20 +1,21 @@
-use backlog_api_client::UpdateIssueParamsBuilder;
+use backlog_api_client::{
+    CommentOrder, CoreError, GetCommentListParamsBuilder, UpdateIssueParamsBuilder,
+};
 use rmcp::schemars;
+use std::str::FromStr;
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
 pub(crate) struct GetIssueDetailsRequest {
-    #[schemars(description = "The issue key to retrieve details for. 
-    This should be in the format 'PROJECT-123', where 'PROJECT' is the project key and '123' is the issue number. 
-    Ensure there are no leading or trailing spaces.")]
+    #[schemars(
+        description = "The issue key to retrieve details for. \n    This should be in the format 'PROJECT-123', where 'PROJECT' is the project key and '123' is the issue number. \n    Ensure there are no leading or trailing spaces."
+    )]
     pub issue_key: String,
 }
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
 pub(crate) struct GetVersionMilestoneListRequest {
     #[schemars(
-        description = "The project ID or project key to retrieve versions (milestones) for. 
-    Examples: 'MYPROJECTKEY', '123'. 
-    Ensure there are no leading or trailing spaces."
+        description = "The project ID or project key to retrieve versions (milestones) for. \n    Examples: 'MYPROJECTKEY', '123'. \n    Ensure there are no leading or trailing spaces."
     )]
     pub project_id_or_key: String,
 }
@@ -55,5 +56,45 @@ impl From<UpdateIssueRequest> for UpdateIssueParamsBuilder {
             builder.description(description);
         }
         builder
+    }
+}
+
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct GetIssueCommentsRequest {
+    #[schemars(description = "Issue ID or key (e.g., 'PROJECT-123').")]
+    pub issue_id_or_key: String,
+    #[schemars(description = "Min comment ID.")]
+    pub min_id: Option<u64>,
+    #[schemars(description = "Max comment ID.")]
+    pub max_id: Option<u64>,
+    #[schemars(description = "Number of comments to retrieve (1-100).")]
+    pub count: Option<u8>,
+    #[schemars(description = "Sort order: 'asc' or 'desc'.")]
+    pub order: Option<String>,
+}
+
+impl TryFrom<GetIssueCommentsRequest> for GetCommentListParamsBuilder {
+    type Error = CoreError;
+    fn try_from(req: GetIssueCommentsRequest) -> Result<Self, Self::Error> {
+        let mut params_builder = GetCommentListParamsBuilder::default();
+
+        if let Some(min_id) = req.min_id {
+            params_builder.min_id(min_id);
+        }
+        if let Some(max_id) = req.max_id {
+            params_builder.max_id(max_id);
+        }
+        if let Some(count) = req.count {
+            params_builder.count(count);
+        }
+        let parsed_order: Option<CommentOrder> = req
+            .order
+            .as_deref()
+            .map(CommentOrder::from_str)
+            .transpose()?;
+        if let Some(order) = parsed_order {
+            params_builder.order(order);
+        }
+        Ok(params_builder)
     }
 }

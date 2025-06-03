@@ -1,6 +1,6 @@
 use backlog_api_core::Error as ApiError;
 use backlog_core::identifier::{
-    AttachmentId, CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ResolutionId, UserId
+    AttachmentId, CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ResolutionId, UserId,
 };
 use derive_builder::Builder;
 use serde::Serialize;

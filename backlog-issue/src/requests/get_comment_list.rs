@@ -1,7 +1,8 @@
-use backlog_api_core::Error as ApiError; // Added this import
+use backlog_api_core::Error as ApiError;
+use backlog_core::Error as CoreError;
 use derive_builder::Builder;
 use serde::Serialize;
-use std::fmt;
+use std::{fmt, str::FromStr};
 
 /// Specifies the sort order for listing comments.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -18,6 +19,21 @@ impl fmt::Display for CommentOrder {
         match self {
             CommentOrder::Asc => write!(f, "asc"),
             CommentOrder::Desc => write!(f, "desc"),
+        }
+    }
+}
+
+impl FromStr for CommentOrder {
+    type Err = CoreError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "asc" => Ok(CommentOrder::Asc),
+            "desc" => Ok(CommentOrder::Desc),
+            _ => Err(CoreError::InvalidParameter(format!(
+                "Invalid comment order: '{}'. Must be 'asc' or 'desc'.",
+                s
+            ))),
         }
     }
 }

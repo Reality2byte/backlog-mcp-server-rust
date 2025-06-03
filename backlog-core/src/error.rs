@@ -28,6 +28,9 @@ pub enum Error {
 
     #[error("Invalid repository id or name: {0}")]
     InvalidRepositoryIdOrName(String),
+
+    #[error("Invalid parameter: {0}")]
+    InvalidParameter(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

@@ -1,4 +1,4 @@
-use crate::issue::request::UpdateIssueRequest;
+use crate::issue::request::{GetIssueCommentsRequest, UpdateIssueRequest};
 use crate::{
     document::{self, request::GetDocumentDetailsRequest},
     git::{
@@ -16,6 +16,7 @@ use crate::{
     },
 };
 use backlog_api_client::client::BacklogApiClient;
+// use backlog_api_client::Comment; // Removed this line as it caused an unused import warning
 use rmcp::{Error as McpError, model::*, tool};
 use std::env;
 use std::sync::Arc;
@@ -133,6 +134,15 @@ impl Server {
     async fn update_issue(&self, #[tool(aggr)] req: UpdateIssueRequest) -> McpResult {
         let updated_issue = issue::bridge::update_issue_impl(self.client.clone(), req).await?;
         Ok(CallToolResult::success(vec![Content::json(updated_issue)?]))
+    }
+
+    #[tool(
+        name = "get_issue_comments",
+        description = "Gets comments for a specific issue. Takes 'issue_id_or_key' (string, required) and optional 'min_id', 'max_id', 'count', 'order' parameters."
+    )]
+    async fn get_issue_comments(&self, #[tool(aggr)] req: GetIssueCommentsRequest) -> McpResult {
+        let comments = issue::bridge::get_issue_comments_impl(self.client.clone(), req).await?;
+        Ok(CallToolResult::success(vec![Content::json(comments)?]))
     }
 }
 

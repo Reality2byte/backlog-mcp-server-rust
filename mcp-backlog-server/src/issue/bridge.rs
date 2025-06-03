@@ -1,12 +1,23 @@
 use super::request::{
-    GetIssueDetailsRequest, GetIssuesByMilestoneNameRequest, GetVersionMilestoneListRequest,
+    GetIssueCommentsRequest, // Added
+    GetIssueDetailsRequest,
+    GetIssuesByMilestoneNameRequest,
+    GetVersionMilestoneListRequest,
     UpdateIssueRequest,
 };
 use crate::error::{Error as McpError, Result};
 use crate::util::{MatchResult, find_by_name_from_array};
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
-    GetIssueListParamsBuilder, Issue, IssueIdOrKey, IssueKey, Milestone, ProjectIdOrKey,
+    Comment, // Added
+    // Corrected paths for these comment-related types:
+    GetCommentListParamsBuilder,
+    GetIssueListParamsBuilder,
+    Issue,
+    IssueIdOrKey,
+    IssueKey,
+    Milestone,
+    ProjectIdOrKey,
     UpdateIssueParamsBuilder,
 };
 use std::str::FromStr;
@@ -101,4 +112,20 @@ pub(crate) async fn update_issue_impl(
         .update_issue(issue_id_or_key, &update_params)
         .await?;
     Ok(updated_issue)
+}
+
+pub(crate) async fn get_issue_comments_impl(
+    client: Arc<Mutex<BacklogApiClient>>,
+    req: GetIssueCommentsRequest,
+) -> Result<Vec<Comment>> {
+    let parsed_issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
+    let comment_params = GetCommentListParamsBuilder::try_from(req)?.build()?;
+
+    let client_guard = client.lock().await;
+    let comments = client_guard
+        .issue()
+        .get_comment_list(parsed_issue_id_or_key, Some(comment_params))
+        .await?;
+
+    Ok(comments)
 }

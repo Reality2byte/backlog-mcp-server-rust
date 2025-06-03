@@ -30,6 +30,7 @@
     -   Removed direct dependencies of `mcp-backlog-server` on `backlog-core`, `backlog-issue`, `backlog-document`, and `backlog-git` in its `Cargo.toml`.
     -   Verified all changes with `cargo check`, `test`, `clippy`, and `fmt`.
 -   **`get_comment_list` API Implemented**: The `get_comment_list` API has been successfully implemented in the `backlog-issue` crate, including models, request parameters, API client method, tests, and documentation. This also involved several workspace-wide fixes for dependencies (`schemars`), type definitions, and error handling in `mcp-backlog-server` to ensure all tests pass.
+-   **`get_issue_comments` MCP Tool Implemented**: The `get_issue_comments` tool has been successfully implemented in `mcp-backlog-server`, allowing retrieval of comments for a specific issue. This included defining request structs, bridge logic, and server registration. Verified with `cargo build`, `clippy`, and `test`.
 
 ## What Works
 -   The Memory Bank system is established and updated.
@@ -46,14 +47,20 @@
     -   Space details.
     -   User details.
 -   The `blg` CLI tool provides commands for various operations, using the improved `backlog-api-client` library.
--   The `mcp-backlog-server` provides a suite of MCP tools, also leveraging the improved `backlog-api-client`.
--   The codebase is free of Clippy warnings (when run with `-D warnings`) and consistently formatted.
+-   The `mcp-backlog-server` provides a suite of MCP tools, also leveraging the improved `backlog-api-client`, including:
+    -   `get_issue_details`
+    -   `get_document_details`
+    -   `get_version_milestone_list`
+    -   `get_issues_by_milestone_name`
+    -   `update_issue` (if `issue_writable` feature enabled)
+    -   `get_repository_list`, `get_repository_details`, `list_pull_requests`, `get_pull_request_details`
+    -   **`get_issue_comments`** (newly added)
+-   The codebase is free of Clippy warnings (when run with `-D warnings`) and consistently formatted. All tests pass.
 
 ## What's Left to Build (for this task)
--   The library implementation for `get_comment_list` is complete.
+-   The library implementation for `get_comment_list` and the MCP tool `get_issue_comments` are complete.
 -   Potential next steps, if requested:
-    -   Integrate `get_comment_list` into the `blg` CLI tool.
-    -   Integrate `get_comment_list` into the `mcp-backlog-server` as a new tool.
+    -   Integrate `get_issue_comments` (or `get_comment_list` library function) into the `blg` CLI tool.
 -   Complete full definitions for stubbed request parameter structs in `backlog-issue/src/requests/mod.rs` (e.g., `AddIssueParams`, `CountIssueParams`, `UpdateIssueParams`, and remaining fields for `GetIssueListParams`).
 
 ## Known Issues (from initialization process and ongoing work)
@@ -142,3 +149,9 @@
     -   Implemented `IssueApi::get_comment_list` method and tests.
     -   Updated `backlog-api-client` to re-export new types.
     -   Addressed various workspace-wide build issues (Schemars, Serialize, request stubs, error handling) to ensure all checks and tests pass.
+-   **`get_issue_comments` MCP Tool Implementation**: User requested to implement an MCP tool to get issue comments.
+    -   Defined `GetIssueCommentsRequest` in `mcp-backlog-server`.
+    -   Implemented `get_issue_comments_impl` bridge function.
+    -   Registered `get_issue_comments` tool in `mcp-backlog-server`.
+    -   Updated `mcp-backlog-server/README.md`.
+    -   Verified with `cargo build`, `clippy`, and `test`.

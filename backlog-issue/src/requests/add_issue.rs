@@ -1,7 +1,6 @@
 use backlog_api_core::Error as ApiError;
 use backlog_core::identifier::{
-    AttachmentId, CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ProjectId,
-    UserId,
+    AttachmentId, CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ProjectId, UserId,
 };
 use chrono::{DateTime, Utc};
 use derive_builder::Builder;

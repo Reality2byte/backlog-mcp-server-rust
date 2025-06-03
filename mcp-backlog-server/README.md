@@ -27,6 +27,14 @@ The following tools are currently available:
         -   `issue_id_or_key` (Issue ID or issue key, e.g., "MYPROJECTKEY-123", "12345")
         -   `summary` (Optional: New summary)
         -   `description` (Optional: New description)
+-   **`get_issue_comments`**
+    -   Description: Gets comments for a specific issue.
+    -   Input:
+        -   `issue_id_or_key` (string, required): The issue ID or issue key.
+        -   `min_id` (Optional `u64`): Filter comments by minimum ID.
+        -   `max_id` (Optional `u64`): Filter comments by maximum ID.
+        -   `count` (Optional `u8`): Number of comments to retrieve (1-100).
+        -   `order` (Optional `string`): Sort order: "asc" or "desc".
 -   **`get_repository_list`**
     -   Description: Get a list of Git repositories for a specified project.
     -   Input: `project_id_or_key` (Project ID or project key)
@@ -113,4 +121,3 @@ The server will listen for MCP client requests on standard input/output.
       "transportType": "stdio"
     }
   }
-  ```

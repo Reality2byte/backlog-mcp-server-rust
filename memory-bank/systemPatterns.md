@@ -94,19 +94,19 @@ graph TD
     *   Defines domain-specific models (`Repository`, `PullRequest`) and API interaction logic (`GitHandler`).
     *   Depends on `backlog-core` and `client`.
 
-6.  **`backlog-api-client` (crate - library part)**:
+7.  **`backlog-api-client` (crate - library part)**:
     *   Acts as the main entry point or facade for the Backlog API library. It re-exports key data models, ID types, request builders, error types (`ApiError`, `BacklogCoreError`), and API handlers from the underlying crates.
     *   The `BacklogApiClient` struct aggregates or provides accessors for the individual API module clients (e.g., `issue()`, `project()`, `document()`, `git()`).
     *   Simplifies usage for library consumers by providing a unified API surface.
 
-7.  **`backlog-api-client` (crate - binary `blg`)**:
+8.  **`backlog-api-client` (crate - binary `blg`)**:
     *   The command-line interface tool, now using `clap` for argument parsing.
     *   Provides subcommands for various Backlog operations, including Git, PRs, and Issues (e.g., `issue list`, `issue show`).
     *   Uses the `backlog-api-client` library.
 
-8.  **`mcp-backlog-server` (crate - binary)**:
+9.  **`mcp-backlog-server` (crate - binary)**:
     *   Implements an MCP server using the `rmcp` Rust SDK.
-    *   Exposes tools (e.g., `get_issue_details`, `get_document_details`, `get_repository_list`) that wrap functionalities of the `backlog-api-client`.
+    *   Exposes tools (e.g., `get_issue_details`, `get_document_details`, `get_repository_list`, `get_issue_comments`) that wrap functionalities of the `backlog-api-client`.
     *   Primarily depends on `backlog-api-client` for Backlog functionalities and types, minimizing direct dependencies on other `backlog-*` sub-crates.
     *   Configured via environment variables (`BACKLOG_BASE_URL`, `BACKLOG_API_KEY`) passed by the MCP system.
     *   Communicates with MCP clients over stdio.

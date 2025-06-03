@@ -1,7 +1,13 @@
 ## Current Work Focus
--   Updating Memory Bank to reflect new builder pattern convention and ensure all files are up-to-date.
+-   Implemented `get_issue_comments` MCP tool in `mcp-backlog-server`.
 
 ## Recent Changes
+-   **Implemented `get_issue_comments` MCP Tool**:
+    -   Added `GetIssueCommentsRequest` struct (with `issue_id_or_key` and optional pagination/ordering params) to `mcp-backlog-server/src/issue/request.rs`.
+    -   Implemented `get_issue_comments_impl` helper function in `mcp-backlog-server/src/issue/bridge.rs` to call the `backlog-api-client`'s `get_comment_list` method, handling parameter mapping and error conversion.
+    -   Registered `get_issue_comments` as a new tool in `mcp-backlog-server/src/server.rs`.
+    -   Updated `mcp-backlog-server/README.md` to include documentation for the new tool.
+    -   Verified changes with `cargo build --all-features`, `cargo clippy --all-features -- -D warnings`, and `cargo test --all-features --all-targets`.
 -   **Established New Builder Pattern Convention**:
     -   Adopted the convention to use `#[builder(..., build_fn(error = "ApiError"))]` for request parameter structs using `derive_builder`. This ensures that the `build()` method returns `Result<Self, backlog_api_core::Error>`.
     -   Verified that `backlog-api-core/src/error.rs` correctly implements `From<derive_builder::UninitializedFieldError>` for `ApiError`. (User confirmed `SetFieldError` conversion is not needed for this project's `derive_builder` version/usage).
@@ -24,7 +30,7 @@
 -   **Previous: Verification**: All changes related to `get_comment_list` were successfully verified with `cargo fmt --all`, `cargo clippy --all-targets --all-features -- -D warnings`, and `cargo test --all-targets --all-features`.
 
 ## Next Steps
--   Finalize Memory Bank updates for the new builder pattern convention.
+-   Finalize Memory Bank updates for the `get_issue_comments` MCP tool.
 -   Await further instructions from the user.
 
 
