@@ -11,7 +11,10 @@
     -   `serde` (version 1.0, with `derive` feature) - Core library for serializing and deserializing Rust data structures.
     -   `serde_json` (version 1.0) - For JSON-specific serialization/deserialization.
     -   `serde_repr` (version 0.1) - For serializing/deserializing enums as their integer representations (used in `backlog-core`).
--   **Error Handling**: `thiserror` (version 2.0) is used for defining custom error types. The primary error type for the `backlog-api-client` library is `backlog_api_core::Error` (often aliased as `ApiError`), which now unifies various error sources by wrapping validation errors from `backlog_core::Error` in addition to HTTP (`reqwest`), JSON (`serde_json`), and URL (`url`) parsing errors.
+-   **Error Handling**: `thiserror` (version 2.0) is used for defining custom error types. 
+    -   The primary error type for the `backlog-api-client` library is `backlog_api_core::Error` (often aliased as `ApiError`).
+    -   It unifies various error sources: HTTP (`reqwest`), JSON (`serde_json`), URL (`url`) parsing, and validation errors from `backlog_core::Error`.
+    -   It now includes an `HttpStatus` variant to hold structured error details (`BacklogApiErrorEntry`, `BacklogApiErrorResponse`) parsed from non-2xx Backlog API responses by the `client::Client`.
 -   **URL Parsing/Manipulation**: `url` (version 2.5) - For handling URLs.
 -   **Regular Expressions**: `regex` (version 1.11) - Potentially used for parsing or validating string patterns.
 -   **Date and Time**: `chrono` (version 0.4.41, with `serde` feature) - For handling date and time values.

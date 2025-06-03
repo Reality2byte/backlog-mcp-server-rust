@@ -1,54 +1,52 @@
 ## Current Work Focus
--   Implemented `get_issue_comments` MCP tool in `mcp-backlog-server`.
+-   Improved error handling in the Backlog API client (`client` crate) and MCP server (`mcp-backlog-server`) for clearer error reporting, particularly for HTTP errors and JSON parsing issues.
 
 ## Recent Changes
+-   **Improved Error Handling for API Client and MCP Server**:
+    -   Defined `BacklogApiErrorEntry` and `BacklogApiErrorResponse` structs in `backlog-api-core/src/error.rs` to represent structured errors from the Backlog API. Made these structs public and re-exported them from `backlog-api-core/src/lib.rs`.
+    -   Added a new `HttpStatus { status: u16, errors: Vec<BacklogApiErrorEntry>, errors_summary: String }` variant to `backlog_api_core::Error` (`ApiError`) to hold structured Backlog API error details.
+    -   Modified `client/src/client.rs` (`execute_request` function):
+        -   For non-2xx HTTP responses, it now attempts to parse the response body as `BacklogApiErrorResponse`.
+        -   If successful, it returns `ApiError::HttpStatus` with the parsed errors.
+        -   If parsing the error body fails, it currently returns `ApiError::InvalidBuildParameter` with the status and raw error body (this is a temporary fallback, ideally a more specific error variant would be used).
+    -   Updated `mcp-backlog-server/src/error.rs`:
+        -   The `From<Error> for McpError` implementation now specifically handles `ApiError::HttpStatus` to provide a clear message to the MCP user.
+        -   For `ApiError::Json` (which occurs on 2xx responses with unexpected JSON structure), it now generates a more helpful `McpError::internal_error` message, suggesting potential misconfigurations or API changes.
+    -   Verified all changes with `cargo build --all-features`, `cargo clippy --all-features -- -D warnings`, and `cargo test --all-features --all-targets`.
 -   **Implemented `get_issue_comments` MCP Tool**:
-    -   Added `GetIssueCommentsRequest` struct (with `issue_id_or_key` and optional pagination/ordering params) to `mcp-backlog-server/src/issue/request.rs`.
-    -   Implemented `get_issue_comments_impl` helper function in `mcp-backlog-server/src/issue/bridge.rs` to call the `backlog-api-client`'s `get_comment_list` method, handling parameter mapping and error conversion.
+    -   Added `GetIssueCommentsRequest` struct to `mcp-backlog-server/src/issue/request.rs`.
+    -   Implemented `get_issue_comments_impl` helper function in `mcp-backlog-server/src/issue/bridge.rs`.
     -   Registered `get_issue_comments` as a new tool in `mcp-backlog-server/src/server.rs`.
-    -   Updated `mcp-backlog-server/README.md` to include documentation for the new tool.
-    -   Verified changes with `cargo build --all-features`, `cargo clippy --all-features -- -D warnings`, and `cargo test --all-features --all-targets`.
+    -   Updated `mcp-backlog-server/README.md`.
+    -   Verified with `cargo build`, `clippy`, and `test`.
 -   **Established New Builder Pattern Convention**:
-    -   Adopted the convention to use `#[builder(..., build_fn(error = "ApiError"))]` for request parameter structs using `derive_builder`. This ensures that the `build()` method returns `Result<Self, backlog_api_core::Error>`.
-    -   Verified that `backlog-api-core/src/error.rs` correctly implements `From<derive_builder::UninitializedFieldError>` for `ApiError`. (User confirmed `SetFieldError` conversion is not needed for this project's `derive_builder` version/usage).
-    -   Verified that relevant request parameter structs in `backlog-issue` (e.g., `GetCommentListParams`, `AddIssueParams`, `GetIssueListParams`, `UpdateIssueParams`) adhere to this new convention.
--   **Previous: Implemented `get_comment_list` API for Issues:**
-    -   Defined new data models (`Comment`, `ChangeLogEntry`, `Star`, `Notification`) in `backlog-issue/src/models/comment.rs`. These models derive `Deserialize`, `Serialize`, `Debug`, `Clone`, `PartialEq`, and conditionally `JsonSchema`.
-    -   Defined request parameters (`GetCommentListParams`, `CommentOrder`) with a builder pattern in `backlog-issue/src/requests/get_comment_list.rs`.
-    -   Added the `get_comment_list` async method to `IssueApi` in `backlog-issue/src/api/mod.rs`.
-    -   Added comprehensive unit tests with mocking for `get_comment_list` in `backlog-issue/src/api/mod.rs`.
-    -   Added Rustdoc comments for all new public types and methods.
-    -   Updated `backlog-api-client/src/lib.rs` to re-export the new comment-related types under the `issue` feature.
--   **Previous: Workspace-wide Build Fixes & Refinements (necessitated by `get_comment_list` and previous stubbing):**
-    -   Added `schemars` as an optional dependency and feature to `backlog-issue/Cargo.toml` and `backlog-core/Cargo.toml`.
-    -   Updated `User` (in `backlog-core/src/user.rs`), `Role` (in `backlog-core/src/role.rs`), `Language` (in `backlog-core/src/language.rs`), and all ID types (in `backlog-core/src/identifier.rs` via macro) to conditionally derive `JsonSchema` when the `schemars` feature of `backlog-core` is active.
-    -   Corrected the `create_mock_user` test helper in `backlog-issue/src/api/mod.rs` regarding `UserId` type (u32) and the correct variants for `Role` (`Developer`) and `Language` (`Japanese`).
-    -   Corrected the usage of `IssueIdOrKey::Key` and `IssueIdOrKey::Id` variants in `backlog-issue` tests.
-    -   Populated previously stubbed request parameter structs (`GetIssueListParams`, `UpdateIssueParams`) in `backlog-issue/src/requests/mod.rs` with necessary fields to resolve build errors in `blg` (CLI) and `mcp-backlog-server`.
-    -   Implemented `From<GetIssueListParams> for Vec<(String, String)>` in `backlog-issue/src/requests/mod.rs` to correctly serialize query parameters, fixing a failing test.
-    -   Enhanced error handling in `mcp-backlog-server/src/error.rs` to include `From` implementations for `GetIssueListParamsBuilderError` and `UpdateIssueParamsBuilderError` from `backlog-api-client`.
--   **Previous: Verification**: All changes related to `get_comment_list` were successfully verified with `cargo fmt --all`, `cargo clippy --all-targets --all-features -- -D warnings`, and `cargo test --all-targets --all-features`.
+    -   Adopted `#[builder(..., build_fn(error = "ApiError"))]` for request parameter structs.
+-   **Previous: Implemented `get_comment_list` API for Issues.**
+-   **Previous: Workspace-wide Build Fixes & Refinements.**
+-   **Previous: Verification of `get_comment_list` library changes.**
 
 ## Next Steps
--   Finalize Memory Bank updates for the `get_issue_comments` MCP tool.
+-   Finalize Memory Bank updates for the error handling improvements.
 -   Await further instructions from the user.
 
-
 ## Active Decisions & Considerations
--   **Facade Pattern Strength**: The `backlog-api-client` crate is increasingly acting as the primary facade for all Backlog API interactions, providing a unified interface for types and errors. This simplifies its usage for consumers like `mcp-backlog-server` and `blg`.
--   **Unified Error Handling**: The decision to make `backlog-api-core::Error` (`ApiError`) the central error type, capable of wrapping lower-level errors like `backlog_core::Error`, promotes consistency in error handling for library consumers.
--   **Minimized Direct Dependencies for Consumers**: `mcp-backlog-server` now has significantly fewer direct dependencies on individual `backlog-*` sub-crates, relying on `backlog-api-client` to expose the necessary API surface. This improves modularity and reduces coupling for consumers.
--   The project remains a Rust workspace with a modular design, but the interaction patterns between the facade (`backlog-api-client`) and its consumers are now cleaner.
--   CLI tool (`blg`) uses `clap`. MCP server tools in `mcp-backlog-server` are organized under `src/tools/`.
+-   **Facade Pattern Strength**: The `backlog-api-client` crate is increasingly acting as the primary facade.
+-   **Unified Error Handling**: `backlog-api-core::Error` (`ApiError`) is the central error type. The recent changes enhance this by providing more structured information for HTTP errors from the Backlog API (via `ApiError::HttpStatus`) and improving how these are reported to end-users (especially MCP users).
+-   **Minimized Direct Dependencies for Consumers**: `mcp-backlog-server` relies on `backlog-api-client`.
+-   The project remains a Rust workspace with a modular design.
+-   CLI tool (`blg`) uses `clap`. MCP server tools in `mcp-backlog-server` are organized.
 
 ## Important Patterns & Preferences
--   **Centralized Facade (`backlog-api-client`)**: Consumers should primarily interact with `backlog-api-client` rather than directly with sub-crates like `backlog-core`, `backlog-issue`, etc.
--   **Consistent Error Propagation**: Errors from underlying operations (HTTP, JSON parsing, core type validation) are expected to be propagated or converted into `backlog_api_core::Error` by the `backlog-api-client` library layer.
--   **Builder Pattern for Request Params**: Request parameter structs using `derive_builder` should specify `#[builder(..., build_fn(error = "ApiError"))]` to ensure builder errors are `backlog_api_core::Error`. This requires `ApiError` to implement `From<derive_builder::UninitializedFieldError>`.
--   Standard Rust project structure, workspace for multiple crates, feature flags for optionality, `thiserror` for error definitions, and `schemars` for MCP schemas remain key patterns.
+-   **Centralized Facade (`backlog-api-client`)**.
+-   **Consistent Error Propagation**: Errors are propagated as `ApiError`. Non-2xx HTTP responses from Backlog are now parsed for detailed error messages and wrapped in `ApiError::HttpStatus`. JSON parsing errors on successful (2xx) responses are wrapped in `ApiError::Json`.
+-   **Builder Pattern for Request Params**: Use `#[builder(..., build_fn(error = "ApiError"))]`.
+-   Standard Rust project structure, workspace, feature flags, `thiserror`, `schemars`.
 
 ## Learnings & Project Insights
--   Refactoring to a stronger facade pattern significantly cleans up consumer dependencies and simplifies their `use` statements and error handling logic.
--   Unifying error types requires careful consideration of how different error sources (validation, HTTP, etc.) are represented and converted, but leads to a more ergonomic API for the library user.
--   The `#[from]` attribute in `thiserror` is very powerful for creating ergonomic error conversions.
--   Iterative refinement of `Cargo.toml` dependencies and `use` statements, guided by compiler and Clippy feedback, is effective for achieving cleaner crate linkage.
+-   Clearer error messages are crucial, especially when distinguishing between client-side misconfiguration (e.g., wrong API key/URL) and server-side API issues or unexpected successful responses.
+-   Parsing specific error structures from API responses (like Backlog's `errors` array) significantly improves debuggability over generic HTTP status errors.
+-   The `Display` implementation of error enums, and how they are converted for final user presentation (e.g., to `McpError`), directly impacts user experience when errors occur.
+-   Refactoring to a stronger facade pattern significantly cleans up consumer dependencies.
+-   Unifying error types requires careful consideration.
+-   The `#[from]` attribute in `thiserror` is very powerful.
+-   Iterative refinement of dependencies and `use` statements is effective.

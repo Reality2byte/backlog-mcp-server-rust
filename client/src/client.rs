@@ -1,4 +1,4 @@
-use backlog_api_core::Result;
+use backlog_api_core::{Result, Error as ApiError, BacklogApiErrorResponse}; // Added ApiError, BacklogApiErrorResponse
 use url::Url;
 
 #[derive(Debug, Clone)]
@@ -115,9 +115,47 @@ impl Client {
         &self,
         request: reqwest::Request,
     ) -> Result<T> {
-        let response = self.client.execute(request).await?;
-        let json = response.json::<serde_json::Value>().await?;
-        let entity = serde_json::from_value(json)?;
+        let response = self.client.execute(request).await?; // Returns ApiError::Http on reqwest error
+
+        if !response.status().is_success() {
+            let status = response.status().as_u16();
+            let error_body_text = response.text().await.unwrap_or_else(|e| format!("Failed to read error body: {}", e));
+            
+            // Attempt to parse as BacklogApiErrorResponse
+            match serde_json::from_str::<BacklogApiErrorResponse>(&error_body_text) {
+                Ok(parsed_errors) => {
+                    let summary = parsed_errors.errors.iter()
+                        .map(|e| e.message.clone())
+                        .collect::<Vec<String>>()
+                        .join("; ");
+                    return Err(ApiError::HttpStatus {
+                        status,
+                        errors: parsed_errors.errors,
+                        errors_summary: summary,
+                    });
+                }
+                Err(_) => {
+                    // If parsing specific error structure fails, return a more generic error
+                    // including the status and raw body.
+                    // For now, we'll use the existing ApiError::Http, but ideally,
+                    // we'd have a variant like HttpErrorWithBody or enhance ApiError::Http.
+                    // This part needs careful consideration of how reqwest::Error is built for status errors.
+                    // For simplicity, we'll re-create a basic error string.
+                    // A better approach would be to ensure reqwest::Error::from(response) captures this.
+                    // However, reqwest::Error::from_response is not public.
+                    // We can construct a generic error message for now.
+                     let summary = format!("HTTP Error {} with body: {}", status, error_body_text);
+                     // This will be wrapped by ApiError::Http if we make a reqwest::Error
+                     // For now, let's use a generic parameter error or a new dedicated variant if we add one.
+                     // To keep it simple and avoid changing ApiError further in this step:
+                     return Err(ApiError::InvalidBuildParameter(summary)); // Corrected to InvalidBuildParameter
+                }
+            }
+        }
+
+        // Success path
+        let json_value = response.json::<serde_json::Value>().await?; // Can return ApiError::Http or ApiError::Json
+        let entity = serde_json::from_value(json_value)?; // Can return ApiError::Json
         Ok(entity)
     }
 }

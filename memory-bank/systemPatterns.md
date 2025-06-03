@@ -74,7 +74,7 @@ graph TD
     *   Ensures consistency in data representation.
 
 3.  **`backlog-api-core` (crate)**:
-    *   Provides common API-related utilities. Its `Error` type (often aliased as `ApiError`) is central to the library's error handling, now capable of wrapping `backlog_core::Error` (validation errors) in addition to HTTP, JSON, and URL errors. Defines the `Result` type used throughout the API client library.
+    *   Provides common API-related utilities. Its `Error` type (often aliased as `ApiError`) is central to the library's error handling, now capable of wrapping `backlog_core::Error` (validation errors) in addition to HTTP, JSON, and URL errors. Defines the `Result` type used throughout the API client library. It now includes an `HttpStatus` variant to hold structured error details from Backlog API non-2xx responses.
 
 4.  **`backlog-issue` (API module crate)**:
     *   Responsible for the Issue domain of the Backlog API, including issue details, listing, milestones, and comments.
@@ -137,6 +137,11 @@ graph TD
 ## Critical Implementation Paths
 -   **Authentication**: Handling API keys/tokens in `client` and `mcp-backlog-server` (via env vars).
 -   **Request/Response Handling**: Serialization/deserialization (`serde`), URL construction, HTTP method mapping in `client` and API module crates.
--   **Error Handling**: Unified error propagation. Errors from HTTP (`reqwest`), JSON parsing (`serde_json`), URL parsing (`url`), and core type validation (`backlog_core::Error`) are all converted to or wrapped by `backlog_api_core::Error` (`ApiError`). Consumers of `backlog-api-client` primarily handle `ApiError`.
+-   **Error Handling**: Unified error propagation.
+    -   Errors from HTTP (`reqwest`), JSON parsing (`serde_json`), URL parsing (`url`), and core type validation (`backlog_core::Error`) are converted to or wrapped by `backlog_api_core::Error` (`ApiError`).
+    -   Non-2xx HTTP responses from the Backlog API are now parsed by `client::Client` to extract structured error messages into `ApiError::HttpStatus { status, errors, errors_summary }`.
+    -   If a non-2xx response body cannot be parsed as a structured Backlog error, it's currently captured in `ApiError::InvalidBuildParameter` (this is a temporary measure and ideally would be a more specific `ApiError` variant).
+    -   Consumers of `backlog-api-client` primarily handle `ApiError`.
+    -   `mcp-backlog-server` converts `ApiError` variants into user-friendly `McpError` messages.
 -   **MCP Tool Definition**: Correctly defining tool schemas and implementing the `call` logic in `mcp-backlog-server`.
 -   **API Endpoint Coverage**: Systematically implementing methods for Backlog API endpoints.

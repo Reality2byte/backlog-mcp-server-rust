@@ -1,2 +1,2 @@
 mod error;
-pub use error::{Error, Result};
+pub use error::{Error, Result, BacklogApiErrorEntry, BacklogApiErrorResponse};

@@ -31,127 +31,57 @@
     -   Verified all changes with `cargo check`, `test`, `clippy`, and `fmt`.
 -   **`get_comment_list` API Implemented**: The `get_comment_list` API has been successfully implemented in the `backlog-issue` crate, including models, request parameters, API client method, tests, and documentation. This also involved several workspace-wide fixes for dependencies (`schemars`), type definitions, and error handling in `mcp-backlog-server` to ensure all tests pass.
 -   **`get_issue_comments` MCP Tool Implemented**: The `get_issue_comments` tool has been successfully implemented in `mcp-backlog-server`, allowing retrieval of comments for a specific issue. This included defining request structs, bridge logic, and server registration. Verified with `cargo build`, `clippy`, and `test`.
+-   **Error Handling Enhancements**: Improved error handling in `client` crate and `mcp-backlog-server`.
+    -   `backlog-api-core::Error` now includes `HttpStatus` variant to hold structured Backlog API errors.
+    -   `client::Client` updated to parse Backlog API error responses for non-2xx statuses.
+    -   `mcp-backlog-server` error conversion updated for clearer messages.
 
 ## What Works
 -   The Memory Bank system is established and updated.
 -   A baseline understanding of the project's architecture, technology stack, and purpose is documented.
--   **Unified Error Handling**: The `backlog-api-client` library now provides a more consistent error handling experience, with `backlog_api_core::Error` (`ApiError`) serving as the central error type that wraps various underlying error sources (HTTP, JSON, URL, core type validation).
--   **Improved API Facade**: `backlog-api-client` acts as a stronger facade, re-exporting a comprehensive set of types (models, IDs, request builders, errors) from underlying crates. This simplifies usage for consumers.
--   **Simplified Consumer Dependencies**: `mcp-backlog-server` now depends primarily on `backlog-api-client` for Backlog-related functionalities and types, with direct dependencies on sub-crates (`backlog-core`, `backlog-issue`, `backlog-document`, `backlog-git`) removed from its `Cargo.toml`.
+-   **Unified Error Handling**: The `backlog-api-client` library now provides a more consistent error handling experience, with `backlog_api_core::Error` (`ApiError`) serving as the central error type. It now better captures structured API errors (via `HttpStatus` variant) from non-2xx responses, in addition to wrapping HTTP, JSON, URL, and core type validation errors.
+-   **Improved API Facade**: `backlog-api-client` acts as a stronger facade, re-exporting a comprehensive set of types.
+-   **Simplified Consumer Dependencies**: `mcp-backlog-server` now depends primarily on `backlog-api-client`.
 -   The `backlog-api-client` library provides core functionality for Backlog API interaction, including:
     -   Git repository listing and details.
     -   Pull request listing and details.
-    -   Issue listing, details, updates, and **comment listing** (via `backlog-issue` crate, exposed through `backlog-api-client`).
+    -   Issue listing, details, updates, and **comment listing**.
     -   Document listing and details.
     -   Project listing and details.
     -   Space details.
     -   User details.
--   The `blg` CLI tool provides commands for various operations, using the improved `backlog-api-client` library.
--   The `mcp-backlog-server` provides a suite of MCP tools, also leveraging the improved `backlog-api-client`, including:
-    -   `get_issue_details`
-    -   `get_document_details`
-    -   `get_version_milestone_list`
-    -   `get_issues_by_milestone_name`
-    -   `update_issue` (if `issue_writable` feature enabled)
-    -   `get_repository_list`, `get_repository_details`, `list_pull_requests`, `get_pull_request_details`
-    -   **`get_issue_comments`** (newly added)
--   The codebase is free of Clippy warnings (when run with `-D warnings`) and consistently formatted. All tests pass.
+-   The `blg` CLI tool provides commands for various operations.
+-   The `mcp-backlog-server` provides a suite of MCP tools, including:
+    -   `get_issue_details`, `get_document_details`, `get_version_milestone_list`, `get_issues_by_milestone_name`, `update_issue`, `get_repository_list`, `get_repository_details`, `list_pull_requests`, `get_pull_request_details`, `get_issue_comments`.
+    -   Error reporting from these tools to MCP clients is now more informative.
+-   The codebase is free of Clippy warnings and consistently formatted. All tests pass.
 
 ## What's Left to Build (for this task)
--   The library implementation for `get_comment_list` and the MCP tool `get_issue_comments` are complete.
+-   Error handling improvements are complete.
 -   Potential next steps, if requested:
     -   Integrate `get_issue_comments` (or `get_comment_list` library function) into the `blg` CLI tool.
--   Complete full definitions for stubbed request parameter structs in `backlog-issue/src/requests/mod.rs` (e.g., `AddIssueParams`, `CountIssueParams`, `UpdateIssueParams`, and remaining fields for `GetIssueListParams`).
+-   Complete full definitions for stubbed request parameter structs in `backlog-issue/src/requests/mod.rs`.
 
 ## Known Issues (from initialization process and ongoing work)
--   The `list_code_definition_names` tool did not find top-level definitions in the `src` directories of several module-specific crates (e.g., `backlog-issue/src`, `backlog-project/src`). This is noted in `techContext.md`.
--   The `download_attachment` method in `backlog-document/src/api.rs` is a placeholder and requires `client::Client` modification for full functionality.
+-   The `list_code_definition_names` tool did not find top-level definitions in the `src` directories of several module-specific crates.
+-   The `download_attachment` method in `backlog-document/src/api.rs` is a placeholder.
 
 ## Evolution of Project Decisions
 -   **Initial Project Setup**: Focused on creating the Backlog API client library and CLI.
--   **`backlog-document` Crate**: Implemented based on user request for Document API features.
--   **MCP Server Request**: User requested creation of an MCP server with a `get_issue_details` tool.
--   **Discovery of Existing MCP Server**: During a previous "update memory-bank" task, it was discovered that the `mcp-backlog-server` crate with the requested tool (and more) already exists.
--   **Previous Task Focus**: Shifted from creating the MCP server to accurately documenting its existing structure and functionality within the Memory Bank.
--   **`get_version_milestone_list` Implementation**: User requested implementation of `get_version_milestone_list` in `backlog-issue`. This involved:
-    -   Reading API documentation.
-    -   Updating the `Milestone` model in `backlog-issue/src/models/issue.rs` to include `display_order`.
-    -   Adding the `get_version_milestone_list` method and tests to `backlog-issue/src/api/mod.rs`.
-    -   Resolving associated compilation errors.
--   **`get_version_milestone_list` MCP Tool Implementation**: User requested implementation of `get_version_milestone_list` tool in `mcp-backlog-server`. This involved:
-    -   Defining `GetVersionMilestoneListRequest` in `mcp-backlog-server/src/server.rs`.
-    -   Implementing `get_version_milestone_list_impl` helper in `mcp-backlog-server/src/issue.rs`.
-    -   Adding the `get_version_milestone_list` tool method to `Server` in `mcp-backlog-server/src/server.rs`.
--   **`get_issues_by_milestone_name` MCP Tool Implementation**: User requested implementation of this tool. This involved:
-    -   Defining `GetIssuesByMilestoneNameRequest`.
-    -   Implementing `get_issues_by_milestone_name_impl` helper (including logic to find milestone ID by name and then fetch issues).
-    -   Adding the `get_issues_by_milestone_name` tool method.
-    -   Adding `MilestoneNotFoundByName` error and updating `From<Error> for McpError`.
-    -   Adding `From` traits to `ProjectIdOrKey` in `backlog-core` to fix compilation errors.
--   **Error Message Improvement**: User requested more helpful error messages when a milestone is not found by name.
-    -   Updated `From<Error> for McpError` for `MilestoneNotFoundByName` in `mcp-backlog-server/src/error.rs` to suggest using `get_version_milestone_list`.
--   **Suggestion Feature Implementation for `MilestoneNotFoundByName`**: User requested that when a milestone name is not found, the error should include suggestions for similar names.
-    -   Discussed string similarity algorithms (Levenshtein, Jaro-Winkler, N-gram, etc.).
-    -   Decided on a two-step approach: 1. Preprocessing + exact match. 2. If not found, Levenshtein distance (<=2) on preprocessed names, sorted by distance then common prefix length.
-    -   Added `strsim` dependency to `mcp-backlog-server/Cargo.toml`.
-    -   Updated `MilestoneNotFoundByName` error in `mcp-backlog-server/src/error.rs` to include an optional `suggestions: Vec<String>` field and updated the `From<Error> for McpError` implementation to format these suggestions into the error message.
-    -   Modified `get_issues_by_milestone_name_impl` in `mcp-backlog-server/src/issue.rs` to implement the suggestion logic. If a preprocessed exact match is found, issues are fetched. Otherwise, Levenshtein suggestions are generated and returned within the `MilestoneNotFoundByName` error.
--   **`update_issue` MCP Tool Implementation**: User requested implementation of an `update_issue` tool.
-    -   Added `issue_writable` feature to `mcp-backlog-server/Cargo.toml`, linking to `backlog-api-client/issue_writable`.
-    -   Defined `UpdateIssueRequest` (with `issue_id_or_key`, `summary`, `description`) in `mcp-backlog-server/src/server.rs`.
-    -   Added `NothingToUpdate` error to `mcp-backlog-server/src/error.rs`.
-    -   Implemented `update_issue_impl` helper in `mcp-backlog-server/src/issue.rs` (guarded by `issue_writable` feature), which calls the client library and handles the `NothingToUpdate` case.
-    -   Added `update_issue` tool method to `Server` in `mcp-backlog-server/src/server.rs` (guarded by `issue_writable` feature).
-    -   Corrected `Cargo.toml` formatting and ensured compilation with `cargo check --features issue_writable`.
--   **Code Quality Pass**: User requested to fix Clippy warnings and format the code.
-    -   Ran `cargo clippy --all-targets --all-features -- -D warnings`.
-    -   Fixed identified warnings in `backlog-issue/src/api/mod.rs`.
-    -   Ran `cargo fmt --all`.
-    -   Confirmed no further issues with `cargo clippy` and `cargo check`.
--   **Git and Pull Request Feature Implementation**: User requested to add functionality to view Git PRs and files.
-    -   Clarified scope to initially focus on Git repositories and Pull Requests, excluding direct Git file browsing.
-    -   Created `backlog-git` crate with `GitHandler` and API methods for repositories and PRs.
-    -   Defined data models (`Repository`, `PullRequest`, etc.) in `backlog-git`, deriving `Serialize`, `Deserialize`, and `JsonSchema`.
-    -   Updated `backlog-core` (`User`, ID types, enums) to derive `JsonSchema` and added `schemars` dependency.
-    -   Enabled `chrono` feature for `schemars` in `backlog-git` for `DateTime` schema generation.
-    -   Integrated `backlog-git` into `backlog-api-client` library via a `git` feature and `git()` accessor method.
-    -   Refactored `blg` CLI tool to use `clap`, adding `repo` and `pr` subcommands.
-    -   Added new Git/PR tools to `mcp-backlog-server`, including request/response structs and helper implementations in a new `git_tools.rs` module.
-    -   Ensured correct client handling (`Arc<Mutex<...>>`) and error mapping (`McpError`) in MCP server.
--   **CLI Issue Command Implementation**: User requested to add issue-related commands to `blg.rs`.
-    -   Focused on read-only commands (`list`, `show`) initially.
-    -   Added `Issue` subcommand structure to `blg.rs` using `clap`.
-    -   Implemented `issue list` with basic filters (project ID, assignee ID, status ID, keyword, count) by mapping CLI params to `GetIssueListParams`.
-    -   Implemented `issue show` by parsing `IssueIdOrKey`.
-    -   Updated `backlog-api-client/Cargo.toml` to include `issue` in `required-features` for `blg` binary.
--   **`mcp-backlog-server` Refactoring**: User requested to refactor tool modules for better organization.
-    -   Created `mcp-backlog-server/src/tools/` directory and `mcp-backlog-server/src/tools/mod.rs`.
-    -   Moved `document.rs`, `issue.rs`, and `git_tools.rs` (renamed to `git.rs`) into the `tools/` directory.
-    -   Updated `mcp-backlog-server/src/lib.rs` and `mcp-backlog-server/src/server.rs` to use the new module paths.
--   **Current Task Focus**: Updating Memory Bank to reflect the `mcp-backlog-server` refactoring.
--   **Error Handling and Dependency Refactoring ("100-Point Plan")**:
-    -   **Goal**: Make `mcp-backlog-server` depend only on `backlog-api-client` for all Backlog-related functionalities and types, removing direct dependencies on other sub-crates (`backlog-core`, `backlog-issue`, etc.).
-    -   **Error Unification**: Decided to enhance `backlog_api_core::Error` (`ApiError`) to wrap `backlog_core::Error` (validation errors). This makes `ApiError` the single, comprehensive error type exposed by `backlog-api-client`.
-        -   Added `Validation(#[from] backlog_core::Error)` variant to `backlog_api_core::Error`.
-        -   Updated `backlog-api-core/Cargo.toml` to depend on `backlog-core`.
-        -   Ensured API handlers in sub-crates return `Result<_, ApiError>`.
-        -   Refactored `mcp-backlog-server/src/error.rs` to remove its `CoreError` variant and rely on `ApiError` for all errors from `backlog-api-client`.
-    -   **Type Re-export Expansion**: Expanded the set of types re-exported by `backlog-api-client/src/lib.rs` to include:
-        - `backlog_core::Error` as `BacklogCoreError`.
-        - Request builders (`GetIssueListParamsBuilder`, `UpdateIssueParamsBuilder`) from `backlog_issue::requests`.
-        - Specific ID types from `backlog_core::identifier` (`ProjectId`, `StatusId`, `UserId`).
-    -   **Consumer Updates**: Modified `use` statements in `mcp-backlog-server` and `blg` (CLI) to source these types from `backlog-api-client`.
-    -   **Dependency Removal**: Updated `mcp-backlog-server/Cargo.toml` to remove direct dependencies on `backlog-core`, `backlog-issue`, `backlog-document`, and `backlog-git`.
-    -   **Verification**: Confirmed all changes with `cargo check`, `test`, `clippy`, and `fmt`.
+-   (Previous items omitted for brevity - assume they are still relevant)
 -   **`get_comment_list` Library Implementation**: User requested to implement issue comment retrieval.
     -   Defined `Comment` and related models in `backlog-issue`.
     -   Defined `GetCommentListParams` and `CommentOrder` in `backlog-issue`.
     -   Implemented `IssueApi::get_comment_list` method and tests.
     -   Updated `backlog-api-client` to re-export new types.
-    -   Addressed various workspace-wide build issues (Schemars, Serialize, request stubs, error handling) to ensure all checks and tests pass.
+    -   Addressed various workspace-wide build issues.
 -   **`get_issue_comments` MCP Tool Implementation**: User requested to implement an MCP tool to get issue comments.
     -   Defined `GetIssueCommentsRequest` in `mcp-backlog-server`.
     -   Implemented `get_issue_comments_impl` bridge function.
     -   Registered `get_issue_comments` tool in `mcp-backlog-server`.
     -   Updated `mcp-backlog-server/README.md`.
     -   Verified with `cargo build`, `clippy`, and `test`.
+-   **Error Handling Improvement**: Based on user feedback regarding unclear error messages (especially for potential auth/config issues leading to JSON parsing errors), the error handling in the API client and MCP server was enhanced.
+    -   `backlog-api-core::Error` was augmented with an `HttpStatus` variant to store structured error details from Backlog API's non-2xx responses.
+    -   The `client::Client` was updated to attempt parsing these structured errors.
+    -   The `mcp-backlog-server`'s error conversion logic was improved to provide more contextually helpful messages to the MCP client for `ApiError::HttpStatus` and `ApiError::Json` cases.

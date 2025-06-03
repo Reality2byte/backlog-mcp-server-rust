@@ -43,7 +43,29 @@ impl From<Error> for McpError {
         match err {
             Error::Server(msg) => McpError::internal_error(msg, None),
             Error::Parameter(msg) => McpError::invalid_params(msg, None),
-            Error::Api(error) => McpError::invalid_request(error.to_string(), None),
+            Error::Api(api_error) => {
+                // Further match on the specific ApiError variant
+                match api_error {
+                    ApiError::HttpStatus { status, errors_summary, .. } => {
+                        // errors_summary already contains a good summary from ApiError's Display
+                        McpError::invalid_request(
+                            format!("Backlog API Error (HTTP {}): {}", status, errors_summary),
+                            None,
+                        )
+                    }
+                    ApiError::Json(serde_error) => {
+                        let detailed_message = format!(
+                            "Failed to parse a successful response from Backlog API: {}. \
+                            This might indicate an unexpected API format change or a misconfiguration \
+                            (e.g., wrong server URL pointing to a non-Backlog service that returned 200 OK with different JSON). \
+                            Please verify settings.",
+                            serde_error
+                        );
+                        McpError::internal_error(detailed_message, None) // Internal because the server got a 200 OK but couldn't parse it.
+                    }
+                    _ => McpError::invalid_request(api_error.to_string(), None), // Fallback for other ApiError variants
+                }
+            }
             Error::MilestoneNotFoundByName {
                 project_id_or_key,
                 original_name,
