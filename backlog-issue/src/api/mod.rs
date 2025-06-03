@@ -91,30 +91,6 @@ impl IssueApi {
     /// * `params` - Optional parameters to filter and paginate the comment list.
     ///   See [`GetCommentListParams`](crate::requests::get_comment_list::GetCommentListParams) for details.
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use backlog_api_client::BacklogApiClient;
-    /// # use backlog_issue::requests::get_comment_list::{GetCommentListParamsBuilder, CommentOrder};
-    /// # use backlog_core::IssueIdOrKey;
-    /// #
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// # let client = BacklogApiClient::new("YOUR_SPACE_KEY", "YOUR_API_KEY", ".backlog.jp")?;
-    /// let issue_key = IssueIdOrKey::key("PROJECT_KEY-123");
-    /// let params = GetCommentListParamsBuilder::default()
-    ///     .count(10u8)
-    ///     .order(CommentOrder::Asc)
-    ///     .build()?;
-    ///
-    /// let comments = client.issue().get_comment_list(issue_key, Some(params)).await?;
-    ///
-    /// for comment in comments {
-    ///     println!("Comment ID: {}, Content: {:?}", comment.id, comment.content.unwrap_or_default());
-    /// }
-    /// # Ok(())
-    /// # }
-    /// ```
     pub async fn get_comment_list(
         // Removed 'a lifetime from here
         &self,
