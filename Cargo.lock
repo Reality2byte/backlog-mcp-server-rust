@@ -1100,7 +1100,10 @@ name = "mcp-backlog-server"
 version = "0.1.0"
 dependencies = [
  "backlog-api-client",
+ "backlog-core",
+ "backlog-project",
  "rmcp",
+ "schemars 0.9.0",
  "serde",
  "serde_json",
  "strsim",

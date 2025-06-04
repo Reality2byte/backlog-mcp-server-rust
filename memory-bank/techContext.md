@@ -28,6 +28,10 @@
     -   Used for models like `User`, `Comment`, `Repository`, `PullRequest`, and the new `Status` in `backlog-project`.
 -   **Inter-Crate Dependencies**:
     -   `backlog-issue` now depends on `backlog-project` for the `Status` model. This is a new dependency reflecting that project statuses are defined at the project level but used by issues.
+    -   `mcp-backlog-server` specific dependencies and features:
+        -   Its `backlog-api-client` dependency now enables the `project` feature, in addition to `issue`, `document`, and `git`.
+        -   It now has direct dependencies on `backlog-project` (for `ProjectStatus` type) and `backlog-core` (for `ProjectIdOrKey` parsing).
+        -   It now has a direct dependency on `schemars` (with `derive` feature) for `JsonSchema` derivation on its request structs.
 
 ## Development Setup
 -   **Rust Toolchain**: Edition 2024.

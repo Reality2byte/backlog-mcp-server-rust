@@ -18,7 +18,10 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 
 # Dependencies on other workspace crates
-backlog-api-client = { path = "../backlog-api-client", features = ["issue", "document", "git"] }
+backlog-api-client = { path = "../backlog-api-client", features = ["issue", "document", "git", "project"] }
+backlog-project = { path = "../backlog-project" }
+backlog-core = { path = "../backlog-core" } # For ProjectIdOrKey parsing and other core types
+schemars = { workspace = true, features = ["derive"] } # For JsonSchema derive
 strsim = "0.11.1"
 
 [dev-dependencies]

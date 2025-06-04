@@ -1,7 +1,8 @@
 ## Current Work Focus
 -   Implemented "Get Status List of Project" API in `backlog-project`.
--   Refactored `Status` model: defined a complete `Status` in `backlog-project`, and updated `backlog-issue` to use it.
+-   Refactored `Status` model: defined a complete `Status` (`ProjectStatus`) in `backlog-project`, and updated `backlog-issue` to use it.
 -   Commonized test utility `setup_client` into `client::test_utils`.
+-   Implemented `get_project_status_list` MCP tool in `mcp-backlog-server`.
 
 ## Recent Changes
 -   **Implemented "Get Status List of Project" API & Refactored `Status` Model**:
@@ -17,8 +18,18 @@
     -   Removed the re-export of the old `Status` from `backlog-issue/src/lib.rs`.
     -   Implemented `get_status_list` async method in `backlog-project/src/api/mod.rs` within `ProjectApi`.
     -   Added unit tests for `get_status_list` in `backlog-project/src/api/mod.rs`, including success, empty list, and error cases.
-    -   Updated mock JSON in `backlog-issue` tests for `Issue.status` to provide the full `Status` structure, fixing previous test failures.
-    -   Re-exported `Status` from `backlog-api-client/src/lib.rs` under the `project` feature.
+    -   Updated mock JSON in `backlog-issue` tests for `Issue.status` to provide the full `ProjectStatus` structure, fixing previous test failures.
+    -   Re-exported `ProjectStatus` from `backlog-api-client/src/lib.rs` under the `project` feature.
+-   **Implemented `get_project_status_list` MCP Tool**:
+    -   Created a new `project` module in `mcp-backlog-server` (`src/project/mod.rs`).
+    -   Defined `GetProjectStatusListRequest` in `mcp-backlog-server/src/project/request.rs`.
+    -   Implemented `get_project_status_list_tool` function in `mcp-backlog-server/src/project/bridge.rs`.
+    -   Registered the `project` module in `mcp-backlog-server/src/lib.rs`.
+    -   Added the `get_project_status_list` tool method to `Server` in `mcp-backlog-server/src/server.rs`.
+    -   Updated `mcp-backlog-server/Cargo.toml`:
+        -   Enabled `project` feature for `backlog-api-client` dependency.
+        -   Added `backlog-project` and `backlog-core` as direct dependencies.
+        -   Added `schemars` as a direct dependency.
 -   **Commonized Test Utility `setup_client`**:
     -   Added `test-utils` feature to `client/Cargo.toml`, enabling `wiremock` as an optional dependency.
     -   Created `client/src/test_utils.rs` and defined `pub async fn setup_client` there.
@@ -33,13 +44,13 @@
 -   **Established New Builder Pattern Convention** (Previous task).
 
 ## Next Steps
--   Finalize Memory Bank updates for the "Get Status List of Project" feature.
 -   Await further instructions from the user.
 
 ## Active Decisions & Considerations
 -   **Model Ownership and Dependencies**:
-    -   The canonical, complete `Status` model (`Status`) is now defined in `backlog-project` as statuses are project-level configurations.
-    -   `backlog-issue` now depends on `backlog-project` to use this `Status` for the `Issue.status` field. This reflects that an issue's status is one of the project-defined statuses.
+    -   The canonical, complete status model (`ProjectStatus`) is now defined in `backlog-project` as statuses are project-level configurations.
+    -   `backlog-issue` now depends on `backlog-project` to use this `ProjectStatus` for the `Issue.status` field. This reflects that an issue's status is one of the project-defined statuses.
+-   **MCP Server Structure**: New MCP tools related to a specific domain (e.g., "project") are organized into their own module within `mcp-backlog-server` (e.g., `src/project/`). This module typically contains `request.rs` for input structs and `bridge.rs` for the core logic interfacing with `backlog-api-client`.
 -   **Test Utilities**: Common test helpers like `setup_client` are being centralized in the `client` crate's `test_utils` module, exposed via a feature flag, to reduce duplication across test suites in different crates.
 -   **Facade Pattern Strength**: `backlog-api-client` continues to be the primary facade.
 -   **Unified Error Handling**: `backlog_api_core::Error` (`ApiError`) remains central.
@@ -49,9 +60,13 @@
 -   **Consistent Error Propagation**.
 -   **Builder Pattern for Request Params**.
 -   Standard Rust project structure, workspace, feature flags, `thiserror`, `schemars`.
--   **Model Placement**: Shared core types in `backlog-core`. Domain-specific models in their respective crates (e.g., `Status` in `backlog-project`). If a model defined in one domain crate (e.g., `backlog-project::Status`) is needed by another (e.g., `backlog-issue`), a direct dependency is added.
+-   **Model Placement**: Shared core types in `backlog-core`. Domain-specific models in their respective crates (e.g., `ProjectStatus` in `backlog-project`). If a model defined in one domain crate (e.g., `backlog-project::ProjectStatus`) is needed by another (e.g., `backlog-issue`), a direct dependency is added.
+-   **MCP Tool Structure**: Tools in `mcp-backlog-server` are organized by domain into modules (e.g., `issue`, `git`, `project`). Each module typically contains:
+    -   `request.rs`: Defines request structs deriving `Deserialize` and `JsonSchema`.
+    -   `bridge.rs`: Contains functions that take these request structs and the `BacklogApiClient`, perform the API call, and return a `crate::error::Result`.
+    -   The main `server.rs` file then defines tool methods that call these bridge functions.
 
 ## Learnings & Project Insights
 -   Careful consideration of model ownership and inter-crate dependencies is crucial for maintaining a clean architecture, especially when types are shared or referenced across different API domains.
--   API documentation for embedded objects within larger responses (e.g., the `status` object within an `Issue`) must be checked to ensure local model definitions are complete and accurate.
+-   API documentation for embedded objects within larger responses (e.g., the `status` object within an `Issue`) must be checked to ensure local model definitions are complete and accurate. The `ProjectStatus` model is a good example of this.
 -   Centralizing test utilities improves maintainability and consistency of tests across the workspace.

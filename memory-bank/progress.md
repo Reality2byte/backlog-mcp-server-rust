@@ -21,6 +21,13 @@
     -   `setup_client` test helper moved to `client::test_utils` and made available via a `test-utils` feature in the `client` crate.
     -   Dependent crates (`backlog-project`, `backlog-issue`) updated to use this common helper and enable the feature.
 -   **Verification**: All changes successfully verified with `cargo build --all-features`, `cargo clippy --all-features -- -D warnings`, and `cargo test --all-features --all-targets`.
+-   **`get_project_status_list` MCP Tool Implemented**:
+    -   New `project` module created in `mcp-backlog-server`.
+    -   `GetProjectStatusListRequest` defined.
+    -   `get_project_status_list_tool` bridge function implemented.
+    -   Tool registered in `server.rs` and module in `lib.rs`.
+    -   `mcp-backlog-server/Cargo.toml` updated with necessary dependencies and features.
+    -   Verified with `cargo check -p mcp-backlog-server`.
 
 ## What Works
 -   The Memory Bank system is established and updated.
@@ -33,19 +40,19 @@
     -   Pull request listing and details.
     -   Issue listing, details, updates, and comment listing. (Issue status now uses a complete model from `backlog-project`).
     -   Document listing and details.
-    -   Project listing, details, and **project status listing** (newly added).
+    -   Project listing, details, and **project status listing**.
     -   Space details.
     -   User details.
 -   The `blg` CLI tool provides commands for various operations.
--   The `mcp-backlog-server` provides a suite of MCP tools. Error reporting is informative.
+-   The `mcp-backlog-server` provides a suite of MCP tools, including **project status listing**. Error reporting is informative.
 -   The codebase is free of Clippy warnings and consistently formatted. All tests pass.
 -   Test utilities like `setup_client` are now shared from the `client` crate.
 
 ## What's Left to Build (for this task)
 -   "Get Status List of Project" feature implementation is complete.
+-   `get_project_status_list` MCP tool implementation is complete.
 -   Potential next steps, if requested:
     -   Integrate `get_status_list` into the `blg` CLI tool.
-    -   Integrate `get_status_list` into an MCP tool in `mcp-backlog-server`.
 -   Complete full definitions for stubbed request parameter structs in `backlog-issue/src/requests/mod.rs`.
 
 ## Known Issues (from initialization process and ongoing work)
@@ -61,6 +68,11 @@
 -   **"Get Status List of Project" Implementation & `Status` Model Refactor**:
     -   User requested to add "Get Status List of Project" API to `backlog-project`.
     -   Discovered that the existing `Status` model in `backlog-issue` was incomplete compared to API responses for issue details.
-    -   Decided to define a new, complete `Status` model in `backlog-project` to represent project-level status definitions.
-    -   Updated `backlog-issue` to depend on `backlog-project` and use `Status` for the `Issue.status` field, ensuring data consistency.
+    -   Decided to define a new, complete `Status` model (`ProjectStatus`) in `backlog-project` to represent project-level status definitions.
+    -   Updated `backlog-issue` to depend on `backlog-project` and use `ProjectStatus` for the `Issue.status` field, ensuring data consistency.
     -   Commonized the `setup_client` test helper function into `client::test_utils` to be shared across test suites.
+-   **`get_project_status_list` MCP Tool Implementation**:
+    -   User requested to integrate the `get_status_list` library function into `mcp-backlog-server`.
+    -   Created a new `project` module within `mcp-backlog-server` to house project-related tools.
+    -   Implemented the `get_project_status_list` tool following established patterns for request structs, bridge functions, and server registration.
+    -   Ensured error handling aligns with existing server patterns, using `?` for concise error propagation.

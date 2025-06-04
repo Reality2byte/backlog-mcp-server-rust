@@ -1,6 +1,7 @@
 use crate::issue::request::{GetIssueCommentsRequest, UpdateIssueRequest};
 use crate::{
     document::{self, request::GetDocumentDetailsRequest},
+    project::{self, request::GetProjectStatusListRequest},
     git::{
         self,
         request::{
@@ -143,6 +144,16 @@ impl Server {
     async fn get_issue_comments(&self, #[tool(aggr)] req: GetIssueCommentsRequest) -> McpResult {
         let comments = issue::bridge::get_issue_comments_impl(self.client.clone(), req).await?;
         Ok(CallToolResult::success(vec![Content::json(comments)?]))
+    }
+
+    #[tool(description = "Get a list of statuses for a specified project.")]
+    async fn get_project_status_list(
+        &self,
+        #[tool(aggr)] req: GetProjectStatusListRequest,
+    ) -> McpResult {
+        let statuses =
+            project::bridge::get_project_status_list_tool(self.client.clone(), req).await?;
+        Ok(CallToolResult::success(vec![Content::json(statuses)?]))
     }
 }
 

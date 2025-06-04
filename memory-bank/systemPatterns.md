@@ -59,6 +59,31 @@ graph TD
     API_Core_Util --> Core_Types_Models
     LibClient --> Core_Types_Models
     API_Core_Util --> Core_Types_Models # backlog-api-core now depends on backlog-core for error wrapping
+
+    subgraph MCP_Srv_Internals
+        direction LR
+        MCP_Srv_Main["server.rs (Tool Registration)"]
+        MCP_Srv_Issue["issue module (bridge, request)"]
+        MCP_Srv_Git["git module (bridge, request)"]
+        MCP_Srv_Doc["document module (bridge, request)"]
+        MCP_Srv_Proj["project module (bridge, request)"]
+        MCP_Srv_Error["error.rs"]
+        MCP_Srv_Lib["lib.rs (Module Exports)"]
+
+        MCP_Srv --> MCP_Srv_Main
+        MCP_Srv_Main --> MCP_Srv_Issue
+        MCP_Srv_Main --> MCP_Srv_Git
+        MCP_Srv_Main --> MCP_Srv_Doc
+        MCP_Srv_Main --> MCP_Srv_Proj
+        MCP_Srv_Issue --> MCP_Srv_Error
+        MCP_Srv_Git --> MCP_Srv_Error
+        MCP_Srv_Doc --> MCP_Srv_Error
+        MCP_Srv_Proj --> MCP_Srv_Error
+        MCP_Srv_Lib -.-> MCP_Srv_Issue
+        MCP_Srv_Lib -.-> MCP_Srv_Git
+        MCP_Srv_Lib -.-> MCP_Srv_Doc
+        MCP_Srv_Lib -.-> MCP_Srv_Proj
+    end
 ```
 
 ## Key Crates and Their Roles
@@ -98,15 +123,24 @@ graph TD
     *   CLI tool using the library.
 
 9.  **`mcp-backlog-server` (crate - binary)**:
-    *   MCP server using the library.
+    *   MCP server using the `backlog-api-client` library.
+    *   Organizes tools into domain-specific modules (e.g., `issue`, `git`, `document`, `project`). Each module typically contains:
+        *   `request.rs`: Defines request structs deriving `Deserialize` and `JsonSchema`.
+        *   `bridge.rs`: Contains functions that take these request structs and the `BacklogApiClient`, perform the API call, and return a `crate::error::Result`.
+    *   `server.rs` defines the main `Server` struct and registers tool methods that call these bridge functions.
+    *   `error.rs` defines a custom error type that wraps `ApiError` and `CoreError`, and converts to `rmcp::Error`.
 
 ## Design Patterns
 -   **Workspace Structure**.
 -   **Facade Pattern** (`backlog-api-client`).
--   **Modular Design**.
+-   **Modular Design** (both for API client crates and MCP server modules).
 -   **Builder Pattern for Request Parameters**.
 -   **Centralized Core Types** (`backlog-core`).
--   **MCP Tool Implementation**.
+-   **MCP Tool Implementation**:
+    -   Tools are methods on the `Server` struct in `mcp-backlog-server/src/server.rs`.
+    -   Logic for each tool is delegated to a "bridge" function in a domain-specific module (e.g., `mcp-backlog-server/src/project/bridge.rs`).
+    -   Request parameters are defined in structs within these modules (e.g., `mcp-backlog-server/src/project/request.rs`).
+    -   Consistent error handling is achieved by bridge functions returning `crate::error::Result`, which is then converted to `rmcp::Error` in `server.rs` using `?`.
 -   **Layered Architecture**.
 -   **Shared Test Utilities**: Common test helpers (like `setup_client`) are provided by the `client` crate via a feature flag (`test-utils`) to promote consistency and reduce duplication in tests of other crates.
 
@@ -127,6 +161,9 @@ graph TD
 -   **Model Definition and Ownership**:
     -   Core IDs and truly shared simple types in `backlog-core`.
     -   More complex, domain-specific models in their respective crates (e.g., `Status` in `backlog-project`).
-    -   If a model from one domain crate is semantically part of another (e.g., an `Issue` has a `Status`), a dependency is established (e.g., `backlog-issue` uses `backlog_project::Status`).
--   **MCP Tool Definition**.
+    -   If a model from one domain crate is semantically part of another (e.g., an `Issue` has a `Status`), a dependency is established (e.g., `backlog-issue` uses `backlog_project::ProjectStatus`).
+-   **MCP Tool Definition**:
+    -   Tools are organized into modules by domain (e.g., `issue`, `git`, `document`, `project`) within `mcp-backlog-server`.
+    -   Each module typically has `request.rs` for input structs and `bridge.rs` for the core logic.
+    -   The main `server.rs` registers these tools.
 -   **API Endpoint Coverage**.
