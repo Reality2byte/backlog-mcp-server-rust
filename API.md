@@ -91,7 +91,7 @@
 - [ ] DeleteIssueType: Deletes Issue Type: DELETE /api/v2/projects/:projectIdOrKey/issueTypes/:id
 
 ### Status
-- [ ] GetStatusListOfProject: Returns list of status in the project: GET /api/v2/projects/:projectIdOrKey/statuses
+- [x] GetStatusListOfProject: Returns list of status in the project: GET /api/v2/projects/:projectIdOrKey/statuses
 - [ ] AddStatus: Adds new Status to the project. You can create up to 8 custom statuses within a Project aside from the 4 default: POST /api/v2/projects/:projectIdOrKey/statuses
 - [ ] UpdateOrderOfStatus: Updates order about Status: PATCH /api/v2/projects/:projectIdOrKey/statuses/updateDisplayOrder
 - [ ] UpdateStatus: Updates information about Status: PATCH /api/v2/projects/:projectIdOrKey/statuses/:id

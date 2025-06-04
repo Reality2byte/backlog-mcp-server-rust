@@ -54,6 +54,9 @@ The following tools are currently available:
         -   `project_id_or_key` (Project ID or project key)
         -   `repo_id_or_name` (Repository ID (as string) or repository name)
         -   `pr_number` (Pull request number)
+-   **`get_project_status_list`**
+    -   Description: Get a list of statuses for a specified project.
+    -   Input: `projectIdOrKey` (Project ID or project key)
 
 ## Feature Flags
 
