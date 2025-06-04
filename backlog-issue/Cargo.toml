@@ -22,6 +22,6 @@ derive_builder = { workspace = true }
 schemars = { workspace = true, features = ["chrono04"], optional = true }
 
 [dev-dependencies]
-wiremock = "0.6.1"
+wiremock = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 serde_json = { workspace = true }

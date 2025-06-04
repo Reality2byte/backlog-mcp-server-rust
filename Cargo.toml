@@ -30,3 +30,4 @@ regex = "1.11"
 chrono = { version = "0.4.41", features = ["serde"] }
 derive_builder = "0.20"
 schemars = { version = "0.9", features = ["chrono04"] }
+wiremock = "0.6.1"

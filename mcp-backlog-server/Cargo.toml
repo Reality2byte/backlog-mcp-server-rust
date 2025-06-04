@@ -22,4 +22,4 @@ backlog-api-client = { path = "../backlog-api-client", features = ["issue", "doc
 strsim = "0.11.1"
 
 [dev-dependencies]
-# wiremock = "0.6.1" # If adding tests later
+# wiremock = { workspace = true }

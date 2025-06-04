@@ -17,5 +17,5 @@ reqwest = { workspace = true, features = ["json"] }
 
 [dev-dependencies]
 # Add later if tests are implemented in this crate
-# wiremock = "0.6.1"
+# wiremock = { workspace = true }
 # tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
