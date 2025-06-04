@@ -6,12 +6,13 @@ license.workspace = true
 
 [features]
 writable = [ "client/writable" ]
-schemars = ["dep:schemars"]
+schemars = ["dep:schemars", "backlog-project/schemars"] # Added backlog-project/schemars
 
 [dependencies]
-client = { path = "../client" }
+client = { path = "../client", features = ["test-utils"] } # Added test-utils feature
 backlog-core = { path = "../backlog-core" }
 backlog-api-core = { path = "../backlog-api-core" }
+backlog-project = { path = "../backlog-project" } # Added backlog-project dependency
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_repr = { workspace = true }

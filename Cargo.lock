@@ -201,6 +201,7 @@ version = "0.1.0"
 dependencies = [
  "backlog-api-core",
  "backlog-core",
+ "backlog-project",
  "chrono",
  "client",
  "derive_builder",
@@ -220,8 +221,11 @@ dependencies = [
  "backlog-api-core",
  "backlog-core",
  "client",
+ "schemars 0.9.0",
  "serde",
  "serde_json",
+ "tokio",
+ "wiremock",
 ]
 
 [[package]]
@@ -372,6 +376,7 @@ dependencies = [
  "serde_json",
  "thiserror",
  "url",
+ "wiremock",
 ]
 
 [[package]]

@@ -5,11 +5,19 @@ edition.workspace = true
 license.workspace = true
 
 [features]
+default = []
 writable = []
+schemars = ["dep:schemars"]
 
 [dependencies]
-client = { path = "../client" }
+client = { path = "../client", features = ["test-utils"] } # Added test-utils feature
 backlog-core = { path = "../backlog-core" }
 backlog-api-core = { path = "../backlog-api-core" }
 serde = { workspace = true }
 serde_json = { workspace = true }
+schemars = { workspace = true, optional = true }
+
+[dev-dependencies]
+wiremock = "0.6.1"
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+serde_json = { workspace = true } # For constructing test JSON bodies

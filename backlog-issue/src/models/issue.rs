@@ -2,9 +2,9 @@ use backlog_core::{
     IssueKey, User,
     identifier::{
         CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ProjectId, ResolutionId,
-        StatusId,
     },
 };
+use backlog_project::Status; // Corrected import path
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -57,13 +57,6 @@ pub struct Resolution {
 #[serde(rename_all = "camelCase")]
 pub struct Priority {
     pub id: PriorityId,
-    pub name: String,
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Status {
-    pub id: StatusId,
     pub name: String,
 }
 
