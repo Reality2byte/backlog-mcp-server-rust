@@ -39,10 +39,14 @@
 ## Development Setup
 -   **Rust Toolchain**: Edition 2024.
 -   **Cargo**: For building, testing, etc.
-    -   `cargo build --all-features`
-    -   `cargo test --all-features --all-targets`
-    -   `cargo run --bin blg ...`
-    -   `cargo run --bin mcp-backlog-server ...`
+    -   Standard build: `cargo build --all-features`
+    -   Standard test: `cargo test --all-features --all-targets`
+    -   Run CLI: `cargo run --bin blg ...`
+    -   Run MCP Server: `cargo run --bin mcp-backlog-server ...`
+    -   **Final Verification Commands (to be run after each implementation task)**:
+        -   `cargo check --all-targets --all-features` (Comprehensive check)
+        -   `cargo test --all-features --all-targets` (Run all tests)
+        -   `cargo clippy` (Linting for the entire workspace, default settings)
 
 ## Technical Constraints
 -   Network connectivity for Backlog API.
