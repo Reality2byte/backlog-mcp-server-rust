@@ -118,10 +118,11 @@ graph TD
     *   Handle their respective API domains. Depend on `backlog-core` and `client`.
 
 7.  **`backlog-api-client` (crate - library part)**:
-    *   Main facade, re-exporting types and API handlers.
+    *   Main facade, re-exporting types and API handlers. Also re-exports `AttachmentId` from `backlog_core::identifier`.
 
 8.  **`backlog-api-client` (crate - binary `blg`)**:
     *   CLI tool using the library.
+    *   Provides subcommands for various operations, e.g., `issue list`, `issue show`, `issue download-attachment`.
 
 9.  **`mcp-backlog-server` (crate - binary)**:
     *   MCP server using the `backlog-api-client` library.

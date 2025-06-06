@@ -136,12 +136,12 @@ mod tests {
             get_comment_list::{CommentOrder, GetCommentListParamsBuilder},
         },
     };
+    use backlog_api_core::bytes::Bytes; // This should be correct now
     use backlog_core::{
         IssueKey, // Moved IssueKey here
         User,
         identifier::{AttachmentId, IssueId, MilestoneId, ProjectId, UserId},
     };
-    use backlog_api_core::bytes::Bytes; // This should be correct now
     use chrono::{TimeZone, Utc};
     use client::test_utils::setup_client; // Use the common setup_client
     use serde_json::json;

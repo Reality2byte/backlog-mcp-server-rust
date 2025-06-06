@@ -48,6 +48,7 @@
         -   `cargo check --all-targets --all-features` (Comprehensive check)
         -   `cargo test --all-features --all-targets` (Run all tests)
         -   `cargo clippy` (Linting for the entire workspace, default settings)
+        -   `cargo fmt` (Formatting the entire workspace, default settings)
 
 ## Technical Constraints
 -   Network connectivity for Backlog API.

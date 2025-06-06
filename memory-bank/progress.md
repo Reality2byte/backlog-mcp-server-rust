@@ -47,6 +47,12 @@
     -   Added necessary imports and fixed compilation errors.
     -   Unit tests implemented for `get_attachment_file`.
     -   Verified with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, and `cargo clippy`.
+-   **`blg issue download-attachment` CLI Command Implemented**:
+    -   Added `DownloadAttachment` subcommand to `IssueCommands` in `blg.rs`.
+    -   Defined `DownloadAttachmentArgs` for arguments: `issue_id_or_key`, `attachment_id`, `output`.
+    -   Implemented logic to parse arguments, call the library function, and save the file using `tokio::fs::write`.
+    -   Corrected import paths for `AttachmentId` in `blg.rs` and re-exported `AttachmentId` from `backlog-api-client` lib.
+    -   Verified with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, and `cargo clippy`.
 
 ## What Works
 -   The Memory Bank system is established and updated.
@@ -62,7 +68,7 @@
     -   Project listing, details, and **project status listing**.
     -   Space details.
     -   User details.
--   The `blg` CLI tool provides commands for various operations.
+-   The `blg` CLI tool provides commands for various operations, including **downloading issue attachments**.
 -   The `mcp-backlog-server` provides a suite of MCP tools, including **project status listing** and **issue attachment listing**. Error reporting is informative.
 -   The codebase is free of Clippy warnings and consistently formatted. All tests pass.
 -   Test utilities like `setup_client` are now shared from the `client` crate.
@@ -114,3 +120,9 @@
     -   Resolved various compilation issues related to imports and method calls.
     -   Added unit tests for the new API method.
     -   Performed full workspace verification (`check`, `test`, `clippy`).
+-   **`blg issue download-attachment` CLI Command Implementation**:
+    -   User requested to add a CLI command to download issue attachments.
+    -   Defined `clap` structures for the new subcommand `issue download-attachment` and its arguments (`issue_id_or_key`, `attachment_id`, `output`).
+    -   Implemented the command logic in `blg.rs` to call the `get_attachment_file` library function and save the output.
+    -   Corrected `AttachmentId` import paths in `blg.rs` and ensured it's re-exported from the `backlog-api-client` library facade.
+    -   Verified with full workspace checks.

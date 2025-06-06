@@ -1,9 +1,19 @@
 use backlog_api_client::{
-    GetIssueListParamsBuilder, IssueIdOrKey, ProjectId, ProjectIdOrKey, RepositoryIdOrName,
-    StatusId, UserId, client::BacklogApiClient,
+    AttachmentId, // Corrected import
+    GetIssueListParamsBuilder,
+    IssueIdOrKey,
+    ProjectId,
+    ProjectIdOrKey,
+    RepositoryIdOrName,
+    StatusId,
+    UserId,
+    client::BacklogApiClient,
 };
-use clap::Parser;
+use clap::{Args, Parser}; // Removed Subcommand
 use std::env;
+use std::path::PathBuf;
+use std::str::FromStr; // Added for parsing
+use tokio::fs; // Added for file system operations
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -97,6 +107,22 @@ enum IssueCommands {
         #[clap(name = "ISSUE_ID_OR_KEY")]
         issue_id_or_key: String,
     },
+    /// Download an issue attachment
+    #[command(about = "Download an issue attachment")]
+    DownloadAttachment(DownloadAttachmentArgs),
+}
+
+#[derive(Args, Debug)]
+struct DownloadAttachmentArgs {
+    /// The ID or key of the issue (e.g., "PROJECT-123" or "12345")
+    issue_id_or_key: String,
+
+    /// The numeric ID of the attachment to download
+    attachment_id: u32,
+
+    /// Output file path to save the attachment
+    #[arg(short, long, value_name = "FILE_PATH")]
+    output: PathBuf,
 }
 
 #[derive(Parser, Debug, Default)]
@@ -232,6 +258,48 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let issues = client.issue().get_issue_list(list_params).await?;
                 // TODO: Pretty print issues
                 println!("{:?}", issues);
+            }
+            IssueCommands::DownloadAttachment(dl_args) => {
+                println!(
+                    "Downloading attachment {} for issue {} to {}",
+                    dl_args.attachment_id,
+                    dl_args.issue_id_or_key,
+                    dl_args.output.display()
+                );
+
+                let parsed_issue_id_or_key = IssueIdOrKey::from_str(&dl_args.issue_id_or_key)
+                    .map_err(|e| {
+                        format!(
+                            "Failed to parse issue_id_or_key '{}': {}",
+                            dl_args.issue_id_or_key, e
+                        )
+                    })?;
+
+                let parsed_attachment_id = AttachmentId::new(dl_args.attachment_id);
+
+                match client
+                    .issue()
+                    .get_attachment_file(parsed_issue_id_or_key, parsed_attachment_id)
+                    .await
+                {
+                    Ok(file_bytes) => {
+                        if let Err(e) = fs::write(&dl_args.output, &file_bytes).await {
+                            eprintln!(
+                                "Error writing attachment to {}: {}",
+                                dl_args.output.display(),
+                                e
+                            );
+                        } else {
+                            println!(
+                                "Attachment downloaded successfully to: {}",
+                                dl_args.output.display()
+                            );
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error downloading attachment: {}", e);
+                    }
+                }
             }
         },
     }

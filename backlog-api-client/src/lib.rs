@@ -13,7 +13,7 @@ pub use backlog_core::{
     // ProjectKey,
     // RepositoryName,
     // UserId,
-    identifier::{ProjectId, StatusId, UserId},
+    identifier::{AttachmentId, ProjectId, StatusId, UserId}, // Added AttachmentId
 };
 
 // Document module (from backlog_document)

@@ -6,8 +6,14 @@
     -   Implemented `get_list_of_issue_attachments` API in `backlog-issue`.
     -   Implemented `get_issue_attachment_list` MCP tool in `mcp-backlog-server`.
     -   Implemented `get_attachment_file` (download issue attachment) API in `backlog-issue`.
+    -   Implemented `blg issue download-attachment` CLI command.
 
 ## Recent Changes
+-   **Implemented `blg issue download-attachment` CLI command**:
+    -   Added `DownloadAttachment` variant to `IssueCommands` enum and `DownloadAttachmentArgs` struct in `backlog-api-client/src/bin/blg.rs`.
+    -   Implemented logic to parse arguments, call the `get_attachment_file` API, and save the downloaded file.
+    -   Updated `backlog-api-client/src/lib.rs` to re-export `AttachmentId`.
+    -   Verified with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, and `cargo clippy`.
 -   **Implemented `get_attachment_file` (Download Issue Attachment) API in `backlog-issue`**:
     -   Added `get_attachment_file` method to `IssueApi` in `backlog-issue/src/api/mod.rs`. This method takes `issue_id_or_key` and `attachment_id`, and returns `backlog_api_core::Result<backlog_api_core::bytes::Bytes>`.
     -   Added `download_file_raw` method to `client::Client` in `client/src/client.rs` to handle raw byte stream downloads.
