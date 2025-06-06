@@ -22,6 +22,7 @@
 -   **Date and Time**: `chrono` (version 0.4.41, with `serde` feature) - For handling date and time values.
 -   **Builder Pattern**: `derive_builder` (version 0.20) - Used for creating builder patterns for request parameter structs.
     -   Convention: Use `#[builder(..., build_fn(error = "ApiError"))]` to make the `build()` method return `Result<Self, backlog_api_core::Error>`.
+-   **Binary Data Handling**: `bytes` (version 1) - For efficient handling of byte streams, used for file downloads. Re-exported by `backlog-api-core`.
 -   **CLI Argument Parsing**: `clap` (version 4.5, with `derive` feature) - Used by the `blg` binary.
 -   **MCP SDK**: `rmcp` (git, branch = "main", features = ["transport-io"]) - For building MCP servers.
 -   **Schema Generation (for MCP tools)**: `schemars` (version 0.8).

@@ -44,7 +44,7 @@
 
 ### Attachements
 - [x] GetListOfIssueAttachments: Returns the list of issue attachments: GET /api/v2/issues/:issueIdOrKey/attachments
-- [ ] GetIssueAttachment: Downloads issue’s attachment file: GET /api/v2/issues/:issueIdOrKey/attachments/:attachmentId
+- [x] GetIssueAttachment: Downloads issue’s attachment file: GET /api/v2/issues/:issueIdOrKey/attachments/:attachmentId
 - [ ] DeleteIssueAttachment: Deletes an attachment of issue: DELETE /api/v2/issues/:issueIdOrKey/attachments/:attachmentId
 
 ### Comment

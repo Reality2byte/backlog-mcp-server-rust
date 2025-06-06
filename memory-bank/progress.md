@@ -40,6 +40,13 @@
     -   Tool method added to `Server` in `mcp-backlog-server/src/server.rs`.
     -   `backlog-api-client/src/lib.rs` updated to re-export `Attachment`.
     -   Verified with `cargo check -p mcp-backlog-server --all-features`.
+-   **`get_attachment_file` (Download Issue Attachment) API Implemented in `backlog-issue`**:
+    -   Added `get_attachment_file` method to `IssueApi`.
+    -   Added `download_file_raw` method to `client::Client`.
+    -   Updated `backlog-api-core` to re-export `bytes` and added `bytes` as a workspace dependency.
+    -   Added necessary imports and fixed compilation errors.
+    -   Unit tests implemented for `get_attachment_file`.
+    -   Verified with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, and `cargo clippy`.
 
 ## What Works
 -   The Memory Bank system is established and updated.
@@ -50,7 +57,7 @@
 -   The `backlog-api-client` library provides core functionality for Backlog API interaction, including:
     -   Git repository listing and details.
     -   Pull request listing and details.
-    -   Issue listing, details, updates, comment listing, and **attachment listing**. (Issue status now uses a complete model from `backlog-project`).
+    -   Issue listing, details, updates, comment listing, **attachment listing**, and **attachment file download**. (Issue status now uses a complete model from `backlog-project`).
     -   Document listing and details.
     -   Project listing, details, and **project status listing**.
     -   Space details.
@@ -99,3 +106,11 @@
     -   Implemented the bridge function and server method, ensuring correct error propagation.
     -   Updated `backlog-api-client` facade to re-export `Attachment` model.
     -   Corrected trait bound errors during `cargo check` by using `.clone()` for `IssueIdOrKey`.
+-   **`get_attachment_file` (Download Issue Attachment) API Implementation**:
+    -   User requested to implement "Get Issue Attachment" (download file) API in `backlog-issue`.
+    -   Added `get_attachment_file` to `IssueApi`, returning `Result<bytes::Bytes>`.
+    -   Added a new `download_file_raw` method to `client::Client` to support fetching raw byte streams.
+    -   Ensured `bytes` crate is correctly re-exported by `backlog-api-core` and added as a workspace dependency.
+    -   Resolved various compilation issues related to imports and method calls.
+    -   Added unit tests for the new API method.
+    -   Performed full workspace verification (`check`, `test`, `clippy`).

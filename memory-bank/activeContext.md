@@ -5,8 +5,17 @@
     -   Implemented `get_project_status_list` MCP tool in `mcp-backlog-server`.
     -   Implemented `get_list_of_issue_attachments` API in `backlog-issue`.
     -   Implemented `get_issue_attachment_list` MCP tool in `mcp-backlog-server`.
+    -   Implemented `get_attachment_file` (download issue attachment) API in `backlog-issue`.
 
 ## Recent Changes
+-   **Implemented `get_attachment_file` (Download Issue Attachment) API in `backlog-issue`**:
+    -   Added `get_attachment_file` method to `IssueApi` in `backlog-issue/src/api/mod.rs`. This method takes `issue_id_or_key` and `attachment_id`, and returns `backlog_api_core::Result<backlog_api_core::bytes::Bytes>`.
+    -   Added `download_file_raw` method to `client::Client` in `client/src/client.rs` to handle raw byte stream downloads.
+    -   Updated `backlog-api-core/src/lib.rs` to re-export the `bytes` crate.
+    -   Added `bytes` to workspace dependencies and `backlog-api-core` dependencies.
+    -   Added `use backlog_core::Identifier;` in `backlog-issue/src/api/mod.rs` to bring the `value()` method for `AttachmentId` into scope.
+    -   Added unit tests for `get_attachment_file`, covering success and 404 error cases.
+    -   Verified with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, and `cargo clippy`.
 -   **Implemented `get_issue_attachment_list` MCP Tool in `mcp-backlog-server`**:
     -   Defined `GetAttachmentListRequest` in `mcp-backlog-server/src/issue/request.rs`, using `rmcp::schemars` for `JsonSchema` derivation.
     -   Implemented `get_attachment_list_impl` bridge function in `mcp-backlog-server/src/issue/bridge.rs`.

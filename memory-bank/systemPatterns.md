@@ -90,7 +90,8 @@ graph TD
 
 1.  **`client` (crate)**:
     *   Provides a generic, low-level HTTP client (`struct Client`).
-    *   Handles making HTTP requests and deserializing responses.
+    *   Handles making HTTP requests and deserializing JSON responses.
+    *   Includes `download_file_raw` method for fetching raw byte streams (e.g., file downloads).
     *   Manages base URL and authentication.
     *   Provides common test utilities (e.g., `setup_client`) via a `test-utils` feature.
 
@@ -110,7 +111,7 @@ graph TD
     *   Responsible for the Issue domain.
     *   Defines models like `Issue`, `Milestone`, `Comment`, and `Attachment`.
     *   Uses `backlog_project::Status` for the `Issue.status` field.
-    *   Implements API endpoint wrappers like `get_issue`, `get_issue_list`, `get_comment_list`, and `get_attachment_list`.
+    *   Implements API endpoint wrappers like `get_issue`, `get_issue_list`, `get_comment_list`, `get_attachment_list`, and `get_attachment_file` (for downloading attachment content as `bytes::Bytes`).
     *   Depends on `backlog-core`, `client`, and now `backlog-project` (for `Status`).
 
 6.  **`backlog-space`, `backlog-user`, `backlog-document`, `backlog-git` (other API module crates)**:

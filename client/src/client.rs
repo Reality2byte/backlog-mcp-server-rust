@@ -163,4 +163,42 @@ impl Client {
         let entity = serde_json::from_value(json_value)?; // Can return ApiError::Json
         Ok(entity)
     }
+
+    pub async fn download_file_raw(&self, path: &str) -> Result<backlog_api_core::bytes::Bytes> {
+        let request = self.prepare_request(reqwest::Method::GET, path, &())?; // No query params for simple download
+        let response = self.client.execute(request).await?; // This maps reqwest::Error to ApiError::Http
+
+        if !response.status().is_success() {
+            let status = response.status().as_u16();
+            // Attempt to parse as BacklogApiErrorResponse for detailed errors
+            let error_body_text = response
+                .text()
+                .await
+                .unwrap_or_else(|e| format!("Failed to read error body: {}", e));
+
+            match serde_json::from_str::<BacklogApiErrorResponse>(&error_body_text) {
+                Ok(parsed_errors) => {
+                    let summary = parsed_errors
+                        .errors
+                        .iter()
+                        .map(|e| e.message.clone())
+                        .collect::<Vec<String>>()
+                        .join("; ");
+                    return Err(ApiError::HttpStatus {
+                        status,
+                        errors: parsed_errors.errors,
+                        errors_summary: summary,
+                    });
+                }
+                Err(_) => {
+                    // If parsing fails, return a more generic error with the status and raw body
+                    let summary = format!("HTTP Error {} with body: {}", status, error_body_text);
+                    // Using InvalidBuildParameter as a placeholder, ideally a more specific variant
+                    return Err(ApiError::InvalidBuildParameter(summary));
+                }
+            }
+        }
+        // Success path: get response body as bytes
+        response.bytes().await.map_err(ApiError::from) // reqwest::Error from .bytes() converted to ApiError::Http
+    }
 }

@@ -147,6 +147,7 @@ name = "backlog-api-core"
 version = "0.1.0"
 dependencies = [
  "backlog-core",
+ "bytes",
  "derive_builder",
  "reqwest",
  "serde",

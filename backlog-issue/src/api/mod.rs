@@ -1,5 +1,5 @@
 use backlog_api_core::Result;
-use backlog_core::{IssueIdOrKey, IssueKey, ProjectIdOrKey};
+use backlog_core::{Identifier, IssueIdOrKey, IssueKey, ProjectIdOrKey}; // Added Identifier
 // Removed unused: use chrono::DateTime;
 use client::Client;
 
@@ -101,6 +101,20 @@ impl IssueApi {
         let path = format!("/api/v2/issues/{}/attachments", issue_key_str);
         self.0.get(&path).await
     }
+
+    pub async fn get_attachment_file(
+        &self,
+        issue_id_or_key: impl Into<IssueIdOrKey>,
+        attachment_id: backlog_core::identifier::AttachmentId,
+    ) -> backlog_api_core::Result<backlog_api_core::bytes::Bytes> {
+        let issue_id_or_key_str = issue_id_or_key.into().to_string();
+        let attachment_id_val = attachment_id.value();
+        let path = format!(
+            "/api/v2/issues/{}/attachments/{}",
+            issue_id_or_key_str, attachment_id_val
+        );
+        self.0.download_file_raw(&path).await
+    }
 }
 
 type GetIssueResponse = Issue;
@@ -123,10 +137,12 @@ mod tests {
         },
     };
     use backlog_core::{
+        IssueKey, // Moved IssueKey here
         User,
         identifier::{AttachmentId, IssueId, MilestoneId, ProjectId, UserId},
     };
-    use chrono::{TimeZone, Utc}; // Removed DateTime as chrono::DateTime is used explicitly
+    use backlog_api_core::bytes::Bytes; // This should be correct now
+    use chrono::{TimeZone, Utc};
     use client::test_utils::setup_client; // Use the common setup_client
     use serde_json::json;
     use wiremock::matchers::{method, path, query_param};
@@ -559,5 +575,68 @@ mod tests {
             .get_attachment_list(IssueIdOrKey::Key(issue_key.parse().unwrap()))
             .await;
         assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_get_attachment_file_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+
+        let issue_key_str = "TESTPROJ-1";
+        let attachment_id_val: u32 = 101;
+        let issue_id_or_key: IssueIdOrKey = issue_key_str.parse::<IssueKey>().unwrap().into();
+        let attachment_id = AttachmentId::new(attachment_id_val);
+
+        let expected_body_bytes = Bytes::from_static(b"sample file content");
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/issues/{}/attachments/{}",
+                issue_key_str, attachment_id_val
+            )))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_bytes(expected_body_bytes.clone())
+                    .insert_header("Content-Type", "application/octet-stream"),
+            )
+            .mount(&mock_server)
+            .await;
+
+        let result = issue_api
+            .get_attachment_file(issue_id_or_key, attachment_id)
+            .await;
+
+        assert!(result.is_ok());
+        let file_bytes = result.unwrap();
+        assert_eq!(file_bytes, expected_body_bytes);
+    }
+
+    #[tokio::test]
+    async fn test_get_attachment_file_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+
+        let issue_key_str = "TESTPROJ-1";
+        let attachment_id_val: u32 = 999; // Non-existent
+        let issue_id_or_key: IssueIdOrKey = issue_key_str.parse::<IssueKey>().unwrap().into();
+        let attachment_id = AttachmentId::new(attachment_id_val);
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/issues/{}/attachments/{}",
+                issue_key_str, attachment_id_val
+            )))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&mock_server)
+            .await;
+
+        let result = issue_api
+            .get_attachment_file(issue_id_or_key, attachment_id)
+            .await;
+        assert!(result.is_err());
+        // Optionally, check for specific error type if ApiError exposes it well
+        // e.g., matches!(result.unwrap_err(), backlog_api_core::Error::HttpStatus { status: reqwest::StatusCode::NOT_FOUND, .. })
     }
 }
