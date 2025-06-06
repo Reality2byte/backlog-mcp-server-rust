@@ -16,6 +16,7 @@
     -   The primary error type for the `backlog-api-client` library is `backlog_api_core::Error` (often aliased as `ApiError`).
     -   It unifies various error sources: HTTP (`reqwest`), JSON (`serde_json`), URL (`url`) parsing, and validation errors from `backlog_core::Error`.
     -   It includes an `HttpStatus` variant to hold structured error details (`BacklogApiErrorEntry`, `BacklogApiErrorResponse`) parsed from non-2xx Backlog API responses by the `client::Client`.
+    -   In `mcp-backlog-server`, errors from `backlog-api-client` (i.e., `ApiError`) or `backlog-core` (`CoreError`) are converted into `mcp_backlog_server::error::Error`. This custom error type then has an `impl From<Error> for rmcp::Error` to integrate with the MCP framework's error handling.
 -   **URL Parsing/Manipulation**: `url` (version 2.5) - For handling URLs.
 -   **Regular Expressions**: `regex` (version 1.11) - Potentially used for parsing or validating string patterns.
 -   **Date and Time**: `chrono` (version 0.4.41, with `serde` feature) - For handling date and time values.
@@ -24,8 +25,9 @@
 -   **CLI Argument Parsing**: `clap` (version 4.5, with `derive` feature) - Used by the `blg` binary.
 -   **MCP SDK**: `rmcp` (git, branch = "main", features = ["transport-io"]) - For building MCP servers.
 -   **Schema Generation (for MCP tools)**: `schemars` (version 0.8).
-    -   Optional dependency in `backlog-core`, `backlog-issue`, `backlog-git`, and `backlog-project`, enabled via a `schemars` feature in each.
-    -   Used for models like `User`, `Comment`, `Repository`, `PullRequest`, `ProjectStatus` (in `backlog-project`), and `Attachment` (in `backlog-issue`).
+    -   For library crates (`backlog-core`, `backlog-issue`, etc.), `schemars` is an optional dependency enabled via a `schemars` feature. Models derive `JsonSchema` conditionally.
+    -   For `mcp-backlog-server` request structs (e.g., in `src/issue/request.rs`), the convention is to use `use rmcp::schemars;` and then `#[derive(schemars::JsonSchema)]`. This leverages the `schemars` re-export from the `rmcp` crate.
+    -   Used for models like `User`, `Comment`, `Repository`, `PullRequest`, `ProjectStatus` (in `backlog-project`), and `Attachment` (in `backlog-issue`), as well as MCP request structs.
 -   **Inter-Crate Dependencies**:
     -   `backlog-issue` now depends on `backlog-project` for the `ProjectStatus` model.
     -   The `schemars` feature in `backlog-issue` now also enables `backlog-core/schemars` to ensure `AttachmentId` (from `backlog-core`) can derive `JsonSchema`.

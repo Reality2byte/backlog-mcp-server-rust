@@ -23,7 +23,10 @@ pub use backlog_document::{DocumentApi, DocumentDetail};
 // Issue module (from backlog_issue)
 #[cfg(feature = "issue")]
 pub use backlog_issue::{
-    Issue, IssueApi, Milestone,
+    Attachment, // Added Attachment
+    Issue,
+    IssueApi,
+    Milestone,
     models::comment::{ChangeLogEntry, Comment, Notification, Star},
     requests::{
         GetIssueListParamsBuilder, UpdateIssueParamsBuilder,

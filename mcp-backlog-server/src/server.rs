@@ -11,7 +11,10 @@ use crate::{
     issue::{
         self,
         request::{
-            GetIssueDetailsRequest, GetIssuesByMilestoneNameRequest, GetVersionMilestoneListRequest,
+            GetAttachmentListRequest, // Added
+            GetIssueDetailsRequest,
+            GetIssuesByMilestoneNameRequest,
+            GetVersionMilestoneListRequest,
         },
     },
     project::{self, request::GetProjectStatusListRequest},
@@ -144,6 +147,18 @@ impl Server {
     async fn get_issue_comments(&self, #[tool(aggr)] req: GetIssueCommentsRequest) -> McpResult {
         let comments = issue::bridge::get_issue_comments_impl(self.client.clone(), req).await?;
         Ok(CallToolResult::success(vec![Content::json(comments)?]))
+    }
+
+    #[tool(
+        name = "get_issue_attachment_list",
+        description = "Get a list of attachments for a specified issue."
+    )]
+    async fn get_issue_attachment_list(
+        &self,
+        #[tool(aggr)] req: GetAttachmentListRequest,
+    ) -> McpResult {
+        let attachments = issue::bridge::get_attachment_list_impl(self.client.clone(), req).await?;
+        Ok(CallToolResult::success(vec![Content::json(attachments)?]))
     }
 
     #[tool(description = "Get a list of statuses for a specified project.")]

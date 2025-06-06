@@ -31,9 +31,15 @@
 -   **`get_list_of_issue_attachments` API Implemented in `backlog-issue`**:
     -   `Attachment` model defined in `backlog-issue/src/models/attachment.rs` using `backlog_core::identifier::AttachmentId`.
     -   `get_attachment_list` method added to `IssueApi`.
-    -   Unit tests implemented.
+    -   Unit tests implemented and passed after fixes.
     -   Relevant modules and `Cargo.toml` updated.
-    -   Verified with `cargo check -p backlog-issue --all-features`.
+    -   Verified with `cargo test -p backlog-issue --all-features`.
+-   **`get_issue_attachment_list` MCP Tool Implemented in `mcp-backlog-server`**:
+    -   `GetAttachmentListRequest` defined in `mcp-backlog-server/src/issue/request.rs`.
+    -   `get_attachment_list_impl` bridge function implemented in `mcp-backlog-server/src/issue/bridge.rs`.
+    -   Tool method added to `Server` in `mcp-backlog-server/src/server.rs`.
+    -   `backlog-api-client/src/lib.rs` updated to re-export `Attachment`.
+    -   Verified with `cargo check -p mcp-backlog-server --all-features`.
 
 ## What Works
 -   The Memory Bank system is established and updated.
@@ -50,7 +56,7 @@
     -   Space details.
     -   User details.
 -   The `blg` CLI tool provides commands for various operations.
--   The `mcp-backlog-server` provides a suite of MCP tools, including **project status listing**. Error reporting is informative.
+-   The `mcp-backlog-server` provides a suite of MCP tools, including **project status listing** and **issue attachment listing**. Error reporting is informative.
 -   The codebase is free of Clippy warnings and consistently formatted. All tests pass.
 -   Test utilities like `setup_client` are now shared from the `client` crate.
 
@@ -85,5 +91,11 @@
 -   **`get_list_of_issue_attachments` API Implementation**:
     -   User requested to implement "Get List of Issue Attachments" API in `backlog-issue`.
     -   Defined `Attachment` model in `backlog-issue`, using `AttachmentId` from `backlog-core`.
-    -   Implemented `get_attachment_list` in `IssueApi` with unit tests.
+    -   Implemented `get_attachment_list` in `IssueApi` with unit tests (initial test failures related to `IssueKey` parsing and `chrono` usage were fixed).
     -   Updated `Cargo.toml` for `backlog-issue` to ensure `backlog-core/schemars` feature propagation.
+-   **`get_issue_attachment_list` MCP Tool Implementation**:
+    -   User requested to add the `get_attachment_list` library function as an MCP tool.
+    -   Defined `GetAttachmentListRequest` in `mcp-backlog-server` using `rmcp::schemars` convention.
+    -   Implemented the bridge function and server method, ensuring correct error propagation.
+    -   Updated `backlog-api-client` facade to re-export `Attachment` model.
+    -   Corrected trait bound errors during `cargo check` by using `.clone()` for `IssueIdOrKey`.

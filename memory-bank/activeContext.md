@@ -1,11 +1,18 @@
 ## Current Work Focus
 -   Implemented "Get Status List of Project" API in `backlog-project`.
 -   Refactored `Status` model: defined a complete `Status` (`ProjectStatus`) in `backlog-project`, and updated `backlog-issue` to use it.
--   Commonized test utility `setup_client` into `client::test_utils`.
--   Implemented `get_project_status_list` MCP tool in `mcp-backlog-server`.
--   Implemented `get_list_of_issue_attachments` API in `backlog-issue`.
+    -   Commonized test utility `setup_client` into `client::test_utils`.
+    -   Implemented `get_project_status_list` MCP tool in `mcp-backlog-server`.
+    -   Implemented `get_list_of_issue_attachments` API in `backlog-issue`.
+    -   Implemented `get_issue_attachment_list` MCP tool in `mcp-backlog-server`.
 
 ## Recent Changes
+-   **Implemented `get_issue_attachment_list` MCP Tool in `mcp-backlog-server`**:
+    -   Defined `GetAttachmentListRequest` in `mcp-backlog-server/src/issue/request.rs`, using `rmcp::schemars` for `JsonSchema` derivation.
+    -   Implemented `get_attachment_list_impl` bridge function in `mcp-backlog-server/src/issue/bridge.rs`.
+    -   Added `get_issue_attachment_list` tool method to `Server` in `mcp-backlog-server/src/server.rs`.
+    -   Updated `backlog-api-client/src/lib.rs` to re-export `Attachment`.
+    -   Verified with `cargo check -p mcp-backlog-server --all-features`.
 -   **Implemented `get_list_of_issue_attachments` API in `backlog-issue`**:
     -   Created `backlog-issue/src/models/attachment.rs` defining `Attachment` struct (using `backlog_core::identifier::AttachmentId`).
     -   Updated `backlog-issue/src/models/mod.rs` to export `Attachment`.
@@ -70,9 +77,10 @@
 -   Standard Rust project structure, workspace, feature flags, `thiserror`, `schemars`.
 -   **Model Placement**: Shared core types in `backlog-core` (e.g., `User`, `AttachmentId`). Domain-specific models in their respective crates (e.g., `ProjectStatus` in `backlog-project`, `Attachment` in `backlog-issue`). If a model defined in one domain crate (e.g., `backlog-project::ProjectStatus`) is needed by another (e.g., `backlog-issue`), a direct dependency is added.
 -   **MCP Tool Structure**: Tools in `mcp-backlog-server` are organized by domain into modules (e.g., `issue`, `git`, `project`). Each module typically contains:
-    -   `request.rs`: Defines request structs deriving `Deserialize` and `JsonSchema`.
-    -   `bridge.rs`: Contains functions that take these request structs and the `BacklogApiClient`, perform the API call, and return a `crate::error::Result`.
-    -   The main `server.rs` file then defines tool methods that call these bridge functions.
+    -   `request.rs`: Defines request structs deriving `serde::Deserialize` and `rmcp::schemars::JsonSchema` (using `use rmcp::schemars;`).
+    -   `bridge.rs`: Contains functions that take these request structs and the `BacklogApiClient` (wrapped in `Arc<Mutex<>>`), perform the API call, and return a `crate::error::Result`.
+    -   The main `server.rs` file then defines tool methods (annotated with `#[tool(...)]`) that call these bridge functions. Error conversion from `crate::error::Error` to `rmcp::Error` is handled by `impl From` and the `?` operator.
+-   **Test Utilities**: Common test helpers like `setup_client` are centralized in the `client` crate's `test_utils` module, exposed via a feature flag.
 
 ## Learnings & Project Insights
 -   Careful consideration of model ownership and inter-crate dependencies is crucial for maintaining a clean architecture, especially when types are shared or referenced across different API domains.

@@ -124,11 +124,11 @@ graph TD
 
 9.  **`mcp-backlog-server` (crate - binary)**:
     *   MCP server using the `backlog-api-client` library.
-    *   Organizes tools into domain-specific modules (e.g., `issue`, `git`, `document`, `project`). Each module typically contains:
-        *   `request.rs`: Defines request structs deriving `Deserialize` and `JsonSchema`.
-        *   `bridge.rs`: Contains functions that take these request structs and the `BacklogApiClient`, perform the API call, and return a `crate::error::Result`.
-    *   `server.rs` defines the main `Server` struct and registers tool methods that call these bridge functions.
-    *   `error.rs` defines a custom error type that wraps `ApiError` and `CoreError`, and converts to `rmcp::Error`.
+    *   Organizes tools into domain-specific modules (e.g., `issue` for issue details, comments, attachments; `git` for repositories, pull requests; `document` for document details; `project` for project-level info like statuses). Each module typically contains:
+        *   `request.rs`: Defines request structs deriving `serde::Deserialize` and `rmcp::schemars::JsonSchema` (using the `use rmcp::schemars;` convention).
+        *   `bridge.rs`: Contains functions that take these request structs and the `BacklogApiClient` (wrapped in `Arc<Mutex<>>`), perform the API call, and return a `crate::error::Result`.
+    *   `server.rs` defines the main `Server` struct and registers tool methods (annotated with `#[tool(...)]`) that call these bridge functions.
+    *   `error.rs` defines a custom error type (`crate::error::Error`) that wraps `ApiError` and `CoreError`. It also provides an `impl From<crate::error::Error> for rmcp::Error` for integration with the MCP framework.
 
 ## Design Patterns
 -   **Workspace Structure**.
@@ -164,6 +164,6 @@ graph TD
     -   If a model from one domain crate is semantically part of another (e.g., an `Issue` has a `Status`), a dependency is established (e.g., `backlog-issue` uses `backlog_project::ProjectStatus`).
 -   **MCP Tool Definition**:
     -   Tools are organized into modules by domain (e.g., `issue`, `git`, `document`, `project`) within `mcp-backlog-server`.
-    -   Each module typically has `request.rs` for input structs and `bridge.rs` for the core logic.
-    -   The main `server.rs` registers these tools.
+    -   Each module typically has `request.rs` for input structs (using `rmcp::schemars`) and `bridge.rs` for the core logic.
+    -   The main `server.rs` registers these tools (often via macros like `#[tool(tool_box)]`).
 -   **API Endpoint Coverage**.

@@ -1,5 +1,6 @@
 use super::request::{
-    GetIssueCommentsRequest, // Added
+    GetAttachmentListRequest, // Added
+    GetIssueCommentsRequest,
     GetIssueDetailsRequest,
     GetIssuesByMilestoneNameRequest,
     GetVersionMilestoneListRequest,
@@ -9,7 +10,8 @@ use crate::error::{Error as McpError, Result};
 use crate::util::{MatchResult, find_by_name_from_array};
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
-    Comment, // Added
+    Attachment, // Added
+    Comment,
     // Corrected paths for these comment-related types:
     GetCommentListParamsBuilder,
     GetIssueListParamsBuilder,
@@ -128,4 +130,25 @@ pub(crate) async fn get_issue_comments_impl(
         .await?;
 
     Ok(comments)
+}
+
+pub(crate) async fn get_attachment_list_impl(
+    client: Arc<Mutex<BacklogApiClient>>,
+    req: GetAttachmentListRequest,
+) -> Result<Vec<Attachment>> {
+    let parsed_issue_id_or_key =
+        IssueIdOrKey::from_str(req.issue_id_or_key.trim()).map_err(|e| {
+            McpError::Parameter(format!(
+                "Invalid issueIdOrKey: {}. Error: {}",
+                req.issue_id_or_key, e
+            ))
+        })?;
+
+    let client_guard = client.lock().await;
+    let attachments = client_guard
+        .issue()
+        .get_attachment_list(parsed_issue_id_or_key.clone()) // Explicitly clone
+        .await?;
+
+    Ok(attachments)
 }

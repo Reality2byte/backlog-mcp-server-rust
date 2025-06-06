@@ -35,6 +35,9 @@ The following tools are currently available:
         -   `max_id` (Optional `u64`): Filter comments by maximum ID.
         -   `count` (Optional `u8`): Number of comments to retrieve (1-100).
         -   `order` (Optional `string`): Sort order: "asc" or "desc".
+-   **`get_issue_attachment_list`**
+    -   Description: Get a list of attachments for a specified issue.
+    -   Input: `issue_id_or_key` (Issue ID or issue key, e.g., "MYPROJECTKEY-123", "12345")
 -   **`get_repository_list`**
     -   Description: Get a list of Git repositories for a specified project.
     -   Input: `project_id_or_key` (Project ID or project key)

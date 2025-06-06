@@ -60,6 +60,15 @@ impl From<UpdateIssueRequest> for UpdateIssueParamsBuilder {
 }
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct GetAttachmentListRequest {
+    #[schemars(
+        description = "The issue ID or issue key for which to retrieve attachments. Examples: 'MYPROJECTKEY-123', '12345'."
+    )]
+    pub issue_id_or_key: String,
+}
+
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
 pub(crate) struct GetIssueCommentsRequest {
     #[schemars(description = "Issue ID or key (e.g., 'PROJECT-123').")]
     pub issue_id_or_key: String,
