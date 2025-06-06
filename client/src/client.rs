@@ -1,4 +1,4 @@
-use backlog_api_core::{Result, Error as ApiError, BacklogApiErrorResponse}; // Added ApiError, BacklogApiErrorResponse
+use backlog_api_core::{BacklogApiErrorResponse, Error as ApiError, Result}; // Added ApiError, BacklogApiErrorResponse
 use url::Url;
 
 #[derive(Debug, Clone)]
@@ -119,12 +119,17 @@ impl Client {
 
         if !response.status().is_success() {
             let status = response.status().as_u16();
-            let error_body_text = response.text().await.unwrap_or_else(|e| format!("Failed to read error body: {}", e));
-            
+            let error_body_text = response
+                .text()
+                .await
+                .unwrap_or_else(|e| format!("Failed to read error body: {}", e));
+
             // Attempt to parse as BacklogApiErrorResponse
             match serde_json::from_str::<BacklogApiErrorResponse>(&error_body_text) {
                 Ok(parsed_errors) => {
-                    let summary = parsed_errors.errors.iter()
+                    let summary = parsed_errors
+                        .errors
+                        .iter()
                         .map(|e| e.message.clone())
                         .collect::<Vec<String>>()
                         .join("; ");
@@ -144,11 +149,11 @@ impl Client {
                     // A better approach would be to ensure reqwest::Error::from(response) captures this.
                     // However, reqwest::Error::from_response is not public.
                     // We can construct a generic error message for now.
-                     let summary = format!("HTTP Error {} with body: {}", status, error_body_text);
-                     // This will be wrapped by ApiError::Http if we make a reqwest::Error
-                     // For now, let's use a generic parameter error or a new dedicated variant if we add one.
-                     // To keep it simple and avoid changing ApiError further in this step:
-                     return Err(ApiError::InvalidBuildParameter(summary)); // Corrected to InvalidBuildParameter
+                    let summary = format!("HTTP Error {} with body: {}", status, error_body_text);
+                    // This will be wrapped by ApiError::Http if we make a reqwest::Error
+                    // For now, let's use a generic parameter error or a new dedicated variant if we add one.
+                    // To keep it simple and avoid changing ApiError further in this step:
+                    return Err(ApiError::InvalidBuildParameter(summary)); // Corrected to InvalidBuildParameter
                 }
             }
         }

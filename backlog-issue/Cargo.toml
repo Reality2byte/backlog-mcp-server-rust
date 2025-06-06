@@ -6,7 +6,7 @@ license.workspace = true
 
 [features]
 writable = [ "client/writable" ]
-schemars = ["dep:schemars", "backlog-project/schemars"] # Added backlog-project/schemars
+schemars = ["dep:schemars", "backlog-project/schemars", "backlog-core/schemars"] # Added backlog-core/schemars
 
 [dependencies]
 client = { path = "../client", features = ["test-utils"] } # Added test-utils feature

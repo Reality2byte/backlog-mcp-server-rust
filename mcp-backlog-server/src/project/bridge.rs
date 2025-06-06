@@ -1,7 +1,7 @@
 use crate::error::Result;
 use crate::project::request::GetProjectStatusListRequest;
-use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::ProjectIdOrKey; // From backlog-core, re-exported by backlog-api-client
+use backlog_api_client::client::BacklogApiClient;
 use backlog_project::Status; // Specific model from backlog-project
 use std::sync::Arc;
 use tokio::sync::Mutex;

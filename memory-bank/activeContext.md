@@ -3,8 +3,16 @@
 -   Refactored `Status` model: defined a complete `Status` (`ProjectStatus`) in `backlog-project`, and updated `backlog-issue` to use it.
 -   Commonized test utility `setup_client` into `client::test_utils`.
 -   Implemented `get_project_status_list` MCP tool in `mcp-backlog-server`.
+-   Implemented `get_list_of_issue_attachments` API in `backlog-issue`.
 
 ## Recent Changes
+-   **Implemented `get_list_of_issue_attachments` API in `backlog-issue`**:
+    -   Created `backlog-issue/src/models/attachment.rs` defining `Attachment` struct (using `backlog_core::identifier::AttachmentId`).
+    -   Updated `backlog-issue/src/models/mod.rs` to export `Attachment`.
+    -   Added `get_attachment_list` method to `IssueApi` in `backlog-issue/src/api/mod.rs`.
+    -   Added unit tests for `get_attachment_list`.
+    -   Updated `backlog-issue/src/lib.rs` to re-export `Attachment` and `Comment`.
+    -   Updated `backlog-issue/Cargo.toml` to include `backlog-core/schemars` in its `schemars` feature.
 -   **Implemented "Get Status List of Project" API & Refactored `Status` Model**:
     -   Added `schemars` as an optional dependency and feature to `backlog-project/Cargo.toml`.
     -   Defined a new, complete `Status` struct in `backlog-project/src/models/status.rs` (fields: `id`, `project_id`, `name`, `color`, `display_order`), deriving `Deserialize`, `Serialize`, and conditionally `JsonSchema`.
@@ -60,7 +68,7 @@
 -   **Consistent Error Propagation**.
 -   **Builder Pattern for Request Params**.
 -   Standard Rust project structure, workspace, feature flags, `thiserror`, `schemars`.
--   **Model Placement**: Shared core types in `backlog-core`. Domain-specific models in their respective crates (e.g., `ProjectStatus` in `backlog-project`). If a model defined in one domain crate (e.g., `backlog-project::ProjectStatus`) is needed by another (e.g., `backlog-issue`), a direct dependency is added.
+-   **Model Placement**: Shared core types in `backlog-core` (e.g., `User`, `AttachmentId`). Domain-specific models in their respective crates (e.g., `ProjectStatus` in `backlog-project`, `Attachment` in `backlog-issue`). If a model defined in one domain crate (e.g., `backlog-project::ProjectStatus`) is needed by another (e.g., `backlog-issue`), a direct dependency is added.
 -   **MCP Tool Structure**: Tools in `mcp-backlog-server` are organized by domain into modules (e.g., `issue`, `git`, `project`). Each module typically contains:
     -   `request.rs`: Defines request structs deriving `Deserialize` and `JsonSchema`.
     -   `bridge.rs`: Contains functions that take these request structs and the `BacklogApiClient`, perform the API call, and return a `crate::error::Result`.

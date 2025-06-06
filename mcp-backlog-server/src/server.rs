@@ -1,7 +1,6 @@
 use crate::issue::request::{GetIssueCommentsRequest, UpdateIssueRequest};
 use crate::{
     document::{self, request::GetDocumentDetailsRequest},
-    project::{self, request::GetProjectStatusListRequest},
     git::{
         self,
         request::{
@@ -15,6 +14,7 @@ use crate::{
             GetIssueDetailsRequest, GetIssuesByMilestoneNameRequest, GetVersionMilestoneListRequest,
         },
     },
+    project::{self, request::GetProjectStatusListRequest},
 };
 use backlog_api_client::client::BacklogApiClient;
 // use backlog_api_client::Comment; // Removed this line as it caused an unused import warning

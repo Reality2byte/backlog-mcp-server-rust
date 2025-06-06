@@ -28,6 +28,12 @@
     -   Tool registered in `server.rs` and module in `lib.rs`.
     -   `mcp-backlog-server/Cargo.toml` updated with necessary dependencies and features.
     -   Verified with `cargo check -p mcp-backlog-server`.
+-   **`get_list_of_issue_attachments` API Implemented in `backlog-issue`**:
+    -   `Attachment` model defined in `backlog-issue/src/models/attachment.rs` using `backlog_core::identifier::AttachmentId`.
+    -   `get_attachment_list` method added to `IssueApi`.
+    -   Unit tests implemented.
+    -   Relevant modules and `Cargo.toml` updated.
+    -   Verified with `cargo check -p backlog-issue --all-features`.
 
 ## What Works
 -   The Memory Bank system is established and updated.
@@ -38,7 +44,7 @@
 -   The `backlog-api-client` library provides core functionality for Backlog API interaction, including:
     -   Git repository listing and details.
     -   Pull request listing and details.
-    -   Issue listing, details, updates, and comment listing. (Issue status now uses a complete model from `backlog-project`).
+    -   Issue listing, details, updates, comment listing, and **attachment listing**. (Issue status now uses a complete model from `backlog-project`).
     -   Document listing and details.
     -   Project listing, details, and **project status listing**.
     -   Space details.
@@ -76,3 +82,8 @@
     -   Created a new `project` module within `mcp-backlog-server` to house project-related tools.
     -   Implemented the `get_project_status_list` tool following established patterns for request structs, bridge functions, and server registration.
     -   Ensured error handling aligns with existing server patterns, using `?` for concise error propagation.
+-   **`get_list_of_issue_attachments` API Implementation**:
+    -   User requested to implement "Get List of Issue Attachments" API in `backlog-issue`.
+    -   Defined `Attachment` model in `backlog-issue`, using `AttachmentId` from `backlog-core`.
+    -   Implemented `get_attachment_list` in `IssueApi` with unit tests.
+    -   Updated `Cargo.toml` for `backlog-issue` to ensure `backlog-core/schemars` feature propagation.

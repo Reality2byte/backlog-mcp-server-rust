@@ -24,10 +24,11 @@
 -   **CLI Argument Parsing**: `clap` (version 4.5, with `derive` feature) - Used by the `blg` binary.
 -   **MCP SDK**: `rmcp` (git, branch = "main", features = ["transport-io"]) - For building MCP servers.
 -   **Schema Generation (for MCP tools)**: `schemars` (version 0.8).
-    -   Optional dependency in `backlog-core`, `backlog-issue`, `backlog-git`, and now `backlog-project`, enabled via a `schemars` feature in each.
-    -   Used for models like `User`, `Comment`, `Repository`, `PullRequest`, and the new `Status` in `backlog-project`.
+    -   Optional dependency in `backlog-core`, `backlog-issue`, `backlog-git`, and `backlog-project`, enabled via a `schemars` feature in each.
+    -   Used for models like `User`, `Comment`, `Repository`, `PullRequest`, `ProjectStatus` (in `backlog-project`), and `Attachment` (in `backlog-issue`).
 -   **Inter-Crate Dependencies**:
-    -   `backlog-issue` now depends on `backlog-project` for the `Status` model. This is a new dependency reflecting that project statuses are defined at the project level but used by issues.
+    -   `backlog-issue` now depends on `backlog-project` for the `ProjectStatus` model.
+    -   The `schemars` feature in `backlog-issue` now also enables `backlog-core/schemars` to ensure `AttachmentId` (from `backlog-core`) can derive `JsonSchema`.
     -   `mcp-backlog-server` specific dependencies and features:
         -   Its `backlog-api-client` dependency now enables the `project` feature, in addition to `issue`, `document`, and `git`.
         -   It now has direct dependencies on `backlog-project` (for `ProjectStatus` type) and `backlog-core` (for `ProjectIdOrKey` parsing).

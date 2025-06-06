@@ -1,9 +1,10 @@
 use backlog_api_core::Result;
 use backlog_core::{IssueIdOrKey, IssueKey, ProjectIdOrKey};
+// Removed unused: use chrono::DateTime;
 use client::Client;
 
 use crate::{
-    models::{comment::Comment, issue::Issue, issue::Milestone},
+    models::{attachment::Attachment, comment::Comment, issue::Issue, issue::Milestone},
     requests::{
         AddIssueParams, CountIssueParams, GetIssueListParams, UpdateIssueParams,
         get_comment_list::GetCommentListParams,
@@ -91,6 +92,15 @@ impl IssueApi {
         let query_params = params.map_or_else(Vec::new, |p| p.to_query_params());
         self.0.get_with_params(&path, &query_params).await
     }
+
+    pub async fn get_attachment_list(
+        &self,
+        issue_id_or_key: impl Into<IssueIdOrKey>,
+    ) -> Result<GetAttachmentListResponse> {
+        let issue_key_str = issue_id_or_key.into().to_string();
+        let path = format!("/api/v2/issues/{}/attachments", issue_key_str);
+        self.0.get(&path).await
+    }
 }
 
 type GetIssueResponse = Issue;
@@ -99,16 +109,14 @@ type DeleteIssueResponse = Issue;
 type UpdateIssueResponse = Issue;
 type GetIssueListResponse = Vec<Issue>;
 type GetCommentListResponse = Vec<Comment>;
+type GetAttachmentListResponse = Vec<Attachment>;
 type GetVersionMilestoneListResponse = Vec<Milestone>;
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::{
-        models::{
-            comment::Comment,
-            issue::Milestone,
-        },
+        models::{attachment::Attachment, comment::Comment, issue::Milestone},
         requests::{
             GetIssueListParamsBuilder,
             get_comment_list::{CommentOrder, GetCommentListParamsBuilder},
@@ -116,9 +124,9 @@ mod tests {
     };
     use backlog_core::{
         User,
-        identifier::{IssueId, MilestoneId, ProjectId, UserId},
+        identifier::{AttachmentId, IssueId, MilestoneId, ProjectId, UserId},
     };
-    use chrono::{TimeZone, Utc};
+    use chrono::{TimeZone, Utc}; // Removed DateTime as chrono::DateTime is used explicitly
     use client::test_utils::setup_client; // Use the common setup_client
     use serde_json::json;
     use wiremock::matchers::{method, path, query_param};
@@ -138,6 +146,7 @@ mod tests {
         }
     }
 
+    // Note: create_mock_comment is not used by the new attachment tests, but kept for existing tests.
     fn create_mock_comment(id: u64, content: &str, user_id: u32, user_name: &str) -> Comment {
         let created_time = Utc.with_ymd_and_hms(2024, 1, 1, 12, 0, 0).unwrap();
         Comment {
@@ -462,5 +471,93 @@ mod tests {
         assert!(result.is_ok());
         let comments = result.unwrap();
         assert_eq!(comments.len(), 1);
+    }
+
+    fn create_mock_attachment(
+        id: u32,
+        name: &str,
+        size: u64,
+        user_id: u32,
+        user_name: &str,
+        created_str: &str,
+    ) -> Attachment {
+        Attachment {
+            id: AttachmentId::new(id),
+            name: name.to_string(),
+            size,
+            created_user: create_mock_user(user_id, user_name),
+            created: chrono::DateTime::parse_from_rfc3339(created_str) // Use RFC3339 specific parser
+                .unwrap()
+                .with_timezone(&Utc),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_attachment_list_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_key = "TESTKEY-1"; // Fixed issue key
+
+        let expected_attachments = vec![
+            create_mock_attachment(1, "file1.txt", 1024, 101, "alice", "2024-01-01T10:00:00Z"),
+            create_mock_attachment(2, "image.png", 20480, 102, "bob", "2024-01-02T11:00:00Z"),
+        ];
+
+        Mock::given(method("GET"))
+            .and(path(format!("/api/v2/issues/{}/attachments", issue_key)))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_attachments))
+            .mount(&mock_server)
+            .await;
+
+        let result = issue_api
+            .get_attachment_list(IssueIdOrKey::Key(issue_key.parse().unwrap()))
+            .await;
+        assert!(result.is_ok());
+        let attachments = result.unwrap();
+        assert_eq!(attachments.len(), 2);
+        assert_eq!(attachments[0].name, "file1.txt");
+        assert_eq!(attachments[1].size, 20480);
+    }
+
+    #[tokio::test]
+    async fn test_get_attachment_list_empty() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_key = "TESTKEY-2"; // Fixed issue key
+
+        let expected_attachments: Vec<Attachment> = vec![];
+
+        Mock::given(method("GET"))
+            .and(path(format!("/api/v2/issues/{}/attachments", issue_key)))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_attachments))
+            .mount(&mock_server)
+            .await;
+
+        let result = issue_api
+            .get_attachment_list(IssueIdOrKey::Key(issue_key.parse().unwrap()))
+            .await;
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_get_attachment_list_issue_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_key = "TESTKEY-404"; // Fixed issue key
+
+        Mock::given(method("GET"))
+            .and(path(format!("/api/v2/issues/{}/attachments", issue_key)))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&mock_server)
+            .await;
+
+        let result = issue_api
+            .get_attachment_list(IssueIdOrKey::Key(issue_key.parse().unwrap()))
+            .await;
+        assert!(result.is_err());
     }
 }

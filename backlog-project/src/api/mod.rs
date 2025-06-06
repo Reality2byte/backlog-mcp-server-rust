@@ -35,10 +35,7 @@ impl ProjectApi {
         &self,
         project_id_or_key: impl Into<ProjectIdOrKey>,
     ) -> Result<Vec<Status>> {
-        let path = format!(
-            "/api/v2/projects/{}/statuses",
-            project_id_or_key.into()
-        );
+        let path = format!("/api/v2/projects/{}/statuses", project_id_or_key.into());
         self.0.get(&path).await
     }
 }
@@ -106,7 +103,9 @@ mod tests {
             .mount(&server)
             .await;
 
-        let result = project_api.get_status_list(ProjectIdOrKey::from_str(project_key).unwrap()).await;
+        let result = project_api
+            .get_status_list(ProjectIdOrKey::from_str(project_key).unwrap())
+            .await;
         assert!(result.is_ok());
         assert!(result.unwrap().is_empty());
     }
@@ -135,7 +134,9 @@ mod tests {
             .mount(&server)
             .await;
 
-        let result = project_api.get_status_list(ProjectId::new(project_id)).await;
+        let result = project_api
+            .get_status_list(ProjectId::new(project_id))
+            .await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);

@@ -46,7 +46,11 @@ impl From<Error> for McpError {
             Error::Api(api_error) => {
                 // Further match on the specific ApiError variant
                 match api_error {
-                    ApiError::HttpStatus { status, errors_summary, .. } => {
+                    ApiError::HttpStatus {
+                        status,
+                        errors_summary,
+                        ..
+                    } => {
                         // errors_summary already contains a good summary from ApiError's Display
                         McpError::invalid_request(
                             format!("Backlog API Error (HTTP {}): {}", status, errors_summary),

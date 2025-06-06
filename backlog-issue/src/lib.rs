@@ -4,4 +4,8 @@ pub mod requests;
 pub mod responses;
 
 pub use api::IssueApi;
-pub use models::issue::{Category, Issue, IssueType, Milestone, Priority, Resolution};
+pub use models::{
+    attachment::Attachment,
+    comment::Comment,
+    issue::{Category, Issue, IssueType, Milestone, Priority, Resolution},
+};

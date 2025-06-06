@@ -108,9 +108,9 @@ graph TD
 
 5.  **`backlog-issue` (API module crate)**:
     *   Responsible for the Issue domain.
-    *   Defines models like `Issue`, `Milestone`, `Comment`.
+    *   Defines models like `Issue`, `Milestone`, `Comment`, and `Attachment`.
     *   Uses `backlog_project::Status` for the `Issue.status` field.
-    *   Implements API endpoint wrappers like `get_issue`, `get_issue_list`, `get_comment_list`.
+    *   Implements API endpoint wrappers like `get_issue`, `get_issue_list`, `get_comment_list`, and `get_attachment_list`.
     *   Depends on `backlog-core`, `client`, and now `backlog-project` (for `Status`).
 
 6.  **`backlog-space`, `backlog-user`, `backlog-document`, `backlog-git` (other API module crates)**:
@@ -159,8 +159,8 @@ graph TD
 -   **Request/Response Handling**.
 -   **Error Handling**: Unified via `ApiError`, with `HttpStatus` variant for structured API errors.
 -   **Model Definition and Ownership**:
-    -   Core IDs and truly shared simple types in `backlog-core`.
-    -   More complex, domain-specific models in their respective crates (e.g., `Status` in `backlog-project`).
+    -   Core IDs (like `UserId`, `IssueId`, `AttachmentId`) and truly shared simple types (like `User`) in `backlog-core`.
+    -   More complex, domain-specific models in their respective crates (e.g., `ProjectStatus` in `backlog-project`, `Attachment` in `backlog-issue`).
     -   If a model from one domain crate is semantically part of another (e.g., an `Issue` has a `Status`), a dependency is established (e.g., `backlog-issue` uses `backlog_project::ProjectStatus`).
 -   **MCP Tool Definition**:
     -   Tools are organized into modules by domain (e.g., `issue`, `git`, `document`, `project`) within `mcp-backlog-server`.

@@ -43,7 +43,7 @@
 - [x] UpdateIssue: Updates information about issue: PATCH /api/v2/issues/:issueIdOrKey
 
 ### Attachements
-- [ ] GetListOfIssueAttachments: Returns the list of issue attachments: GET /api/v2/issues/:issueIdOrKey/attachments
+- [x] GetListOfIssueAttachments: Returns the list of issue attachments: GET /api/v2/issues/:issueIdOrKey/attachments
 - [ ] GetIssueAttachment: Downloads issue’s attachment file: GET /api/v2/issues/:issueIdOrKey/attachments/:attachmentId
 - [ ] DeleteIssueAttachment: Deletes an attachment of issue: DELETE /api/v2/issues/:issueIdOrKey/attachments/:attachmentId
 
