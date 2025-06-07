@@ -12,8 +12,13 @@
     -   Implemented "Get List of Pull Request Attachments" API in `backlog-git` and `mcp-backlog-server`.
 -   **Implemented Pull Request Attachment Download functionality (library, CLI, MCP)**.
 -   **Refactored pull request number handling to use a newtype `PrNumber(u64)` for improved type safety across the codebase.**
+-   **Implemented `download_issue_attachment_raw` MCP tool.**
 
 ## Recent Changes
+-   **Implemented `download_issue_attachment_raw` MCP Tool**:
+    -   **`mcp-backlog-server/src/server.rs`**: Added the `download_issue_attachment_raw` tool method. This tool reuses the existing `DownloadAttachmentRequest` (from `crate::issue::request`) and the `issue::bridge::download_issue_attachment_file` bridge function. It returns a JSON object containing the filename, MIME type, and base64-encoded attachment data.
+    -   **`mcp-backlog-server/README.md`**: Documented the new `download_issue_attachment_raw` tool, including its description, input parameters, and output format.
+    -   Verified all changes with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, `cargo clippy --all-features --all-targets`, and `cargo fmt --all`.
 -   **Refactored `pr_number` to use `PrNumber(u64)` Newtype**:
     -   **`backlog-core/src/identifier.rs`**:
         -   Defined `pub struct PrNumber(pub u64);`.

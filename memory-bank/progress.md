@@ -75,6 +75,7 @@
     -   All changes verified with `cargo check`, `cargo test`, `cargo clippy`, and `cargo fmt`.
 -   **Pull Request Attachment Download Implemented**: Added functionality to download pull request attachments in the library (`backlog-git`), CLI (`blg pr download-attachment`), and MCP server (`download_pull_request_attachment_raw/image/text` tools).
 -   **`PrNumber` Newtype Refactoring**: Refactored pull request number handling to use `PrNumber(u64)` newtype for improved type safety across `backlog-core`, `backlog-git`, `backlog-api-client` (library and CLI), and `mcp-backlog-server`.
+-   **`download_issue_attachment_raw` MCP Tool Implemented**: Added a new MCP tool to download issue attachments as raw (JSON with base64) data.
 
 ## What Works
 -   The Memory Bank system is established and updated.
@@ -91,7 +92,7 @@
     -   Space details.
     -   User details.
 -   The `blg` CLI tool provides commands for various operations, including **downloading issue attachments** and **pull request attachments**.
--   The `mcp-backlog-server` provides a suite of MCP tools, including **project status listing**, **issue attachment listing**, **issue attachment image download** (using `Content::image`, rejecting non-images), **issue attachment text download** (using `Content::text`, rejecting non-UTF-8 files), and **pull request attachment download (raw JSON, image, text)**. Error reporting is informative.
+-   The `mcp-backlog-server` provides a suite of MCP tools, including **project status listing**, **issue attachment listing**, **issue attachment image download** (using `Content::image`, rejecting non-images), **issue attachment text download** (using `Content::text`, rejecting non-UTF-8 files), **issue attachment raw download (JSON with base64 data)**, and **pull request attachment download (raw JSON, image, text)**. Error reporting is informative.
 -   The codebase is free of Clippy warnings and consistently formatted. All tests pass.
 -   Test utilities like `setup_client` are now shared from the `client` crate.
 
@@ -189,4 +190,11 @@
     -   Updated `backlog-git` (models and API methods), `backlog-api-client` (library facade and CLI tool), and `mcp-backlog-server` (bridge functions and error types) to use `PrNumber`.
     -   Ensured consistency with existing ID patterns (e.g., placement in `backlog-core`, `serde` derive without `transparent`).
     -   Resolved compiler errors related to `FromStr` error construction in `backlog-core`.
+    -   All changes verified with `cargo check`, `test`, `clippy`, and `fmt`.
+-   **`download_issue_attachment_raw` MCP Tool Implementation**:
+    -   User requested a tool to download issue attachments as raw data, similar to the pull request raw download tool.
+    -   Implemented `download_issue_attachment_raw` in `mcp-backlog-server/src/server.rs`.
+    -   Reused existing `DownloadAttachmentRequest` and `issue::bridge::download_issue_attachment_file` bridge function.
+    -   The tool returns a JSON object containing filename, MIME type, and base64-encoded data.
+    -   Updated `mcp-backlog-server/README.md` to document the new tool.
     -   All changes verified with `cargo check`, `test`, `clippy`, and `fmt`.

@@ -165,6 +165,38 @@ impl Server {
         Ok(CallToolResult::success(vec![Content::json(attachments)?]))
     }
 
+    #[tool(
+        description = "Download an issue attachment as raw bytes. Returns a JSON object with filename, MIME type, and base64-encoded content."
+    )]
+    async fn download_issue_attachment_raw(
+        &self,
+        #[tool(aggr)] req: DownloadAttachmentRequest,
+    ) -> McpResult {
+        let (filename, bytes_data) =
+            issue::bridge::download_issue_attachment_file(self.client.clone(), req).await?;
+
+        let mime_type = mime_guess::from_path(&filename)
+            .first_or_octet_stream()
+            .to_string();
+
+        #[derive(Serialize)]
+        struct SerializableRawAttachment<'a> {
+            filename: &'a str,
+            mime_type: String,
+            data_base64: String,
+        }
+
+        let base64_encoded_data = BASE64_STANDARD.encode(&bytes_data);
+
+        let response_data = SerializableRawAttachment {
+            filename: &filename,
+            mime_type,
+            data_base64: base64_encoded_data,
+        };
+
+        Ok(CallToolResult::success(vec![Content::json(response_data)?]))
+    }
+
     #[tool(description = "Download an issue attachment image. Returns filename and image content.")]
     async fn download_issue_attachment_image(
         &self,

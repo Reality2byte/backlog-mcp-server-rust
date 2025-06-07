@@ -38,6 +38,11 @@ The following tools are currently available:
 -   **`get_issue_attachment_list`**
     -   Description: Get a list of attachments for a specified issue.
     -   Input: `issue_id_or_key` (Issue ID or issue key, e.g., "MYPROJECTKEY-123", "12345")
+-   **`download_issue_attachment_raw`**
+    -   Description: Download an issue attachment as raw bytes. Returns a JSON object with filename, MIME type, and base64-encoded content.
+    -   Input:
+        -   `issue_id_or_key` (string, required): The issue ID or issue key. Examples: "MYPROJECTKEY-123", "12345".
+        -   `attachment_id` (number, required): The numeric ID of the attachment to download.
 -   **`download_issue_attachment_image`**
     -   Description: Download an issue attachment if it is an image. Returns the image content (base64 encoded) and its MIME type. Returns an error if the attachment is not an image.
     -   Input:
