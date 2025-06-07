@@ -24,7 +24,6 @@
     -   Convention: Use `#[builder(..., build_fn(error = "ApiError"))]` to make the `build()` method return `Result<Self, backlog_api_core::Error>`.
 -   **Binary Data Handling**: `bytes` (version 1) - For efficient handling of byte streams, used for file downloads. Re-exported by `backlog-api-core`.
 -   **Base64 Encoding**: `base64` (version 0.21) - Used for encoding binary data for JSON transport in MCP tools.
--   **MIME Type Guessing**: `mime_guess` (version 2.0) - Used to determine MIME type from filenames for MCP tool responses.
 -   **CLI Argument Parsing**: `clap` (version 4.5, with `derive` feature) - Used by the `blg` binary.
 -   **MCP SDK**: `rmcp` (git, branch = "main", features = ["transport-io"]) - For building MCP servers.
     -   The `download_issue_attachment_image` tool now uses `rmcp::model::Content::image` to return image data, which expects base64 encoded string and a MIME type. It includes a check to ensure the attachment is an image.

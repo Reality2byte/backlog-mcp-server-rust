@@ -131,8 +131,7 @@
     -   The existing `download_issue_attachment_file` MCP tool was renamed to `download_issue_attachment_image` by the user.
     -   The server method in `mcp-backlog-server/src/server.rs` was updated by the user to:
         -   Use `Content::image(base64_data, mime_type)` for the response, as discussed.
-        -   Include a check to ensure the attachment's MIME type (obtained via `mime_guess`) starts with "image/". If not, it returns an error.
-    -   The `use mime_guess;` statement was confirmed/added if necessary.
+        -   Include a check to ensure the attachment's Content-type starts with "image/". If not, it returns an error.
     -   The bridge function `download_issue_attachment_file` (which fetches filename and bytes) remained largely the same.
     -   The `DownloadAttachmentRequest` struct was reused.
     -   This refined error handling (rejecting non-images) was tested with issue PASTA-1242, which has non-image attachments, and the tool correctly returned an "Attachment is not an image" error.

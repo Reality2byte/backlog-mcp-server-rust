@@ -213,7 +213,7 @@ impl Server {
         let (filename, content_type, bytes_data) = // Destructure 3-tuple
             issue::bridge::download_issue_attachment_file(self.client.clone(), req).await?;
 
-        // Use actual content_type from download, not mime_guess
+        // Use actual content_type from download
         let data_base64 = BASE64_STANDARD.encode(&bytes_data);
 
         let response_data = SerializableRawAttachment {
@@ -292,7 +292,7 @@ impl Server {
         let (filename, content_type, bytes_data) = // Destructure 3-tuple
             git::bridge::download_pr_attachment_bridge(self.client.clone(), req).await?;
 
-        // Use actual content_type from download, not mime_guess
+        // Use actual content_type from download
         let data_base64 = BASE64_STANDARD.encode(&bytes_data);
 
         let response_data = SerializableRawAttachment {

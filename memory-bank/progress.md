@@ -58,7 +58,7 @@
     -   The server method was updated by the user to use `Content::image` for the response.
     -   A check was added to ensure the attachment is an image based on its MIME type; an error is returned for non-image files.
     -   This error handling was successfully tested.
-    -   Dependencies (`base64`, `mime_guess`) and import paths were confirmed/corrected.
+    -   Dependencies (`base64`) and import paths were confirmed/corrected.
 -   **`download_issue_attachment_text` MCP Tool Implemented in `mcp-backlog-server`**:
     -   Added `download_issue_attachment_text` tool method to `Server`.
     -   Reused existing `DownloadAttachmentRequest` and `download_issue_attachment_file` bridge function.
@@ -160,7 +160,7 @@
         -   Use `Content::image(base64_data, mime_type)` for the response.
         -   Add a check to ensure the MIME type indicates an image, returning an error otherwise.
     -   This refined behavior and error handling were successfully tested.
-    -   Dependencies (`base64`, `mime_guess`) and necessary imports were confirmed.
+    -   Dependencies (`base64) and necessary imports were confirmed.
 -   **`download_issue_attachment_text` MCP Tool Implementation**:
     -   User requested a text-specific version of the attachment download tool.
     -   Added `download_issue_attachment_text` method to `mcp-backlog-server/src/server.rs`.
