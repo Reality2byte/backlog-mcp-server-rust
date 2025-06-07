@@ -269,7 +269,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     )
                     .await
                 {
-                    Ok(file_bytes) => {
+                    Ok((_filename, _content_type, file_bytes)) => {
+                        // Destructure the tuple
                         if let Err(e) = fs::write(&dl_args.output, &file_bytes).await {
                             eprintln!(
                                 "Error writing attachment to {}: {}",
@@ -355,7 +356,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .get_attachment_file(parsed_issue_id_or_key, parsed_attachment_id)
                     .await
                 {
-                    Ok(file_bytes) => {
+                    Ok((_filename, _content_type, file_bytes)) => {
+                        // Destructure the tuple
                         if let Err(e) = fs::write(&dl_args.output, &file_bytes).await {
                             eprintln!(
                                 "Error writing attachment to {}: {}",

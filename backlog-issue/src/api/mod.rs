@@ -106,14 +106,15 @@ impl IssueApi {
         &self,
         issue_id_or_key: impl Into<IssueIdOrKey>,
         attachment_id: backlog_core::identifier::AttachmentId,
-    ) -> backlog_api_core::Result<backlog_api_core::bytes::Bytes> {
+    ) -> backlog_api_core::Result<(String, String, backlog_api_core::bytes::Bytes)> {
+        // Changed return type
         let issue_id_or_key_str = issue_id_or_key.into().to_string();
         let attachment_id_val = attachment_id.value();
         let path = format!(
             "/api/v2/issues/{}/attachments/{}",
             issue_id_or_key_str, attachment_id_val
         );
-        self.0.download_file_raw(&path).await
+        self.0.download_file_raw(&path).await // download_file_raw now returns a tuple
     }
 }
 
@@ -143,6 +144,7 @@ mod tests {
     };
     use chrono::{TimeZone, Utc};
     use client::test_utils::setup_client; // Use the common setup_client
+    // Removed: use reqwest::header::CONTENT_DISPOSITION; // reqwest not a dev-dependency here
     use serde_json::json;
     use wiremock::matchers::{method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -592,6 +594,8 @@ mod tests {
         let attachment_id = AttachmentId::new(attachment_id_val);
 
         let expected_body_bytes = Bytes::from_static(b"sample file content");
+        let expected_filename = "test_attachment.dat";
+        let expected_content_type = "application/octet-stream";
 
         Mock::given(method("GET"))
             .and(path(format!(
@@ -601,7 +605,11 @@ mod tests {
             .respond_with(
                 ResponseTemplate::new(200)
                     .set_body_bytes(expected_body_bytes.clone())
-                    .insert_header("Content-Type", "application/octet-stream"),
+                    .insert_header("Content-Type", expected_content_type) // Use string literal
+                    .insert_header(
+                        "Content-Disposition", // Already string literal, ensure it stays
+                        format!("attachment; filename=\"{}\"", expected_filename),
+                    ),
             )
             .mount(&mock_server)
             .await;
@@ -611,7 +619,9 @@ mod tests {
             .await;
 
         assert!(result.is_ok());
-        let file_bytes = result.unwrap();
+        let (filename, content_type, file_bytes) = result.unwrap();
+        assert_eq!(filename, expected_filename);
+        assert_eq!(content_type, expected_content_type);
         assert_eq!(file_bytes, expected_body_bytes);
     }
 

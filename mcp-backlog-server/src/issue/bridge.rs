@@ -159,37 +159,18 @@ pub(crate) async fn get_attachment_list_impl(
 pub(crate) async fn download_issue_attachment_file(
     client: Arc<Mutex<BacklogApiClient>>,
     req: DownloadAttachmentRequest,
-) -> Result<(String, bytes::Bytes)> {
+) -> Result<(String, String, bytes::Bytes)> {
+    // Changed return type to include content_type
     let parsed_issue_id_or_key = IssueIdOrKey::from_str(&req.issue_id_or_key)?;
     let parsed_attachment_id = AttachmentId::new(req.attachment_id);
 
     let client_guard = client.lock().await;
 
-    // 1. Get attachment list to find the filename
-    let attachments = client_guard
-        .issue()
-        .get_attachment_list(parsed_issue_id_or_key.clone())
-        .await?;
-
-    let target_attachment = attachments
-        .iter()
-        .find(|att| att.id == parsed_attachment_id);
-
-    let filename = match target_attachment {
-        Some(att) => att.name.clone(),
-        None => {
-            return Err(McpError::Parameter(format!(
-                "Attachment ID {} not found on issue {}",
-                req.attachment_id, req.issue_id_or_key
-            )));
-        }
-    };
-
-    // 2. Download the file content
-    let file_bytes = client_guard
+    // The get_attachment_file method now returns (filename, content_type, bytes)
+    // due to changes in client.download_file_raw
+    client_guard
         .issue()
         .get_attachment_file(parsed_issue_id_or_key, parsed_attachment_id)
-        .await?;
-
-    Ok((filename, file_bytes))
+        .await
+        .map_err(McpError::from) // Convert ApiError to McpError
 }

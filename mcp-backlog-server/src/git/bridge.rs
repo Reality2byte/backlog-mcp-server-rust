@@ -8,7 +8,7 @@ use backlog_api_client::{
     AttachmentId, PrNumber, ProjectIdOrKey, PullRequest, PullRequestAttachment, Repository,
     RepositoryIdOrName,
 };
-use backlog_core::Identifier; // Added for .value()
+// Removed: use backlog_core::Identifier; // Was unused after bridge function refactor
 use std::{str::FromStr, sync::Arc};
 use tokio::sync::Mutex;
 
@@ -94,50 +94,25 @@ pub(crate) async fn get_pull_request_attachment_list_tool(
 pub(crate) async fn download_pr_attachment_bridge(
     client: Arc<Mutex<BacklogApiClient>>,
     req: DownloadPullRequestAttachmentRequest,
-) -> Result<(String, Bytes)> {
+) -> Result<(String, String, Bytes)> {
+    // Changed return type
     let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
     let pr_number = PrNumber::from(req.pr_number);
-    let target_attachment_id_val = req.attachment_id;
+    let attachment_id_for_download = AttachmentId::new(req.attachment_id);
 
     let client_guard = client.lock().await;
 
-    // 1. Get the list of attachments to find the filename
-    // Pass references to project_id_or_key and repo_id_or_name
-    let attachments = client_guard
+    // The download_pull_request_attachment method in backlog-git now returns (filename, content_type, bytes)
+    // due to changes in client.download_file_raw.
+    client_guard
         .git()
-        .get_pull_request_attachment_list(&project_id_or_key, &repo_id_or_name, pr_number)
-        .await?;
-
-    let id_to_find_rhs = target_attachment_id_val as u64;
-    let target_attachment = attachments.iter().find(|att| {
-        let current_att_id_lhs: u64 = att.id.value() as u64; // Cast u32 (compiler inferred) to u64
-        current_att_id_lhs == id_to_find_rhs
-    });
-
-    match target_attachment {
-        Some(attachment_info) => {
-            let filename = attachment_info.name.clone();
-            let attachment_id_for_download = AttachmentId::new(target_attachment_id_val); // Create AttachmentId for download
-
-            // 2. Download the actual file content
-            // Now we can move project_id_or_key and repo_id_or_name as they were not moved before
-            let file_bytes = client_guard
-                .git()
-                .download_pull_request_attachment(
-                    project_id_or_key,
-                    repo_id_or_name,
-                    pr_number,
-                    attachment_id_for_download,
-                )
-                .await?;
-            Ok((filename, file_bytes))
-        }
-        None => Err(Error::PullRequestAttachmentNotFound {
+        .download_pull_request_attachment(
             project_id_or_key,
             repo_id_or_name,
             pr_number,
-            attachment_id: target_attachment_id_val,
-        }),
-    }
+            attachment_id_for_download,
+        )
+        .await
+        .map_err(Error::from) // Convert ApiError to local McpError
 }

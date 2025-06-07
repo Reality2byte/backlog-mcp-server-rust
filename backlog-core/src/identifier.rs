@@ -83,7 +83,8 @@ impl_identifier!(
     (PriorityId, u32),
     (ResolutionId, u32),
     (CommentId, u32),
-    (AttachmentId, u32),
+    (AttachmentId, u32),         // Generic attachment ID, used for Issues and PRs
+    (DocumentAttachmentId, u32), // Specific for Document attachments
     (NotificationId, u32),
     (StarId, u32),
     (RepositoryId, u32),

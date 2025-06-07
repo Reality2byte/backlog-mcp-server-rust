@@ -1,4 +1,5 @@
-use backlog_api_core::{BacklogApiErrorResponse, Error as ApiError, Result}; // Added ApiError, BacklogApiErrorResponse
+use backlog_api_core::{BacklogApiErrorResponse, Error as ApiError, Result, bytes}; // Added bytes
+use reqwest::header::{CONTENT_DISPOSITION, CONTENT_TYPE}; // Removed HeaderMap
 use url::Url;
 
 #[derive(Debug, Clone)]
@@ -164,18 +165,17 @@ impl Client {
         Ok(entity)
     }
 
-    pub async fn download_file_raw(&self, path: &str) -> Result<backlog_api_core::bytes::Bytes> {
-        let request = self.prepare_request(reqwest::Method::GET, path, &())?; // No query params for simple download
-        let response = self.client.execute(request).await?; // This maps reqwest::Error to ApiError::Http
+    pub async fn download_file_raw(&self, path: &str) -> Result<(String, String, bytes::Bytes)> {
+        // Changed return type
+        let request = self.prepare_request(reqwest::Method::GET, path, &())?;
+        let response = self.client.execute(request).await?;
 
         if !response.status().is_success() {
             let status = response.status().as_u16();
-            // Attempt to parse as BacklogApiErrorResponse for detailed errors
             let error_body_text = response
                 .text()
                 .await
                 .unwrap_or_else(|e| format!("Failed to read error body: {}", e));
-
             match serde_json::from_str::<BacklogApiErrorResponse>(&error_body_text) {
                 Ok(parsed_errors) => {
                     let summary = parsed_errors
@@ -191,14 +191,42 @@ impl Client {
                     });
                 }
                 Err(_) => {
-                    // If parsing fails, return a more generic error with the status and raw body
                     let summary = format!("HTTP Error {} with body: {}", status, error_body_text);
-                    // Using InvalidBuildParameter as a placeholder, ideally a more specific variant
                     return Err(ApiError::InvalidBuildParameter(summary));
                 }
             }
         }
-        // Success path: get response body as bytes
-        response.bytes().await.map_err(ApiError::from) // reqwest::Error from .bytes() converted to ApiError::Http
+
+        // Success path
+        let headers = response.headers().clone();
+        let bytes_content = response.bytes().await.map_err(ApiError::from)?;
+
+        // Extract filename from Content-Disposition
+        let filename = headers
+            .get(CONTENT_DISPOSITION)
+            .and_then(|value| value.to_str().ok())
+            .and_then(|value| {
+                // Simple parser for `filename="name.ext"` or `filename*=UTF-8''name.ext`
+                if let Some(start) = value.find("filename=\"") {
+                    let remainder = &value[start + 10..];
+                    remainder.find('"').map(|end| remainder[..end].to_string())
+                } else if let Some(start) = value.find("filename*=UTF-8''") {
+                    let remainder = &value[start + 17..];
+                    // This doesn't handle URL decoding, but it's a start
+                    Some(remainder.to_string())
+                } else {
+                    None
+                }
+            })
+            .unwrap_or_else(|| "downloaded_file".to_string()); // Default filename
+
+        // Extract Content-Type
+        let content_type = headers
+            .get(CONTENT_TYPE)
+            .and_then(|value| value.to_str().ok())
+            .unwrap_or("application/octet-stream") // Default content type
+            .to_string();
+
+        Ok((filename, content_type, bytes_content))
     }
 }

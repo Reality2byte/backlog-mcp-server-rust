@@ -54,19 +54,18 @@ pub(crate) fn find_by_name_from_array<T: Clone>(
     }
 }
 
-pub fn ensure_image_type(filename: &str) -> Result<String, McpError> {
-    let mime_type = mime_guess::from_path(filename)
-        .first_or_octet_stream()
-        .to_string();
-
-    if !mime_type.starts_with("image/") {
+pub fn ensure_image_type(
+    content_type: &str,
+    filename_for_error_message: &str,
+) -> Result<String, McpError> {
+    if !content_type.starts_with("image/") {
         return Err(McpError::invalid_request(
             format!(
-                "Attachment '{}' is not an image. Content type: {}",
-                filename, mime_type
+                "Attachment '{}' is not an image. Reported content type: {}",
+                filename_for_error_message, content_type
             ),
             None,
         ));
     }
-    Ok(mime_type)
+    Ok(content_type.to_string())
 }

@@ -1,7 +1,7 @@
 use backlog_api_core::{Result, bytes}; // Added bytes
 use backlog_core::DocumentId;
 use backlog_core::Identifier;
-use backlog_core::identifier::AttachmentId;
+use backlog_core::identifier::DocumentAttachmentId; // Changed to DocumentAttachmentId
 use client::Client;
 // Removed use reqwest; as it's no longer directly used in the return type for download_attachment
 
@@ -48,8 +48,9 @@ impl DocumentApi {
     pub async fn download_attachment(
         &self,
         document_id: impl Into<DocumentId>,
-        attachment_id: impl Into<AttachmentId>,
-    ) -> Result<bytes::Bytes> {
+        attachment_id: impl Into<DocumentAttachmentId>, // Changed to DocumentAttachmentId
+    ) -> Result<(String, String, bytes::Bytes)> {
+        // Changed return type to tuple
         // Changed return type
         let path = format!(
             // Removed _ from _path
@@ -65,9 +66,10 @@ impl DocumentApi {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use backlog_api_core::bytes;
-    use backlog_core::identifier::AttachmentId;
-    use client::test_utils::setup_client; // Corrected path
+    use backlog_api_core::bytes; // Keep this for Bytes::from
+    use backlog_core::identifier::DocumentAttachmentId; // Changed to DocumentAttachmentId
+    use client::test_utils::setup_client;
+    // Removed: use reqwest::header::CONTENT_DISPOSITION; // Was unused
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -99,14 +101,16 @@ mod tests {
             .await;
 
         let document_id = DocumentId::new(document_id_val.to_string());
-        let attachment_id = AttachmentId::new(attachment_id_val);
+        let attachment_id = DocumentAttachmentId::new(attachment_id_val); // Changed to DocumentAttachmentId
 
         let result = doc_api
             .download_attachment(document_id, attachment_id)
             .await;
 
         assert!(result.is_ok());
-        let bytes_content = result.unwrap();
+        let (filename, content_type, bytes_content) = result.unwrap();
+        assert_eq!(filename, "doc_attachment.txt");
+        assert_eq!(content_type, "application/octet-stream");
         assert_eq!(bytes_content, bytes::Bytes::from(attachment_content));
     }
 
@@ -129,7 +133,7 @@ mod tests {
             .await;
 
         let document_id = DocumentId::new(document_id_val.to_string());
-        let attachment_id = AttachmentId::new(attachment_id_val);
+        let attachment_id = DocumentAttachmentId::new(attachment_id_val); // Changed to DocumentAttachmentId
 
         let result = doc_api
             .download_attachment(document_id, attachment_id)

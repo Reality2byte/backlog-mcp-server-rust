@@ -9,8 +9,14 @@ The following tools are grouped by their respective modules:
 
 ### Document Tools
 -   **`get_document_details`**
-    -   Description: Retrieves details for a specific Backlog document. This includes the title, body in Markdown format (`plain`), body in ProseMirror JSON format (`json`), and other metadata.
+    -   Description: Retrieves details for a specific Backlog document. This includes the title, body in Markdown format (`plain`), body in ProseMirror JSON format (`json`), and other metadata. The `plain` (Markdown) content may contain image tags like `![alt_text](/document/backend/PROJ/DOCUMENT_ID_HEX/file/ATTACHMENT_ID)`. The `ATTACHMENT_ID` from such tags can be used with the `download_document_attachment_image` tool. The `alt_text` can often serve as a filename hint if needed by the client.
     -   Input: `document_id` (a 32-digit hexadecimal string)
+-   **`download_document_attachment_image`**
+    -   Description: Download a document attachment if it is an image. Returns the image content (base64 encoded) and its actual MIME type from the server. Returns an error if the attachment is not an image based on its `Content-Type` header.
+    -   Input:
+        -   `document_id` (string, required): The document ID (a 32-digit hexadecimal string).
+        -   `attachment_id` (number, required): The numeric ID of the attachment to download (obtained from Markdown links in document content).
+    -   Output: Image content via `rmcp::model::Content::image`.
 
 ### Git Tools
 -   **`get_repository_list`**

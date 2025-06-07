@@ -151,7 +151,8 @@ impl GitApi {
         repo_id_or_name: impl Into<RepositoryIdOrName>,
         pr_number: PrNumber, // Changed to PrNumber
         attachment_id: AttachmentId,
-    ) -> Result<bytes::Bytes> {
+    ) -> Result<(String, String, bytes::Bytes)> {
+        // Changed return type
         // Changed Bytes to bytes::Bytes
         let path = format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",
@@ -173,6 +174,7 @@ mod tests {
     // Let's rely on the top-level `bytes` module being available.
     use backlog_core::identifier::{AttachmentId, Identifier, PrNumber}; // Added PrNumber for tests
     use client::test_utils::setup_client;
+    // Removed: use reqwest::header::CONTENT_DISPOSITION; // Was causing error, not a dev-dependency
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -333,8 +335,10 @@ mod tests {
             .await;
 
         assert!(result.is_ok());
-        let bytes_content = result.unwrap();
-        assert_eq!(bytes_content, bytes::Bytes::from(attachment_content)); // Changed Bytes to bytes::Bytes
+        let (filename, content_type, bytes_content) = result.unwrap();
+        assert_eq!(filename, "test_file.txt");
+        assert_eq!(content_type, "application/octet-stream");
+        assert_eq!(bytes_content, bytes::Bytes::from(attachment_content));
     }
 
     #[tokio::test]

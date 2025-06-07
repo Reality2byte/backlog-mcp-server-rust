@@ -14,13 +14,37 @@
 -   **Refactored pull request number handling to use a newtype `PrNumber(u64)` for improved type safety across the codebase.**
 -   **Implemented `download_issue_attachment_raw` MCP tool.**
 -   **Reorganized `mcp-backlog-server/README.md` to group tools by module.**
--   **Implemented `download_attachment` method in `backlog-document` crate to return `bytes::Bytes`.**
+-   **Implemented `download_attachment` method in `backlog-document` crate (and refactored client for all downloads) to return filename, content type, and `bytes::Bytes`.**
+-   **Implemented `download_document_attachment_image` MCP tool.**
 
 ## Recent Changes
--   **Implemented Document Attachment Download in `backlog-document`**:
+-   **Implemented Document Attachment Image Download (MCP Tool & Client/Library Refactor)**:
+    -   **`client/src/client.rs`**:
+        -   Modified `download_file_raw` to parse `Content-Disposition` (for filename) and `Content-Type` headers, changing its return signature to `Result<(String, String, bytes::Bytes)>`.
+    -   **Library Crate Updates (`backlog-issue`, `backlog-git`, `backlog-document`)**:
+        -   Respective attachment download methods (`get_attachment_file`, `download_pull_request_attachment`, `download_attachment`) were updated to align with `client::download_file_raw`'s new return type (triple tuple).
+        -   Unit tests for these methods were updated to mock and assert the filename and content type.
+        -   Corrected import paths for header constants in test modules (using string literals where `reqwest` was not a dev-dependency, e.g., in `backlog-issue` and `backlog-git` tests).
+    -   **CLI Update (`backlog-api-client/src/bin/blg.rs`)**:
+        -   `DownloadAttachment` handlers for both issues and pull requests were updated to correctly destructure the 3-tuple from library calls, using only the `file_bytes` component for `fs::write`.
+    -   **Core Type Update (`backlog-core`)**:
+        -   Added `DocumentAttachmentId(u32)` newtype to `identifier.rs` and re-exported it from `lib.rs`.
+    -   **Document Crate Update (`backlog-document`)**:
+        -   `download_attachment` method in `api.rs` now uses `DocumentAttachmentId` for its `attachment_id` parameter.
+    -   **MCP Server (`mcp-backlog-server`)**:
+        -   **`src/document/request.rs`**: Defined `DownloadDocumentAttachmentRequest` (fields: `document_id: String`, `attachment_id: u32`).
+        -   **`src/document/bridge.rs`**: Implemented `download_document_attachment_bridge` to use the updated `backlog_document::download_attachment` and return the `(filename, content_type, bytes)` triple. Corrected import paths for `DocumentAttachmentId` and `bytes`.
+        -   **`src/util.rs`**: Modified `ensure_image_type` to accept `content_type: &str` and `filename_for_error_message: &str`, basing its check on the provided `content_type`.
+        -   **`src/issue/bridge.rs` & `src/git/bridge.rs`**: Updated `download_issue_attachment_file` and `download_pr_attachment_bridge` to return the `(String, String, Bytes)` triple from their underlying library calls. Removed redundant filename fetching logic.
+        -   **`src/server.rs`**:
+            -   Added the new `download_document_attachment_image` tool method. It uses the filename and `content_type` from the bridge, validates with the updated `ensure_image_type`.
+            -   Updated existing image and text download tools (`download_issue_attachment_image/text/raw`, `download_pull_request_attachment_image/text/raw`) to correctly handle the 3-tuple from their bridge functions and use the actual `content_type` (especially for `_raw` tools and `ensure_image_type` calls).
+        -   **`README.md`**: Documented the new `download_document_attachment_image` tool and updated the description of `get_document_details`.
+    -   Verified all changes with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, `cargo clippy --all-features --all-targets`, and `cargo fmt --all`.
+-   **Implemented Document Attachment Download in `backlog-document`**: (This is now part of the above entry)
     -   **`backlog-document/src/api.rs`**:
         -   Updated the `download_attachment` method:
-            -   Changed return type from `Result<reqwest::Response>` to `Result<bytes::Bytes>`.
+            -   Changed return type from `Result<reqwest::Response>` to `Result<bytes::Bytes>`. (Superseded by tuple return)
             -   Implemented the body to call `self.0.download_file_raw(&path).await`.
             -   Added `use backlog_api_core::bytes;`.
         -   Added unit tests for `download_attachment` covering success and 404 error cases, using `wiremock` and `client::test_utils::setup_client`.
