@@ -1,3 +1,4 @@
+use rmcp::Error as McpError;
 use std::cmp::Ordering;
 
 pub(crate) enum MatchResult<T> {
@@ -51,4 +52,21 @@ pub(crate) fn find_by_name_from_array<T: Clone>(
                 .collect(),
         )
     }
+}
+
+pub fn ensure_image_type(filename: &str) -> Result<String, McpError> {
+    let mime_type = mime_guess::from_path(filename)
+        .first_or_octet_stream()
+        .to_string();
+
+    if !mime_type.starts_with("image/") {
+        return Err(McpError::invalid_request(
+            format!(
+                "Attachment '{}' is not an image. Content type: {}",
+                filename, mime_type
+            ),
+            None,
+        ));
+    }
+    Ok(mime_type)
 }

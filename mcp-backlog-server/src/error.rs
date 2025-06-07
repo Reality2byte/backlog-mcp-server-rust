@@ -105,3 +105,9 @@ impl From<Error> for McpError {
         }
     }
 }
+
+impl From<std::string::FromUtf8Error> for Error {
+    fn from(err: std::string::FromUtf8Error) -> Self {
+        Error::Server(format!("Failed to decode UTF-8 string: {}", err))
+    }
+}

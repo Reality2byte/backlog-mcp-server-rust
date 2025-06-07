@@ -1,4 +1,5 @@
 use crate::issue::request::{GetIssueCommentsRequest, UpdateIssueRequest};
+use crate::util::ensure_image_type;
 use crate::{
     document::{self, request::GetDocumentDetailsRequest},
     git::{
@@ -36,6 +37,13 @@ pub struct Server {
 }
 
 type McpResult = Result<CallToolResult, McpError>;
+
+#[derive(Serialize)]
+struct SerializableRawAttachment<'a> {
+    filename: &'a str,
+    mime_type: String,
+    data_base64: String,
+}
 
 #[tool(tool_box)]
 impl Server {
@@ -179,19 +187,12 @@ impl Server {
             .first_or_octet_stream()
             .to_string();
 
-        #[derive(Serialize)]
-        struct SerializableRawAttachment<'a> {
-            filename: &'a str,
-            mime_type: String,
-            data_base64: String,
-        }
-
-        let base64_encoded_data = BASE64_STANDARD.encode(&bytes_data);
+        let data_base64 = BASE64_STANDARD.encode(&bytes_data);
 
         let response_data = SerializableRawAttachment {
             filename: &filename,
             mime_type,
-            data_base64: base64_encoded_data,
+            data_base64,
         };
 
         Ok(CallToolResult::success(vec![Content::json(response_data)?]))
@@ -204,17 +205,7 @@ impl Server {
     ) -> McpResult {
         let (filename, bytes_data) =
             issue::bridge::download_issue_attachment_file(self.client.clone(), req).await?;
-
-        let mime_type = mime_guess::from_path(&filename)
-            .first_or_octet_stream()
-            .to_string();
-
-        if !mime_type.starts_with("image/") {
-            return Err(McpError::invalid_request(
-                format!("Attachment is not an image. Content type: {}", mime_type),
-                None,
-            ));
-        }
+        let mime_type = ensure_image_type(&filename)?;
 
         let base64_encoded_data = BASE64_STANDARD.encode(&bytes_data);
         Ok(CallToolResult::success(vec![Content::image(
@@ -233,13 +224,8 @@ impl Server {
         let (_filename, bytes_data) =
             issue::bridge::download_issue_attachment_file(self.client.clone(), req).await?;
 
-        match String::from_utf8(bytes_data.to_vec()) {
-            Ok(text_content) => Ok(CallToolResult::success(vec![Content::text(text_content)])),
-            Err(_) => Err(McpError::invalid_request(
-                "Attachment is not a valid UTF-8 text file.",
-                None,
-            )),
-        }
+        let text = String::from_utf8(bytes_data.to_vec()).map_err(crate::error::Error::from)?;
+        Ok(CallToolResult::success(vec![Content::text(text)]))
     }
 
     #[tool(description = "Get a list of statuses for a specified project.")]
@@ -276,19 +262,12 @@ impl Server {
             .first_or_octet_stream()
             .to_string();
 
-        #[derive(Serialize)]
-        struct SerializableRawAttachment<'a> {
-            filename: &'a str,
-            mime_type: String,
-            data_base64: String,
-        }
-
-        let base64_encoded_data = BASE64_STANDARD.encode(&bytes_data);
+        let data_base64 = BASE64_STANDARD.encode(&bytes_data);
 
         let response_data = SerializableRawAttachment {
             filename: &filename,
             mime_type,
-            data_base64: base64_encoded_data,
+            data_base64,
         };
 
         Ok(CallToolResult::success(vec![Content::json(response_data)?]))
@@ -303,20 +282,7 @@ impl Server {
     ) -> McpResult {
         let (filename, bytes_data) =
             git::bridge::download_pr_attachment_bridge(self.client.clone(), req).await?;
-
-        let mime_type = mime_guess::from_path(&filename)
-            .first_or_octet_stream()
-            .to_string();
-
-        if !mime_type.starts_with("image/") {
-            return Err(McpError::invalid_request(
-                format!(
-                    "Attachment '{}' is not an image. Content type: {}",
-                    filename, mime_type
-                ),
-                None,
-            ));
-        }
+        let mime_type = ensure_image_type(&filename)?;
 
         let base64_encoded_data = BASE64_STANDARD.encode(&bytes_data);
         Ok(CallToolResult::success(vec![Content::image(
