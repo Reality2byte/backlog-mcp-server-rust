@@ -5,7 +5,7 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-client = { path = "../client" }
+client = { path = "../client", features = ["test-utils"] } # Enabled test-utils feature
 backlog-core = { path = "../backlog-core" }
 backlog-api-core = { path = "../backlog-api-core" }
 serde = { workspace = true, features = ["derive"] }
@@ -16,6 +16,5 @@ url = { workspace = true }
 reqwest = { workspace = true, features = ["json"] }
 
 [dev-dependencies]
-# Add later if tests are implemented in this crate
-# wiremock = { workspace = true }
-# tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+wiremock = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

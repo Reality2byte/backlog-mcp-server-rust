@@ -14,8 +14,21 @@
 -   **Refactored pull request number handling to use a newtype `PrNumber(u64)` for improved type safety across the codebase.**
 -   **Implemented `download_issue_attachment_raw` MCP tool.**
 -   **Reorganized `mcp-backlog-server/README.md` to group tools by module.**
+-   **Implemented `download_attachment` method in `backlog-document` crate to return `bytes::Bytes`.**
 
 ## Recent Changes
+-   **Implemented Document Attachment Download in `backlog-document`**:
+    -   **`backlog-document/src/api.rs`**:
+        -   Updated the `download_attachment` method:
+            -   Changed return type from `Result<reqwest::Response>` to `Result<bytes::Bytes>`.
+            -   Implemented the body to call `self.0.download_file_raw(&path).await`.
+            -   Added `use backlog_api_core::bytes;`.
+        -   Added unit tests for `download_attachment` covering success and 404 error cases, using `wiremock` and `client::test_utils::setup_client`.
+        -   Corrected `DocumentId::new()` calls in tests to pass a `String` by using `.to_string()` on integer test values, resolving initial compiler errors.
+    -   **`backlog-document/Cargo.toml`**:
+        -   Added `wiremock` and `tokio` as dev-dependencies.
+        -   Enabled the `test-utils` feature for the `client` dependency.
+    -   Verified all changes with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, `cargo clippy --all-features --all-targets`, and `cargo fmt --all`.
 -   **Reorganized `mcp-backlog-server/README.md` Tool Listing**:
     -   **`mcp-backlog-server/README.md`**: Updated the "Available Tools" section. Tools are now grouped under subheadings corresponding to the server's internal modules: `Document Tools`, `Git Tools`, `Issue Tools`, `Project Tools`, and `User Tools`. The tool name `list_pull_requests` was corrected to `get_pull_request_list` to match the server implementation.
 -   **Implemented `download_issue_attachment_raw` MCP Tool**:

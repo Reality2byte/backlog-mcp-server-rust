@@ -78,6 +78,7 @@
 -   **`download_issue_attachment_raw` MCP Tool Implemented**: Added a new MCP tool to download issue attachments as raw (JSON with base64) data.
 -   **`get_user_list` MCP Tool Implemented**: Added a new MCP tool to retrieve a list of all users in the Backlog space.
 -   **`mcp-backlog-server/README.md` Reorganized**: Grouped the 'Available Tools' section by module for better clarity.
+-   **Document Attachment Download Implemented**: `backlog-document` crate's `download_attachment` method now correctly returns `bytes::Bytes` and has unit tests.
 
 ## What Works
 -   The Memory Bank system is established and updated.
@@ -89,7 +90,7 @@
     -   Git repository listing and details.
     -   Pull request listing, details, **attachment listing**, and **attachment download**.
     -   Issue listing, details, updates, comment listing, **attachment listing**, and **attachment file download**. (Issue status now uses a complete model from `backlog-project`).
-    -   Document listing and details.
+    -   Document listing, details, and **attachment download**.
     -   Project listing, details, and **project status listing**.
     -   Space details.
     -   User details.
@@ -214,3 +215,11 @@
     -   User requested to group the "Available Tools" section in `mcp-backlog-server/README.md` by the server's internal module structure (`document`, `git`, `issue`, `project`, `user`).
     -   Updated the README to reflect this new grouped structure.
     -   Corrected the tool name `list_pull_requests` to `get_pull_request_list` to match the actual implementation.
+-   **Document Attachment Download Implementation (`backlog-document`)**:
+    -   User requested to implement `download_attachment` in `backlog-document/src/api.rs` to return `Result<bytes::Bytes>`.
+    -   Updated the method signature and implementation to use `self.client.download_file_raw()`.
+    -   Added `backlog_api_core::bytes` import.
+    -   Updated `backlog-document/Cargo.toml` to include dev-dependencies (`wiremock`, `tokio`) and enable `test-utils` feature for the `client` dependency.
+    -   Added unit tests for success and 404 error cases.
+    -   Corrected `DocumentId::new()` calls in tests to pass `String` arguments, resolving compiler errors.
+    -   All changes verified with `cargo check`, `test`, `clippy`, and `fmt`.
