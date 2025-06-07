@@ -2,10 +2,16 @@ use crate::error::{Error, Result}; // Added Error
 use crate::git::request::{
     DownloadPullRequestAttachmentRequest, GetPullRequestAttachmentListRequest,
 }; // Added DownloadPullRequestAttachmentRequest
-use backlog_api_client::bytes::Bytes; // Added Bytes
+// Removed: use backlog_api_client::bytes::Bytes; // Unused after DownloadedFile introduction
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
-    AttachmentId, PrNumber, ProjectIdOrKey, PullRequest, PullRequestAttachment, Repository,
+    AttachmentId,
+    DownloadedFile,
+    PrNumber,
+    ProjectIdOrKey,
+    PullRequest,
+    PullRequestAttachment, // Added DownloadedFile
+    Repository,
     RepositoryIdOrName,
 };
 // Removed: use backlog_core::Identifier; // Was unused after bridge function refactor
@@ -94,7 +100,8 @@ pub(crate) async fn get_pull_request_attachment_list_tool(
 pub(crate) async fn download_pr_attachment_bridge(
     client: Arc<Mutex<BacklogApiClient>>,
     req: DownloadPullRequestAttachmentRequest,
-) -> Result<(String, String, Bytes)> {
+) -> Result<DownloadedFile> {
+    // Changed return type to DownloadedFile
     // Changed return type
     let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;

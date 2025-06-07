@@ -2,6 +2,14 @@ use backlog_api_core::{BacklogApiErrorResponse, Error as ApiError, Result, bytes
 use reqwest::header::{CONTENT_DISPOSITION, CONTENT_TYPE}; // Removed HeaderMap
 use url::Url;
 
+/// Represents a downloaded file's metadata and content.
+#[derive(Debug, Clone)]
+pub struct DownloadedFile {
+    pub filename: String,
+    pub content_type: String,
+    pub bytes: bytes::Bytes,
+}
+
 #[derive(Debug, Clone)]
 pub struct Client {
     base_url: Url,
@@ -165,7 +173,8 @@ impl Client {
         Ok(entity)
     }
 
-    pub async fn download_file_raw(&self, path: &str) -> Result<(String, String, bytes::Bytes)> {
+    pub async fn download_file_raw(&self, path: &str) -> Result<DownloadedFile> {
+        // Changed return type
         // Changed return type
         let request = self.prepare_request(reqwest::Method::GET, path, &())?;
         let response = self.client.execute(request).await?;
@@ -227,6 +236,10 @@ impl Client {
             .unwrap_or("application/octet-stream") // Default content type
             .to_string();
 
-        Ok((filename, content_type, bytes_content))
+        Ok(DownloadedFile {
+            filename,
+            content_type,
+            bytes: bytes_content,
+        })
     }
 }

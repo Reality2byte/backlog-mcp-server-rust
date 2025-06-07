@@ -1,4 +1,5 @@
 pub mod client;
+pub use ::client::DownloadedFile; // Re-export DownloadedFile from the client crate
 pub use backlog_api_core::Error as ApiError;
 pub use backlog_api_core::bytes; // Re-export bytes
 

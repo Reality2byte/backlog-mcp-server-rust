@@ -6,7 +6,7 @@ use tokio::sync::Mutex;
 
 use super::request::{DownloadDocumentAttachmentRequest, GetDocumentDetailsRequest}; // Added DownloadDocumentAttachmentRequest
 use crate::error::Result;
-use backlog_api_client::bytes;
+use backlog_api_client::DownloadedFile; // Removed unused bytes
 use backlog_core::identifier::DocumentAttachmentId; // Changed to backlog_core::identifier // Changed to backlog_api_client re-export
 
 pub(crate) async fn get_document_details(
@@ -22,7 +22,8 @@ pub(crate) async fn get_document_details(
 pub(crate) async fn download_document_attachment_bridge(
     client: Arc<Mutex<BacklogApiClient>>,
     req: DownloadDocumentAttachmentRequest,
-) -> Result<(String, String, bytes::Bytes)> {
+) -> Result<DownloadedFile> {
+    // Changed return type to DownloadedFile
     let client_guard = client.lock().await;
     let document_id = DocumentId::from_str(req.document_id.trim())?;
     let attachment_id = DocumentAttachmentId::new(req.attachment_id);

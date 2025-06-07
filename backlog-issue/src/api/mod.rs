@@ -1,7 +1,7 @@
 use backlog_api_core::Result;
 use backlog_core::{Identifier, IssueIdOrKey, IssueKey, ProjectIdOrKey}; // Added Identifier
 // Removed unused: use chrono::DateTime;
-use client::Client;
+use client::{Client, DownloadedFile}; // Added DownloadedFile
 
 use crate::{
     models::{attachment::Attachment, comment::Comment, issue::Issue, issue::Milestone},
@@ -106,7 +106,8 @@ impl IssueApi {
         &self,
         issue_id_or_key: impl Into<IssueIdOrKey>,
         attachment_id: backlog_core::identifier::AttachmentId,
-    ) -> backlog_api_core::Result<(String, String, backlog_api_core::bytes::Bytes)> {
+    ) -> backlog_api_core::Result<DownloadedFile> {
+        // Changed return type to DownloadedFile
         // Changed return type
         let issue_id_or_key_str = issue_id_or_key.into().to_string();
         let attachment_id_val = attachment_id.value();
@@ -619,10 +620,10 @@ mod tests {
             .await;
 
         assert!(result.is_ok());
-        let (filename, content_type, file_bytes) = result.unwrap();
-        assert_eq!(filename, expected_filename);
-        assert_eq!(content_type, expected_content_type);
-        assert_eq!(file_bytes, expected_body_bytes);
+        let downloaded_file = result.unwrap();
+        assert_eq!(downloaded_file.filename, expected_filename);
+        assert_eq!(downloaded_file.content_type, expected_content_type);
+        assert_eq!(downloaded_file.bytes, expected_body_bytes);
     }
 
     #[tokio::test]

@@ -1,12 +1,12 @@
 use crate::models::{PullRequest, PullRequestAttachment, Repository};
-use backlog_api_core::{Result, bytes}; // Changed Bytes to bytes
+use backlog_api_core::Result; // Removed unused bytes
 use backlog_core::{
     Identifier, // Added Identifier trait for .value()
     ProjectIdOrKey,
     RepositoryIdOrName,
     identifier::{AttachmentId, PrNumber}, // Added PrNumber
 };
-use client::Client; // The generic HTTP client from the `client` crate
+use client::{Client, DownloadedFile}; // Added DownloadedFile
 
 /// Provides access to the Git and Pull Request related API functions.
 #[derive(Debug, Clone)]
@@ -151,7 +151,8 @@ impl GitApi {
         repo_id_or_name: impl Into<RepositoryIdOrName>,
         pr_number: PrNumber, // Changed to PrNumber
         attachment_id: AttachmentId,
-    ) -> Result<(String, String, bytes::Bytes)> {
+    ) -> Result<DownloadedFile> {
+        // Changed return type to DownloadedFile
         // Changed return type
         // Changed Bytes to bytes::Bytes
         let path = format!(
@@ -172,6 +173,7 @@ mod tests {
     // No, the top level import is `backlog_api_core::bytes`, so here we'd use `bytes::Bytes`.
     // Or, import `backlog_api_core::bytes::Bytes` specifically for the test module if preferred.
     // Let's rely on the top-level `bytes` module being available.
+    use backlog_api_core::bytes::Bytes; // Import Bytes for tests
     use backlog_core::identifier::{AttachmentId, Identifier, PrNumber}; // Added PrNumber for tests
     use client::test_utils::setup_client;
     // Removed: use reqwest::header::CONTENT_DISPOSITION; // Was causing error, not a dev-dependency
@@ -335,10 +337,10 @@ mod tests {
             .await;
 
         assert!(result.is_ok());
-        let (filename, content_type, bytes_content) = result.unwrap();
-        assert_eq!(filename, "test_file.txt");
-        assert_eq!(content_type, "application/octet-stream");
-        assert_eq!(bytes_content, bytes::Bytes::from(attachment_content));
+        let downloaded_file = result.unwrap();
+        assert_eq!(downloaded_file.filename, "test_file.txt");
+        assert_eq!(downloaded_file.content_type, "application/octet-stream");
+        assert_eq!(downloaded_file.bytes, Bytes::from(attachment_content)); // Use imported Bytes
     }
 
     #[tokio::test]

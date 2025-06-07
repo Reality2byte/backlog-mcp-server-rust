@@ -14,6 +14,8 @@ use backlog_api_client::{
     Attachment,   // This is the model
     AttachmentId, // Corrected path
     Comment,
+    // bytes, // Corrected: Use re-exported bytes - now unused
+    DownloadedFile, // Added DownloadedFile
     // Corrected paths for these comment-related types:
     GetCommentListParamsBuilder,
     GetIssueListParamsBuilder,
@@ -23,7 +25,6 @@ use backlog_api_client::{
     Milestone,
     ProjectIdOrKey,
     UpdateIssueParamsBuilder,
-    bytes, // Corrected: Use re-exported bytes
 };
 use std::str::FromStr;
 use std::sync::Arc;
@@ -159,7 +160,8 @@ pub(crate) async fn get_attachment_list_impl(
 pub(crate) async fn download_issue_attachment_file(
     client: Arc<Mutex<BacklogApiClient>>,
     req: DownloadAttachmentRequest,
-) -> Result<(String, String, bytes::Bytes)> {
+) -> Result<DownloadedFile> {
+    // Changed return type to DownloadedFile
     // Changed return type to include content_type
     let parsed_issue_id_or_key = IssueIdOrKey::from_str(&req.issue_id_or_key)?;
     let parsed_attachment_id = AttachmentId::new(req.attachment_id);

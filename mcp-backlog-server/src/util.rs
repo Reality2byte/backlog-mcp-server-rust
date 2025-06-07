@@ -57,7 +57,8 @@ pub(crate) fn find_by_name_from_array<T: Clone>(
 pub fn ensure_image_type(
     content_type: &str,
     filename_for_error_message: &str,
-) -> Result<String, McpError> {
+) -> Result<(), McpError> {
+    // Changed return type to Result<(), McpError>
     if !content_type.starts_with("image/") {
         return Err(McpError::invalid_request(
             format!(
@@ -67,5 +68,5 @@ pub fn ensure_image_type(
             None,
         ));
     }
-    Ok(content_type.to_string())
+    Ok(()) // Return Ok(()) on success
 }

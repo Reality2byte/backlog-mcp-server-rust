@@ -1,8 +1,8 @@
-use backlog_api_core::{Result, bytes}; // Added bytes
+use backlog_api_core::Result; // Removed unused bytes
 use backlog_core::DocumentId;
 use backlog_core::Identifier;
 use backlog_core::identifier::DocumentAttachmentId; // Changed to DocumentAttachmentId
-use client::Client;
+use client::{Client, DownloadedFile}; // Added DownloadedFile
 // Removed use reqwest; as it's no longer directly used in the return type for download_attachment
 
 use crate::models::{Document, DocumentDetail, DocumentTreeResponse};
@@ -49,7 +49,8 @@ impl DocumentApi {
         &self,
         document_id: impl Into<DocumentId>,
         attachment_id: impl Into<DocumentAttachmentId>, // Changed to DocumentAttachmentId
-    ) -> Result<(String, String, bytes::Bytes)> {
+    ) -> Result<DownloadedFile> {
+        // Changed return type to DownloadedFile
         // Changed return type to tuple
         // Changed return type
         let path = format!(
@@ -108,10 +109,13 @@ mod tests {
             .await;
 
         assert!(result.is_ok());
-        let (filename, content_type, bytes_content) = result.unwrap();
-        assert_eq!(filename, "doc_attachment.txt");
-        assert_eq!(content_type, "application/octet-stream");
-        assert_eq!(bytes_content, bytes::Bytes::from(attachment_content));
+        let downloaded_file = result.unwrap();
+        assert_eq!(downloaded_file.filename, "doc_attachment.txt");
+        assert_eq!(downloaded_file.content_type, "application/octet-stream");
+        assert_eq!(
+            downloaded_file.bytes,
+            bytes::Bytes::from(attachment_content)
+        );
     }
 
     #[tokio::test]
