@@ -2,6 +2,7 @@ use backlog_api_client::{
     AttachmentId, // Corrected import
     GetIssueListParamsBuilder,
     IssueIdOrKey,
+    PrNumber, // Added PrNumber
     ProjectId,
     ProjectIdOrKey,
     RepositoryIdOrName,
@@ -229,10 +230,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
                 let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
                 let repo_id_or_name = repo_id.parse::<RepositoryIdOrName>()?;
+                let pr_num = PrNumber::from(pr_number);
 
                 let pr = client
                     .git()
-                    .get_pull_request(proj_id_or_key, repo_id_or_name, pr_number)
+                    .get_pull_request(proj_id_or_key, repo_id_or_name, pr_num)
                     .await?;
                 // TODO: Pretty print pull request
                 println!("{:?}", pr);
@@ -255,12 +257,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .map_err(|e| format!("Failed to parse repo_id '{}': {}", dl_args.repo_id, e))?;
                 let parsed_attachment_id = AttachmentId::new(dl_args.attachment_id);
 
+                let parsed_pr_number = PrNumber::from(dl_args.pr_number);
+
                 match client
                     .git()
                     .download_pull_request_attachment(
                         parsed_project_id,
                         parsed_repo_id,
-                        dl_args.pr_number,
+                        parsed_pr_number,
                         parsed_attachment_id,
                     )
                     .await

@@ -12,6 +12,7 @@ pub use role::Role;
 
 pub mod identifier;
 pub use self::identifier::Identifier;
+pub use self::identifier::PrNumber; // Added PrNumber export
 
 pub mod active_type_id;
 pub use self::active_type_id::ActiveTypeId;

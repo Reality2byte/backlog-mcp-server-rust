@@ -11,8 +11,34 @@
     -   Implemented `download_issue_attachment_text` MCP tool in `mcp-backlog-server`.
     -   Implemented "Get List of Pull Request Attachments" API in `backlog-git` and `mcp-backlog-server`.
 -   **Implemented Pull Request Attachment Download functionality (library, CLI, MCP)**.
+-   **Refactored pull request number handling to use a newtype `PrNumber(u64)` for improved type safety across the codebase.**
 
 ## Recent Changes
+-   **Refactored `pr_number` to use `PrNumber(u64)` Newtype**:
+    -   **`backlog-core/src/identifier.rs`**:
+        -   Defined `pub struct PrNumber(pub u64);`.
+        -   Implemented `Identifier` (for `u64`), `From<u64>`, `Display`, `FromStr`, `Serialize`, `Deserialize`, `Hash`, and common debug/clone traits. Used `crate::error::Error::InvalidParameter` for `FromStr` error.
+    -   **`backlog-core/src/lib.rs`**:
+        -   Exported `PrNumber` from the `identifier` module.
+    -   **`backlog-git/src/models.rs`**:
+        -   Changed the type of `number` field in `PullRequest` struct from `u64` to `PrNumber`.
+        -   Added `PrNumber` to imports from `backlog_core::identifier`.
+    -   **`backlog-git/src/api.rs`**:
+        -   Updated methods (`get_pull_request`, `get_pull_request_attachment_list`, `download_pull_request_attachment`) to accept `PrNumber` for `pr_number` parameters.
+        -   Updated internal URL formatting to use `pr_number.value()`.
+        -   Updated unit tests to use `PrNumber::new(...)`.
+    -   **`backlog-api-client/src/lib.rs`**:
+        -   Re-exported `PrNumber` from `backlog_core::identifier`.
+    -   **`backlog-api-client/src/bin/blg.rs`**:
+        -   Imported `PrNumber`.
+        -   Updated `PrCommands::Show` and `PrCommands::DownloadAttachment` handlers to convert the `u64` `pr_number` argument to `PrNumber` using `PrNumber::from()` before calling library functions.
+    -   **`mcp-backlog-server/src/git/bridge.rs`**:
+        -   Imported `PrNumber`.
+        -   Updated `get_pull_request`, `get_pull_request_attachment_list_tool`, and `download_pr_attachment_bridge` functions to convert `u64` `pr_number` from request objects to `PrNumber` using `PrNumber::from()`.
+    -   **`mcp-backlog-server/src/error.rs`**:
+        -   Updated the `pr_number` field in the `PullRequestAttachmentNotFound` error variant from `u64` to `PrNumber`.
+        -   Imported `PrNumber`.
+    -   Verified all changes with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, `cargo clippy --all-features --all-targets`, and `cargo fmt --all`.
 -   **Implemented Pull Request Attachment Download (Library, CLI, MCP Tools)**:
     -   **`backlog-git/src/api.rs`**:
         -   Added `download_pull_request_attachment` method to `GitApi` to download attachment content as `bytes::Bytes`.
@@ -146,7 +172,8 @@
 -   **Consistent Error Propagation**.
 -   **Builder Pattern for Request Params**.
 -   Standard Rust project structure, workspace, feature flags, `thiserror`, `schemars`.
--   **Model Placement**: Shared core types in `backlog-core` (e.g., `User`, `AttachmentId`). Domain-specific models in their respective crates (e.g., `ProjectStatus` in `backlog-project`, `Attachment` in `backlog-issue`). If a model defined in one domain crate (e.g., `backlog-project::ProjectStatus`) is needed by another (e.g., `backlog-issue`), a direct dependency is added.
+    -   **Model Placement**: Shared core types and identifiers (like `User`, `AttachmentId`, `PrNumber`) in `backlog-core`. Domain-specific models in their respective crates.
+    -   **Serialization of Newtypes**: For simple numeric newtypes like `PrNumber(u64)` or existing `Id(u32)` types, deriving `Serialize` and `Deserialize` directly is sufficient for them to be treated as their inner numeric type in JSON. `#[serde(transparent)]` is an option for explicitness but not strictly necessary if the default behavior is as desired and consistent with project patterns.
 -   **MCP Tool Structure**: Tools in `mcp-backlog-server` are organized by domain into modules (e.g., `issue`, `git`, `project`). Each module typically contains:
     -   `request.rs`: Defines request structs deriving `serde::Deserialize` and `rmcp::schemars::JsonSchema` (using `use rmcp::schemars;`).
     -   `bridge.rs`: Contains functions that take these request structs and the `BacklogApiClient` (wrapped in `Arc<Mutex<>>`), perform the API call, and return a `crate::error::Result`.
@@ -157,5 +184,6 @@
 -   Careful consideration of model ownership and inter-crate dependencies is crucial for maintaining a clean architecture, especially when types are shared or referenced across different API domains.
 -   API documentation for embedded objects within larger responses (e.g., the `status` object within an `Issue`) must be checked to ensure local model definitions are complete and accurate. The `ProjectStatus` model is a good example of this.
     -   Centralizing test utilities improves maintainability and consistency of tests across the workspace.
-    -   Compiler type inference, especially within closures or with generic traits like `Identifier`, can sometimes be surprising. Explicitly annotating types or casting (e.g., `att.id.value() as u64`) can be necessary to guide the compiler when its inference seems to contradict definitions.
+    -   Compiler type inference, especially within closures or with generic traits like `Identifier`, can sometimes be surprising. Explicitly annotating types or casting (e.g., `att.id.value() as u64`) can be necessary to guide the compiler when its inference seems to contradict definitions. This was particularly noted during the PR attachment download implementation.
     -   For MCP tools returning generic binary data, if the `rmcp::model::Content` or `RawContent` enum doesn't offer a straightforward "raw binary" variant, returning a structured JSON object with base64-encoded data is a robust fallback (as done for `download_pull_request_attachment_raw`).
+    -   When implementing `FromStr` for newtypes, ensure the error variant used (e.g., `crate::error::Error::InvalidParameter`) matches an actual defined variant in the error enum.

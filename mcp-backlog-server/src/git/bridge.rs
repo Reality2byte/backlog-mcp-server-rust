@@ -6,6 +6,7 @@ use backlog_api_client::bytes::Bytes; // Added Bytes
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
     AttachmentId, // Added AttachmentId
+    PrNumber,     // Added PrNumber
     ProjectIdOrKey,
     PullRequest,
     PullRequestAttachment,
@@ -72,7 +73,7 @@ pub(crate) async fn get_pull_request(
     let client_guard = client.lock().await;
     let pull_request = client_guard
         .git()
-        .get_pull_request(proj_id_or_key, repo_id_or_name, pr_number)
+        .get_pull_request(proj_id_or_key, repo_id_or_name, PrNumber::from(pr_number))
         .await?;
     Ok(pull_request)
 }
@@ -88,7 +89,11 @@ pub(crate) async fn get_pull_request_attachment_list_tool(
     let client_guard = client.lock().await;
     Ok(client_guard
         .git()
-        .get_pull_request_attachment_list(&project_id_or_key, &repo_id_or_name, req.pr_number)
+        .get_pull_request_attachment_list(
+            &project_id_or_key,
+            &repo_id_or_name,
+            PrNumber::from(req.pr_number),
+        )
         .await?)
 }
 
@@ -98,7 +103,7 @@ pub(crate) async fn download_pr_attachment_bridge(
 ) -> Result<(String, Bytes)> {
     let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
-    let pr_number = req.pr_number;
+    let pr_number = PrNumber::from(req.pr_number); // Changed to PrNumber
     let target_attachment_id_val = req.attachment_id; // This is u32
 
     let client_guard = client.lock().await;

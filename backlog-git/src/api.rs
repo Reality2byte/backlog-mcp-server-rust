@@ -4,7 +4,7 @@ use backlog_core::{
     Identifier, // Added Identifier trait for .value()
     ProjectIdOrKey,
     RepositoryIdOrName,
-    identifier::AttachmentId, // Added AttachmentId
+    identifier::{AttachmentId, PrNumber}, // Added PrNumber
 };
 use client::Client; // The generic HTTP client from the `client` crate
 
@@ -100,13 +100,13 @@ impl GitApi {
         &self,
         project_id_or_key: impl Into<ProjectIdOrKey>,
         repo_id_or_name: impl Into<RepositoryIdOrName>,
-        pr_number: u64,
+        pr_number: PrNumber,
     ) -> Result<PullRequest> {
         let path = format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}",
             project_id_or_key.into(),
             repo_id_or_name.into(),
-            pr_number
+            pr_number.value()
         );
         self.client.get(&path).await
     }
@@ -122,15 +122,15 @@ impl GitApi {
     /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/repositories/:repoIdOrName/pullRequests/:number/attachments`.
     pub async fn get_pull_request_attachment_list(
         &self,
-        project_id_or_key: &ProjectIdOrKey,
-        repo_id_or_name: &RepositoryIdOrName,
-        pr_number: u64,
+        project_id_or_key: &ProjectIdOrKey, // Keeping as reference based on existing code
+        repo_id_or_name: &RepositoryIdOrName, // Keeping as reference
+        pr_number: PrNumber,                // Changed to PrNumber
     ) -> backlog_api_core::Result<Vec<PullRequestAttachment>> {
         let path = format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments", // "/git/" を追加
             project_id_or_key, // Display trait を利用
             repo_id_or_name,   // Display trait を利用
-            pr_number
+            pr_number.value()
         );
         self.client.get(&path).await // クエリパラメータはなし
     }
@@ -149,7 +149,7 @@ impl GitApi {
         &self,
         project_id_or_key: impl Into<ProjectIdOrKey>,
         repo_id_or_name: impl Into<RepositoryIdOrName>,
-        pr_number: u64,
+        pr_number: PrNumber, // Changed to PrNumber
         attachment_id: AttachmentId,
     ) -> Result<bytes::Bytes> {
         // Changed Bytes to bytes::Bytes
@@ -157,7 +157,7 @@ impl GitApi {
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",
             project_id_or_key.into(),
             repo_id_or_name.into(),
-            pr_number,
+            pr_number.value(),
             attachment_id.value() // Use .value() to get the u64 ID
         );
         self.client.download_file_raw(&path).await
@@ -171,7 +171,7 @@ mod tests {
     // No, the top level import is `backlog_api_core::bytes`, so here we'd use `bytes::Bytes`.
     // Or, import `backlog_api_core::bytes::Bytes` specifically for the test module if preferred.
     // Let's rely on the top-level `bytes` module being available.
-    use backlog_core::identifier::{AttachmentId, Identifier}; // Identifier is already here for tests
+    use backlog_core::identifier::{AttachmentId, Identifier, PrNumber}; // Added PrNumber for tests
     use client::test_utils::setup_client;
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -184,7 +184,8 @@ mod tests {
 
         let project_key = "TESTPROJECT";
         let repo_name = "test-repo";
-        let pr_number = 123;
+        let pr_number_val = 123;
+        let pr_number = PrNumber::new(pr_number_val);
 
         let mock_response = vec![
             PullRequestAttachment {
@@ -202,7 +203,7 @@ mod tests {
         Mock::given(method("GET"))
             .and(path(format!(
                 "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments", // "/git/" を追加
-                project_key, repo_name, pr_number
+                project_key, repo_name, pr_number_val
             )))
             .respond_with(ResponseTemplate::new(200).set_body_json(&mock_response))
             .mount(&server)
@@ -232,13 +233,14 @@ mod tests {
 
         let project_key = "TESTPROJECT";
         let repo_name = "test-repo";
-        let pr_number = 124;
+        let pr_number_val = 124;
+        let pr_number = PrNumber::new(pr_number_val);
         let mock_response: Vec<PullRequestAttachment> = vec![];
 
         Mock::given(method("GET"))
             .and(path(format!(
                 "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments", // "/git/" を追加
-                project_key, repo_name, pr_number
+                project_key, repo_name, pr_number_val
             )))
             .respond_with(ResponseTemplate::new(200).set_body_json(&mock_response))
             .mount(&server)
@@ -263,12 +265,13 @@ mod tests {
 
         let project_key = "NONEXISTENT";
         let repo_name = "norepo";
-        let pr_number = 1;
+        let pr_number_val = 1;
+        let pr_number = PrNumber::new(pr_number_val);
 
         Mock::given(method("GET"))
             .and(path(format!(
                 "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments", // "/git/" を追加
-                project_key, repo_name, pr_number
+                project_key, repo_name, pr_number_val
             )))
             .respond_with(ResponseTemplate::new(404))
             .mount(&server)
@@ -294,14 +297,15 @@ mod tests {
 
         let project_key = "TESTPROJECT";
         let repo_name = "test-repo";
-        let pr_number = 125;
+        let pr_number_val = 125;
+        let pr_number = PrNumber::new(pr_number_val);
         let attachment_id_val = 201;
         let attachment_content = "This is a test file content.";
 
         Mock::given(method("GET"))
             .and(path(format!(
                 "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",
-                project_key, repo_name, pr_number, attachment_id_val
+                project_key, repo_name, pr_number_val, attachment_id_val
             )))
             .respond_with(
                 ResponseTemplate::new(200)
@@ -341,13 +345,14 @@ mod tests {
 
         let project_key = "TESTPROJECT";
         let repo_name = "test-repo";
-        let pr_number = 126;
+        let pr_number_val = 126;
+        let pr_number = PrNumber::new(pr_number_val);
         let attachment_id_val = 202;
 
         Mock::given(method("GET"))
             .and(path(format!(
                 "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",
-                project_key, repo_name, pr_number, attachment_id_val
+                project_key, repo_name, pr_number_val, attachment_id_val
             )))
             .respond_with(ResponseTemplate::new(404))
             .mount(&server)

@@ -1,4 +1,4 @@
-use backlog_api_client::{ApiError, CoreError, ProjectIdOrKey, RepositoryIdOrName}; // Added RepositoryIdOrName
+use backlog_api_client::{ApiError, CoreError, PrNumber, ProjectIdOrKey, RepositoryIdOrName}; // Added PrNumber
 use rmcp::Error as McpError;
 use thiserror::Error as ThisError;
 
@@ -29,7 +29,7 @@ pub enum Error {
     PullRequestAttachmentNotFound {
         project_id_or_key: ProjectIdOrKey,
         repo_id_or_name: RepositoryIdOrName,
-        pr_number: u64,
+        pr_number: PrNumber, // Changed from u64
         attachment_id: u32,
     },
 }

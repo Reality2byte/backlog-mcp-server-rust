@@ -74,6 +74,7 @@
     -   Added `get_pull_request_attachment_list` tool method to `Server` in `mcp-backlog-server`.
     -   All changes verified with `cargo check`, `cargo test`, `cargo clippy`, and `cargo fmt`.
 -   **Pull Request Attachment Download Implemented**: Added functionality to download pull request attachments in the library (`backlog-git`), CLI (`blg pr download-attachment`), and MCP server (`download_pull_request_attachment_raw/image/text` tools).
+-   **`PrNumber` Newtype Refactoring**: Refactored pull request number handling to use `PrNumber(u64)` newtype for improved type safety across `backlog-core`, `backlog-git`, `backlog-api-client` (library and CLI), and `mcp-backlog-server`.
 
 ## What Works
 -   The Memory Bank system is established and updated.
@@ -181,4 +182,11 @@
     -   Implemented `download_pr_attachment_bridge` in MCP server, including logic to fetch filename first.
     -   Added `download_pull_request_attachment_raw` (returning JSON with base64 data), `_image`, and `_text` tools to MCP server.
     -   Resolved several compiler issues related to type inference (u32/u64 comparison) and `rmcp` content types during implementation.
+    -   All changes verified with `cargo check`, `test`, `clippy`, and `fmt`.
+-   **`PrNumber` Newtype Refactoring**:
+    -   User requested to wrap `u64` pull request numbers with a `PrNumber(u64)` newtype for type safety.
+    -   Defined `PrNumber` in `backlog-core` with necessary traits (`Identifier`, `Display`, `FromStr`, `Serialize`, `Deserialize`, etc.).
+    -   Updated `backlog-git` (models and API methods), `backlog-api-client` (library facade and CLI tool), and `mcp-backlog-server` (bridge functions and error types) to use `PrNumber`.
+    -   Ensured consistency with existing ID patterns (e.g., placement in `backlog-core`, `serde` derive without `transparent`).
+    -   Resolved compiler errors related to `FromStr` error construction in `backlog-core`.
     -   All changes verified with `cargo check`, `test`, `clippy`, and `fmt`.

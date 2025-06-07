@@ -2,7 +2,7 @@
 
 use backlog_core::{
     User,
-    identifier::{AttachmentId, IssueId, ProjectId, PullRequestId, RepositoryId},
+    identifier::{AttachmentId, IssueId, PrNumber, ProjectId, PullRequestId, RepositoryId}, // Added PrNumber
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize}; // Assuming User is defined in backlog-core and public, and implements Serialize, JsonSchema
@@ -63,7 +63,7 @@ pub struct PullRequest {
     #[serde(rename = "repositoryId")]
     pub repository_id: RepositoryId,
     /// The number of the pull request, unique within the repository.
-    pub number: u64,
+    pub number: PrNumber, // Changed from u64
     /// The summary (title) of the pull request.
     pub summary: String,
     /// The description of the pull request.
