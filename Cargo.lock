@@ -160,6 +160,7 @@ dependencies = [
 name = "backlog-core"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "regex",
  "schemars 0.9.0",
  "serde",

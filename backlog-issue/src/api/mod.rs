@@ -154,10 +154,14 @@ mod tests {
             id: UserId::new(id),
             user_id: Some(name.to_string()),
             name: name.to_string(),
-            role_type: backlog_core::Role::Developer,
+            role_type: backlog_core::Role::User,
             lang: Some(backlog_core::Language::Japanese),
             mail_address: format!("{}@example.com", name),
-            last_login_time: "2024-01-01T00:00:00Z".to_string(),
+            last_login_time: Some(
+                chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                    .unwrap()
+                    .with_timezone(&Utc),
+            ),
         }
     }
 

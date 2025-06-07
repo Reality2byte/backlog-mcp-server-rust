@@ -106,6 +106,9 @@ The following tools are currently available:
 -   **`get_project_status_list`**
     -   Description: Get a list of statuses for a specified project.
     -   Input: `project_id_or_key` (Project ID or project key)
+-   **`get_user_list`**
+    -   Description: Get a list of users in the space.
+    -   Input: (No parameters)
 
 ## Feature Flags
 

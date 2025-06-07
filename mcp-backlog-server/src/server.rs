@@ -18,6 +18,7 @@ use crate::{
         },
     },
     project::{self, request::GetProjectStatusListRequest},
+    user::{self, request::GetUserListRequest}, // Added user module and GetUserListRequest
 };
 use backlog_api_client::client::BacklogApiClient;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64_STANDARD};
@@ -171,6 +172,12 @@ impl Server {
     ) -> McpResult {
         let attachments = issue::bridge::get_attachment_list_impl(self.client.clone(), req).await?;
         Ok(CallToolResult::success(vec![Content::json(attachments)?]))
+    }
+
+    #[tool(description = "Get a list of users in the space.")]
+    async fn get_user_list(&self, #[tool(aggr)] req: GetUserListRequest) -> McpResult {
+        let users = user::bridge::get_user_list_bridge(req, self.client.clone()).await?;
+        Ok(CallToolResult::success(vec![Content::json(users)?]))
     }
 
     #[tool(
