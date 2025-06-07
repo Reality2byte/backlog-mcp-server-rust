@@ -4,7 +4,10 @@ use crate::{
     git::{
         self,
         request::{
-            GetPullRequestDetailsRequest, GetRepositoryDetailsRequest, GetRepositoryListRequest,
+            GetPullRequestAttachmentListRequest,
+            GetPullRequestDetailsRequest, // GetPullRequestAttachmentListRequest を追加
+            GetRepositoryDetailsRequest,
+            GetRepositoryListRequest,
             ListPullRequestsRequest,
         },
     },
@@ -219,6 +222,16 @@ impl Server {
         let statuses =
             project::bridge::get_project_status_list_tool(self.client.clone(), req).await?;
         Ok(CallToolResult::success(vec![Content::json(statuses)?]))
+    }
+
+    #[tool(description = "Get a list of attachments for a specific pull request.")]
+    async fn get_pull_request_attachment_list(
+        &self,
+        #[tool(aggr)] req: GetPullRequestAttachmentListRequest,
+    ) -> McpResult {
+        let attachments =
+            git::bridge::get_pull_request_attachment_list_tool(req, self.client.clone()).await?; // 引数の順序を修正
+        Ok(CallToolResult::success(vec![Content::json(attachments)?]))
     }
 }
 

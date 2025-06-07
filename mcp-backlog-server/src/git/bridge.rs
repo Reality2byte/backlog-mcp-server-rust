@@ -1,6 +1,13 @@
 use crate::error::Result;
+use crate::git::request::GetPullRequestAttachmentListRequest;
 use backlog_api_client::client::BacklogApiClient;
-use backlog_api_client::{ProjectIdOrKey, PullRequest, Repository, RepositoryIdOrName};
+use backlog_api_client::{
+    ProjectIdOrKey,
+    PullRequest,
+    PullRequestAttachment,
+    Repository,
+    RepositoryIdOrName, // GitPullRequestAttachment を PullRequestAttachment に変更
+};
 use std::{str::FromStr, sync::Arc};
 use tokio::sync::Mutex;
 
@@ -63,4 +70,19 @@ pub(crate) async fn get_pull_request(
         .get_pull_request(proj_id_or_key, repo_id_or_name, pr_number)
         .await?;
     Ok(pull_request)
+}
+
+pub(crate) async fn get_pull_request_attachment_list_tool(
+    req: GetPullRequestAttachmentListRequest,
+    client: Arc<Mutex<BacklogApiClient>>,
+) -> Result<Vec<PullRequestAttachment>> {
+    // GitPullRequestAttachment を PullRequestAttachment に変更
+    let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+    let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
+
+    let client_guard = client.lock().await;
+    Ok(client_guard
+        .git()
+        .get_pull_request_attachment_list(&project_id_or_key, &repo_id_or_name, req.pr_number)
+        .await?)
 }

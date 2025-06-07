@@ -60,14 +60,14 @@ mod tests {
         let expected_statuses = vec![
             Status {
                 id: StatusId::new(1),
-                project_id: project_id,
+                project_id, // 冗長なフィールド名を修正
                 name: "Open".to_string(),
                 color: "#ff0000".to_string(),
                 display_order: 1,
             },
             Status {
                 id: StatusId::new(2),
-                project_id: project_id,
+                project_id, // 冗長なフィールド名を修正
                 name: "Closed".to_string(),
                 color: "#00ff00".to_string(),
                 display_order: 2,

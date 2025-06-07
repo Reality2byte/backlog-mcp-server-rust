@@ -9,8 +9,19 @@
     -   Implemented `blg issue download-attachment` CLI command.
     -   Implemented and then refined `download_issue_attachment_image` MCP tool in `mcp-backlog-server` (formerly `download_issue_attachment_file`).
     -   Implemented `download_issue_attachment_text` MCP tool in `mcp-backlog-server`.
+    -   Implemented "Get List of Pull Request Attachments" API in `backlog-git` and `mcp-backlog-server`.
 
 ## Recent Changes
+-   **Implemented "Get List of Pull Request Attachments" API and MCP Tool**:
+    -   Defined `PullRequestAttachment` model in `backlog-git/src/models.rs`.
+    -   Added `get_pull_request_attachment_list` method to `GitApi` in `backlog-git/src/api.rs` with unit tests.
+    -   Added `schemars` feature and dev-dependencies (`wiremock`, `tokio`) to `backlog-git/Cargo.toml`.
+    -   Exported `PullRequestAttachment` from `backlog-git/src/lib.rs`.
+    -   Re-exported `PullRequestAttachment` from `backlog-api-client/src/lib.rs`.
+    -   Defined `GetPullRequestAttachmentListRequest` in `mcp-backlog-server/src/git/request.rs`.
+    -   Added `get_pull_request_attachment_list_tool` bridge function to `mcp-backlog-server/src/git/bridge.rs`.
+    -   Added `get_pull_request_attachment_list` tool method to `Server` in `mcp-backlog-server/src/server.rs`.
+    -   Verified with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, `cargo clippy --all-features --all-targets`, and `cargo fmt --all`.
 -   **Implemented `download_issue_attachment_text` MCP Tool in `mcp-backlog-server`**:
     -   Added `download_issue_attachment_text` tool method to `Server` in `mcp-backlog-server/src/server.rs`.
     -   Reused `DownloadAttachmentRequest` and the existing `download_issue_attachment_file` bridge function.

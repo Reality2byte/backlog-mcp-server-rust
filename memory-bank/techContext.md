@@ -30,12 +30,13 @@
     -   The `download_issue_attachment_image` tool now uses `rmcp::model::Content::image` to return image data, which expects base64 encoded string and a MIME type. It includes a check to ensure the attachment is an image.
     -   The `download_issue_attachment_text` tool uses `rmcp::model::Content::text` to return text content. It attempts to convert the attachment bytes to a UTF-8 string and errors if the conversion fails.
 -   **Schema Generation (for MCP tools)**: `schemars` (version 0.8).
-    -   For library crates (`backlog-core`, `backlog-issue`, etc.), `schemars` is an optional dependency enabled via a `schemars` feature. Models derive `JsonSchema` conditionally.
+    -   For library crates (`backlog-core`, `backlog-issue`, `backlog-git`, etc.), `schemars` is an optional dependency enabled via a `schemars` feature. Models derive `JsonSchema` conditionally.
     -   For `mcp-backlog-server` request structs (e.g., in `src/issue/request.rs`), the convention is to use `use rmcp::schemars;` and then `#[derive(schemars::JsonSchema)]`. This leverages the `schemars` re-export from the `rmcp` crate.
-    -   Used for models like `User`, `Comment`, `Repository`, `PullRequest`, `ProjectStatus` (in `backlog-project`), and `Attachment` (in `backlog-issue`), as well as MCP request structs.
+    -   Used for models like `User`, `Comment`, `Repository`, `PullRequest`, `PullRequestAttachment` (in `backlog-git`), `ProjectStatus` (in `backlog-project`), and `Attachment` (in `backlog-issue`), as well as MCP request structs.
 -   **Inter-Crate Dependencies**:
     -   `backlog-issue` now depends on `backlog-project` for the `ProjectStatus` model.
     -   The `schemars` feature in `backlog-issue` now also enables `backlog-core/schemars` to ensure `AttachmentId` (from `backlog-core`) can derive `JsonSchema`.
+    -   `backlog-git` now has a `schemars` feature that enables `backlog-core/schemars` for `AttachmentId` and `dep:schemars` for its own models like `PullRequestAttachment`.
     -   `mcp-backlog-server` specific dependencies and features:
         -   Its `backlog-api-client` dependency now enables the `project` feature, in addition to `issue`, `document`, and `git`.
         -   It now has direct dependencies on `backlog-project` (for `ProjectStatus` type) and `backlog-core` (for `ProjectIdOrKey` parsing).

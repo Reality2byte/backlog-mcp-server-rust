@@ -114,10 +114,16 @@ graph TD
     *   Implements API endpoint wrappers like `get_issue`, `get_issue_list`, `get_comment_list`, `get_attachment_list`, and `get_attachment_file` (for downloading attachment content as `bytes::Bytes`).
     *   Depends on `backlog-core`, `client`, and now `backlog-project` (for `Status`).
 
-6.  **`backlog-space`, `backlog-user`, `backlog-document`, `backlog-git` (other API module crates)**:
+6.  **`backlog-git` (API module crate)**:
+    *   Responsible for the Git and Pull Request domain.
+    *   Defines models like `Repository`, `PullRequest`, and `PullRequestAttachment`.
+    *   Implements API endpoint wrappers like `get_repository_list`, `get_repository`, `get_pull_request_list`, `get_pull_request`, and `get_pull_request_attachment_list`.
+    *   Depends on `backlog-core` and `client`.
+
+7.  **`backlog-space`, `backlog-user`, `backlog-document` (other API module crates)**:
     *   Handle their respective API domains. Depend on `backlog-core` and `client`.
 
-7.  **`backlog-api-client` (crate - library part)**:
+8.  **`backlog-api-client` (crate - library part)**:
     *   Main facade, re-exporting types and API handlers. Also re-exports `AttachmentId` from `backlog_core::identifier`.
 
 8.  **`backlog-api-client` (crate - binary `blg`)**:

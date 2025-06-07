@@ -2,10 +2,13 @@
 
 use backlog_core::{
     User,
-    identifier::{IssueId, ProjectId, PullRequestId, RepositoryId},
+    identifier::{AttachmentId, IssueId, ProjectId, PullRequestId, RepositoryId},
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize}; // Assuming User is defined in backlog-core and public, and implements Serialize, JsonSchema
+
+#[cfg(feature = "schemars")]
+use schemars::JsonSchema;
 
 /// Represents a Git repository in Backlog.
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
@@ -119,6 +122,18 @@ pub struct IssueLink {
     /// The ID of the linked issue.
     pub id: IssueId,
     // Add more fields if the API provides them, like issueKey, summary
+}
+
+/// Represents an attachment associated with a pull request.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+pub struct PullRequestAttachment {
+    /// The unique identifier for the attachment.
+    pub id: AttachmentId,
+    /// The name of the attachment file.
+    pub name: String,
+    /// The size of the attachment file in bytes.
+    pub size: u64,
 }
 
 // TODO: Define other related models like PullRequestComment, Attachment, Star if needed.

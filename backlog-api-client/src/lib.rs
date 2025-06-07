@@ -37,7 +37,7 @@ pub use backlog_issue::{
 
 // Git module (from backlog_git)
 #[cfg(feature = "git")]
-pub use backlog_git::{GitApi, PullRequest, Repository};
+pub use backlog_git::{GitApi, PullRequest, PullRequestAttachment, Repository};
 
 // Project module (from backlog_project)
 #[cfg(feature = "project")]

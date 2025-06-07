@@ -191,9 +191,12 @@ dependencies = [
  "backlog-core",
  "chrono",
  "client",
+ "schemars 0.9.0",
  "serde",
  "serde_json",
  "thiserror",
+ "tokio",
+ "wiremock",
 ]
 
 [[package]]

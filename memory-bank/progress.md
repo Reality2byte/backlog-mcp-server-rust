@@ -64,6 +64,15 @@
     -   Reused existing `DownloadAttachmentRequest` and `download_issue_attachment_file` bridge function.
     -   The method converts attachment bytes to a UTF-8 string. If successful, returns `Content::text`; otherwise, returns an error.
     -   Verified with all final verification commands.
+-   **"Get List of Pull Request Attachments" API and MCP Tool Implemented**:
+    -   Defined `PullRequestAttachment` model in `backlog-git`.
+    -   Added `get_pull_request_attachment_list` method to `GitApi` with unit tests.
+    -   Configured `backlog-git/Cargo.toml` with necessary features and dependencies.
+    -   Re-exported `PullRequestAttachment` from `backlog-api-client`.
+    -   Defined `GetPullRequestAttachmentListRequest` in `mcp-backlog-server`.
+    -   Implemented `get_pull_request_attachment_list_tool` bridge function.
+    -   Added `get_pull_request_attachment_list` tool method to `Server` in `mcp-backlog-server`.
+    -   All changes verified with `cargo check`, `cargo test`, `cargo clippy`, and `cargo fmt`.
 
 ## What Works
 -   The Memory Bank system is established and updated.
@@ -73,7 +82,7 @@
 -   **Simplified Consumer Dependencies**: `mcp-backlog-server` depends primarily on `backlog-api-client`.
 -   The `backlog-api-client` library provides core functionality for Backlog API interaction, including:
     -   Git repository listing and details.
-    -   Pull request listing and details.
+    -   Pull request listing, details, and **attachment listing**.
     -   Issue listing, details, updates, comment listing, **attachment listing**, and **attachment file download**. (Issue status now uses a complete model from `backlog-project`).
     -   Document listing and details.
     -   Project listing, details, and **project status listing**.
@@ -152,3 +161,13 @@
     -   It attempts to convert the bytes to a UTF-8 string. If successful, it returns `Content::text`. If conversion fails, it returns an error indicating the file is not valid UTF-8 text.
     -   This approach simplifies the logic by defining "text file" as "valid UTF-8" for the tool's purpose.
     -   Verified with all final verification commands.
+-   **"Get List of Pull Request Attachments" API and MCP Tool Implementation**:
+    -   User requested to implement "Get List of Pull Request Attachments" API.
+    -   Defined `PullRequestAttachment` model in `backlog-git`.
+    -   Implemented `get_pull_request_attachment_list` method in `GitApi` with unit tests.
+    -   Added `schemars` feature and dev-dependencies to `backlog-git/Cargo.toml`.
+    -   Re-exported `PullRequestAttachment` from `backlog-api-client`.
+    -   Defined `GetPullRequestAttachmentListRequest` for MCP server.
+    -   Implemented bridge function and server tool method in `mcp-backlog-server`.
+    -   Corrected various compilation errors and warnings during implementation.
+    -   Verified all changes with `cargo check`, `test`, `clippy`, and `fmt`.

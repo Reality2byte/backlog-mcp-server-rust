@@ -9,6 +9,18 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 chrono = { workspace = true }
-backlog-core = { path = "../backlog-core" }
+backlog-core = { path = "../backlog-core", features = ["schemars"] } # schemars feature を追加 (AttachmentId のため)
 backlog-api-core = { path = "../backlog-api-core" }
-client = { path = "../client" }
+client = { path = "../client", features = ["test-utils"] } # test-utils feature を有効化
+
+[features]
+default = []
+schemars = ["dep:schemars", "backlog-core/schemars"]
+
+[dependencies.schemars]
+workspace = true
+optional = true
+
+[dev-dependencies]
+wiremock = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
