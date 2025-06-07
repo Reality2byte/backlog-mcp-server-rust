@@ -69,6 +69,35 @@ The following tools are currently available:
         -   `project_id_or_key` (Project ID or project key)
         -   `repo_id_or_name` (Repository ID (as string) or repository name)
         -   `pr_number` (Pull request number)
+-   **`get_pull_request_attachment_list`**
+    -   Description: Get a list of attachments for a specific pull request.
+    -   Input:
+        -   `project_id_or_key` (Project ID or project key)
+        -   `repo_id_or_name` (Repository ID (as string) or repository name)
+        -   `pr_number` (Pull request number)
+-   **`download_pull_request_attachment_raw`**
+    -   Description: Download a pull request attachment as raw bytes. Returns a JSON object with filename, MIME type, and base64-encoded content.
+    -   Input:
+        -   `project_id_or_key` (Project ID or project key)
+        -   `repo_id_or_name` (Repository ID (as string) or repository name)
+        -   `pr_number` (Pull request number)
+        -   `attachment_id` (Numeric ID of the attachment)
+-   **`download_pull_request_attachment_image`**
+    -   Description: Download a pull request attachment image. Returns filename and image content as base64. Returns an error if the attachment is not an image.
+    -   Input:
+        -   `project_id_or_key` (Project ID or project key)
+        -   `repo_id_or_name` (Repository ID (as string) or repository name)
+        -   `pr_number` (Pull request number)
+        -   `attachment_id` (Numeric ID of the attachment)
+    -   Output: Image content via `rmcp::model::Content::image`.
+-   **`download_pull_request_attachment_text`**
+    -   Description: Download a pull request attachment if it is a valid UTF-8 text file. Returns the text content. Returns an error if the attachment is not a valid UTF-8 text file.
+    -   Input:
+        -   `project_id_or_key` (Project ID or project key)
+        -   `repo_id_or_name` (Repository ID (as string) or repository name)
+        -   `pr_number` (Pull request number)
+        -   `attachment_id` (Numeric ID of the attachment)
+    -   Output: Text content via `rmcp::model::Content::text`.
 -   **`get_project_status_list`**
     -   Description: Get a list of statuses for a specified project.
     -   Input: `project_id_or_key` (Project ID or project key)
