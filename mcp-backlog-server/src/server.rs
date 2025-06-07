@@ -4,6 +4,7 @@ use crate::{
     git::{
         self,
         request::{
+            DownloadPullRequestAttachmentRequest, // Added
             GetPullRequestAttachmentListRequest,
             GetPullRequestDetailsRequest, // GetPullRequestAttachmentListRequest を追加
             GetRepositoryDetailsRequest,
@@ -27,9 +28,10 @@ use backlog_api_client::client::BacklogApiClient;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64_STANDARD};
 use rmcp::{
     Error as McpError,
-    model::{CallToolResult, Content, ServerCapabilities, ServerInfo},
+    model::{CallToolResult, Content, ServerCapabilities, ServerInfo}, // Removed RawContent
     tool,
 };
+use serde::Serialize; // Added for SerializableRawAttachment
 use std::env;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -232,6 +234,88 @@ impl Server {
         let attachments =
             git::bridge::get_pull_request_attachment_list_tool(req, self.client.clone()).await?; // 引数の順序を修正
         Ok(CallToolResult::success(vec![Content::json(attachments)?]))
+    }
+
+    #[tool(
+        description = "Download a pull request attachment as raw bytes. Returns filename and raw byte content."
+    )]
+    async fn download_pull_request_attachment_raw(
+        &self,
+        #[tool(aggr)] req: DownloadPullRequestAttachmentRequest,
+    ) -> McpResult {
+        let (filename, bytes_data) =
+            git::bridge::download_pr_attachment_bridge(req, self.client.clone()).await?;
+
+        let mime_type = mime_guess::from_path(&filename)
+            .first_or_octet_stream()
+            .to_string();
+
+        #[derive(Serialize)]
+        struct SerializableRawAttachment<'a> {
+            filename: &'a str,
+            mime_type: String,
+            data_base64: String,
+        }
+
+        let base64_encoded_data = BASE64_STANDARD.encode(&bytes_data);
+
+        let response_data = SerializableRawAttachment {
+            filename: &filename,
+            mime_type,
+            data_base64: base64_encoded_data,
+        };
+
+        Ok(CallToolResult::success(vec![Content::json(response_data)?]))
+    }
+
+    #[tool(
+        description = "Download a pull request attachment image. Returns filename and image content as base64."
+    )]
+    async fn download_pull_request_attachment_image(
+        &self,
+        #[tool(aggr)] req: DownloadPullRequestAttachmentRequest,
+    ) -> McpResult {
+        let (filename, bytes_data) =
+            git::bridge::download_pr_attachment_bridge(req, self.client.clone()).await?;
+
+        let mime_type = mime_guess::from_path(&filename)
+            .first_or_octet_stream()
+            .to_string();
+
+        if !mime_type.starts_with("image/") {
+            return Err(McpError::invalid_request(
+                format!(
+                    "Attachment '{}' is not an image. Content type: {}",
+                    filename, mime_type
+                ),
+                None,
+            ));
+        }
+
+        let base64_encoded_data = BASE64_STANDARD.encode(&bytes_data);
+        Ok(CallToolResult::success(vec![Content::image(
+            base64_encoded_data,
+            mime_type,
+        )]))
+    }
+
+    #[tool(
+        description = "Download a pull request attachment if it is a valid UTF-8 text file. Returns the text content."
+    )]
+    async fn download_pull_request_attachment_text(
+        &self,
+        #[tool(aggr)] req: DownloadPullRequestAttachmentRequest,
+    ) -> McpResult {
+        let (filename, bytes_data) =
+            git::bridge::download_pr_attachment_bridge(req, self.client.clone()).await?;
+
+        match String::from_utf8(bytes_data.to_vec()) {
+            Ok(text_content) => Ok(CallToolResult::success(vec![Content::text(text_content)])),
+            Err(_) => Err(McpError::invalid_request(
+                format!("Attachment '{}' is not a valid UTF-8 text file.", filename),
+                None,
+            )),
+        }
     }
 }
 

@@ -1,13 +1,18 @@
-use crate::error::Result;
-use crate::git::request::GetPullRequestAttachmentListRequest;
+use crate::error::{Error, Result}; // Added Error
+use crate::git::request::{
+    DownloadPullRequestAttachmentRequest, GetPullRequestAttachmentListRequest,
+}; // Added DownloadPullRequestAttachmentRequest
+use backlog_api_client::bytes::Bytes; // Added Bytes
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
+    AttachmentId, // Added AttachmentId
     ProjectIdOrKey,
     PullRequest,
     PullRequestAttachment,
     Repository,
     RepositoryIdOrName, // GitPullRequestAttachment を PullRequestAttachment に変更
 };
+use backlog_core::Identifier; // Added for .value()
 use std::{str::FromStr, sync::Arc};
 use tokio::sync::Mutex;
 
@@ -85,4 +90,55 @@ pub(crate) async fn get_pull_request_attachment_list_tool(
         .git()
         .get_pull_request_attachment_list(&project_id_or_key, &repo_id_or_name, req.pr_number)
         .await?)
+}
+
+pub(crate) async fn download_pr_attachment_bridge(
+    req: DownloadPullRequestAttachmentRequest,
+    client: Arc<Mutex<BacklogApiClient>>,
+) -> Result<(String, Bytes)> {
+    let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+    let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
+    let pr_number = req.pr_number;
+    let target_attachment_id_val = req.attachment_id; // This is u32
+
+    let client_guard = client.lock().await;
+
+    // 1. Get the list of attachments to find the filename
+    // Pass references to project_id_or_key and repo_id_or_name
+    let attachments = client_guard
+        .git()
+        .get_pull_request_attachment_list(&project_id_or_key, &repo_id_or_name, pr_number)
+        .await?;
+
+    let id_to_find_rhs = target_attachment_id_val as u64;
+    let target_attachment = attachments.iter().find(|att| {
+        let current_att_id_lhs: u64 = att.id.value() as u64; // Cast u32 (compiler inferred) to u64
+        current_att_id_lhs == id_to_find_rhs
+    });
+
+    match target_attachment {
+        Some(attachment_info) => {
+            let filename = attachment_info.name.clone();
+            let attachment_id_for_download = AttachmentId::new(target_attachment_id_val); // Create AttachmentId for download
+
+            // 2. Download the actual file content
+            // Now we can move project_id_or_key and repo_id_or_name as they were not moved before
+            let file_bytes = client_guard
+                .git()
+                .download_pull_request_attachment(
+                    project_id_or_key,
+                    repo_id_or_name,
+                    pr_number,
+                    attachment_id_for_download,
+                )
+                .await?;
+            Ok((filename, file_bytes))
+        }
+        None => Err(Error::PullRequestAttachmentNotFound {
+            project_id_or_key,
+            repo_id_or_name,
+            pr_number,
+            attachment_id: target_attachment_id_val,
+        }),
+    }
 }

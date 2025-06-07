@@ -86,6 +86,28 @@ enum PrCommands {
         #[clap(short, long)]
         pr_number: u64,
     },
+    /// Download a pull request attachment
+    #[command(about = "Download a pull request attachment")]
+    DownloadAttachment(DownloadPrAttachmentArgs),
+}
+
+#[derive(Args, Debug)]
+struct DownloadPrAttachmentArgs {
+    /// Project ID or Key
+    #[clap(short = 'p', long)]
+    project_id: String,
+    /// Repository ID or Name
+    #[clap(short = 'r', long)]
+    repo_id: String,
+    /// Pull Request number
+    #[clap(short = 'n', long)]
+    pr_number: u64,
+    /// The numeric ID of the attachment to download
+    #[clap(short = 'a', long)]
+    attachment_id: u32,
+    /// Output file path to save the attachment
+    #[clap(short = 'o', long, value_name = "FILE_PATH")]
+    output: PathBuf,
 }
 
 #[derive(Parser)]
@@ -214,6 +236,53 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .await?;
                 // TODO: Pretty print pull request
                 println!("{:?}", pr);
+            }
+            PrCommands::DownloadAttachment(dl_args) => {
+                println!(
+                    "Downloading attachment {} for PR #{} in repo {} (project {}) to {}",
+                    dl_args.attachment_id,
+                    dl_args.pr_number,
+                    dl_args.repo_id,
+                    dl_args.project_id,
+                    dl_args.output.display()
+                );
+
+                let parsed_project_id =
+                    ProjectIdOrKey::from_str(&dl_args.project_id).map_err(|e| {
+                        format!("Failed to parse project_id '{}': {}", dl_args.project_id, e)
+                    })?;
+                let parsed_repo_id = RepositoryIdOrName::from_str(&dl_args.repo_id)
+                    .map_err(|e| format!("Failed to parse repo_id '{}': {}", dl_args.repo_id, e))?;
+                let parsed_attachment_id = AttachmentId::new(dl_args.attachment_id);
+
+                match client
+                    .git()
+                    .download_pull_request_attachment(
+                        parsed_project_id,
+                        parsed_repo_id,
+                        dl_args.pr_number,
+                        parsed_attachment_id,
+                    )
+                    .await
+                {
+                    Ok(file_bytes) => {
+                        if let Err(e) = fs::write(&dl_args.output, &file_bytes).await {
+                            eprintln!(
+                                "Error writing attachment to {}: {}",
+                                dl_args.output.display(),
+                                e
+                            );
+                        } else {
+                            println!(
+                                "Attachment downloaded successfully to: {}",
+                                dl_args.output.display()
+                            );
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error downloading PR attachment: {}", e);
+                    }
+                }
             }
         },
         Commands::Issue(issue_args) => match issue_args.command {

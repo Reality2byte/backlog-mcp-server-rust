@@ -1,6 +1,11 @@
 use crate::models::{PullRequest, PullRequestAttachment, Repository};
-use backlog_api_core::Result;
-use backlog_core::{ProjectIdOrKey, RepositoryIdOrName};
+use backlog_api_core::{Result, bytes}; // Changed Bytes to bytes
+use backlog_core::{
+    Identifier, // Added Identifier trait for .value()
+    ProjectIdOrKey,
+    RepositoryIdOrName,
+    identifier::AttachmentId, // Added AttachmentId
+};
 use client::Client; // The generic HTTP client from the `client` crate
 
 /// Provides access to the Git and Pull Request related API functions.
@@ -129,14 +134,45 @@ impl GitApi {
         );
         self.client.get(&path).await // クエリパラメータはなし
     }
+
+    /// Downloads the content of a specific pull request attachment.
+    ///
+    /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/attachments/:attachmentId`.
+    ///
+    /// # Arguments
+    ///
+    /// * `project_id_or_key` - The ID or key of the project.
+    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
+    /// * `pr_number` - The pull request number.
+    /// * `attachment_id` - The ID of the attachment to download.
+    pub async fn download_pull_request_attachment(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        repo_id_or_name: impl Into<RepositoryIdOrName>,
+        pr_number: u64,
+        attachment_id: AttachmentId,
+    ) -> Result<bytes::Bytes> {
+        // Changed Bytes to bytes::Bytes
+        let path = format!(
+            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",
+            project_id_or_key.into(),
+            repo_id_or_name.into(),
+            pr_number,
+            attachment_id.value() // Use .value() to get the u64 ID
+        );
+        self.client.download_file_raw(&path).await
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use backlog_core::identifier::{AttachmentId, Identifier};
-    use client::test_utils::setup_client; // Identifier を追加
-    // use std::str::FromStr; // FromStr を削除 (parse() メソッド呼び出しのため不要)
+    // backlog_api_core::bytes is already in scope from the top-level import if we change it there.
+    // No, the top level import is `backlog_api_core::bytes`, so here we'd use `bytes::Bytes`.
+    // Or, import `backlog_api_core::bytes::Bytes` specifically for the test module if preferred.
+    // Let's rely on the top-level `bytes` module being available.
+    use backlog_core::identifier::{AttachmentId, Identifier}; // Identifier is already here for tests
+    use client::test_utils::setup_client;
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -248,5 +284,93 @@ mod tests {
         assert!(result.is_err());
         // Further assertions can be made on the error type if needed
         // e.g., matches!(result.unwrap_err(), backlog_api_core::Error::HttpStatus { .. })
+    }
+
+    #[tokio::test]
+    async fn test_download_pull_request_attachment_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+        let pr_number = 125;
+        let attachment_id_val = 201;
+        let attachment_content = "This is a test file content.";
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",
+                project_key, repo_name, pr_number, attachment_id_val
+            )))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_bytes(attachment_content)
+                    .insert_header("Content-Type", "application/octet-stream")
+                    .insert_header(
+                        "Content-Disposition",
+                        "attachment; filename=\"test_file.txt\"",
+                    ),
+            )
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+        let attachment_id = AttachmentId::new(attachment_id_val);
+
+        let result = git_api
+            .download_pull_request_attachment(
+                project_id_or_key,
+                repo_id_or_name,
+                pr_number,
+                attachment_id,
+            )
+            .await;
+
+        assert!(result.is_ok());
+        let bytes_content = result.unwrap();
+        assert_eq!(bytes_content, bytes::Bytes::from(attachment_content)); // Changed Bytes to bytes::Bytes
+    }
+
+    #[tokio::test]
+    async fn test_download_pull_request_attachment_error_404() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+        let pr_number = 126;
+        let attachment_id_val = 202;
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",
+                project_key, repo_name, pr_number, attachment_id_val
+            )))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+        let attachment_id = AttachmentId::new(attachment_id_val);
+
+        let result = git_api
+            .download_pull_request_attachment(
+                project_id_or_key,
+                repo_id_or_name,
+                pr_number,
+                attachment_id,
+            )
+            .await;
+
+        assert!(result.is_err());
+        // Example: Check for specific error kind if ApiError is structured enough
+        // match result.unwrap_err() {
+        //     backlog_api_core::Error::HttpStatus { status, .. } => assert_eq!(status, reqwest::StatusCode::NOT_FOUND),
+        //     _ => panic!("Expected HttpStatus error"),
+        // }
     }
 }

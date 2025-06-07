@@ -21,6 +21,18 @@ pub struct GetPullRequestDetailsRequest {
 }
 
 #[derive(Deserialize, JsonSchema, Debug)]
+pub struct DownloadPullRequestAttachmentRequest {
+    /// The project ID or project key.
+    pub project_id_or_key: String,
+    /// The repository ID (as a string) or repository name.
+    pub repo_id_or_name: String,
+    /// The pull request number.
+    pub pr_number: u64,
+    /// The numeric ID of the attachment to download.
+    pub attachment_id: u32,
+}
+
+#[derive(Deserialize, JsonSchema, Debug)]
 pub struct GetRepositoryDetailsRequest {
     /// The project ID or project key.
     pub project_id_or_key: String,

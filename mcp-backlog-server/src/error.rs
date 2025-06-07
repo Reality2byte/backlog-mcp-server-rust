@@ -1,4 +1,4 @@
-use backlog_api_client::{ApiError, CoreError, ProjectIdOrKey};
+use backlog_api_client::{ApiError, CoreError, ProjectIdOrKey, RepositoryIdOrName}; // Added RepositoryIdOrName
 use rmcp::Error as McpError;
 use thiserror::Error as ThisError;
 
@@ -22,6 +22,16 @@ pub enum Error {
 
     #[error("Nothing to update. Please provide a summary and/or a description.")]
     NothingToUpdate,
+
+    #[error(
+        "Pull request attachment with ID '{attachment_id}' not found in pull request #{pr_number} of repository '{repo_id_or_name}' in project '{project_id_or_key}'."
+    )]
+    PullRequestAttachmentNotFound {
+        project_id_or_key: ProjectIdOrKey,
+        repo_id_or_name: RepositoryIdOrName,
+        pr_number: u64,
+        attachment_id: u32,
+    },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -88,6 +98,10 @@ impl From<Error> for McpError {
                 McpError::invalid_params(message, None)
             }
             Error::NothingToUpdate => McpError::invalid_params(err.to_string(), None),
+            Error::PullRequestAttachmentNotFound { .. } => {
+                // The Display impl from ThisError will format the message
+                McpError::invalid_request(err.to_string(), None) // Or invalid_params
+            }
         }
     }
 }

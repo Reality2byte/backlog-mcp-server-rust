@@ -73,6 +73,7 @@
     -   Implemented `get_pull_request_attachment_list_tool` bridge function.
     -   Added `get_pull_request_attachment_list` tool method to `Server` in `mcp-backlog-server`.
     -   All changes verified with `cargo check`, `cargo test`, `cargo clippy`, and `cargo fmt`.
+-   **Pull Request Attachment Download Implemented**: Added functionality to download pull request attachments in the library (`backlog-git`), CLI (`blg pr download-attachment`), and MCP server (`download_pull_request_attachment_raw/image/text` tools).
 
 ## What Works
 -   The Memory Bank system is established and updated.
@@ -82,14 +83,14 @@
 -   **Simplified Consumer Dependencies**: `mcp-backlog-server` depends primarily on `backlog-api-client`.
 -   The `backlog-api-client` library provides core functionality for Backlog API interaction, including:
     -   Git repository listing and details.
-    -   Pull request listing, details, and **attachment listing**.
+    -   Pull request listing, details, **attachment listing**, and **attachment download**.
     -   Issue listing, details, updates, comment listing, **attachment listing**, and **attachment file download**. (Issue status now uses a complete model from `backlog-project`).
     -   Document listing and details.
     -   Project listing, details, and **project status listing**.
     -   Space details.
     -   User details.
--   The `blg` CLI tool provides commands for various operations, including **downloading issue attachments**.
--   The `mcp-backlog-server` provides a suite of MCP tools, including **project status listing**, **issue attachment listing**, **issue attachment image download** (using `Content::image`, rejecting non-images), and **issue attachment text download** (using `Content::text`, rejecting non-UTF-8 files). Error reporting is informative.
+-   The `blg` CLI tool provides commands for various operations, including **downloading issue attachments** and **pull request attachments**.
+-   The `mcp-backlog-server` provides a suite of MCP tools, including **project status listing**, **issue attachment listing**, **issue attachment image download** (using `Content::image`, rejecting non-images), **issue attachment text download** (using `Content::text`, rejecting non-UTF-8 files), and **pull request attachment download (raw JSON, image, text)**. Error reporting is informative.
 -   The codebase is free of Clippy warnings and consistently formatted. All tests pass.
 -   Test utilities like `setup_client` are now shared from the `client` crate.
 
@@ -171,3 +172,13 @@
     -   Implemented bridge function and server tool method in `mcp-backlog-server`.
     -   Corrected various compilation errors and warnings during implementation.
     -   Verified all changes with `cargo check`, `test`, `clippy`, and `fmt`.
+-   **Pull Request Attachment Download Implementation**:
+    -   User requested to implement download functionality for pull request attachments.
+    -   Implemented `download_pull_request_attachment` method in `backlog-git::GitApi`.
+    -   Added `blg pr download-attachment` command to the CLI.
+    -   Added `DownloadPullRequestAttachmentRequest` to MCP server requests.
+    -   Added `PullRequestAttachmentNotFound` error variant to MCP server errors.
+    -   Implemented `download_pr_attachment_bridge` in MCP server, including logic to fetch filename first.
+    -   Added `download_pull_request_attachment_raw` (returning JSON with base64 data), `_image`, and `_text` tools to MCP server.
+    -   Resolved several compiler issues related to type inference (u32/u64 comparison) and `rmcp` content types during implementation.
+    -   All changes verified with `cargo check`, `test`, `clippy`, and `fmt`.

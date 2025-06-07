@@ -10,8 +10,35 @@
     -   Implemented and then refined `download_issue_attachment_image` MCP tool in `mcp-backlog-server` (formerly `download_issue_attachment_file`).
     -   Implemented `download_issue_attachment_text` MCP tool in `mcp-backlog-server`.
     -   Implemented "Get List of Pull Request Attachments" API in `backlog-git` and `mcp-backlog-server`.
+-   **Implemented Pull Request Attachment Download functionality (library, CLI, MCP)**.
 
 ## Recent Changes
+-   **Implemented Pull Request Attachment Download (Library, CLI, MCP Tools)**:
+    -   **`backlog-git/src/api.rs`**:
+        -   Added `download_pull_request_attachment` method to `GitApi` to download attachment content as `bytes::Bytes`.
+        -   Added unit tests for success and error cases.
+        -   Corrected import for `backlog_api_core::bytes::Bytes` and ensured `backlog_core::Identifier` trait was in scope for `value()` method.
+    -   **`backlog-api-client/src/bin/blg.rs`**:
+        -   Added `pr download-attachment` subcommand to the CLI.
+        -   Defined `DownloadPrAttachmentArgs` for arguments.
+        -   Implemented logic to call the library function and save the downloaded file.
+    -   **`mcp-backlog-server/src/git/request.rs`**:
+        -   Defined `DownloadPullRequestAttachmentRequest` struct for the MCP tool.
+    -   **`mcp-backlog-server/src/error.rs`**:
+        -   Added `PullRequestAttachmentNotFound` variant to the local `Error` enum.
+        -   Updated `From<Error> for McpError` to handle the new variant.
+    -   **`mcp-backlog-server/src/git/bridge.rs`**:
+        -   Implemented `download_pr_attachment_bridge` function. This bridge first fetches the attachment list to get the filename, then downloads the file content.
+        -   Corrected `Identifier` trait import.
+        -   Resolved a persistent type mismatch issue in ID comparison (`u32` vs `u64`) by ensuring both sides of the comparison were explicitly `u64`.
+        -   Updated to use the new `Error::PullRequestAttachmentNotFound`.
+    -   **`mcp-backlog-server/src/server.rs`**:
+        -   Added three new MCP tools:
+            -   `download_pull_request_attachment_raw`: Returns attachment metadata and base64-encoded content as JSON (fallback for generic raw binary).
+            -   `download_pull_request_attachment_image`: Returns `Content::image` for image attachments.
+            -   `download_pull_request_attachment_text`: Returns `Content::text` for UTF-8 text attachments.
+        -   Corrected import and usage of `rmcp::model::RawContent` (ultimately removed direct usage for the `_raw` tool in favor of JSON).
+    -   Verified all changes with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, `cargo clippy --all-features --all-targets`, and `cargo fmt --all`.
 -   **Implemented "Get List of Pull Request Attachments" API and MCP Tool**:
     -   Defined `PullRequestAttachment` model in `backlog-git/src/models.rs`.
     -   Added `get_pull_request_attachment_list` method to `GitApi` in `backlog-git/src/api.rs` with unit tests.
@@ -129,4 +156,6 @@
 ## Learnings & Project Insights
 -   Careful consideration of model ownership and inter-crate dependencies is crucial for maintaining a clean architecture, especially when types are shared or referenced across different API domains.
 -   API documentation for embedded objects within larger responses (e.g., the `status` object within an `Issue`) must be checked to ensure local model definitions are complete and accurate. The `ProjectStatus` model is a good example of this.
--   Centralizing test utilities improves maintainability and consistency of tests across the workspace.
+    -   Centralizing test utilities improves maintainability and consistency of tests across the workspace.
+    -   Compiler type inference, especially within closures or with generic traits like `Identifier`, can sometimes be surprising. Explicitly annotating types or casting (e.g., `att.id.value() as u64`) can be necessary to guide the compiler when its inference seems to contradict definitions.
+    -   For MCP tools returning generic binary data, if the `rmcp::model::Content` or `RawContent` enum doesn't offer a straightforward "raw binary" variant, returning a structured JSON object with base64-encoded data is a robust fallback (as done for `download_pull_request_attachment_raw`).
