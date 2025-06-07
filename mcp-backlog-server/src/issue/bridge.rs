@@ -1,5 +1,6 @@
 use super::request::{
-    GetAttachmentListRequest, // Added
+    DownloadAttachmentRequest, // Added
+    GetAttachmentListRequest,
     GetIssueCommentsRequest,
     GetIssueDetailsRequest,
     GetIssuesByMilestoneNameRequest,
@@ -10,7 +11,8 @@ use crate::error::{Error as McpError, Result};
 use crate::util::{MatchResult, find_by_name_from_array};
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
-    Attachment, // Added
+    Attachment,   // This is the model
+    AttachmentId, // Corrected path
     Comment,
     // Corrected paths for these comment-related types:
     GetCommentListParamsBuilder,
@@ -21,6 +23,7 @@ use backlog_api_client::{
     Milestone,
     ProjectIdOrKey,
     UpdateIssueParamsBuilder,
+    bytes, // Corrected: Use re-exported bytes
 };
 use std::str::FromStr;
 use std::sync::Arc;
@@ -151,4 +154,42 @@ pub(crate) async fn get_attachment_list_impl(
         .await?;
 
     Ok(attachments)
+}
+
+pub(crate) async fn download_issue_attachment_file(
+    client: Arc<Mutex<BacklogApiClient>>,
+    req: DownloadAttachmentRequest,
+) -> Result<(String, bytes::Bytes)> {
+    let parsed_issue_id_or_key = IssueIdOrKey::from_str(&req.issue_id_or_key)?;
+    let parsed_attachment_id = AttachmentId::new(req.attachment_id);
+
+    let client_guard = client.lock().await;
+
+    // 1. Get attachment list to find the filename
+    let attachments = client_guard
+        .issue()
+        .get_attachment_list(parsed_issue_id_or_key.clone())
+        .await?;
+
+    let target_attachment = attachments
+        .iter()
+        .find(|att| att.id == parsed_attachment_id);
+
+    let filename = match target_attachment {
+        Some(att) => att.name.clone(),
+        None => {
+            return Err(McpError::Parameter(format!(
+                "Attachment ID {} not found on issue {}",
+                req.attachment_id, req.issue_id_or_key
+            )));
+        }
+    };
+
+    // 2. Download the file content
+    let file_bytes = client_guard
+        .issue()
+        .get_attachment_file(parsed_issue_id_or_key, parsed_attachment_id)
+        .await?;
+
+    Ok((filename, file_bytes))
 }

@@ -53,6 +53,12 @@
     -   Implemented logic to parse arguments, call the library function, and save the file using `tokio::fs::write`.
     -   Corrected import paths for `AttachmentId` in `blg.rs` and re-exported `AttachmentId` from `backlog-api-client` lib.
     -   Verified with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, and `cargo clippy`.
+-   **`download_issue_attachment_image` MCP Tool Refined in `mcp-backlog-server`**:
+    -   The tool (formerly `download_issue_attachment_file`) was renamed to `download_issue_attachment_image` by the user.
+    -   The server method was updated by the user to use `Content::image` for the response.
+    -   A check was added to ensure the attachment is an image based on its MIME type; an error is returned for non-image files.
+    -   This error handling was successfully tested.
+    -   Dependencies (`base64`, `mime_guess`) and import paths were confirmed/corrected.
 
 ## What Works
 -   The Memory Bank system is established and updated.
@@ -69,7 +75,7 @@
     -   Space details.
     -   User details.
 -   The `blg` CLI tool provides commands for various operations, including **downloading issue attachments**.
--   The `mcp-backlog-server` provides a suite of MCP tools, including **project status listing** and **issue attachment listing**. Error reporting is informative.
+-   The `mcp-backlog-server` provides a suite of MCP tools, including **project status listing**, **issue attachment listing**, and **issue attachment image download** (using `Content::image` and rejecting non-image files). Error reporting is informative.
 -   The codebase is free of Clippy warnings and consistently formatted. All tests pass.
 -   Test utilities like `setup_client` are now shared from the `client` crate.
 
@@ -126,3 +132,11 @@
     -   Implemented the command logic in `blg.rs` to call the `get_attachment_file` library function and save the output.
     -   Corrected `AttachmentId` import paths in `blg.rs` and ensured it's re-exported from the `backlog-api-client` library facade.
     -   Verified with full workspace checks.
+-   **`download_issue_attachment_image` MCP Tool Implementation and Refinement**:
+    -   Initially, a generic `download_issue_attachment_file` MCP tool was implemented, returning a JSON object with base64 encoded data.
+    -   The user then requested to specialize this for images, renaming it to `download_issue_attachment_image`.
+    -   The user updated the server method to:
+        -   Use `Content::image(base64_data, mime_type)` for the response.
+        -   Add a check to ensure the MIME type indicates an image, returning an error otherwise.
+    -   This refined behavior and error handling were successfully tested.
+    -   Dependencies (`base64`, `mime_guess`) and necessary imports were confirmed.

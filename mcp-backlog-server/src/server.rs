@@ -11,7 +11,8 @@ use crate::{
     issue::{
         self,
         request::{
-            GetAttachmentListRequest, // Added
+            DownloadAttachmentRequest, // Added
+            GetAttachmentListRequest,
             GetIssueDetailsRequest,
             GetIssuesByMilestoneNameRequest,
             GetVersionMilestoneListRequest,
@@ -20,8 +21,12 @@ use crate::{
     project::{self, request::GetProjectStatusListRequest},
 };
 use backlog_api_client::client::BacklogApiClient;
-// use backlog_api_client::Comment; // Removed this line as it caused an unused import warning
-use rmcp::{Error as McpError, model::*, tool};
+use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64_STANDARD};
+use rmcp::{
+    Error as McpError,
+    model::{CallToolResult, Content, ServerCapabilities, ServerInfo},
+    tool,
+};
 use std::env;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -159,6 +164,32 @@ impl Server {
     ) -> McpResult {
         let attachments = issue::bridge::get_attachment_list_impl(self.client.clone(), req).await?;
         Ok(CallToolResult::success(vec![Content::json(attachments)?]))
+    }
+
+    #[tool(description = "Download an issue attachment image. Returns filename and image content.")]
+    async fn download_issue_attachment_image(
+        &self,
+        #[tool(aggr)] req: DownloadAttachmentRequest,
+    ) -> McpResult {
+        let (filename, bytes_data) =
+            issue::bridge::download_issue_attachment_file(self.client.clone(), req).await?;
+
+        let mime_type = mime_guess::from_path(&filename)
+            .first_or_octet_stream()
+            .to_string();
+
+        if !mime_type.starts_with("image/") {
+            return Err(McpError::invalid_request(
+                format!("Attachment is not an image. Content type: {}", mime_type),
+                None,
+            ));
+        }
+
+        let base64_encoded_data = BASE64_STANDARD.encode(&bytes_data);
+        Ok(CallToolResult::success(vec![Content::image(
+            base64_encoded_data,
+            mime_type,
+        )]))
     }
 
     #[tool(description = "Get a list of statuses for a specified project.")]

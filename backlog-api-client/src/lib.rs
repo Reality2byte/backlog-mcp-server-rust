@@ -1,5 +1,6 @@
 pub mod client;
 pub use backlog_api_core::Error as ApiError;
+pub use backlog_api_core::bytes; // Re-export bytes
 
 // Core types (from backlog_core)
 pub use backlog_core::{

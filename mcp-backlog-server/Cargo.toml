@@ -23,6 +23,8 @@ backlog-project = { path = "../backlog-project" }
 backlog-core = { path = "../backlog-core" } # For ProjectIdOrKey parsing and other core types
 schemars = { workspace = true, features = ["derive"] } # For JsonSchema derive
 strsim = "0.11.1"
+mime_guess = { workspace = true } # Added for MIME type guessing
+base64 = { workspace = true } # Added for base64 encoding
 
 [dev-dependencies]
 # wiremock = { workspace = true }

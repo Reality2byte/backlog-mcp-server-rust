@@ -69,6 +69,15 @@ pub(crate) struct GetAttachmentListRequest {
 }
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct DownloadAttachmentRequest {
+    #[schemars(description = "The issue ID or issue key. Examples: 'MYPROJECTKEY-123', '12345'.")]
+    pub issue_id_or_key: String, // Corrected to match serde rename_all
+    #[schemars(description = "The numeric ID of the attachment to download.")]
+    pub attachment_id: u32, // Corrected to match serde rename_all
+}
+
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
 pub(crate) struct GetIssueCommentsRequest {
     #[schemars(description = "Issue ID or key (e.g., 'PROJECT-123').")]
     pub issue_id_or_key: String,

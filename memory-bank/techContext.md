@@ -23,8 +23,12 @@
 -   **Builder Pattern**: `derive_builder` (version 0.20) - Used for creating builder patterns for request parameter structs.
     -   Convention: Use `#[builder(..., build_fn(error = "ApiError"))]` to make the `build()` method return `Result<Self, backlog_api_core::Error>`.
 -   **Binary Data Handling**: `bytes` (version 1) - For efficient handling of byte streams, used for file downloads. Re-exported by `backlog-api-core`.
+-   **Base64 Encoding**: `base64` (version 0.21) - Used for encoding binary data for JSON transport in MCP tools.
+-   **MIME Type Guessing**: `mime_guess` (version 2.0) - Used to determine MIME type from filenames for MCP tool responses.
 -   **CLI Argument Parsing**: `clap` (version 4.5, with `derive` feature) - Used by the `blg` binary.
 -   **MCP SDK**: `rmcp` (git, branch = "main", features = ["transport-io"]) - For building MCP servers.
+    -   The `download_issue_attachment_image` tool now uses `rmcp::model::Content::image` to return image data, which expects base64 encoded string and a MIME type.
+    -   The tool includes a check to ensure the attachment is an image before attempting this.
 -   **Schema Generation (for MCP tools)**: `schemars` (version 0.8).
     -   For library crates (`backlog-core`, `backlog-issue`, etc.), `schemars` is an optional dependency enabled via a `schemars` feature. Models derive `JsonSchema` conditionally.
     -   For `mcp-backlog-server` request structs (e.g., in `src/issue/request.rs`), the convention is to use `use rmcp::schemars;` and then `#[derive(schemars::JsonSchema)]`. This leverages the `schemars` re-export from the `rmcp` crate.
@@ -48,7 +52,7 @@
         -   `cargo check --all-targets --all-features` (Comprehensive check)
         -   `cargo test --all-features --all-targets` (Run all tests)
         -   `cargo clippy` (Linting for the entire workspace, default settings)
-        -   `cargo fmt` (Formatting the entire workspace, default settings)
+        -   `cargo fmt --all` (Formatting the entire workspace, default settings)
 
 ## Technical Constraints
 -   Network connectivity for Backlog API.

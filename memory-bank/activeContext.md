@@ -7,8 +7,18 @@
     -   Implemented `get_issue_attachment_list` MCP tool in `mcp-backlog-server`.
     -   Implemented `get_attachment_file` (download issue attachment) API in `backlog-issue`.
     -   Implemented `blg issue download-attachment` CLI command.
+    -   Implemented and then refined `download_issue_attachment_image` MCP tool in `mcp-backlog-server` (formerly `download_issue_attachment_file`).
 
 ## Recent Changes
+-   **Refined MCP Tool for Image Attachment Download (`download_issue_attachment_image`)**:
+    -   The existing `download_issue_attachment_file` MCP tool was renamed to `download_issue_attachment_image` by the user.
+    -   The server method in `mcp-backlog-server/src/server.rs` was updated by the user to:
+        -   Use `Content::image(base64_data, mime_type)` for the response, as discussed.
+        -   Include a check to ensure the attachment's MIME type (obtained via `mime_guess`) starts with "image/". If not, it returns an error.
+    -   The `use mime_guess;` statement was confirmed/added if necessary.
+    -   The bridge function `download_issue_attachment_file` (which fetches filename and bytes) remained largely the same.
+    -   The `DownloadAttachmentRequest` struct was reused.
+    -   This refined error handling (rejecting non-images) was tested with issue PASTA-1242, which has non-image attachments, and the tool correctly returned an "Attachment is not an image" error.
 -   **Implemented `blg issue download-attachment` CLI command**:
     -   Added `DownloadAttachment` variant to `IssueCommands` enum and `DownloadAttachmentArgs` struct in `backlog-api-client/src/bin/blg.rs`.
     -   Implemented logic to parse arguments, call the `get_attachment_file` API, and save the downloaded file.

@@ -38,6 +38,12 @@ The following tools are currently available:
 -   **`get_issue_attachment_list`**
     -   Description: Get a list of attachments for a specified issue.
     -   Input: `issue_id_or_key` (Issue ID or issue key, e.g., "MYPROJECTKEY-123", "12345")
+-   **`download_issue_attachment_image`**
+    -   Description: Download an issue attachment if it is an image. Returns the image content (base64 encoded) and its MIME type. Returns an error if the attachment is not an image.
+    -   Input:
+        -   `issueIdOrKey` (string, required): The issue ID or issue key. Examples: "MYPROJECTKEY-123", "12345".
+        -   `attachmentId` (number, required): The numeric ID of the attachment to download.
+    -   Output: Image content via `rmcp::model::Content::image`.
 -   **`get_repository_list`**
     -   Description: Get a list of Git repositories for a specified project.
     -   Input: `project_id_or_key` (Project ID or project key)
