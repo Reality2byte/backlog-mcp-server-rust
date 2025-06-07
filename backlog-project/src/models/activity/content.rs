@@ -50,7 +50,7 @@ pub struct File {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Svn {
-    pub rev: u64,
+    pub rev: SvnRevision,
     pub comment: String,
 }
 

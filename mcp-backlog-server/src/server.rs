@@ -4,22 +4,16 @@ use crate::{
     git::{
         self,
         request::{
-            DownloadPullRequestAttachmentRequest, // Added
-            GetPullRequestAttachmentListRequest,
-            GetPullRequestDetailsRequest, // GetPullRequestAttachmentListRequest を追加
-            GetRepositoryDetailsRequest,
-            GetRepositoryListRequest,
+            DownloadPullRequestAttachmentRequest, GetPullRequestAttachmentListRequest,
+            GetPullRequestDetailsRequest, GetRepositoryDetailsRequest, GetRepositoryListRequest,
             ListPullRequestsRequest,
         },
     },
     issue::{
         self,
         request::{
-            DownloadAttachmentRequest, // Added
-            GetAttachmentListRequest,
-            GetIssueDetailsRequest,
-            GetIssuesByMilestoneNameRequest,
-            GetVersionMilestoneListRequest,
+            DownloadAttachmentRequest, GetAttachmentListRequest, GetIssueDetailsRequest,
+            GetIssuesByMilestoneNameRequest, GetVersionMilestoneListRequest,
         },
     },
     project::{self, request::GetProjectStatusListRequest},
@@ -28,10 +22,10 @@ use backlog_api_client::client::BacklogApiClient;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64_STANDARD};
 use rmcp::{
     Error as McpError,
-    model::{CallToolResult, Content, ServerCapabilities, ServerInfo}, // Removed RawContent
+    model::{CallToolResult, Content, ServerCapabilities, ServerInfo},
     tool,
 };
-use serde::Serialize; // Added for SerializableRawAttachment
+use serde::Serialize;
 use std::env;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -204,7 +198,7 @@ impl Server {
         &self,
         #[tool(aggr)] req: DownloadAttachmentRequest,
     ) -> McpResult {
-        let (_filename, bytes_data) = // filename is not used directly in response but fetched by bridge
+        let (_filename, bytes_data) =
             issue::bridge::download_issue_attachment_file(self.client.clone(), req).await?;
 
         match String::from_utf8(bytes_data.to_vec()) {
@@ -232,7 +226,7 @@ impl Server {
         #[tool(aggr)] req: GetPullRequestAttachmentListRequest,
     ) -> McpResult {
         let attachments =
-            git::bridge::get_pull_request_attachment_list_tool(req, self.client.clone()).await?; // 引数の順序を修正
+            git::bridge::get_pull_request_attachment_list_tool(self.client.clone(), req).await?;
         Ok(CallToolResult::success(vec![Content::json(attachments)?]))
     }
 
@@ -244,7 +238,7 @@ impl Server {
         #[tool(aggr)] req: DownloadPullRequestAttachmentRequest,
     ) -> McpResult {
         let (filename, bytes_data) =
-            git::bridge::download_pr_attachment_bridge(req, self.client.clone()).await?;
+            git::bridge::download_pr_attachment_bridge(self.client.clone(), req).await?;
 
         let mime_type = mime_guess::from_path(&filename)
             .first_or_octet_stream()
@@ -276,7 +270,7 @@ impl Server {
         #[tool(aggr)] req: DownloadPullRequestAttachmentRequest,
     ) -> McpResult {
         let (filename, bytes_data) =
-            git::bridge::download_pr_attachment_bridge(req, self.client.clone()).await?;
+            git::bridge::download_pr_attachment_bridge(self.client.clone(), req).await?;
 
         let mime_type = mime_guess::from_path(&filename)
             .first_or_octet_stream()
@@ -307,7 +301,7 @@ impl Server {
         #[tool(aggr)] req: DownloadPullRequestAttachmentRequest,
     ) -> McpResult {
         let (filename, bytes_data) =
-            git::bridge::download_pr_attachment_bridge(req, self.client.clone()).await?;
+            git::bridge::download_pr_attachment_bridge(self.client.clone(), req).await?;
 
         match String::from_utf8(bytes_data.to_vec()) {
             Ok(text_content) => Ok(CallToolResult::success(vec![Content::text(text_content)])),

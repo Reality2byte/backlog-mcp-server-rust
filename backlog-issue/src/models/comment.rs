@@ -1,5 +1,6 @@
 use backlog_core::{
-    identifier::{CommentId, NotificationId, StarId}, User
+    User,
+    identifier::{CommentId, NotificationId, StarId},
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize}; // Ensured Serialize is here

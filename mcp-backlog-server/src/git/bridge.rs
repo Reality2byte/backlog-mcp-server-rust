@@ -5,13 +5,8 @@ use crate::git::request::{
 use backlog_api_client::bytes::Bytes; // Added Bytes
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
-    AttachmentId, // Added AttachmentId
-    PrNumber,     // Added PrNumber
-    ProjectIdOrKey,
-    PullRequest,
-    PullRequestAttachment,
-    Repository,
-    RepositoryIdOrName, // GitPullRequestAttachment を PullRequestAttachment に変更
+    AttachmentId, PrNumber, ProjectIdOrKey, PullRequest, PullRequestAttachment, Repository,
+    RepositoryIdOrName,
 };
 use backlog_core::Identifier; // Added for .value()
 use std::{str::FromStr, sync::Arc};
@@ -19,7 +14,7 @@ use tokio::sync::Mutex;
 
 /// Helper function to implement the get_repository_list tool.
 pub(crate) async fn get_repository_list(
-    client: Arc<Mutex<BacklogApiClient>>, // Changed signature
+    client: Arc<Mutex<BacklogApiClient>>,
     project_id_or_key: String,
 ) -> Result<Vec<Repository>> {
     let project_id = project_id_or_key.parse::<ProjectIdOrKey>()?;
@@ -30,7 +25,7 @@ pub(crate) async fn get_repository_list(
 }
 
 pub(crate) async fn get_repository(
-    client: Arc<Mutex<BacklogApiClient>>, // Changed signature
+    client: Arc<Mutex<BacklogApiClient>>,
     project_id_or_key: String,
     repo_id_or_name: String,
 ) -> Result<Repository> {
@@ -79,10 +74,9 @@ pub(crate) async fn get_pull_request(
 }
 
 pub(crate) async fn get_pull_request_attachment_list_tool(
-    req: GetPullRequestAttachmentListRequest,
     client: Arc<Mutex<BacklogApiClient>>,
+    req: GetPullRequestAttachmentListRequest,
 ) -> Result<Vec<PullRequestAttachment>> {
-    // GitPullRequestAttachment を PullRequestAttachment に変更
     let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
 
@@ -98,13 +92,13 @@ pub(crate) async fn get_pull_request_attachment_list_tool(
 }
 
 pub(crate) async fn download_pr_attachment_bridge(
-    req: DownloadPullRequestAttachmentRequest,
     client: Arc<Mutex<BacklogApiClient>>,
+    req: DownloadPullRequestAttachmentRequest,
 ) -> Result<(String, Bytes)> {
     let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
-    let pr_number = PrNumber::from(req.pr_number); // Changed to PrNumber
-    let target_attachment_id_val = req.attachment_id; // This is u32
+    let pr_number = PrNumber::from(req.pr_number);
+    let target_attachment_id_val = req.attachment_id;
 
     let client_guard = client.lock().await;
 
