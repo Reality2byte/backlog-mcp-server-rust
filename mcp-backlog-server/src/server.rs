@@ -192,6 +192,25 @@ impl Server {
         )]))
     }
 
+    #[tool(
+        description = "Download an issue attachment if it is a valid UTF-8 text file. Returns the text content."
+    )]
+    async fn download_issue_attachment_text(
+        &self,
+        #[tool(aggr)] req: DownloadAttachmentRequest,
+    ) -> McpResult {
+        let (_filename, bytes_data) = // filename is not used directly in response but fetched by bridge
+            issue::bridge::download_issue_attachment_file(self.client.clone(), req).await?;
+
+        match String::from_utf8(bytes_data.to_vec()) {
+            Ok(text_content) => Ok(CallToolResult::success(vec![Content::text(text_content)])),
+            Err(_) => Err(McpError::invalid_request(
+                "Attachment is not a valid UTF-8 text file.",
+                None,
+            )),
+        }
+    }
+
     #[tool(description = "Get a list of statuses for a specified project.")]
     async fn get_project_status_list(
         &self,

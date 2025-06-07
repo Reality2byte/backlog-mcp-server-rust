@@ -44,6 +44,12 @@ The following tools are currently available:
         -   `issueIdOrKey` (string, required): The issue ID or issue key. Examples: "MYPROJECTKEY-123", "12345".
         -   `attachmentId` (number, required): The numeric ID of the attachment to download.
     -   Output: Image content via `rmcp::model::Content::image`.
+-   **`download_issue_attachment_text`**
+    -   Description: Download an issue attachment if it is a valid UTF-8 text file. Returns the text content. Returns an error if the attachment is not a valid UTF-8 text file.
+    -   Input:
+        -   `issueIdOrKey` (string, required): The issue ID or issue key. Examples: "MYPROJECTKEY-123", "12345".
+        -   `attachmentId` (number, required): The numeric ID of the attachment to download.
+    -   Output: Text content via `rmcp::model::Content::text`.
 -   **`get_repository_list`**
     -   Description: Get a list of Git repositories for a specified project.
     -   Input: `project_id_or_key` (Project ID or project key)

@@ -126,7 +126,7 @@ graph TD
 
 9.  **`mcp-backlog-server` (crate - binary)**:
     *   MCP server using the `backlog-api-client` library.
-    *   Organizes tools into domain-specific modules (e.g., `issue` for issue details, comments, attachment listing, and image-specific attachment download using `Content::image`; `git` for repositories, pull requests; `document` for document details; `project` for project-level info like statuses). Each module typically contains:
+    *   Organizes tools into domain-specific modules (e.g., `issue` for issue details, comments, attachment listing, image-specific attachment download using `Content::image`, and text-specific attachment download using `Content::text`; `git` for repositories, pull requests; `document` for document details; `project` for project-level info like statuses). Each module typically contains:
         *   `request.rs`: Defines request structs deriving `serde::Deserialize` and `rmcp::schemars::JsonSchema` (using the `use rmcp::schemars;` convention).
         *   `bridge.rs`: Contains functions that take these request structs and the `BacklogApiClient` (wrapped in `Arc<Mutex<>>`), perform the API call, and return a `crate::error::Result`.
     *   `server.rs` defines the main `Server` struct and registers tool methods (annotated with `#[tool(...)]`) that call these bridge functions.

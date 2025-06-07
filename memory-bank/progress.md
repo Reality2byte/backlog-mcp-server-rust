@@ -59,6 +59,11 @@
     -   A check was added to ensure the attachment is an image based on its MIME type; an error is returned for non-image files.
     -   This error handling was successfully tested.
     -   Dependencies (`base64`, `mime_guess`) and import paths were confirmed/corrected.
+-   **`download_issue_attachment_text` MCP Tool Implemented in `mcp-backlog-server`**:
+    -   Added `download_issue_attachment_text` tool method to `Server`.
+    -   Reused existing `DownloadAttachmentRequest` and `download_issue_attachment_file` bridge function.
+    -   The method converts attachment bytes to a UTF-8 string. If successful, returns `Content::text`; otherwise, returns an error.
+    -   Verified with all final verification commands.
 
 ## What Works
 -   The Memory Bank system is established and updated.
@@ -75,7 +80,7 @@
     -   Space details.
     -   User details.
 -   The `blg` CLI tool provides commands for various operations, including **downloading issue attachments**.
--   The `mcp-backlog-server` provides a suite of MCP tools, including **project status listing**, **issue attachment listing**, and **issue attachment image download** (using `Content::image` and rejecting non-image files). Error reporting is informative.
+-   The `mcp-backlog-server` provides a suite of MCP tools, including **project status listing**, **issue attachment listing**, **issue attachment image download** (using `Content::image`, rejecting non-images), and **issue attachment text download** (using `Content::text`, rejecting non-UTF-8 files). Error reporting is informative.
 -   The codebase is free of Clippy warnings and consistently formatted. All tests pass.
 -   Test utilities like `setup_client` are now shared from the `client` crate.
 
@@ -140,3 +145,10 @@
         -   Add a check to ensure the MIME type indicates an image, returning an error otherwise.
     -   This refined behavior and error handling were successfully tested.
     -   Dependencies (`base64`, `mime_guess`) and necessary imports were confirmed.
+-   **`download_issue_attachment_text` MCP Tool Implementation**:
+    -   User requested a text-specific version of the attachment download tool.
+    -   Added `download_issue_attachment_text` method to `mcp-backlog-server/src/server.rs`.
+    -   It reuses the existing bridge function to get file bytes.
+    -   It attempts to convert the bytes to a UTF-8 string. If successful, it returns `Content::text`. If conversion fails, it returns an error indicating the file is not valid UTF-8 text.
+    -   This approach simplifies the logic by defining "text file" as "valid UTF-8" for the tool's purpose.
+    -   Verified with all final verification commands.

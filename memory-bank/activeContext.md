@@ -8,8 +8,16 @@
     -   Implemented `get_attachment_file` (download issue attachment) API in `backlog-issue`.
     -   Implemented `blg issue download-attachment` CLI command.
     -   Implemented and then refined `download_issue_attachment_image` MCP tool in `mcp-backlog-server` (formerly `download_issue_attachment_file`).
+    -   Implemented `download_issue_attachment_text` MCP tool in `mcp-backlog-server`.
 
 ## Recent Changes
+-   **Implemented `download_issue_attachment_text` MCP Tool in `mcp-backlog-server`**:
+    -   Added `download_issue_attachment_text` tool method to `Server` in `mcp-backlog-server/src/server.rs`.
+    -   Reused `DownloadAttachmentRequest` and the existing `download_issue_attachment_file` bridge function.
+    -   The method attempts to convert attachment bytes to a UTF-8 string.
+    -   If successful, returns `Content::text(string_data)`.
+    -   If UTF-8 conversion fails, returns an error indicating it's not a valid UTF-8 text file.
+    -   Verified with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, `cargo clippy`, and `cargo fmt --all`.
 -   **Refined MCP Tool for Image Attachment Download (`download_issue_attachment_image`)**:
     -   The existing `download_issue_attachment_file` MCP tool was renamed to `download_issue_attachment_image` by the user.
     -   The server method in `mcp-backlog-server/src/server.rs` was updated by the user to:

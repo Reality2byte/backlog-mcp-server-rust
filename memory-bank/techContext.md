@@ -27,8 +27,8 @@
 -   **MIME Type Guessing**: `mime_guess` (version 2.0) - Used to determine MIME type from filenames for MCP tool responses.
 -   **CLI Argument Parsing**: `clap` (version 4.5, with `derive` feature) - Used by the `blg` binary.
 -   **MCP SDK**: `rmcp` (git, branch = "main", features = ["transport-io"]) - For building MCP servers.
-    -   The `download_issue_attachment_image` tool now uses `rmcp::model::Content::image` to return image data, which expects base64 encoded string and a MIME type.
-    -   The tool includes a check to ensure the attachment is an image before attempting this.
+    -   The `download_issue_attachment_image` tool now uses `rmcp::model::Content::image` to return image data, which expects base64 encoded string and a MIME type. It includes a check to ensure the attachment is an image.
+    -   The `download_issue_attachment_text` tool uses `rmcp::model::Content::text` to return text content. It attempts to convert the attachment bytes to a UTF-8 string and errors if the conversion fails.
 -   **Schema Generation (for MCP tools)**: `schemars` (version 0.8).
     -   For library crates (`backlog-core`, `backlog-issue`, etc.), `schemars` is an optional dependency enabled via a `schemars` feature. Models derive `JsonSchema` conditionally.
     -   For `mcp-backlog-server` request structs (e.g., in `src/issue/request.rs`), the convention is to use `use rmcp::schemars;` and then `#[derive(schemars::JsonSchema)]`. This leverages the `schemars` re-export from the `rmcp` crate.
