@@ -32,6 +32,7 @@
 -   **Schema Generation (for MCP tools)**: `schemars` (version 0.8).
     -   For library crates (`backlog-core`, `backlog-issue`, `backlog-git`, etc.), `schemars` is an optional dependency enabled via a `schemars` feature. Models derive `JsonSchema` conditionally.
     -   For `mcp-backlog-server` request structs (e.g., in `src/issue/request.rs`), the convention is to use `use rmcp::schemars;` and then `#[derive(schemars::JsonSchema)]`. This leverages the `schemars` re-export from the `rmcp` crate.
+        -   **Naming Convention**: JSON keys for MCP tool request parameters MUST use `snake_case`. `#[serde(rename_all = "camelCase")]` or other renaming attributes for request structs in `mcp-backlog-server` should NOT be used. Rust struct field names should also be `snake_case`.
     -   Used for models like `User`, `Comment`, `Repository`, `PullRequest`, `PullRequestAttachment` (in `backlog-git`), `ProjectStatus` (in `backlog-project`), and `Attachment` (in `backlog-issue`), as well as MCP request structs.
 -   **Inter-Crate Dependencies**:
     -   `backlog-issue` now depends on `backlog-project` for the `ProjectStatus` model.

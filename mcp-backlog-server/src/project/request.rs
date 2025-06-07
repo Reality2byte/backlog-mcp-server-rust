@@ -2,7 +2,7 @@ use rmcp::schemars;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
-#[serde(rename_all = "camelCase")]
+// #[serde(rename_all = "camelCase")] // Removed
 pub struct GetProjectStatusListRequest {
     /// The project ID or project key to retrieve statuses for.
     /// Examples: "MYPROJECTKEY", "123".

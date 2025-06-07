@@ -41,14 +41,14 @@ The following tools are currently available:
 -   **`download_issue_attachment_image`**
     -   Description: Download an issue attachment if it is an image. Returns the image content (base64 encoded) and its MIME type. Returns an error if the attachment is not an image.
     -   Input:
-        -   `issueIdOrKey` (string, required): The issue ID or issue key. Examples: "MYPROJECTKEY-123", "12345".
-        -   `attachmentId` (number, required): The numeric ID of the attachment to download.
+        -   `issue_id_or_key` (string, required): The issue ID or issue key. Examples: "MYPROJECTKEY-123", "12345".
+        -   `attachment_id` (number, required): The numeric ID of the attachment to download.
     -   Output: Image content via `rmcp::model::Content::image`.
 -   **`download_issue_attachment_text`**
     -   Description: Download an issue attachment if it is a valid UTF-8 text file. Returns the text content. Returns an error if the attachment is not a valid UTF-8 text file.
     -   Input:
-        -   `issueIdOrKey` (string, required): The issue ID or issue key. Examples: "MYPROJECTKEY-123", "12345".
-        -   `attachmentId` (number, required): The numeric ID of the attachment to download.
+        -   `issue_id_or_key` (string, required): The issue ID or issue key. Examples: "MYPROJECTKEY-123", "12345".
+        -   `attachment_id` (number, required): The numeric ID of the attachment to download.
     -   Output: Text content via `rmcp::model::Content::text`.
 -   **`get_repository_list`**
     -   Description: Get a list of Git repositories for a specified project.
@@ -71,7 +71,7 @@ The following tools are currently available:
         -   `pr_number` (Pull request number)
 -   **`get_project_status_list`**
     -   Description: Get a list of statuses for a specified project.
-    -   Input: `projectIdOrKey` (Project ID or project key)
+    -   Input: `project_id_or_key` (Project ID or project key)
 
 ## Feature Flags
 
