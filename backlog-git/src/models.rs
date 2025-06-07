@@ -17,34 +17,26 @@ pub struct Repository {
     /// The ID of the repository.
     pub id: RepositoryId,
     /// The ID of the project that the repository belongs to.
-    #[serde(rename = "projectId")]
-    pub project_id: u64,
+    pub project_id: ProjectId,
     /// The name of the repository.
     pub name: String,
     /// The description of the repository.
     pub description: Option<String>,
     /// The hook URL for the repository.
-    #[serde(rename = "hookUrl")]
     pub hook_url: Option<String>, // Note: Nulab's API might use "nulabAccount" specific URLs
     /// The HTTP URL for cloning the repository.
-    #[serde(rename = "httpUrl")]
     pub http_url: Option<String>,
     /// The SSH URL for cloning the repository.
-    #[serde(rename = "sshUrl")]
     pub ssh_url: Option<String>,
     /// The display order of the repository.
-    #[serde(rename = "displayOrder")]
     pub display_order: Option<u64>,
     /// The timestamp of the last push to the repository.
-    #[serde(rename = "pushedAt")]
     pub pushed_at: Option<DateTime<Utc>>,
     /// The user who created the repository.
-    #[serde(rename = "createdUser")]
     pub created_user: Option<User>,
     /// The timestamp of when the repository was created.
     pub created: Option<DateTime<Utc>>,
     /// The user who last updated the repository.
-    #[serde(rename = "updatedUser")]
     pub updated_user: Option<User>,
     /// The timestamp of when the repository was last updated.
     pub updated: Option<DateTime<Utc>>,
@@ -57,10 +49,8 @@ pub struct PullRequest {
     /// The ID of the pull request.
     pub id: PullRequestId,
     /// The ID of the project that the pull request belongs to.
-    #[serde(rename = "projectId")]
     pub project_id: ProjectId,
     /// The ID of the repository that the pull request belongs to.
-    #[serde(rename = "repositoryId")]
     pub repository_id: RepositoryId,
     /// The number of the pull request, unique within the repository.
     pub number: PrNumber, // Changed from u64
@@ -80,24 +70,18 @@ pub struct PullRequest {
     #[serde(rename = "issue")]
     pub related_issue: Option<IssueLink>,
     /// The SHA hash of the base commit.
-    #[serde(rename = "baseCommit")]
     pub base_commit: Option<String>,
     /// The SHA hash of the branch commit.
-    #[serde(rename = "branchCommit")]
     pub branch_commit: Option<String>,
     /// The timestamp of when the pull request was closed.
-    #[serde(rename = "closeAt")]
     pub close_at: Option<DateTime<Utc>>,
     /// The timestamp of when the pull request was merged.
-    #[serde(rename = "mergeAt")]
     pub merge_at: Option<DateTime<Utc>>,
     /// The user who created the pull request.
-    #[serde(rename = "createdUser")]
     pub created_user: Option<User>,
     /// The timestamp of when the pull request was created.
     pub created: Option<DateTime<Utc>>,
     /// The user who last updated the pull request.
-    #[serde(rename = "updatedUser")]
     pub updated_user: Option<User>,
     /// The timestamp of when the pull request was last updated.
     pub updated: Option<DateTime<Utc>>,

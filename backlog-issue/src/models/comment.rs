@@ -1,4 +1,6 @@
-use backlog_core::User;
+use backlog_core::{
+    identifier::{CommentId, NotificationId, StarId}, User
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize}; // Ensured Serialize is here
 
@@ -14,7 +16,7 @@ use schemars::JsonSchema;
 #[serde(rename_all = "camelCase")]
 pub struct Comment {
     /// The ID of the comment.
-    pub id: u64,
+    pub id: CommentId,
     /// The content of the comment.
     pub content: Option<String>,
     /// A list of changes made in this comment.
@@ -67,7 +69,7 @@ pub struct ChangeLogEntry {
 #[serde(rename_all = "camelCase")]
 pub struct Star {
     /// The ID of the star.
-    pub id: u64,
+    pub id: StarId,
     /// Optional comment associated with the star.
     pub comment: Option<String>,
     /// URL related to the star (often points to the starred item).
@@ -86,7 +88,7 @@ pub struct Star {
 #[serde(rename_all = "camelCase")]
 pub struct Notification {
     /// The ID of the notification.
-    pub id: u64,
+    pub id: NotificationId,
     /// Indicates if the notification has been read by the user.
     pub already_read: bool,
     /// A code indicating the reason for the notification.

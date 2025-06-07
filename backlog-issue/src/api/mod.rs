@@ -138,9 +138,8 @@ mod tests {
     };
     use backlog_api_core::bytes::Bytes; // This should be correct now
     use backlog_core::{
-        IssueKey, // Moved IssueKey here
-        User,
-        identifier::{AttachmentId, IssueId, MilestoneId, ProjectId, UserId},
+        IssueKey, User,
+        identifier::{AttachmentId, CommentId, IssueId, MilestoneId, ProjectId, UserId},
     };
     use chrono::{TimeZone, Utc};
     use client::test_utils::setup_client; // Use the common setup_client
@@ -163,10 +162,10 @@ mod tests {
     }
 
     // Note: create_mock_comment is not used by the new attachment tests, but kept for existing tests.
-    fn create_mock_comment(id: u64, content: &str, user_id: u32, user_name: &str) -> Comment {
+    fn create_mock_comment(id: u32, content: &str, user_id: u32, user_name: &str) -> Comment {
         let created_time = Utc.with_ymd_and_hms(2024, 1, 1, 12, 0, 0).unwrap();
         Comment {
-            id,
+            id: CommentId::new(id),
             content: Some(content.to_string()),
             change_log: vec![],
             created_user: create_mock_user(user_id, user_name),
