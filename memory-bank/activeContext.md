@@ -13,8 +13,11 @@
 -   **Implemented Pull Request Attachment Download functionality (library, CLI, MCP)**.
 -   **Refactored pull request number handling to use a newtype `PrNumber(u64)` for improved type safety across the codebase.**
 -   **Implemented `download_issue_attachment_raw` MCP tool.**
+-   **Reorganized `mcp-backlog-server/README.md` to group tools by module.**
 
 ## Recent Changes
+-   **Reorganized `mcp-backlog-server/README.md` Tool Listing**:
+    -   **`mcp-backlog-server/README.md`**: Updated the "Available Tools" section. Tools are now grouped under subheadings corresponding to the server's internal modules: `Document Tools`, `Git Tools`, `Issue Tools`, `Project Tools`, and `User Tools`. The tool name `list_pull_requests` was corrected to `get_pull_request_list` to match the server implementation.
 -   **Implemented `download_issue_attachment_raw` MCP Tool**:
     -   **`mcp-backlog-server/src/server.rs`**: Added the `download_issue_attachment_raw` tool method. This tool reuses the existing `DownloadAttachmentRequest` (from `crate::issue::request`) and the `issue::bridge::download_issue_attachment_file` bridge function. It returns a JSON object containing the filename, MIME type, and base64-encoded attachment data.
     -   **`mcp-backlog-server/README.md`**: Documented the new `download_issue_attachment_raw` tool, including its description, input parameters, and output format.

@@ -77,6 +77,7 @@
 -   **`PrNumber` Newtype Refactoring**: Refactored pull request number handling to use `PrNumber(u64)` newtype for improved type safety across `backlog-core`, `backlog-git`, `backlog-api-client` (library and CLI), and `mcp-backlog-server`.
 -   **`download_issue_attachment_raw` MCP Tool Implemented**: Added a new MCP tool to download issue attachments as raw (JSON with base64) data.
 -   **`get_user_list` MCP Tool Implemented**: Added a new MCP tool to retrieve a list of all users in the Backlog space.
+-   **`mcp-backlog-server/README.md` Reorganized**: Grouped the 'Available Tools' section by module for better clarity.
 
 ## What Works
 -   The Memory Bank system is established and updated.
@@ -209,3 +210,7 @@
     -   Enabled the `user` feature for the `backlog-api-client` dependency in `mcp-backlog-server/Cargo.toml`.
     -   Updated `mcp-backlog-server/README.md` to document the new tool.
     -   All changes verified with `cargo check`, `test`, `clippy`, and `fmt`.
+-   **`mcp-backlog-server/README.md` Reorganization**:
+    -   User requested to group the "Available Tools" section in `mcp-backlog-server/README.md` by the server's internal module structure (`document`, `git`, `issue`, `project`, `user`).
+    -   Updated the README to reflect this new grouped structure.
+    -   Corrected the tool name `list_pull_requests` to `get_pull_request_list` to match the actual implementation.

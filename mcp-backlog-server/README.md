@@ -5,14 +5,67 @@ This server allows MCP-compatible clients (such as AI assistants) to utilize Bac
 
 ## Available Tools
 
-The following tools are currently available:
+The following tools are grouped by their respective modules:
 
--   **`get_issue_details`**
-    -   Description: Retrieves details for a specific Backlog issue.
-    -   Input: `issue_key` (e.g., "PROJECT-123")
+### Document Tools
 -   **`get_document_details`**
     -   Description: Retrieves details for a specific Backlog document. This includes the title, body in Markdown format (`plain`), body in ProseMirror JSON format (`json`), and other metadata.
     -   Input: `document_id` (a 32-digit hexadecimal string)
+
+### Git Tools
+-   **`get_repository_list`**
+    -   Description: Get a list of Git repositories for a specified project.
+    -   Input: `project_id_or_key` (Project ID or project key)
+-   **`get_repository_details`**
+    -   Description: Get details for a specific Git repository.
+    -   Input:
+        -   `project_id_or_key` (Project ID or project key)
+        -   `repo_id_or_name` (Repository ID (as string) or repository name)
+-   **`get_pull_request_list`**
+    -   Description: Get a list of pull requests for a specified repository.
+    -   Input:
+        -   `project_id_or_key` (Project ID or project key)
+        -   `repo_id_or_name` (Repository ID (as string) or repository name)
+-   **`get_pull_request_details`**
+    -   Description: Get details for a specific pull request.
+    -   Input:
+        -   `project_id_or_key` (Project ID or project key)
+        -   `repo_id_or_name` (Repository ID (as string) or repository name)
+        -   `pr_number` (Pull request number)
+-   **`get_pull_request_attachment_list`**
+    -   Description: Get a list of attachments for a specific pull request.
+    -   Input:
+        -   `project_id_or_key` (Project ID or project key)
+        -   `repo_id_or_name` (Repository ID (as string) or repository name)
+        -   `pr_number` (Pull request number)
+-   **`download_pull_request_attachment_raw`**
+    -   Description: Download a pull request attachment as raw bytes. Returns a JSON object with filename, MIME type, and base64-encoded content.
+    -   Input:
+        -   `project_id_or_key` (Project ID or project key)
+        -   `repo_id_or_name` (Repository ID (as string) or repository name)
+        -   `pr_number` (Pull request number)
+        -   `attachment_id` (Numeric ID of the attachment)
+-   **`download_pull_request_attachment_image`**
+    -   Description: Download a pull request attachment image. Returns filename and image content as base64. Returns an error if the attachment is not an image.
+    -   Input:
+        -   `project_id_or_key` (Project ID or project key)
+        -   `repo_id_or_name` (Repository ID (as string) or repository name)
+        -   `pr_number` (Pull request number)
+        -   `attachment_id` (Numeric ID of the attachment)
+    -   Output: Image content via `rmcp::model::Content::image`.
+-   **`download_pull_request_attachment_text`**
+    -   Description: Download a pull request attachment if it is a valid UTF-8 text file. Returns the text content. Returns an error if the attachment is not a valid UTF-8 text file.
+    -   Input:
+        -   `project_id_or_key` (Project ID or project key)
+        -   `repo_id_or_name` (Repository ID (as string) or repository name)
+        -   `pr_number` (Pull request number)
+        -   `attachment_id` (Numeric ID of the attachment)
+    -   Output: Text content via `rmcp::model::Content::text`.
+
+### Issue Tools
+-   **`get_issue_details`**
+    -   Description: Retrieves details for a specific Backlog issue.
+    -   Input: `issue_key` (e.g., "PROJECT-123")
 -   **`get_version_milestone_list`**
     -   Description: Retrieves a list of versions (milestones) for a specified project.
     -   Input: `project_id_or_key` (Project ID or project key, e.g., "MYPROJECTKEY", "123")
@@ -55,57 +108,13 @@ The following tools are currently available:
         -   `issue_id_or_key` (string, required): The issue ID or issue key. Examples: "MYPROJECTKEY-123", "12345".
         -   `attachment_id` (number, required): The numeric ID of the attachment to download.
     -   Output: Text content via `rmcp::model::Content::text`.
--   **`get_repository_list`**
-    -   Description: Get a list of Git repositories for a specified project.
-    -   Input: `project_id_or_key` (Project ID or project key)
--   **`get_repository_details`**
-    -   Description: Get details for a specific Git repository.
-    -   Input:
-        -   `project_id_or_key` (Project ID or project key)
-        -   `repo_id_or_name` (Repository ID (as string) or repository name)
--   **`list_pull_requests`**
-    -   Description: Get a list of pull requests for a specified repository.
-    -   Input:
-        -   `project_id_or_key` (Project ID or project key)
-        -   `repo_id_or_name` (Repository ID (as string) or repository name)
--   **`get_pull_request_details`**
-    -   Description: Get details for a specific pull request.
-    -   Input:
-        -   `project_id_or_key` (Project ID or project key)
-        -   `repo_id_or_name` (Repository ID (as string) or repository name)
-        -   `pr_number` (Pull request number)
--   **`get_pull_request_attachment_list`**
-    -   Description: Get a list of attachments for a specific pull request.
-    -   Input:
-        -   `project_id_or_key` (Project ID or project key)
-        -   `repo_id_or_name` (Repository ID (as string) or repository name)
-        -   `pr_number` (Pull request number)
--   **`download_pull_request_attachment_raw`**
-    -   Description: Download a pull request attachment as raw bytes. Returns a JSON object with filename, MIME type, and base64-encoded content.
-    -   Input:
-        -   `project_id_or_key` (Project ID or project key)
-        -   `repo_id_or_name` (Repository ID (as string) or repository name)
-        -   `pr_number` (Pull request number)
-        -   `attachment_id` (Numeric ID of the attachment)
--   **`download_pull_request_attachment_image`**
-    -   Description: Download a pull request attachment image. Returns filename and image content as base64. Returns an error if the attachment is not an image.
-    -   Input:
-        -   `project_id_or_key` (Project ID or project key)
-        -   `repo_id_or_name` (Repository ID (as string) or repository name)
-        -   `pr_number` (Pull request number)
-        -   `attachment_id` (Numeric ID of the attachment)
-    -   Output: Image content via `rmcp::model::Content::image`.
--   **`download_pull_request_attachment_text`**
-    -   Description: Download a pull request attachment if it is a valid UTF-8 text file. Returns the text content. Returns an error if the attachment is not a valid UTF-8 text file.
-    -   Input:
-        -   `project_id_or_key` (Project ID or project key)
-        -   `repo_id_or_name` (Repository ID (as string) or repository name)
-        -   `pr_number` (Pull request number)
-        -   `attachment_id` (Numeric ID of the attachment)
-    -   Output: Text content via `rmcp::model::Content::text`.
+
+### Project Tools
 -   **`get_project_status_list`**
     -   Description: Get a list of statuses for a specified project.
     -   Input: `project_id_or_key` (Project ID or project key)
+
+### User Tools
 -   **`get_user_list`**
     -   Description: Get a list of users in the space.
     -   Input: (No parameters)
@@ -161,10 +170,7 @@ The server will listen for MCP client requests on standard input/output.
 ```
   "mcpServers": {
     "backlog_mcp_server": {
-      "autoApprove": [
-        "get_document_details",
-        "get_issue_details"
-      ],
+      "autoApprove": [],
       "disabled": false,
       "timeout": 60,
       "command": "/path/to/mcp-backlog-server",
