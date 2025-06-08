@@ -86,6 +86,14 @@
     -   `get_issue_type_list` method implemented in `backlog-project::ProjectApi`.
     -   Unit tests added for `get_issue_type_list`.
     -   `IssueType` exported from `backlog-project` and re-exported by `backlog-api-client`.
+-   **Updated `backlog-document` Models and Schemars Integration**:
+    -   `DocumentDetail` in `backlog-document/src/models.rs` updated with `attachments` field and new `DocumentAttachment` struct defined.
+    -   `JsonSchema` derives added to `Document`, `DocumentDetail`, `DocumentAttachment`, and `DocumentTag`.
+    -   `backlog-document/Cargo.toml` updated with `schemars` dependency and feature.
+    -   `backlog-core/src/document_id.rs` updated to derive `JsonSchema` for `DocumentId`.
+    -   `backlog-api-client/Cargo.toml` updated with a refined `schemars` feature to correctly propagate to sub-crates.
+    -   `mcp-backlog-server/Cargo.toml` updated to enable `backlog-api-client/schemars` feature.
+    -   All changes verified with `cargo check`, `test`, `clippy`, and `fmt`.
 
 ## What Works
 -   The Memory Bank system is established and updated.
@@ -97,17 +105,17 @@
     -   Git repository listing and details.
     -   Pull request listing, details, **attachment listing**, and **attachment download** (now returns `DownloadedFile`).
     -   Issue listing, details, updates, comment listing, **attachment listing**, and **attachment file download** (now returns `DownloadedFile`). (Issue status now uses a complete model from `backlog-project`).
-    -   Document listing, details, and **attachment download** (now returns `DownloadedFile`).
+    -   Document listing, details, and **attachment download** (now returns `DownloadedFile`). **Document detail model now includes attachments and supports `JsonSchema`**.
     -   Project listing, details, **project status listing**, and **project issue type listing**.
     -   Space details.
     -   User details.
 -   The `blg` CLI tool provides commands for various operations, including **downloading issue attachments** and **pull request attachments** (adapted to use `DownloadedFile`).
--   The `mcp-backlog-server` provides a suite of MCP tools, including **project status listing**, **issue attachment listing**, **issue attachment image/text/raw download**, **pull request attachment download (raw JSON, image, text)**, **user list retrieval**, and **document attachment image download**. Error reporting is informative. All download tools now correctly use `DownloadedFile` and the updated `ensure_image_type`.
+-   The `mcp-backlog-server` provides a suite of MCP tools, including **project status listing**, **issue attachment listing**, **issue attachment image/text/raw download**, **pull request attachment download (raw JSON, image, text)**, **user list retrieval**, and **document attachment image download**. Error reporting is informative. All download tools now correctly use `DownloadedFile` and the updated `ensure_image_type`. **The `get_document_details` tool will now reflect the updated `DocumentDetail` schema.**
 -   The codebase is free of Clippy warnings and consistently formatted. All tests pass.
 -   Test utilities like `setup_client` are now shared from the `client` crate.
 
 ## What's Left to Build (for this task)
--   "Get Issue Type List" feature implementation is complete.
+-   The current task of updating document models and schemars integration is complete.
 -   Potential next steps, if requested:
     -   Integrate `get_issue_type_list` into the `blg` CLI tool.
     -   Implement an MCP tool for `get_issue_type_list`.
@@ -248,118 +256,13 @@
     -   Implemented `get_issue_type_list` method in `ProjectApi` with unit tests.
     -   Re-exported `IssueType` from `backlog-api-client` facade.
     -   All changes verified.
-<environment_details>
-# VSCode Visible Files
-mcp-backlog-server/src/server.rs
-mcp-backlog-server/src/server.rs
-mcp-backlog-server/src/util.rs
-mcp-backlog-server/src/util.rs
-memory-bank/activeContext.md
-
-# VSCode Open Tabs
-backlog-core/src/project_id_or_key.rs
-backlog-core/src/issue_id_or_key.rs
-backlog-core/src/issue_key.rs
-Cargo.toml
-../../../.cargo/git/checkouts/rust-sdk-773cd6d57c4837f3/22134eb/crates/rmcp/src/model.rs
-../../../.cargo/git/checkouts/rust-sdk-773cd6d57c4837f3/22134eb/crates/rmcp/src/model/content.rs
-client/Cargo.toml
-backlog-user/src/api/mod.rs
-backlog-core/src/user.rs
-mcp-backlog-server/src/lib.rs
-mcp-backlog-server/Cargo.toml
-mcp-backlog-server/src/user/bridge.rs
-mcp-backlog-server/src/user/mod.rs
-mcp-backlog-server/src/user/request.rs
-client/src/test_utils.rs
-backlog-issue/src/models/issue.rs
-backlog-issue/src/models/priority.rs
-backlog-issue/src/models/resolution.rs
-backlog-issue/src/requests/mod.rs
-backlog-issue/src/requests/add_issue.rs
-backlog-issue/src/requests/update_issue.rs
-backlog-issue/src/requests/get_issue_list.rs
-backlog-issue/src/requests/get_comment_list.rs
-backlog-document/src/models.rs
-mcp-backlog-server/src/main.rs
-README.md
-backlog-api-client/README.md
-mcp-backlog-server/src/document/mod.rs
-mcp-backlog-server/src/issue/mod.rs
-mcp-backlog-server/src/issue/request.rs
-mcp-backlog-server/src/project/request.rs
-memory-bank/techContext.md
-../../../.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/convert/mod.rs
-mcp-backlog-server/src/project/mod.rs
-backlog-issue/src/models/mod.rs
-backlog-issue/src/lib.rs
-backlog-issue/Cargo.toml
-mcp-backlog-server/src/project/bridge.rs
-backlog-api-core/src/lib.rs
-mcp-backlog-server/src/git/request.rs
-backlog-api-core/Cargo.toml
-API.md
-backlog-api-core/src/error.rs
-mcp-backlog-server/src/git/mod.rs
-.gitignore
-backlog-git/src/lib.rs
-backlog-git/Cargo.toml
-backlog-project/src/models/issue_type.rs
-backlog-project/src/models/milestone.rs
-backlog-project/src/models/category.rs
-backlog-project/src/models/mod.rs
-backlog-project/src/api/mod.rs
-backlog-project/src/lib.rs
-backlog-api-client/src/lib.rs
-memory-bank/progress.md
-memory-bank/systemPatterns.md
-backlog-space/Cargo.toml
-backlog-user/Cargo.toml
-backlog-api-client/src/client.rs
-backlog-project/src/models/status.rs
-backlog-project/Cargo.toml
-backlog-issue/src/models/comment.rs
-backlog-project/src/models/activity/content.rs
-backlog-git/src/models.rs
-backlog-issue/src/responses/mod.rs
-backlog-document/Cargo.toml
-backlog-core/src/identifier.rs
-backlog-core/src/lib.rs
-mcp-backlog-server/src/document/request.rs
-client/src/client.rs
-mcp-backlog-server/src/util.rs
-backlog-api-client/src/bin/blg.rs
-client/src/lib.rs
-backlog-issue/src/api/mod.rs
-memory-bank/activeContext.md
-mcp-backlog-server/README.md
-mcp-backlog-server/src/server.rs
-mcp-backlog-server/src/attachment.rs
-backlog-document/src/api.rs
-backlog-document/src/requests.rs
-backlog-git/src/api.rs
-mcp-backlog-server/src/document/bridge.rs
-mcp-backlog-server/src/git/bridge.rs
-mcp-backlog-server/src/issue/bridge.rs
-mcp-backlog-server/src/error.rs
-backlog-core/Cargo.toml
-backlog-core/src/role.rs
-backlog-core/src/language.rs
-backlog-issue/src/models/attachment.rs
-backlog-api-client/Cargo.toml
-memory-bank/productContext.md
-memory-bank/projectbrief.md
-backlog-core/src/repository_id_or_name.rs
-backlog-core/src/error.rs
-backlog-core/src/repository_name.rs
-../../../Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json
-
-# Current Time
-6/8/2025, 9:47:47 PM (Asia/Tokyo, UTC+9:00)
-
-# Context Window Usage
-748,177 / 1,048.576K tokens used (71%)
-
-# Current Mode
-ACT MODE
-</environment_details>
+-   **Updated `backlog-document` Models and Schemars Integration**:
+    -   Based on a new API response for document details, `DocumentDetail` in `backlog-document/src/models.rs` was updated to include an `attachments` field (a `Vec<DocumentAttachment>`).
+    -   A new `DocumentAttachment` struct was defined.
+    -   `JsonSchema` derives were added to `Document`, `DocumentDetail`, `DocumentAttachment`, and `DocumentTag` in `backlog-document/src/models.rs`, conditional on a new `schemars` feature.
+    -   The `status_id` field in `DocumentDetail` was confirmed to remain `i32`.
+    -   `backlog-document/Cargo.toml` was updated to include `schemars` as an optional dependency and define the `schemars` feature (propagating to `backlog-core/schemars`).
+    -   `backlog-core/src/document_id.rs` was updated to ensure `DocumentId` derives `JsonSchema` when the `backlog-core/schemars` feature is active.
+    -   `backlog-api-client/Cargo.toml` was updated to define a general `schemars` feature that correctly propagates to `backlog-document/schemars` (and other relevant sub-crates like `backlog-core`, `backlog-issue`, `backlog-project`, `backlog-git`).
+    -   `mcp-backlog-server/Cargo.toml` was updated to enable the `schemars` feature of its `backlog-api-client` dependency.
+    -   All changes were verified with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, `cargo clippy --all-features --all-targets`, and `cargo fmt --all`.

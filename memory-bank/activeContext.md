@@ -19,6 +19,19 @@
 -   Implemented `download_document_attachment_image` MCP tool.
 -   Refactored `client::Client::download_file_raw` to return `DownloadedFile` struct instead of a tuple, and updated all callers.
 -   Refactored `ensure_image_type` in `mcp-backlog-server` to return `Result<(), McpError>`.
+-   **Updated `backlog-document` Models and Schemars Integration**:
+    -   **`backlog-document/src/models.rs`**:
+        -   Added `attachments: Vec<DocumentAttachment>` to `DocumentDetail`.
+        -   Defined new `DocumentAttachment` struct.
+        -   Added `JsonSchema` derives to `Document`, `DocumentDetail`, `DocumentAttachment`, and `DocumentTag` (conditional on `schemars` feature).
+        -   Corrected `status_id` in `DocumentDetail` to remain `i32` as per user clarification (it's document's own status, not project status).
+    -   **`backlog-document/Cargo.toml`**: Added `schemars` optional dependency and a `schemars` feature: `schemars = ["dep:schemars", "backlog-core/schemars"]`.
+    -   **`backlog-core/src/document_id.rs`**: Added `#[cfg_attr(feature = "schemars", derive(JsonSchema))]` to `DocumentId` struct and the `use schemars::JsonSchema;` import.
+    -   **`backlog-api-client/Cargo.toml`**:
+        -   Defined a general `schemars` feature to propagate to sub-crates: `schemars = ["backlog-core/schemars", "backlog-issue/schemars", ..., "backlog-document/schemars", ...]`.
+        -   Corrected this feature list to remove propagation to `backlog-user` as it lacks a `schemars` feature.
+    -   **`mcp-backlog-server/Cargo.toml`**: Enabled the new `schemars` feature for the `backlog-api-client` dependency.
+    -   Verified all changes with `cargo check`, `cargo test`, `cargo clippy`, and `cargo fmt`.
 
 ## Recent Changes
 -   **Implemented "Get Issue Type List" API in `backlog-project`**:

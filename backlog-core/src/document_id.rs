@@ -4,10 +4,14 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{str::FromStr, sync::LazyLock};
 
+#[cfg(feature = "schemars")]
+use schemars::JsonSchema;
+
 static DOCUMENT_ID_REGEXP: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[0-9a-f]{32}$").unwrap());
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
 pub struct DocumentId(pub String);
 
 impl DocumentId {

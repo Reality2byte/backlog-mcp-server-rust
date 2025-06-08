@@ -1,12 +1,13 @@
 use backlog_core::{
     DocumentId, User,
-    identifier::{ProjectId, StatusId},
+    identifier::{DocumentAttachmentId, ProjectId, StatusId},
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct Document {
     pub id: DocumentId,
@@ -25,6 +26,7 @@ pub struct Document {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct DocumentDetail {
     pub id: DocumentId,
@@ -32,9 +34,11 @@ pub struct DocumentDetail {
     pub title: String,
     pub json: JsonValue, // assuming ProseMirror JSON
     pub plain: String,
-    pub status_id: i32, // Assuming status_id is an integer, adjust if it's a different type
+    pub status_id: i32, // Document's own status, not project status
     #[serde(skip_serializing_if = "Option::is_none")]
     pub emoji: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub attachments: Vec<DocumentAttachment>,
     pub created_user: User,
     pub created: DateTime<Utc>,
     pub updated_user: User,
@@ -44,6 +48,18 @@ pub struct DocumentDetail {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[serde(rename_all = "camelCase")]
+pub struct DocumentAttachment {
+    pub id: DocumentAttachmentId,
+    pub name: String,
+    pub size: u64,
+    pub created_user: User,
+    pub created: DateTime<Utc>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct DocumentTag {
     pub id: u32, // Assuming ID is a numeric type
     pub name: String,

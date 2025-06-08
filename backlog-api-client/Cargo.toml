@@ -12,8 +12,17 @@ space = ["backlog-space"]
 user = ["backlog-user"]
 document = ["backlog-document"] # Added document feature
 git = ["backlog-git"] # Added git feature
+schemars = [ # Added schemars feature to propagate to sub-crates
+    "backlog-core/schemars",
+    "backlog-issue/schemars",
+    "backlog-project/schemars",
+    # "backlog-space/schemars", # Add if/when space has schemars
+    # "backlog-user/schemars", # Removed as backlog-user doesn't have this feature
+    "backlog-document/schemars",
+    "backlog-git/schemars",
+]
 cli = ["clap"] # Added cli feature for clap dependency
-all_writable = ["backlog-issue/writable", "backlog-project/writable", "backlog-space/writable", "backlog-user/writable"] 
+all_writable = ["backlog-issue/writable", "backlog-project/writable", "backlog-space/writable", "backlog-user/writable"]
 issue_writable = ["backlog-issue/writable"]
 project_writable = ["backlog-project/writable"]
 space_writable = ["backlog-space/writable"]
