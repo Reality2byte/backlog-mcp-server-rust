@@ -30,7 +30,7 @@ pub use backlog_issue::{
     Attachment, Issue, IssueApi,
     models::comment::{ChangeLogEntry, Comment, Notification, Star},
     requests::{
-        GetIssueListParamsBuilder, UpdateIssueParamsBuilder,
+        GetIssueListParams, GetIssueListParamsBuilder, UpdateIssueParams, UpdateIssueParamsBuilder,
         get_comment_list::{CommentOrder, GetCommentListParams, GetCommentListParamsBuilder},
     },
 };

@@ -7,9 +7,9 @@ use crate::error::{Error as McpError, Result};
 use crate::util::{MatchResult, find_by_name_from_array};
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
-    Attachment, AttachmentId, Comment, DownloadedFile, GetCommentListParamsBuilder,
+    Attachment, AttachmentId, Comment, DownloadedFile, GetCommentListParams,
     GetIssueListParamsBuilder, Issue, IssueIdOrKey, IssueKey, Milestone, ProjectIdOrKey,
-    UpdateIssueParamsBuilder,
+    UpdateIssueParams,
 };
 use std::str::FromStr;
 use std::sync::Arc;
@@ -95,7 +95,7 @@ pub(crate) async fn update_issue_impl(
     }
 
     let issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
-    let update_params = UpdateIssueParamsBuilder::from(req).build()?;
+    let update_params = UpdateIssueParams::try_from(req)?;
 
     let client_guard = client.lock().await;
     let updated_issue = client_guard
@@ -110,14 +110,13 @@ pub(crate) async fn get_issue_comments_impl(
     req: GetIssueCommentsRequest,
 ) -> Result<Vec<Comment>> {
     let parsed_issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
-    let comment_params = GetCommentListParamsBuilder::try_from(req)?.build()?;
+    let comment_params = GetCommentListParams::try_from(req)?;
 
     let client_guard = client.lock().await;
     let comments = client_guard
         .issue()
         .get_comment_list(parsed_issue_id_or_key, Some(comment_params))
         .await?;
-
     Ok(comments)
 }
 
@@ -138,7 +137,6 @@ pub(crate) async fn get_attachment_list_impl(
         .issue()
         .get_attachment_list(parsed_issue_id_or_key.clone()) // Explicitly clone
         .await?;
-
     Ok(attachments)
 }
 
@@ -150,12 +148,9 @@ pub(crate) async fn download_issue_attachment_file(
     let parsed_attachment_id = AttachmentId::new(req.attachment_id);
 
     let client_guard = client.lock().await;
-
-    // The get_attachment_file method now returns (filename, content_type, bytes)
-    // due to changes in client.download_file_raw
-    client_guard
+    let attachment = client_guard
         .issue()
         .get_attachment_file(parsed_issue_id_or_key, parsed_attachment_id)
-        .await
-        .map_err(McpError::from)
+        .await?;
+    Ok(attachment)
 }

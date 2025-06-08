@@ -1,5 +1,6 @@
 use backlog_api_client::{
-    CommentOrder, CoreError, GetCommentListParamsBuilder, UpdateIssueParamsBuilder,
+    ApiError, CommentOrder, GetCommentListParams, GetCommentListParamsBuilder, UpdateIssueParams,
+    UpdateIssueParamsBuilder,
 };
 use rmcp::schemars;
 use std::str::FromStr;
@@ -46,8 +47,9 @@ pub(crate) struct UpdateIssueRequest {
     pub description: Option<String>,
 }
 
-impl From<UpdateIssueRequest> for UpdateIssueParamsBuilder {
-    fn from(req: UpdateIssueRequest) -> Self {
+impl TryFrom<UpdateIssueRequest> for UpdateIssueParams {
+    type Error = ApiError;
+    fn try_from(req: UpdateIssueRequest) -> Result<Self, Self::Error> {
         let mut builder = UpdateIssueParamsBuilder::default();
         if let Some(summary) = req.summary {
             builder.summary(summary);
@@ -55,7 +57,7 @@ impl From<UpdateIssueRequest> for UpdateIssueParamsBuilder {
         if let Some(description) = req.description {
             builder.description(description);
         }
-        builder
+        builder.build()
     }
 }
 
@@ -89,8 +91,8 @@ pub(crate) struct GetIssueCommentsRequest {
     pub order: Option<String>,
 }
 
-impl TryFrom<GetIssueCommentsRequest> for GetCommentListParamsBuilder {
-    type Error = CoreError;
+impl TryFrom<GetIssueCommentsRequest> for GetCommentListParams {
+    type Error = ApiError;
     fn try_from(req: GetIssueCommentsRequest) -> Result<Self, Self::Error> {
         let mut params_builder = GetCommentListParamsBuilder::default();
 
@@ -111,6 +113,6 @@ impl TryFrom<GetIssueCommentsRequest> for GetCommentListParamsBuilder {
         if let Some(order) = parsed_order {
             params_builder.order(order);
         }
-        Ok(params_builder)
+        params_builder.build()
     }
 }

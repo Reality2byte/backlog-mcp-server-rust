@@ -140,7 +140,9 @@ impl Server {
     async fn get_document_tree(&self, #[tool(aggr)] req: GetDocumentTreeRequest) -> McpResult {
         let document_tree =
             document::bridge::get_document_tree_tool(self.client.clone(), req).await?;
-        Ok(CallToolResult::success(vec![Content::json(document_tree.active_tree)?]))
+        Ok(CallToolResult::success(vec![Content::json(
+            document_tree.active_tree,
+        )?]))
     }
 
     #[tool(description = "Get a list of versions (milestones) for a specified project.")]
