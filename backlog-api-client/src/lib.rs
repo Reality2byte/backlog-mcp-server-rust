@@ -21,7 +21,7 @@ pub use backlog_core::{
 // Document module (from backlog_document)
 #[cfg(feature = "document")]
 pub use backlog_document::{
-    DocumentApi, DocumentDetail, DocumentTreeResponse, GetDocumentTreeParams,
+    DocumentApi, DocumentDetail, DocumentTreeResponse, DocumentTreeRootNode, GetDocumentTreeParams,
 };
 
 // Issue module (from backlog_issue)

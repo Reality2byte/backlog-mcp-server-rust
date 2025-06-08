@@ -18,7 +18,7 @@ The following tools are grouped by their respective modules:
         -   `attachment_id` (number, required): The numeric ID of the attachment to download (obtained from Markdown links in document content).
     -   Output: Image content via `rmcp::model::Content::image`.
 -   **`get_document_tree`**
-    -   Description: Get the document tree (active and trash) for a specified project. The tree structure includes document ID, name, update timestamp, emoji, and children nodes.
+    -   Description: Get the document tree for a specified project. The tree structure includes document ID, name, update timestamp, emoji, and children nodes.
     -   Input: `project_id_or_key` (string, required): The project ID or project key. Examples: "MYPROJECTKEY", "123".
     -   Output: A JSON object representing the `DocumentTreeResponse`, containing `projectId`, `activeTree`, and `trashTree`. Each tree is a recursive `DocumentTreeNode` structure.
 

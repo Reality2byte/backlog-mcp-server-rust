@@ -1,4 +1,4 @@
-use crate::models::DocumentTreeNode;
+use crate::models::DocumentTreeRootNode; // DocumentTreeNode is no longer directly used here
 use backlog_core::identifier::ProjectId;
 use serde::{Deserialize, Serialize};
 
@@ -10,6 +10,6 @@ use schemars::JsonSchema;
 #[serde(rename_all = "camelCase")]
 pub struct DocumentTreeResponse {
     pub project_id: ProjectId,
-    pub active_tree: DocumentTreeNode,
-    pub trash_tree: DocumentTreeNode,
+    pub active_tree: DocumentTreeRootNode,
+    pub trash_tree: DocumentTreeRootNode,
 }
