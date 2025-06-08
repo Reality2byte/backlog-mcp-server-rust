@@ -1,5 +1,3 @@
-use backlog_api_client::DownloadedFile;
-use rmcp::Error as McpError;
 use std::cmp::Ordering;
 
 pub(crate) enum MatchResult<T> {
@@ -52,34 +50,5 @@ pub(crate) fn find_by_name_from_array<T: Clone>(
                 .map(|(name, _, _)| name.clone())
                 .collect(),
         )
-    }
-}
-
-pub fn ensure_image_type(
-    content_type: &str,
-    filename_for_error_message: &str,
-) -> Result<(), McpError> {
-    if !content_type.starts_with("image/") {
-        return Err(McpError::invalid_request(
-            format!(
-                "Attachment '{}' is not an image. Reported content type: {}",
-                filename_for_error_message, content_type
-            ),
-            None,
-        ));
-    }
-    Ok(())
-}
-
-pub fn ensure_text_type(downloaded_file: &DownloadedFile) -> Result<String, McpError> {
-    match String::from_utf8(downloaded_file.bytes.to_vec()) {
-        Ok(text_content) => Ok(text_content),
-        Err(_) => Err(McpError::invalid_request(
-            format!(
-                "Attachment '{}' is not a valid UTF-8 text file.",
-                downloaded_file.filename
-            ),
-            None,
-        )),
     }
 }

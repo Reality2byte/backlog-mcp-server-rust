@@ -1,10 +1,10 @@
+use crate::SerializableRawAttachment;
 use crate::issue::request::{GetIssueCommentsRequest, UpdateIssueRequest};
-use crate::util::{ensure_image_type, ensure_text_type};
 use crate::{
     document::{
         self,
         request::{DownloadDocumentAttachmentRequest, GetDocumentDetailsRequest},
-    }, // Added DownloadDocumentAttachmentRequest
+    },
     git::{
         self,
         request::{
@@ -21,18 +21,14 @@ use crate::{
         },
     },
     project::{self, request::GetProjectStatusListRequest},
-    user::{self, request::GetUserListRequest}, // Added user module and GetUserListRequest
+    user::{self, request::GetUserListRequest},
 };
-use backlog_api_client::DownloadedFile;
 use backlog_api_client::client::BacklogApiClient;
-// Keep this
-use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64_STANDARD};
 use rmcp::{
     Error as McpError,
     model::{CallToolResult, Content, ServerCapabilities, ServerInfo},
     tool,
 };
-use serde::Serialize;
 use std::env;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -43,29 +39,6 @@ pub struct Server {
 }
 
 type McpResult = Result<CallToolResult, McpError>;
-
-#[derive(Serialize)]
-struct SerializableRawAttachment {
-    filename: String,
-    mime_type: String,
-    data_base64: String,
-}
-
-impl From<DownloadedFile> for SerializableRawAttachment {
-    fn from(file: DownloadedFile) -> Self {
-        SerializableRawAttachment {
-            filename: file.filename,
-            mime_type: file.content_type,
-            data_base64: BASE64_STANDARD.encode(file.bytes),
-        }
-    }
-}
-
-impl From<SerializableRawAttachment> for Content {
-    fn from(file: SerializableRawAttachment) -> Self {
-        Content::image(file.data_base64, file.mime_type)
-    }
-}
 
 #[tool(tool_box)]
 impl Server {
@@ -157,9 +130,8 @@ impl Server {
     ) -> McpResult {
         let file =
             document::bridge::download_document_attachment_bridge(self.client.clone(), req).await?;
-        ensure_image_type(&file.content_type, &file.filename)?;
-        let response_data = SerializableRawAttachment::from(file);
-        Ok(CallToolResult::success(vec![response_data.into()]))
+        let response_data = SerializableRawAttachment::image(file)?;
+        Ok(CallToolResult::success(vec![response_data.try_into()?]))
     }
 
     #[tool(description = "Get a list of versions (milestones) for a specified project.")]
@@ -223,8 +195,8 @@ impl Server {
         #[tool(aggr)] req: DownloadAttachmentRequest,
     ) -> McpResult {
         let file = issue::bridge::download_issue_attachment_file(self.client.clone(), req).await?;
-        let response_data = SerializableRawAttachment::from(file);
-        Ok(CallToolResult::success(vec![Content::json(response_data)?]))
+        let response_data = SerializableRawAttachment::raw(file);
+        Ok(CallToolResult::success(vec![response_data.try_into()?]))
     }
 
     #[tool(description = "Download an issue attachment image. Returns filename and image content.")]
@@ -233,9 +205,8 @@ impl Server {
         #[tool(aggr)] req: DownloadAttachmentRequest,
     ) -> McpResult {
         let file = issue::bridge::download_issue_attachment_file(self.client.clone(), req).await?;
-        ensure_image_type(&file.content_type, &file.filename)?;
-        let response_data = SerializableRawAttachment::from(file);
-        Ok(CallToolResult::success(vec![response_data.into()]))
+        let response_data = SerializableRawAttachment::image(file)?;
+        Ok(CallToolResult::success(vec![response_data.try_into()?]))
     }
 
     #[tool(
@@ -246,8 +217,8 @@ impl Server {
         #[tool(aggr)] req: DownloadAttachmentRequest,
     ) -> McpResult {
         let file = issue::bridge::download_issue_attachment_file(self.client.clone(), req).await?;
-        let text = ensure_text_type(&file)?;
-        Ok(CallToolResult::success(vec![Content::text(text)]))
+        let response_data = SerializableRawAttachment::text(file)?;
+        Ok(CallToolResult::success(vec![response_data.try_into()?]))
     }
 
     #[tool(description = "Get a list of statuses for a specified project.")]
@@ -278,8 +249,8 @@ impl Server {
         #[tool(aggr)] req: DownloadPullRequestAttachmentRequest,
     ) -> McpResult {
         let file = git::bridge::download_pr_attachment_bridge(self.client.clone(), req).await?;
-        let response_data = SerializableRawAttachment::from(file);
-        Ok(CallToolResult::success(vec![Content::json(response_data)?]))
+        let response_data = SerializableRawAttachment::raw(file);
+        Ok(CallToolResult::success(vec![response_data.try_into()?]))
     }
 
     #[tool(
@@ -290,9 +261,8 @@ impl Server {
         #[tool(aggr)] req: DownloadPullRequestAttachmentRequest,
     ) -> McpResult {
         let file = git::bridge::download_pr_attachment_bridge(self.client.clone(), req).await?;
-        ensure_image_type(&file.content_type, &file.filename)?;
-        let response_data = SerializableRawAttachment::from(file);
-        Ok(CallToolResult::success(vec![response_data.into()]))
+        let response_data = SerializableRawAttachment::image(file)?;
+        Ok(CallToolResult::success(vec![response_data.try_into()?]))
     }
 
     #[tool(
@@ -303,8 +273,8 @@ impl Server {
         #[tool(aggr)] req: DownloadPullRequestAttachmentRequest,
     ) -> McpResult {
         let file = git::bridge::download_pr_attachment_bridge(self.client.clone(), req).await?;
-        let text = ensure_text_type(&file)?;
-        Ok(CallToolResult::success(vec![Content::text(text)]))
+        let response_data = SerializableRawAttachment::text(file)?;
+        Ok(CallToolResult::success(vec![response_data.try_into()?]))
     }
 }
 
