@@ -1,5 +1,5 @@
 use crate::issue::request::{GetIssueCommentsRequest, UpdateIssueRequest};
-use crate::util::ensure_image_type;
+use crate::util::{ensure_image_type, ensure_text_type};
 use crate::{
     document::{
         self,
@@ -23,7 +23,9 @@ use crate::{
     project::{self, request::GetProjectStatusListRequest},
     user::{self, request::GetUserListRequest}, // Added user module and GetUserListRequest
 };
-use backlog_api_client::client::BacklogApiClient; // Keep this
+use backlog_api_client::DownloadedFile;
+use backlog_api_client::client::BacklogApiClient;
+// Keep this
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64_STANDARD};
 use rmcp::{
     Error as McpError,
@@ -47,6 +49,22 @@ struct SerializableRawAttachment {
     filename: String,
     mime_type: String,
     data_base64: String,
+}
+
+impl From<DownloadedFile> for SerializableRawAttachment {
+    fn from(file: DownloadedFile) -> Self {
+        SerializableRawAttachment {
+            filename: file.filename,
+            mime_type: file.content_type,
+            data_base64: BASE64_STANDARD.encode(file.bytes),
+        }
+    }
+}
+
+impl From<SerializableRawAttachment> for Content {
+    fn from(file: SerializableRawAttachment) -> Self {
+        Content::image(file.data_base64, file.mime_type)
+    }
 }
 
 #[tool(tool_box)]
@@ -137,16 +155,11 @@ impl Server {
         &self,
         #[tool(aggr)] req: DownloadDocumentAttachmentRequest,
     ) -> McpResult {
-        let downloaded_file =
+        let file =
             document::bridge::download_document_attachment_bridge(self.client.clone(), req).await?;
-
-        ensure_image_type(&downloaded_file.content_type, &downloaded_file.filename)?;
-
-        let base64_encoded_data = BASE64_STANDARD.encode(&downloaded_file.bytes);
-        Ok(CallToolResult::success(vec![Content::image(
-            base64_encoded_data,
-            downloaded_file.content_type, // Use original content_type
-        )]))
+        ensure_image_type(&file.content_type, &file.filename)?;
+        let response_data = SerializableRawAttachment::from(file);
+        Ok(CallToolResult::success(vec![response_data.into()]))
     }
 
     #[tool(description = "Get a list of versions (milestones) for a specified project.")]
@@ -209,17 +222,8 @@ impl Server {
         &self,
         #[tool(aggr)] req: DownloadAttachmentRequest,
     ) -> McpResult {
-        let downloaded_file =
-            issue::bridge::download_issue_attachment_file(self.client.clone(), req).await?;
-
-        let data_base64 = BASE64_STANDARD.encode(&downloaded_file.bytes);
-
-        let response_data = SerializableRawAttachment {
-            filename: downloaded_file.filename,
-            mime_type: downloaded_file.content_type,
-            data_base64,
-        };
-
+        let file = issue::bridge::download_issue_attachment_file(self.client.clone(), req).await?;
+        let response_data = SerializableRawAttachment::from(file);
         Ok(CallToolResult::success(vec![Content::json(response_data)?]))
     }
 
@@ -228,15 +232,10 @@ impl Server {
         &self,
         #[tool(aggr)] req: DownloadAttachmentRequest,
     ) -> McpResult {
-        let downloaded_file =
-            issue::bridge::download_issue_attachment_file(self.client.clone(), req).await?;
-        ensure_image_type(&downloaded_file.content_type, &downloaded_file.filename)?;
-
-        let base64_encoded_data = BASE64_STANDARD.encode(&downloaded_file.bytes);
-        Ok(CallToolResult::success(vec![Content::image(
-            base64_encoded_data,
-            downloaded_file.content_type, // Use original content_type
-        )]))
+        let file = issue::bridge::download_issue_attachment_file(self.client.clone(), req).await?;
+        ensure_image_type(&file.content_type, &file.filename)?;
+        let response_data = SerializableRawAttachment::from(file);
+        Ok(CallToolResult::success(vec![response_data.into()]))
     }
 
     #[tool(
@@ -246,19 +245,9 @@ impl Server {
         &self,
         #[tool(aggr)] req: DownloadAttachmentRequest,
     ) -> McpResult {
-        let downloaded_file =
-            issue::bridge::download_issue_attachment_file(self.client.clone(), req).await?;
-
-        match String::from_utf8(downloaded_file.bytes.to_vec()) {
-            Ok(text_content) => Ok(CallToolResult::success(vec![Content::text(text_content)])),
-            Err(_) => Err(McpError::invalid_request(
-                format!(
-                    "Attachment '{}' is not a valid UTF-8 text file.",
-                    downloaded_file.filename
-                ),
-                None,
-            )),
-        }
+        let file = issue::bridge::download_issue_attachment_file(self.client.clone(), req).await?;
+        let text = ensure_text_type(&file)?;
+        Ok(CallToolResult::success(vec![Content::text(text)]))
     }
 
     #[tool(description = "Get a list of statuses for a specified project.")]
@@ -288,17 +277,8 @@ impl Server {
         &self,
         #[tool(aggr)] req: DownloadPullRequestAttachmentRequest,
     ) -> McpResult {
-        let downloaded_file =
-            git::bridge::download_pr_attachment_bridge(self.client.clone(), req).await?;
-
-        let data_base64 = BASE64_STANDARD.encode(&downloaded_file.bytes);
-
-        let response_data = SerializableRawAttachment {
-            filename: downloaded_file.filename,
-            mime_type: downloaded_file.content_type,
-            data_base64,
-        };
-
+        let file = git::bridge::download_pr_attachment_bridge(self.client.clone(), req).await?;
+        let response_data = SerializableRawAttachment::from(file);
         Ok(CallToolResult::success(vec![Content::json(response_data)?]))
     }
 
@@ -309,15 +289,10 @@ impl Server {
         &self,
         #[tool(aggr)] req: DownloadPullRequestAttachmentRequest,
     ) -> McpResult {
-        let downloaded_file =
-            git::bridge::download_pr_attachment_bridge(self.client.clone(), req).await?;
-        ensure_image_type(&downloaded_file.content_type, &downloaded_file.filename)?;
-
-        let base64_encoded_data = BASE64_STANDARD.encode(&downloaded_file.bytes);
-        Ok(CallToolResult::success(vec![Content::image(
-            base64_encoded_data,
-            downloaded_file.content_type, // Use original content_type
-        )]))
+        let file = git::bridge::download_pr_attachment_bridge(self.client.clone(), req).await?;
+        ensure_image_type(&file.content_type, &file.filename)?;
+        let response_data = SerializableRawAttachment::from(file);
+        Ok(CallToolResult::success(vec![response_data.into()]))
     }
 
     #[tool(
@@ -327,19 +302,9 @@ impl Server {
         &self,
         #[tool(aggr)] req: DownloadPullRequestAttachmentRequest,
     ) -> McpResult {
-        let downloaded_file =
-            git::bridge::download_pr_attachment_bridge(self.client.clone(), req).await?;
-
-        match String::from_utf8(downloaded_file.bytes.to_vec()) {
-            Ok(text_content) => Ok(CallToolResult::success(vec![Content::text(text_content)])),
-            Err(_) => Err(McpError::invalid_request(
-                format!(
-                    "Attachment '{}' is not a valid UTF-8 text file.",
-                    downloaded_file.filename
-                ),
-                None,
-            )),
-        }
+        let file = git::bridge::download_pr_attachment_bridge(self.client.clone(), req).await?;
+        let text = ensure_text_type(&file)?;
+        Ok(CallToolResult::success(vec![Content::text(text)]))
     }
 }
 

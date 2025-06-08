@@ -1,8 +1,8 @@
-use backlog_api_core::{BacklogApiErrorResponse, Error as ApiError, Result, bytes}; // Added bytes
-use reqwest::header::{CONTENT_DISPOSITION, CONTENT_TYPE}; // Removed HeaderMap
+use backlog_api_core::{BacklogApiErrorResponse, Error as ApiError, Result, bytes};
+use reqwest::header::{CONTENT_DISPOSITION, CONTENT_TYPE};
 use url::Url;
 
-/// Represents a downloaded file's metadata and content.
+/// A type that represents a downloaded file's metadata and content.
 #[derive(Debug, Clone)]
 pub struct DownloadedFile {
     pub filename: String,
@@ -174,8 +174,6 @@ impl Client {
     }
 
     pub async fn download_file_raw(&self, path: &str) -> Result<DownloadedFile> {
-        // Changed return type
-        // Changed return type
         let request = self.prepare_request(reqwest::Method::GET, path, &())?;
         let response = self.client.execute(request).await?;
 

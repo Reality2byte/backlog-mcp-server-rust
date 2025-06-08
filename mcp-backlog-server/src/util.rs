@@ -1,3 +1,4 @@
+use backlog_api_client::DownloadedFile;
 use rmcp::Error as McpError;
 use std::cmp::Ordering;
 
@@ -58,7 +59,6 @@ pub fn ensure_image_type(
     content_type: &str,
     filename_for_error_message: &str,
 ) -> Result<(), McpError> {
-    // Changed return type to Result<(), McpError>
     if !content_type.starts_with("image/") {
         return Err(McpError::invalid_request(
             format!(
@@ -68,5 +68,18 @@ pub fn ensure_image_type(
             None,
         ));
     }
-    Ok(()) // Return Ok(()) on success
+    Ok(())
+}
+
+pub fn ensure_text_type(downloaded_file: &DownloadedFile) -> Result<String, McpError> {
+    match String::from_utf8(downloaded_file.bytes.to_vec()) {
+        Ok(text_content) => Ok(text_content),
+        Err(_) => Err(McpError::invalid_request(
+            format!(
+                "Attachment '{}' is not a valid UTF-8 text file.",
+                downloaded_file.filename
+            ),
+            None,
+        )),
+    }
 }
