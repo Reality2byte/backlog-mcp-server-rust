@@ -1,9 +1,9 @@
 use backlog_api_core::Result;
-use backlog_core::{Identifier, IssueIdOrKey, IssueKey, ProjectIdOrKey};
+use backlog_core::{Identifier, IssueIdOrKey, IssueKey};
 use client::{Client, DownloadedFile};
 
 use crate::{
-    models::{attachment::Attachment, comment::Comment, issue::Issue, issue::Milestone},
+    models::{attachment::Attachment, comment::Comment, issue::Issue},
     requests::{
         AddIssueParams, CountIssueParams, GetIssueListParams, UpdateIssueParams,
         get_comment_list::GetCommentListParams,
@@ -67,20 +67,6 @@ impl IssueApi {
             .await
     }
 
-    pub async fn get_version_milestone_list(
-        &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-    ) -> Result<GetVersionMilestoneListResponse> {
-        let project_id_or_key_val = project_id_or_key.into();
-        let project_id_or_key_str: String = project_id_or_key_val.to_string();
-        self.0
-            .get(&format!(
-                "/api/v2/projects/{}/versions",
-                project_id_or_key_str
-            ))
-            .await
-    }
-
     pub async fn get_comment_list(
         &self,
         issue_id_or_key: impl Into<IssueIdOrKey>,
@@ -123,13 +109,12 @@ type UpdateIssueResponse = Issue;
 type GetIssueListResponse = Vec<Issue>;
 type GetCommentListResponse = Vec<Comment>;
 type GetAttachmentListResponse = Vec<Attachment>;
-type GetVersionMilestoneListResponse = Vec<Milestone>;
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::{
-        models::{attachment::Attachment, comment::Comment, issue::Milestone},
+        models::{attachment::Attachment, comment::Comment},
         requests::{
             GetIssueListParamsBuilder,
             get_comment_list::{CommentOrder, GetCommentListParamsBuilder},
@@ -138,7 +123,7 @@ mod tests {
     use backlog_api_core::bytes::Bytes;
     use backlog_core::{
         IssueKey, User,
-        identifier::{AttachmentId, CommentId, IssueId, MilestoneId, ProjectId, UserId},
+        identifier::{AttachmentId, CommentId, IssueId, ProjectId, UserId},
     };
     use chrono::{TimeZone, Utc};
     use client::test_utils::setup_client;
@@ -282,76 +267,6 @@ mod tests {
 
         let params = GetIssueListParamsBuilder::default().build().unwrap();
         let result = issue_api.get_issue_list(params).await;
-        assert!(result.is_err());
-    }
-
-    #[tokio::test]
-    async fn test_get_version_milestone_list_success() {
-        let mock_server = MockServer::start().await;
-        let client = setup_client(&mock_server).await; // Now uses common setup_client
-        let issue_api = IssueApi::new(client);
-        let project_id_or_key_str = "TEST_PROJECT";
-        let project_id_or_key: ProjectIdOrKey = project_id_or_key_str.parse().unwrap();
-        let project_id_numeric = ProjectId::new(1);
-
-        let expected_versions: Vec<Milestone> = vec![
-            Milestone {
-                id: MilestoneId::new(1),
-                project_id: project_id_numeric,
-                name: "Version 1.0".to_string(),
-                description: Some("Initial release".to_string()),
-                start_date: Some(chrono::Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap()),
-                release_due_date: Some(chrono::Utc.with_ymd_and_hms(2023, 1, 31, 0, 0, 0).unwrap()),
-                archived: false,
-                display_order: Some(1),
-            },
-            Milestone {
-                id: MilestoneId::new(2),
-                project_id: project_id_numeric,
-                name: "Version 1.1".to_string(),
-                description: None,
-                start_date: None,
-                release_due_date: None,
-                archived: true,
-                display_order: Some(2),
-            },
-        ];
-
-        Mock::given(method("GET"))
-            .and(path(format!(
-                "/api/v2/projects/{}/versions",
-                project_id_or_key.clone()
-            )))
-            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_versions))
-            .mount(&mock_server)
-            .await;
-        let result = issue_api
-            .get_version_milestone_list(project_id_or_key.clone())
-            .await;
-        assert!(result.is_ok());
-        let versions = result.unwrap();
-        assert_eq!(versions.len(), 2);
-    }
-
-    #[tokio::test]
-    async fn test_get_version_milestone_list_error() {
-        let mock_server = MockServer::start().await;
-        let client = setup_client(&mock_server).await; // Now uses common setup_client
-        let issue_api = IssueApi::new(client);
-        let project_id_or_key_str = "TEST_PROJECT_ERROR";
-        let project_id_or_key: ProjectIdOrKey = project_id_or_key_str.parse().unwrap();
-
-        Mock::given(method("GET"))
-            .and(path(format!(
-                "/api/v2/projects/{}/versions",
-                project_id_or_key.clone()
-            )))
-            .respond_with(ResponseTemplate::new(500))
-            .mount(&mock_server)
-            .await;
-        let result = issue_api
-            .get_version_milestone_list(project_id_or_key.clone())
-            .await;
         assert!(result.is_err());
     }
 

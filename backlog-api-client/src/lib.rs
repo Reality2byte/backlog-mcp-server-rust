@@ -25,7 +25,7 @@ pub use backlog_document::{DocumentApi, DocumentDetail};
 // Issue module (from backlog_issue)
 #[cfg(feature = "issue")]
 pub use backlog_issue::{
-    Attachment, Issue, IssueApi, Milestone,
+    Attachment, Issue, IssueApi,
     models::comment::{ChangeLogEntry, Comment, Notification, Star},
     requests::{
         GetIssueListParamsBuilder, UpdateIssueParamsBuilder,
@@ -39,7 +39,7 @@ pub use backlog_git::{GitApi, PullRequest, PullRequestAttachment, Repository};
 
 // Project module (from backlog_project)
 #[cfg(feature = "project")]
-pub use backlog_project::{IssueType, Project, ProjectApi, Status}; // Added IssueType
+pub use backlog_project::{IssueType, Milestone, Project, ProjectApi, Status};
 
 // Space module (from backlog_space)
 #[cfg(feature = "space")]

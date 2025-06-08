@@ -35,7 +35,7 @@ pub(crate) async fn get_version_milestone_list(
     let client_guard = client.lock().await;
     let proj_id_or_key = ProjectIdOrKey::from_str(req.project_id_or_key.trim())?;
     let versions = client_guard
-        .issue()
+        .project()
         .get_version_milestone_list(proj_id_or_key)
         .await?;
     Ok(versions)
@@ -50,7 +50,7 @@ pub(crate) async fn get_issues_by_milestone_name(
     let client_guard = client.lock().await;
 
     let all_project_milestones = client_guard
-        .issue()
+        .project()
         .get_version_milestone_list(proj_id_or_key.clone())
         .await?;
 

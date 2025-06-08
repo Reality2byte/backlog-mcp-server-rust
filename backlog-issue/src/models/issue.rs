@@ -1,9 +1,8 @@
 use backlog_core::{
     IssueKey, User,
-    identifier::{CategoryId, IssueId, MilestoneId, PriorityId, ProjectId, ResolutionId},
+    identifier::{CategoryId, IssueId, PriorityId, ProjectId, ResolutionId},
 };
-use backlog_project::{IssueType, Status};
-use chrono::{DateTime, Utc};
+use backlog_project::{IssueType, Milestone, Status};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -54,17 +53,4 @@ pub struct Category {
     pub id: CategoryId,
     pub name: String,
     pub display_order: i32,
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Milestone {
-    pub id: MilestoneId,
-    pub project_id: ProjectId,
-    pub name: String,
-    pub description: Option<String>,
-    pub start_date: Option<DateTime<Utc>>,
-    pub release_due_date: Option<DateTime<Utc>>,
-    pub archived: bool,
-    pub display_order: Option<i32>,
 }

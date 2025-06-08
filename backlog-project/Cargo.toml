@@ -13,6 +13,7 @@ schemars = ["dep:schemars"]
 client = { path = "../client" }
 backlog-core = { path = "../backlog-core" }
 backlog-api-core = { path = "../backlog-api-core" }
+chrono = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 schemars = { workspace = true, optional = true }
