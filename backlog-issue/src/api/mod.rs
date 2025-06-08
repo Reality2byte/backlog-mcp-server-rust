@@ -2,13 +2,17 @@ use backlog_api_core::Result;
 use backlog_core::{Identifier, IssueIdOrKey, IssueKey};
 use client::{Client, DownloadedFile};
 
+#[cfg(feature = "writable")]
+use crate::responses::{AddIssueResponse, DeleteIssueResponse, UpdateIssueResponse};
 use crate::{
-    models::{attachment::Attachment, comment::Comment, issue::Issue},
     requests::{
-        AddIssueParams, CountIssueParams, GetIssueListParams, UpdateIssueParams,
-        get_comment_list::GetCommentListParams,
+        AddIssueParams, CountIssueParams, GetCommentListParams, GetIssueListParams,
+        UpdateIssueParams,
     },
-    responses::CountIssueResponse,
+    responses::{
+        CountIssueResponse, GetAttachmentListResponse, GetCommentListResponse,
+        GetIssueListResponse, GetIssueResponse,
+    },
 };
 
 pub struct IssueApi(Client);
@@ -102,19 +106,11 @@ impl IssueApi {
     }
 }
 
-type GetIssueResponse = Issue;
-type AddIssueResponse = Issue;
-type DeleteIssueResponse = Issue;
-type UpdateIssueResponse = Issue;
-type GetIssueListResponse = Vec<Issue>;
-type GetCommentListResponse = Vec<Comment>;
-type GetAttachmentListResponse = Vec<Attachment>;
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::{
-        models::{attachment::Attachment, comment::Comment},
+        models::{attachment::Attachment, comment::Comment, issue::Issue},
         requests::{
             GetIssueListParamsBuilder,
             get_comment_list::{CommentOrder, GetCommentListParamsBuilder},

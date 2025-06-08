@@ -1,8 +1,9 @@
+use crate::{Priority, Resolution};
 use backlog_core::{
     IssueKey, User,
-    identifier::{CategoryId, IssueId, PriorityId, ProjectId, ResolutionId},
+    identifier::{IssueId, ProjectId},
 };
-use backlog_project::{IssueType, Milestone, Status};
+use backlog_project::{Category, IssueType, Milestone, Status};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -31,26 +32,4 @@ pub struct Issue {
     pub created: String,
     pub updated_user: Option<Box<User>>,
     pub updated: String,
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Resolution {
-    pub id: ResolutionId,
-    pub name: String,
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Priority {
-    pub id: PriorityId,
-    pub name: String,
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Category {
-    pub id: CategoryId,
-    pub name: String,
-    pub display_order: i32,
 }
