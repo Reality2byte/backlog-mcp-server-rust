@@ -248,3 +248,118 @@
     -   Implemented `get_issue_type_list` method in `ProjectApi` with unit tests.
     -   Re-exported `IssueType` from `backlog-api-client` facade.
     -   All changes verified.
+<environment_details>
+# VSCode Visible Files
+mcp-backlog-server/src/server.rs
+mcp-backlog-server/src/server.rs
+mcp-backlog-server/src/util.rs
+mcp-backlog-server/src/util.rs
+memory-bank/activeContext.md
+
+# VSCode Open Tabs
+backlog-core/src/project_id_or_key.rs
+backlog-core/src/issue_id_or_key.rs
+backlog-core/src/issue_key.rs
+Cargo.toml
+../../../.cargo/git/checkouts/rust-sdk-773cd6d57c4837f3/22134eb/crates/rmcp/src/model.rs
+../../../.cargo/git/checkouts/rust-sdk-773cd6d57c4837f3/22134eb/crates/rmcp/src/model/content.rs
+client/Cargo.toml
+backlog-user/src/api/mod.rs
+backlog-core/src/user.rs
+mcp-backlog-server/src/lib.rs
+mcp-backlog-server/Cargo.toml
+mcp-backlog-server/src/user/bridge.rs
+mcp-backlog-server/src/user/mod.rs
+mcp-backlog-server/src/user/request.rs
+client/src/test_utils.rs
+backlog-issue/src/models/issue.rs
+backlog-issue/src/models/priority.rs
+backlog-issue/src/models/resolution.rs
+backlog-issue/src/requests/mod.rs
+backlog-issue/src/requests/add_issue.rs
+backlog-issue/src/requests/update_issue.rs
+backlog-issue/src/requests/get_issue_list.rs
+backlog-issue/src/requests/get_comment_list.rs
+backlog-document/src/models.rs
+mcp-backlog-server/src/main.rs
+README.md
+backlog-api-client/README.md
+mcp-backlog-server/src/document/mod.rs
+mcp-backlog-server/src/issue/mod.rs
+mcp-backlog-server/src/issue/request.rs
+mcp-backlog-server/src/project/request.rs
+memory-bank/techContext.md
+../../../.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/convert/mod.rs
+mcp-backlog-server/src/project/mod.rs
+backlog-issue/src/models/mod.rs
+backlog-issue/src/lib.rs
+backlog-issue/Cargo.toml
+mcp-backlog-server/src/project/bridge.rs
+backlog-api-core/src/lib.rs
+mcp-backlog-server/src/git/request.rs
+backlog-api-core/Cargo.toml
+API.md
+backlog-api-core/src/error.rs
+mcp-backlog-server/src/git/mod.rs
+.gitignore
+backlog-git/src/lib.rs
+backlog-git/Cargo.toml
+backlog-project/src/models/issue_type.rs
+backlog-project/src/models/milestone.rs
+backlog-project/src/models/category.rs
+backlog-project/src/models/mod.rs
+backlog-project/src/api/mod.rs
+backlog-project/src/lib.rs
+backlog-api-client/src/lib.rs
+memory-bank/progress.md
+memory-bank/systemPatterns.md
+backlog-space/Cargo.toml
+backlog-user/Cargo.toml
+backlog-api-client/src/client.rs
+backlog-project/src/models/status.rs
+backlog-project/Cargo.toml
+backlog-issue/src/models/comment.rs
+backlog-project/src/models/activity/content.rs
+backlog-git/src/models.rs
+backlog-issue/src/responses/mod.rs
+backlog-document/Cargo.toml
+backlog-core/src/identifier.rs
+backlog-core/src/lib.rs
+mcp-backlog-server/src/document/request.rs
+client/src/client.rs
+mcp-backlog-server/src/util.rs
+backlog-api-client/src/bin/blg.rs
+client/src/lib.rs
+backlog-issue/src/api/mod.rs
+memory-bank/activeContext.md
+mcp-backlog-server/README.md
+mcp-backlog-server/src/server.rs
+mcp-backlog-server/src/attachment.rs
+backlog-document/src/api.rs
+backlog-document/src/requests.rs
+backlog-git/src/api.rs
+mcp-backlog-server/src/document/bridge.rs
+mcp-backlog-server/src/git/bridge.rs
+mcp-backlog-server/src/issue/bridge.rs
+mcp-backlog-server/src/error.rs
+backlog-core/Cargo.toml
+backlog-core/src/role.rs
+backlog-core/src/language.rs
+backlog-issue/src/models/attachment.rs
+backlog-api-client/Cargo.toml
+memory-bank/productContext.md
+memory-bank/projectbrief.md
+backlog-core/src/repository_id_or_name.rs
+backlog-core/src/error.rs
+backlog-core/src/repository_name.rs
+../../../Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json
+
+# Current Time
+6/8/2025, 9:47:47 PM (Asia/Tokyo, UTC+9:00)
+
+# Context Window Usage
+748,177 / 1,048.576K tokens used (71%)
+
+# Current Mode
+ACT MODE
+</environment_details>

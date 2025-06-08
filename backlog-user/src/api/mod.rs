@@ -9,11 +9,12 @@ impl UserApi {
         Self(client)
     }
 
+    /// Get the details of the authenticated user.
     pub async fn get_own_user(&self) -> Result<GetUserResponse> {
         self.0.get("/api/v2/users/myself").await
     }
 
-    /// Fetches the list of users in the space.
+    /// Get the list of users in the space.
     /// Corresponds to `GET /api/v2/users`.
     pub async fn get_user_list(&self) -> Result<Vec<User>> {
         self.0.get("/api/v2/users").await

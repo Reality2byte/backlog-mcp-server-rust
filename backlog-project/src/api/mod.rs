@@ -12,6 +12,8 @@ impl ProjectApi {
         Self(client)
     }
 
+    /// Gets the list of projects.
+    /// Corresponds to `GET /api/v2/projects`.
     pub async fn get_project_list(
         &self,
         params: GetProjectParams,
@@ -19,6 +21,8 @@ impl ProjectApi {
         self.0.get_with_params("/api/v2/projects", &params).await
     }
 
+    /// Gets a project by its ID or key.
+    /// Corresponds to `GET /api/v2/projects/:projectIdOrKey`.
     pub async fn get_project(
         &self,
         project_id_or_key: impl Into<ProjectIdOrKey>,
@@ -29,7 +33,6 @@ impl ProjectApi {
     }
 
     /// Gets the list of statuses for a project.
-    ///
     /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/statuses`.
     pub async fn get_status_list(
         &self,
@@ -50,6 +53,9 @@ impl ProjectApi {
         self.0.get(&path).await
     }
 
+    /// Gets the list of version milestones for a project.
+    ///
+    /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/versions`.
     pub async fn get_version_milestone_list(
         &self,
         project_id_or_key: impl Into<ProjectIdOrKey>,

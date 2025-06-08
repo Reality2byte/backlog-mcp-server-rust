@@ -22,6 +22,7 @@ impl IssueApi {
         Self(client)
     }
 
+    /// Get issue by its ID or key.
     pub async fn get_issue(
         &self,
         issue_id_or_key: impl Into<IssueIdOrKey>,
@@ -32,11 +33,13 @@ impl IssueApi {
             .await
     }
 
+    /// Get a list of issues with optional parameters.
     pub async fn get_issue_list(&self, params: GetIssueListParams) -> Result<GetIssueListResponse> {
         let params_vec: Vec<(String, String)> = params.into();
         self.0.get_with_params("/api/v2/issues", &params_vec).await
     }
 
+    /// Count issues based on the provided parameters.
     pub async fn count_issue(&self, params: CountIssueParams) -> Result<CountIssueResponse> {
         let params: Vec<(String, String)> = params.into();
         self.0
@@ -44,11 +47,13 @@ impl IssueApi {
             .await
     }
 
+    /// Add a new issue with the provided parameters.
     #[cfg(feature = "writable")]
     pub async fn add_issue(&self, params: AddIssueParams) -> Result<AddIssueResponse> {
         self.0.post("/api/v2/issues", &params).await
     }
 
+    /// Delete an issue by its key.
     #[cfg(feature = "writable")]
     pub async fn delete_issue(
         &self,
@@ -59,6 +64,7 @@ impl IssueApi {
             .await
     }
 
+    /// Update an existing issue by its ID or key.
     #[cfg(feature = "writable")]
     pub async fn update_issue(
         &self,
@@ -71,6 +77,7 @@ impl IssueApi {
             .await
     }
 
+    /// Get a list of comments for an issue by its ID or key.
     pub async fn get_comment_list(
         &self,
         issue_id_or_key: impl Into<IssueIdOrKey>,
@@ -82,6 +89,7 @@ impl IssueApi {
         self.0.get_with_params(&path, &query_params).await
     }
 
+    /// Get a list of attachments for an issue by its ID or key.
     pub async fn get_attachment_list(
         &self,
         issue_id_or_key: impl Into<IssueIdOrKey>,
@@ -91,6 +99,7 @@ impl IssueApi {
         self.0.get(&path).await
     }
 
+    /// Get a specific attachment file by issue ID or key and attachment ID.
     pub async fn get_attachment_file(
         &self,
         issue_id_or_key: impl Into<IssueIdOrKey>,
