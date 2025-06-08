@@ -3,7 +3,9 @@ use crate::issue::request::{GetIssueCommentsRequest, UpdateIssueRequest};
 use crate::{
     document::{
         self,
-        request::{DownloadDocumentAttachmentRequest, GetDocumentDetailsRequest},
+        request::{
+            DownloadDocumentAttachmentRequest, GetDocumentDetailsRequest, GetDocumentTreeRequest,
+        },
     },
     git::{
         self,
@@ -132,6 +134,13 @@ impl Server {
             document::bridge::download_document_attachment_bridge(self.client.clone(), req).await?;
         let response_data = SerializableRawAttachment::image(file)?;
         Ok(CallToolResult::success(vec![response_data.try_into()?]))
+    }
+
+    #[tool(description = "Get the document tree (active and trash) for a specified project.")]
+    async fn get_document_tree(&self, #[tool(aggr)] req: GetDocumentTreeRequest) -> McpResult {
+        let document_tree =
+            document::bridge::get_document_tree_tool(self.client.clone(), req).await?;
+        Ok(CallToolResult::success(vec![Content::json(document_tree)?]))
     }
 
     #[tool(description = "Get a list of versions (milestones) for a specified project.")]

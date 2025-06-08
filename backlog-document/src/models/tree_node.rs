@@ -1,7 +1,11 @@
 use backlog_core::{DocumentId, identifier::StatusId};
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "schemars")]
+use schemars::JsonSchema;
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct DocumentTreeNode {
     pub id: DocumentId,

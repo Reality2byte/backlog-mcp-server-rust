@@ -87,12 +87,20 @@
     -   Unit tests added for `get_issue_type_list`.
     -   `IssueType` exported from `backlog-project` and re-exported by `backlog-api-client`.
 -   **Updated `backlog-document` Models and Schemars Integration**:
-    -   `DocumentDetail` in `backlog-document/src/models.rs` updated with `attachments` field and new `DocumentAttachment` struct defined.
+    -   `DocumentDetail` in `backlog-document/src/models.rs` (now `models/document_detail.rs`) updated with `attachments` field and new `DocumentAttachment` struct defined (in `models/attachment.rs`).
     -   `JsonSchema` derives added to `Document`, `DocumentDetail`, `DocumentAttachment`, and `DocumentTag`.
     -   `backlog-document/Cargo.toml` updated with `schemars` dependency and feature.
     -   `backlog-core/src/document_id.rs` updated to derive `JsonSchema` for `DocumentId`.
     -   `backlog-api-client/Cargo.toml` updated with a refined `schemars` feature to correctly propagate to sub-crates.
     -   `mcp-backlog-server/Cargo.toml` updated to enable `backlog-api-client/schemars` feature.
+    -   All changes verified with `cargo check`, `test`, `clippy`, and `fmt`.
+-   **Implemented `get_document_tree` MCP Tool**:
+    -   Added `JsonSchema` derives to `DocumentTreeNode` (in `backlog-document/src/models/tree_node.rs`) and `DocumentTreeResponse` (in `backlog-document/src/responses.rs`).
+    -   Defined `GetDocumentTreeRequest` in `mcp-backlog-server/src/document/request.rs`.
+    -   Implemented `get_document_tree_tool` bridge function in `mcp-backlog-server/src/document/bridge.rs`, using direct struct instantiation for `GetDocumentTreeParams` due to a builder issue.
+    -   Ensured `DocumentTreeResponse` and `GetDocumentTreeParams` are re-exported by `backlog-api-client/src/lib.rs`.
+    -   Added `get_document_tree` tool method to `mcp-backlog-server/src/server.rs`.
+    -   Documented the new tool in `mcp-backlog-server/README.md`.
     -   All changes verified with `cargo check`, `test`, `clippy`, and `fmt`.
 
 ## What Works
@@ -105,24 +113,26 @@
     -   Git repository listing and details.
     -   Pull request listing, details, **attachment listing**, and **attachment download** (now returns `DownloadedFile`).
     -   Issue listing, details, updates, comment listing, **attachment listing**, and **attachment file download** (now returns `DownloadedFile`). (Issue status now uses a complete model from `backlog-project`).
-    -   Document listing, details, and **attachment download** (now returns `DownloadedFile`). **Document detail model now includes attachments and supports `JsonSchema`**.
+    -   Document listing, details, **document tree retrieval**, and **attachment download** (now returns `DownloadedFile`). Document detail model now includes attachments and supports `JsonSchema`. Document tree models also support `JsonSchema`.
     -   Project listing, details, **project status listing**, and **project issue type listing**.
     -   Space details.
     -   User details.
 -   The `blg` CLI tool provides commands for various operations, including **downloading issue attachments** and **pull request attachments** (adapted to use `DownloadedFile`).
--   The `mcp-backlog-server` provides a suite of MCP tools, including **project status listing**, **issue attachment listing**, **issue attachment image/text/raw download**, **pull request attachment download (raw JSON, image, text)**, **user list retrieval**, and **document attachment image download**. Error reporting is informative. All download tools now correctly use `DownloadedFile` and the updated `ensure_image_type`. **The `get_document_details` tool will now reflect the updated `DocumentDetail` schema.**
+-   The `mcp-backlog-server` provides a suite of MCP tools, including **project status listing**, **issue attachment listing**, **issue attachment image/text/raw download**, **pull request attachment download (raw JSON, image, text)**, **user list retrieval**, **document detail retrieval**, **document attachment image download**, and now **document tree retrieval**. Error reporting is informative. All download tools now correctly use `DownloadedFile` and the updated `ensure_image_type`. The `get_document_details` and `get_document_tree` tools reflect updated model schemas.
 -   The codebase is free of Clippy warnings and consistently formatted. All tests pass.
 -   Test utilities like `setup_client` are now shared from the `client` crate.
 
 ## What's Left to Build (for this task)
--   The current task of updating document models and schemars integration is complete.
+-   The current task of implementing the `get_document_tree` MCP tool is complete.
 -   Potential next steps, if requested:
     -   Integrate `get_issue_type_list` into the `blg` CLI tool.
     -   Implement an MCP tool for `get_issue_type_list`.
 -   Complete full definitions for stubbed request parameter structs in `backlog-issue/src/requests/mod.rs`.
+-   Investigate the `derive_builder` issue for `GetDocumentTreeParams` if using the builder pattern is preferred over direct instantiation for consistency.
 
 ## Known Issues (from initialization process and ongoing work)
 -   The `list_code_definition_names` tool did not find top-level definitions in the `src` directories of several module-specific crates.
+-   A `derive_builder` issue prevented using `GetDocumentTreeParams::builder()` in `mcp-backlog-server`; direct struct instantiation was used as a workaround.
 
 ## Evolution of Project Decisions
 -   **Initial Project Setup**: Focused on creating the Backlog API client library and CLI.
@@ -265,4 +275,12 @@
     -   `backlog-core/src/document_id.rs` was updated to ensure `DocumentId` derives `JsonSchema` when the `backlog-core/schemars` feature is active.
     -   `backlog-api-client/Cargo.toml` was updated to define a general `schemars` feature that correctly propagates to `backlog-document/schemars` (and other relevant sub-crates like `backlog-core`, `backlog-issue`, `backlog-project`, `backlog-git`).
     -   `mcp-backlog-server/Cargo.toml` was updated to enable the `schemars` feature of its `backlog-api-client` dependency.
+    -   All changes were verified with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, `cargo clippy --all-features --all-targets`, and `cargo fmt --all`.
+-   **Implemented `get_document_tree` MCP Tool**:
+    -   Added `JsonSchema` derives to `DocumentTreeNode` (in `backlog-document/src/models/tree_node.rs`) and `DocumentTreeResponse` (in `backlog-document/src/responses.rs`).
+    -   Defined `GetDocumentTreeRequest` in `mcp-backlog-server/src/document/request.rs`.
+    -   Implemented `get_document_tree_tool` bridge function in `mcp-backlog-server/src/document/bridge.rs`. This included correcting import paths for types from `backlog_document` to be imported via the `backlog_api_client` facade, and using direct struct instantiation for `GetDocumentTreeParams` as a workaround for a `derive_builder` issue (`E0599: no function or associated item named builder found`).
+    -   Ensured `DocumentTreeResponse` and `GetDocumentTreeParams` are re-exported by `backlog-api-client/src/lib.rs` under the `document` feature.
+    -   Added `get_document_tree` tool method to `mcp-backlog-server/src/server.rs`.
+    -   Documented the new tool in `mcp-backlog-server/README.md`.
     -   All changes were verified with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, `cargo clippy --all-features --all-targets`, and `cargo fmt --all`.

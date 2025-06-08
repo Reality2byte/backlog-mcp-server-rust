@@ -16,3 +16,11 @@ pub(crate) struct DownloadDocumentAttachmentRequest {
     #[schemars(description = "The numeric ID of the attachment to download.")]
     pub attachment_id: u32,
 }
+
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct GetDocumentTreeRequest {
+    #[schemars(
+        description = "The project ID or project key for which to retrieve the document tree. Examples: \"MYPROJECTKEY\", \"123\"."
+    )]
+    pub project_id_or_key: String,
+}

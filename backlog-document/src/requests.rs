@@ -39,7 +39,7 @@ impl fmt::Display for DocumentSortKey {
 }
 
 #[derive(Debug, Builder, Clone, PartialEq)]
-#[builder(setter(strip_option))]
+#[builder(setter(strip_option), build_fn(error = "backlog_api_core::Error"))]
 pub struct GetDocumentTreeParams {
     // Based on curl: /api/v2/documents/tree?apiKey=xxx&projectIdOrKey=MSSP
     #[builder(setter(into))]

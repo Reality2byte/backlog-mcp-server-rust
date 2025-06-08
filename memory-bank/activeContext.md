@@ -32,6 +32,14 @@
         -   Corrected this feature list to remove propagation to `backlog-user` as it lacks a `schemars` feature.
     -   **`mcp-backlog-server/Cargo.toml`**: Enabled the new `schemars` feature for the `backlog-api-client` dependency.
     -   Verified all changes with `cargo check`, `cargo test`, `cargo clippy`, and `cargo fmt`.
+-   **Implemented `get_document_tree` MCP Tool**:
+    -   **`backlog-document` Models**: Added `JsonSchema` derives to `DocumentTreeNode` (in `models/tree_node.rs`) and `DocumentTreeResponse` (in `responses.rs`).
+    -   **`mcp-backlog-server/src/document/request.rs`**: Defined `GetDocumentTreeRequest` struct.
+    -   **`mcp-backlog-server/src/document/bridge.rs`**: Implemented `get_document_tree_tool` bridge function. Corrected import paths for `backlog_document` types to use `backlog_api_client` facade. Used direct struct instantiation for `GetDocumentTreeParams` as a workaround for a `derive_builder` issue.
+    -   **`backlog-api-client/src/lib.rs`**: Ensured `DocumentTreeResponse` and `GetDocumentTreeParams` are re-exported under the `document` feature.
+    -   **`mcp-backlog-server/src/server.rs`**: Added `get_document_tree` tool method.
+    -   **`mcp-backlog-server/README.md`**: Documented the new tool.
+    -   Verified all changes with `cargo check`, `test`, `clippy`, and `fmt`.
 
 ## Recent Changes
 -   **Implemented "Get Issue Type List" API in `backlog-project`**:
