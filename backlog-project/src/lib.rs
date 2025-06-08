@@ -4,4 +4,4 @@ pub use api::ProjectApi;
 pub mod models;
 pub mod requests;
 
-pub use models::{Project, Status};
+pub use models::{IssueType, Project, Status}; // Added IssueType

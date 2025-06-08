@@ -39,7 +39,7 @@ pub use backlog_git::{GitApi, PullRequest, PullRequestAttachment, Repository};
 
 // Project module (from backlog_project)
 #[cfg(feature = "project")]
-pub use backlog_project::{Project, ProjectApi, Status};
+pub use backlog_project::{IssueType, Project, ProjectApi, Status}; // Added IssueType
 
 // Space module (from backlog_space)
 #[cfg(feature = "space")]

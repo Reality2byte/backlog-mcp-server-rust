@@ -1,4 +1,5 @@
 ## Current Work Focus
+-   **Implemented "Get Issue Type List" API in `backlog-project`**.
 -   Implemented "Get Status List of Project" API in `backlog-project`.
 -   Refactored `Status` model: defined a complete `Status` (`ProjectStatus`) in `backlog-project`, and updated `backlog-issue` to use it.
     -   Commonized test utility `setup_client` into `client::test_utils`.
@@ -10,194 +11,48 @@
     -   Implemented and then refined `download_issue_attachment_image` MCP tool in `mcp-backlog-server` (formerly `download_issue_attachment_file`).
     -   Implemented `download_issue_attachment_text` MCP tool in `mcp-backlog-server`.
     -   Implemented "Get List of Pull Request Attachments" API in `backlog-git` and `mcp-backlog-server`.
--   **Implemented Pull Request Attachment Download functionality (library, CLI, MCP)**.
--   **Refactored pull request number handling to use a newtype `PrNumber(u64)` for improved type safety across the codebase.**
--   **Implemented `download_issue_attachment_raw` MCP tool.**
--   **Reorganized `mcp-backlog-server/README.md` to group tools by module.**
--   **Implemented `download_attachment` method in `backlog-document` crate (and refactored client for all downloads) to return filename, content type, and `bytes::Bytes`.**
--   **Implemented `download_document_attachment_image` MCP tool.**
+-   Implemented Pull Request Attachment Download functionality (library, CLI, MCP).
+-   Refactored pull request number handling to use a newtype `PrNumber(u64)` for improved type safety across the codebase.
+-   Implemented `download_issue_attachment_raw` MCP tool.
+-   Reorganized `mcp-backlog-server/README.md` to group tools by module.
+-   Implemented `download_attachment` method in `backlog-document` crate (and refactored client for all downloads) to return filename, content type, and `bytes::Bytes`.
+-   Implemented `download_document_attachment_image` MCP tool.
+-   Refactored `client::Client::download_file_raw` to return `DownloadedFile` struct instead of a tuple, and updated all callers.
+-   Refactored `ensure_image_type` in `mcp-backlog-server` to return `Result<(), McpError>`.
 
 ## Recent Changes
--   **Implemented Document Attachment Image Download (MCP Tool & Client/Library Refactor)**:
+-   **Implemented "Get Issue Type List" API in `backlog-project`**:
+    -   **`backlog-core/src/identifier.rs`**: Confirmed `IssueTypeId(u32)` already exists.
+    -   **`backlog-project/src/models/issue_type.rs`**: Created new file and defined `IssueType` struct with fields: `id`, `project_id`, `name`, `color`, `display_order`, `template_summary`, `template_description`. Derived `Serialize`, `Deserialize`, `JsonSchema` (conditional).
+    -   **`backlog-project/src/models/mod.rs`**: Exported `issue_type` module and `IssueType` struct.
+    -   **`backlog-project/src/api/mod.rs`**:
+        -   Added `get_issue_type_list(&self, project_id_or_key: impl Into<ProjectIdOrKey>) -> Result<Vec<IssueType>>` method to `ProjectApi`.
+        -   Added unit tests for success (multiple items, empty list) and error (404) cases.
+    -   **`backlog-project/src/lib.rs`**: Re-exported `IssueType` from `models`.
+    -   **`backlog-api-client/src/lib.rs`**: Re-exported `IssueType` from `backlog_project` under the `project` feature.
+    -   Verified all changes with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, `cargo clippy --all-features --all-targets`, and `cargo fmt --all`.
+-   **Refactored Attachment Download Return Types and `ensure_image_type`**:
     -   **`client/src/client.rs`**:
-        -   Modified `download_file_raw` to parse `Content-Disposition` (for filename) and `Content-Type` headers, changing its return signature to `Result<(String, String, bytes::Bytes)>`.
+        -   Defined `pub struct DownloadedFile { filename: String, content_type: String, bytes: bytes::Bytes }`.
+        -   Changed `download_file_raw` to return `Result<DownloadedFile>`.
+    -   **`client/src/lib.rs`**: Re-exported `DownloadedFile`.
+    -   **`backlog-api-client/src/lib.rs`**: Re-exported `DownloadedFile` from the `client` crate.
     -   **Library Crate Updates (`backlog-issue`, `backlog-git`, `backlog-document`)**:
-        -   Respective attachment download methods (`get_attachment_file`, `download_pull_request_attachment`, `download_attachment`) were updated to align with `client::download_file_raw`'s new return type (triple tuple).
-        -   Unit tests for these methods were updated to mock and assert the filename and content type.
-        -   Corrected import paths for header constants in test modules (using string literals where `reqwest` was not a dev-dependency, e.g., in `backlog-issue` and `backlog-git` tests).
+        -   Attachment download methods updated to return `Result<DownloadedFile>`.
+        -   Unit tests updated.
+        -   Unused `bytes` imports removed.
     -   **CLI Update (`backlog-api-client/src/bin/blg.rs`)**:
-        -   `DownloadAttachment` handlers for both issues and pull requests were updated to correctly destructure the 3-tuple from library calls, using only the `file_bytes` component for `fs::write`.
-    -   **Core Type Update (`backlog-core`)**:
-        -   Added `DocumentAttachmentId(u32)` newtype to `identifier.rs` and re-exported it from `lib.rs`.
-    -   **Document Crate Update (`backlog-document`)**:
-        -   `download_attachment` method in `api.rs` now uses `DocumentAttachmentId` for its `attachment_id` parameter.
-    -   **MCP Server (`mcp-backlog-server`)**:
-        -   **`src/document/request.rs`**: Defined `DownloadDocumentAttachmentRequest` (fields: `document_id: String`, `attachment_id: u32`).
-        -   **`src/document/bridge.rs`**: Implemented `download_document_attachment_bridge` to use the updated `backlog_document::download_attachment` and return the `(filename, content_type, bytes)` triple. Corrected import paths for `DocumentAttachmentId` and `bytes`.
-        -   **`src/util.rs`**: Modified `ensure_image_type` to accept `content_type: &str` and `filename_for_error_message: &str`, basing its check on the provided `content_type`.
-        -   **`src/issue/bridge.rs` & `src/git/bridge.rs`**: Updated `download_issue_attachment_file` and `download_pr_attachment_bridge` to return the `(String, String, Bytes)` triple from their underlying library calls. Removed redundant filename fetching logic.
-        -   **`src/server.rs`**:
-            -   Added the new `download_document_attachment_image` tool method. It uses the filename and `content_type` from the bridge, validates with the updated `ensure_image_type`.
-            -   Updated existing image and text download tools (`download_issue_attachment_image/text/raw`, `download_pull_request_attachment_image/text/raw`) to correctly handle the 3-tuple from their bridge functions and use the actual `content_type` (especially for `_raw` tools and `ensure_image_type` calls).
-        -   **`README.md`**: Documented the new `download_document_attachment_image` tool and updated the description of `get_document_details`.
-    -   Verified all changes with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, `cargo clippy --all-features --all-targets`, and `cargo fmt --all`.
--   **Implemented Document Attachment Download in `backlog-document`**: (This is now part of the above entry)
-    -   **`backlog-document/src/api.rs`**:
-        -   Updated the `download_attachment` method:
-            -   Changed return type from `Result<reqwest::Response>` to `Result<bytes::Bytes>`. (Superseded by tuple return)
-            -   Implemented the body to call `self.0.download_file_raw(&path).await`.
-            -   Added `use backlog_api_core::bytes;`.
-        -   Added unit tests for `download_attachment` covering success and 404 error cases, using `wiremock` and `client::test_utils::setup_client`.
-        -   Corrected `DocumentId::new()` calls in tests to pass a `String` by using `.to_string()` on integer test values, resolving initial compiler errors.
-    -   **`backlog-document/Cargo.toml`**:
-        -   Added `wiremock` and `tokio` as dev-dependencies.
-        -   Enabled the `test-utils` feature for the `client` dependency.
-    -   Verified all changes with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, `cargo clippy --all-features --all-targets`, and `cargo fmt --all`.
--   **Reorganized `mcp-backlog-server/README.md` Tool Listing**:
-    -   **`mcp-backlog-server/README.md`**: Updated the "Available Tools" section. Tools are now grouped under subheadings corresponding to the server's internal modules: `Document Tools`, `Git Tools`, `Issue Tools`, `Project Tools`, and `User Tools`. The tool name `list_pull_requests` was corrected to `get_pull_request_list` to match the server implementation.
--   **Implemented `download_issue_attachment_raw` MCP Tool**:
-    -   **`mcp-backlog-server/src/server.rs`**: Added the `download_issue_attachment_raw` tool method. This tool reuses the existing `DownloadAttachmentRequest` (from `crate::issue::request`) and the `issue::bridge::download_issue_attachment_file` bridge function. It returns a JSON object containing the filename, MIME type, and base64-encoded attachment data.
-    -   **`mcp-backlog-server/README.md`**: Documented the new `download_issue_attachment_raw` tool, including its description, input parameters, and output format.
-    -   Verified all changes with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, `cargo clippy --all-features --all-targets`, and `cargo fmt --all`.
--   **Refactored `pr_number` to use `PrNumber(u64)` Newtype**:
-    -   **`backlog-core/src/identifier.rs`**:
-        -   Defined `pub struct PrNumber(pub u64);`.
-        -   Implemented `Identifier` (for `u64`), `From<u64>`, `Display`, `FromStr`, `Serialize`, `Deserialize`, `Hash`, and common debug/clone traits. Used `crate::error::Error::InvalidParameter` for `FromStr` error.
-    -   **`backlog-core/src/lib.rs`**:
-        -   Exported `PrNumber` from the `identifier` module.
-    -   **`backlog-git/src/models.rs`**:
-        -   Changed the type of `number` field in `PullRequest` struct from `u64` to `PrNumber`.
-        -   Added `PrNumber` to imports from `backlog_core::identifier`.
-    -   **`backlog-git/src/api.rs`**:
-        -   Updated methods (`get_pull_request`, `get_pull_request_attachment_list`, `download_pull_request_attachment`) to accept `PrNumber` for `pr_number` parameters.
-        -   Updated internal URL formatting to use `pr_number.value()`.
-        -   Updated unit tests to use `PrNumber::new(...)`.
-    -   **`backlog-api-client/src/lib.rs`**:
-        -   Re-exported `PrNumber` from `backlog_core::identifier`.
-    -   **`backlog-api-client/src/bin/blg.rs`**:
-        -   Imported `PrNumber`.
-        -   Updated `PrCommands::Show` and `PrCommands::DownloadAttachment` handlers to convert the `u64` `pr_number` argument to `PrNumber` using `PrNumber::from()` before calling library functions.
-    -   **`mcp-backlog-server/src/git/bridge.rs`**:
-        -   Imported `PrNumber`.
-        -   Updated `get_pull_request`, `get_pull_request_attachment_list_tool`, and `download_pr_attachment_bridge` functions to convert `u64` `pr_number` from request objects to `PrNumber` using `PrNumber::from()`.
-    -   **`mcp-backlog-server/src/error.rs`**:
-        -   Updated the `pr_number` field in the `PullRequestAttachmentNotFound` error variant from `u64` to `PrNumber`.
-        -   Imported `PrNumber`.
-    -   Verified all changes with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, `cargo clippy --all-features --all-targets`, and `cargo fmt --all`.
--   **Implemented Pull Request Attachment Download (Library, CLI, MCP Tools)**:
-    -   **`backlog-git/src/api.rs`**:
-        -   Added `download_pull_request_attachment` method to `GitApi` to download attachment content as `bytes::Bytes`.
-        -   Added unit tests for success and error cases.
-        -   Corrected import for `backlog_api_core::bytes::Bytes` and ensured `backlog_core::Identifier` trait was in scope for `value()` method.
-    -   **`backlog-api-client/src/bin/blg.rs`**:
-        -   Added `pr download-attachment` subcommand to the CLI.
-        -   Defined `DownloadPrAttachmentArgs` for arguments.
-        -   Implemented logic to call the library function and save the downloaded file.
-    -   **`mcp-backlog-server/src/git/request.rs`**:
-        -   Defined `DownloadPullRequestAttachmentRequest` struct for the MCP tool.
-    -   **`mcp-backlog-server/src/error.rs`**:
-        -   Added `PullRequestAttachmentNotFound` variant to the local `Error` enum.
-        -   Updated `From<Error> for McpError` to handle the new variant.
-    -   **`mcp-backlog-server/src/git/bridge.rs`**:
-        -   Implemented `download_pr_attachment_bridge` function. This bridge first fetches the attachment list to get the filename, then downloads the file content.
-        -   Corrected `Identifier` trait import.
-        -   Resolved a persistent type mismatch issue in ID comparison (`u32` vs `u64`) by ensuring both sides of the comparison were explicitly `u64`.
-        -   Updated to use the new `Error::PullRequestAttachmentNotFound`.
+        -   Download handlers updated to use `DownloadedFile.bytes`.
+    -   **MCP Server Bridge Functions (`mcp-backlog-server/.../bridge.rs`)**:
+        -   Download bridge functions updated to return `Result<DownloadedFile>`.
+        -   Unused `bytes` or `Bytes` imports removed.
+    -   **`mcp-backlog-server/src/util.rs`**:
+        -   Changed `ensure_image_type` to return `Result<(), McpError>`.
     -   **`mcp-backlog-server/src/server.rs`**:
-        -   Added three new MCP tools:
-            -   `download_pull_request_attachment_raw`: Returns attachment metadata and base64-encoded content as JSON (fallback for generic raw binary).
-            -   `download_pull_request_attachment_image`: Returns `Content::image` for image attachments.
-            -   `download_pull_request_attachment_text`: Returns `Content::text` for UTF-8 text attachments.
-        -   Corrected import and usage of `rmcp::model::RawContent` (ultimately removed direct usage for the `_raw` tool in favor of JSON).
-    -   Verified all changes with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, `cargo clippy --all-features --all-targets`, and `cargo fmt --all`.
--   **Implemented "Get List of Pull Request Attachments" API and MCP Tool**:
-    -   Defined `PullRequestAttachment` model in `backlog-git/src/models.rs`.
-    -   Added `get_pull_request_attachment_list` method to `GitApi` in `backlog-git/src/api.rs` with unit tests.
-    -   Added `schemars` feature and dev-dependencies (`wiremock`, `tokio`) to `backlog-git/Cargo.toml`.
-    -   Exported `PullRequestAttachment` from `backlog-git/src/lib.rs`.
-    -   Re-exported `PullRequestAttachment` from `backlog-api-client/src/lib.rs`.
-    -   Defined `GetPullRequestAttachmentListRequest` in `mcp-backlog-server/src/git/request.rs`.
-    -   Added `get_pull_request_attachment_list_tool` bridge function to `mcp-backlog-server/src/git/bridge.rs`.
-    -   Added `get_pull_request_attachment_list` tool method to `Server` in `mcp-backlog-server/src/server.rs`.
-    -   Verified with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, `cargo clippy --all-features --all-targets`, and `cargo fmt --all`.
--   **Implemented `download_issue_attachment_text` MCP Tool in `mcp-backlog-server`**:
-    -   Added `download_issue_attachment_text` tool method to `Server` in `mcp-backlog-server/src/server.rs`.
-    -   Reused `DownloadAttachmentRequest` and the existing `download_issue_attachment_file` bridge function.
-    -   The method attempts to convert attachment bytes to a UTF-8 string.
-    -   If successful, returns `Content::text(string_data)`.
-    -   If UTF-8 conversion fails, returns an error indicating it's not a valid UTF-8 text file.
-    -   Verified with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, `cargo clippy`, and `cargo fmt --all`.
--   **Refined MCP Tool for Image Attachment Download (`download_issue_attachment_image`)**:
-    -   The existing `download_issue_attachment_file` MCP tool was renamed to `download_issue_attachment_image` by the user.
-    -   The server method in `mcp-backlog-server/src/server.rs` was updated by the user to:
-        -   Use `Content::image(base64_data, mime_type)` for the response, as discussed.
-        -   Include a check to ensure the attachment's Content-type starts with "image/". If not, it returns an error.
-    -   The bridge function `download_issue_attachment_file` (which fetches filename and bytes) remained largely the same.
-    -   The `DownloadAttachmentRequest` struct was reused.
-    -   This refined error handling (rejecting non-images) was tested with issue PASTA-1242, which has non-image attachments, and the tool correctly returned an "Attachment is not an image" error.
--   **Implemented `blg issue download-attachment` CLI command**:
-    -   Added `DownloadAttachment` variant to `IssueCommands` enum and `DownloadAttachmentArgs` struct in `backlog-api-client/src/bin/blg.rs`.
-    -   Implemented logic to parse arguments, call the `get_attachment_file` API, and save the downloaded file.
-    -   Updated `backlog-api-client/src/lib.rs` to re-export `AttachmentId`.
-    -   Verified with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, and `cargo clippy`.
--   **Implemented `get_attachment_file` (Download Issue Attachment) API in `backlog-issue`**:
-    -   Added `get_attachment_file` method to `IssueApi` in `backlog-issue/src/api/mod.rs`. This method takes `issue_id_or_key` and `attachment_id`, and returns `backlog_api_core::Result<backlog_api_core::bytes::Bytes>`.
-    -   Added `download_file_raw` method to `client::Client` in `client/src/client.rs` to handle raw byte stream downloads.
-    -   Updated `backlog-api-core/src/lib.rs` to re-export the `bytes` crate.
-    -   Added `bytes` to workspace dependencies and `backlog-api-core` dependencies.
-    -   Added `use backlog_core::Identifier;` in `backlog-issue/src/api/mod.rs` to bring the `value()` method for `AttachmentId` into scope.
-    -   Added unit tests for `get_attachment_file`, covering success and 404 error cases.
-    -   Verified with `cargo check --all-targets --all-features`, `cargo test --all-features --all-targets`, and `cargo clippy`.
--   **Implemented `get_issue_attachment_list` MCP Tool in `mcp-backlog-server`**:
-    -   Defined `GetAttachmentListRequest` in `mcp-backlog-server/src/issue/request.rs`, using `rmcp::schemars` for `JsonSchema` derivation.
-    -   Implemented `get_attachment_list_impl` bridge function in `mcp-backlog-server/src/issue/bridge.rs`.
-    -   Added `get_issue_attachment_list` tool method to `Server` in `mcp-backlog-server/src/server.rs`.
-    -   Updated `backlog-api-client/src/lib.rs` to re-export `Attachment`.
-    -   Verified with `cargo check -p mcp-backlog-server --all-features`.
--   **Implemented `get_list_of_issue_attachments` API in `backlog-issue`**:
-    -   Created `backlog-issue/src/models/attachment.rs` defining `Attachment` struct (using `backlog_core::identifier::AttachmentId`).
-    -   Updated `backlog-issue/src/models/mod.rs` to export `Attachment`.
-    -   Added `get_attachment_list` method to `IssueApi` in `backlog-issue/src/api/mod.rs`.
-    -   Added unit tests for `get_attachment_list`.
-    -   Updated `backlog-issue/src/lib.rs` to re-export `Attachment` and `Comment`.
-    -   Updated `backlog-issue/Cargo.toml` to include `backlog-core/schemars` in its `schemars` feature.
--   **Implemented "Get Status List of Project" API & Refactored `Status` Model**:
-    -   Added `schemars` as an optional dependency and feature to `backlog-project/Cargo.toml`.
-    -   Defined a new, complete `Status` struct in `backlog-project/src/models/status.rs` (fields: `id`, `project_id`, `name`, `color`, `display_order`), deriving `Deserialize`, `Serialize`, and conditionally `JsonSchema`.
-    -   Exported `Status` from `backlog-project`'s `models/mod.rs` and `lib.rs`.
-    -   Added `backlog-project` as a dependency to `backlog-issue/Cargo.toml` and updated its `schemars` feature to also enable `backlog-project/schemars`.
-    -   In `backlog-issue/src/models/issue.rs`:
-        -   Removed the local, incomplete `Status` struct definition.
-        -   Changed the `Issue.status` field to use `Box<backlog_project::Status>`.
-        -   Updated imports to use `backlog_project::Status`.
-        -   Removed unused `StatusId` import.
-    -   Removed the re-export of the old `Status` from `backlog-issue/src/lib.rs`.
-    -   Implemented `get_status_list` async method in `backlog-project/src/api/mod.rs` within `ProjectApi`.
-    -   Added unit tests for `get_status_list` in `backlog-project/src/api/mod.rs`, including success, empty list, and error cases.
-    -   Updated mock JSON in `backlog-issue` tests for `Issue.status` to provide the full `ProjectStatus` structure, fixing previous test failures.
-    -   Re-exported `ProjectStatus` from `backlog-api-client/src/lib.rs` under the `project` feature.
--   **Implemented `get_project_status_list` MCP Tool**:
-    -   Created a new `project` module in `mcp-backlog-server` (`src/project/mod.rs`).
-    -   Defined `GetProjectStatusListRequest` in `mcp-backlog-server/src/project/request.rs`.
-    -   Implemented `get_project_status_list_tool` function in `mcp-backlog-server/src/project/bridge.rs`.
-    -   Registered the `project` module in `mcp-backlog-server/src/lib.rs`.
-    -   Added the `get_project_status_list` tool method to `Server` in `mcp-backlog-server/src/server.rs`.
-    -   Updated `mcp-backlog-server/Cargo.toml`:
-        -   Enabled `project` feature for `backlog-api-client` dependency.
-        -   Added `backlog-project` and `backlog-core` as direct dependencies.
-        -   Added `schemars` as a direct dependency.
--   **Commonized Test Utility `setup_client`**:
-    -   Added `test-utils` feature to `client/Cargo.toml`, enabling `wiremock` as an optional dependency.
-    -   Created `client/src/test_utils.rs` and defined `pub async fn setup_client` there.
-    -   Conditionally exported `test_utils` module from `client/src/lib.rs` via the `test-utils` feature.
-    -   Updated `backlog-project/Cargo.toml` and `backlog-issue/Cargo.toml` to enable the `test-utils` feature for their `client` dependency.
-    -   Updated test modules in `backlog-project` and `backlog-issue` to import and use `client::test_utils::setup_client`.
--   **Improved Error Handling for API Client and MCP Server** (Previous task):
-    -   Enhanced `backlog_api_core::Error` with `HttpStatus` variant.
-    -   Improved `client::Client` to parse structured Backlog API errors.
-    -   Improved `mcp-backlog-server` error conversion.
--   **Implemented `get_issue_comments` MCP Tool** (Previous task).
--   **Established New Builder Pattern Convention** (Previous task).
+        -   All download tool methods (`_raw`, `_image`, `_text`) updated to work with `DownloadedFile` from bridge functions and the new `ensure_image_type`.
+    -   Verified all changes.
+-   **Implemented Document Attachment Image Download (MCP Tool & Client/Library Refactor)**: (Details omitted for brevity, see previous context if needed)
+    -   Verified all changes.
 
 ## Next Steps
 -   Await further instructions from the user.
@@ -206,6 +61,7 @@
 -   **Model Ownership and Dependencies**:
     -   The canonical, complete status model (`ProjectStatus`) is now defined in `backlog-project` as statuses are project-level configurations.
     -   `backlog-issue` now depends on `backlog-project` to use this `ProjectStatus` for the `Issue.status` field. This reflects that an issue's status is one of the project-defined statuses.
+    -   `IssueType` model is defined in `backlog-project` as it's a project-level configuration.
 -   **MCP Server Structure**: New MCP tools related to a specific domain (e.g., "project") are organized into their own module within `mcp-backlog-server` (e.g., `src/project/`). This module typically contains `request.rs` for input structs and `bridge.rs` for the core logic interfacing with `backlog-api-client`.
 -   **Test Utilities**: Common test helpers like `setup_client` are being centralized in the `client` crate's `test_utils` module, exposed via a feature flag, to reduce duplication across test suites in different crates.
 -   **Facade Pattern Strength**: `backlog-api-client` continues to be the primary facade.
@@ -216,8 +72,9 @@
 -   **Consistent Error Propagation**.
 -   **Builder Pattern for Request Params**.
 -   Standard Rust project structure, workspace, feature flags, `thiserror`, `schemars`.
-    -   **Model Placement**: Shared core types and identifiers (like `User`, `AttachmentId`, `PrNumber`) in `backlog-core`. Domain-specific models in their respective crates.
+    -   **Model Placement**: Shared core types and identifiers (like `User`, `AttachmentId`, `PrNumber`, `IssueTypeId`) in `backlog-core`. Domain-specific models in their respective crates.
     -   **Serialization of Newtypes**: For simple numeric newtypes like `PrNumber(u64)` or existing `Id(u32)` types, deriving `Serialize` and `Deserialize` directly is sufficient for them to be treated as their inner numeric type in JSON. `#[serde(transparent)]` is an option for explicitness but not strictly necessary if the default behavior is as desired and consistent with project patterns.
+    -   **Serialization of Structs**: Use `#[serde(rename_all = "camelCase")]` for structs that map to JSON objects to match Backlog API conventions. Use `#[serde(default, skip_serializing_if = "Option::is_none")]` for optional fields.
 -   **MCP Tool Structure**: Tools in `mcp-backlog-server` are organized by domain into modules (e.g., `issue`, `git`, `project`). Each module typically contains:
     -   `request.rs`: Defines request structs deriving `serde::Deserialize` and `rmcp::schemars::JsonSchema` (using `use rmcp::schemars;`).
     -   `bridge.rs`: Contains functions that take these request structs and the `BacklogApiClient` (wrapped in `Arc<Mutex<>>`), perform the API call, and return a `crate::error::Result`.

@@ -78,8 +78,14 @@
 -   **`download_issue_attachment_raw` MCP Tool Implemented**: Added a new MCP tool to download issue attachments as raw (JSON with base64) data.
 -   **`get_user_list` MCP Tool Implemented**: Added a new MCP tool to retrieve a list of all users in the Backlog space.
 -   **`mcp-backlog-server/README.md` Reorganized**: Grouped the 'Available Tools' section by module for better clarity.
--   **Document Attachment Download Implemented & Client Refactor**: `backlog-document` crate's `download_attachment` method, and all other attachment download methods in the library, now return filename, content type, and `bytes::Bytes`.
+-   **Document Attachment Download Implemented & Client Refactor**: `client::Client::download_file_raw` (and thus all library attachment download methods) now returns `DownloadedFile { filename, content_type, bytes }`.
 -   **MCP Document Attachment Image Download**: Implemented `download_document_attachment_image` tool in `mcp-backlog-server`.
+-   **`ensure_image_type` Refactor**: `mcp-backlog-server/src/util.rs::ensure_image_type` now returns `Result<(), McpError>`.
+-   **"Get Issue Type List" API Implemented in `backlog-project`**:
+    -   `IssueType` model defined in `backlog-project/src/models/issue_type.rs`.
+    -   `get_issue_type_list` method implemented in `backlog-project::ProjectApi`.
+    -   Unit tests added for `get_issue_type_list`.
+    -   `IssueType` exported from `backlog-project` and re-exported by `backlog-api-client`.
 
 ## What Works
 -   The Memory Bank system is established and updated.
@@ -89,27 +95,26 @@
 -   **Simplified Consumer Dependencies**: `mcp-backlog-server` depends primarily on `backlog-api-client`.
 -   The `backlog-api-client` library provides core functionality for Backlog API interaction, including:
     -   Git repository listing and details.
-    -   Pull request listing, details, **attachment listing**, and **attachment download** (now returns filename, content type, and bytes).
-    -   Issue listing, details, updates, comment listing, **attachment listing**, and **attachment file download** (now returns filename, content type, and bytes). (Issue status now uses a complete model from `backlog-project`).
-    -   Document listing, details, and **attachment download** (now returns filename, content type, and bytes).
-    -   Project listing, details, and **project status listing**.
+    -   Pull request listing, details, **attachment listing**, and **attachment download** (now returns `DownloadedFile`).
+    -   Issue listing, details, updates, comment listing, **attachment listing**, and **attachment file download** (now returns `DownloadedFile`). (Issue status now uses a complete model from `backlog-project`).
+    -   Document listing, details, and **attachment download** (now returns `DownloadedFile`).
+    -   Project listing, details, **project status listing**, and **project issue type listing**.
     -   Space details.
     -   User details.
--   The `blg` CLI tool provides commands for various operations, including **downloading issue attachments** and **pull request attachments** (adapted to new library attachment download signatures).
--   The `mcp-backlog-server` provides a suite of MCP tools, including **project status listing**, **issue attachment listing**, **issue attachment image/text/raw download**, **pull request attachment download (raw JSON, image, text)**, **user list retrieval**, and **document attachment image download**. Error reporting is informative.
+-   The `blg` CLI tool provides commands for various operations, including **downloading issue attachments** and **pull request attachments** (adapted to use `DownloadedFile`).
+-   The `mcp-backlog-server` provides a suite of MCP tools, including **project status listing**, **issue attachment listing**, **issue attachment image/text/raw download**, **pull request attachment download (raw JSON, image, text)**, **user list retrieval**, and **document attachment image download**. Error reporting is informative. All download tools now correctly use `DownloadedFile` and the updated `ensure_image_type`.
 -   The codebase is free of Clippy warnings and consistently formatted. All tests pass.
 -   Test utilities like `setup_client` are now shared from the `client` crate.
 
 ## What's Left to Build (for this task)
--   "Get Status List of Project" feature implementation is complete.
--   `get_project_status_list` MCP tool implementation is complete.
+-   "Get Issue Type List" feature implementation is complete.
 -   Potential next steps, if requested:
-    -   Integrate `get_status_list` into the `blg` CLI tool.
+    -   Integrate `get_issue_type_list` into the `blg` CLI tool.
+    -   Implement an MCP tool for `get_issue_type_list`.
 -   Complete full definitions for stubbed request parameter structs in `backlog-issue/src/requests/mod.rs`.
 
 ## Known Issues (from initialization process and ongoing work)
 -   The `list_code_definition_names` tool did not find top-level definitions in the `src` directories of several module-specific crates.
--   The `download_attachment` method in `backlog-document/src/api.rs` is a placeholder. (This is now resolved)
 
 ## Evolution of Project Decisions
 -   **Initial Project Setup**: Focused on creating the Backlog API client library and CLI.
@@ -216,8 +221,7 @@
     -   User requested to group the "Available Tools" section in `mcp-backlog-server/README.md` by the server's internal module structure (`document`, `git`, `issue`, `project`, `user`).
     -   Updated the README to reflect this new grouped structure.
     -   Corrected the tool name `list_pull_requests` to `get_pull_request_list` to match the actual implementation.
--   **Document Attachment Download Implementation (`backlog-document`)**: (This entry is now superseded by the MCP Document Attachment Image Download entry below)
--   **MCP Document Attachment Image Download & Client Refactor**:
+-   **MCP Document Attachment Image Download & Client Refactor (Tuple Return)**:
     -   User requested `download_document_attachment_image` MCP tool.
     -   **Client Refactor**: `client::Client::download_file_raw` was enhanced to parse `Content-Disposition` (for filename) and `Content-Type` headers, changing its return to `Result<(String, String, bytes::Bytes)>`.
     -   **Library Updates**: All attachment download methods in `backlog-issue`, `backlog-git`, and `backlog-document` were updated to use and return this new triple. Unit tests were updated accordingly.
@@ -231,3 +235,16 @@
         -   Existing MCP server attachment download tools updated to correctly use the new 3-tuple from their bridge functions and the modified `ensure_image_type`.
         -   `mcp-backlog-server/README.md` updated.
     -   All changes verified with `cargo check`, `test`, `clippy`, and `fmt`.
+-   **Refactored Attachment Download Return Types to `DownloadedFile` Struct and `ensure_image_type`**:
+    -   `client::Client::download_file_raw` changed to return `Result<DownloadedFile>`.
+    -   All library API methods, CLI commands, and MCP bridge functions updated to use `DownloadedFile`.
+    -   `mcp-backlog-server/src/util.rs::ensure_image_type` changed to return `Result<(), McpError>`.
+    -   MCP server image download tools updated to use the new `ensure_image_type` and `DownloadedFile.content_type`.
+    -   All changes verified.
+-   **Implemented "Get Issue Type List" API in `backlog-project`**:
+    -   Confirmed `IssueTypeId` exists in `backlog-core`.
+    -   Defined `IssueType` model in `backlog-project/src/models/issue_type.rs`.
+    -   Exported `IssueType` from `backlog-project` models and lib.
+    -   Implemented `get_issue_type_list` method in `ProjectApi` with unit tests.
+    -   Re-exported `IssueType` from `backlog-api-client` facade.
+    -   All changes verified.

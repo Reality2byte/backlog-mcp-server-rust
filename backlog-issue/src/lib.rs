@@ -7,5 +7,5 @@ pub use api::IssueApi;
 pub use models::{
     attachment::Attachment,
     comment::Comment,
-    issue::{Category, Issue, IssueType, Milestone, Priority, Resolution},
+    issue::{Category, Issue, Milestone, Priority, Resolution},
 };

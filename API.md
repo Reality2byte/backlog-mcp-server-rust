@@ -86,7 +86,7 @@
 
 ### Issue Type
 - [ ] UpdateIssueType: Updates information about Issue Type: PATCH /api/v2/projects/:projectIdOrKey/issueTypes/:id
-- [ ] GetIssueTypeList: Returns list of Issue Types in the project: GET /api/v2/projects/:projectIdOrKey/issueTypes
+- [x] GetIssueTypeList: Returns list of Issue Types in the project: GET /api/v2/projects/:projectIdOrKey/issueTypes
 - [ ] AddIssueType: Adds new Issue Type to the project: POST /api/v2/projects/:projectIdOrKey/issueTypes
 - [ ] DeleteIssueType: Deletes Issue Type: DELETE /api/v2/projects/:projectIdOrKey/issueTypes/:id
 
