@@ -1,4 +1,5 @@
-use crate::models::{Document, DocumentDetail, DocumentTreeResponse};
+use crate::DocumentTreeResponse;
+use crate::models::{Document, DocumentDetail};
 use crate::requests::{GetDocumentTreeParams, ListDocumentsParams};
 use backlog_api_core::Result;
 use backlog_core::DocumentId;

@@ -1,7 +1,9 @@
 pub mod api;
 pub mod models;
 pub mod requests;
+pub mod responses;
 
 pub use api::DocumentApi;
-pub use models::*;
-pub use requests::*;
+pub use models::{Document, DocumentAttachment, DocumentDetail, DocumentTag, DocumentTreeNode};
+pub use requests::{GetDocumentTreeParams, ListDocumentsParams};
+pub use responses::DocumentTreeResponse;
