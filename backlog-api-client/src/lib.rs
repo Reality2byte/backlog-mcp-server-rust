@@ -15,7 +15,7 @@ pub use backlog_core::{
     // ProjectKey,
     // RepositoryName,
     // UserId,
-    identifier::{AttachmentId, PrNumber, ProjectId, StatusId, UserId}, // Added PrNumber
+    identifier::{AttachmentId, PrNumber, ProjectId, StatusId, UserId},
 };
 
 // Document module (from backlog_document)
@@ -25,10 +25,7 @@ pub use backlog_document::{DocumentApi, DocumentDetail};
 // Issue module (from backlog_issue)
 #[cfg(feature = "issue")]
 pub use backlog_issue::{
-    Attachment, // Added Attachment
-    Issue,
-    IssueApi,
-    Milestone,
+    Attachment, Issue, IssueApi, Milestone,
     models::comment::{ChangeLogEntry, Comment, Notification, Star},
     requests::{
         GetIssueListParamsBuilder, UpdateIssueParamsBuilder,

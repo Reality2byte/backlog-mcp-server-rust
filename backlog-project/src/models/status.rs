@@ -1,11 +1,11 @@
 use backlog_core::identifier::{ProjectId, StatusId};
-use serde::{Deserialize, Serialize}; // Added Serialize
+use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "schemars")]
 use schemars::JsonSchema;
 
 /// Represents a status definition within a project.
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)] // Added Serialize
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct Status {

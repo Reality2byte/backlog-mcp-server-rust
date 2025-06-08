@@ -1,7 +1,6 @@
 use backlog_api_core::Result;
-use backlog_core::{Identifier, IssueIdOrKey, IssueKey, ProjectIdOrKey}; // Added Identifier
-// Removed unused: use chrono::DateTime;
-use client::{Client, DownloadedFile}; // Added DownloadedFile
+use backlog_core::{Identifier, IssueIdOrKey, IssueKey, ProjectIdOrKey};
+use client::{Client, DownloadedFile};
 
 use crate::{
     models::{attachment::Attachment, comment::Comment, issue::Issue, issue::Milestone},
@@ -107,15 +106,13 @@ impl IssueApi {
         issue_id_or_key: impl Into<IssueIdOrKey>,
         attachment_id: backlog_core::identifier::AttachmentId,
     ) -> backlog_api_core::Result<DownloadedFile> {
-        // Changed return type to DownloadedFile
-        // Changed return type
         let issue_id_or_key_str = issue_id_or_key.into().to_string();
         let attachment_id_val = attachment_id.value();
         let path = format!(
             "/api/v2/issues/{}/attachments/{}",
             issue_id_or_key_str, attachment_id_val
         );
-        self.0.download_file_raw(&path).await // download_file_raw now returns a tuple
+        self.0.download_file_raw(&path).await
     }
 }
 
@@ -138,19 +135,16 @@ mod tests {
             get_comment_list::{CommentOrder, GetCommentListParamsBuilder},
         },
     };
-    use backlog_api_core::bytes::Bytes; // This should be correct now
+    use backlog_api_core::bytes::Bytes;
     use backlog_core::{
         IssueKey, User,
         identifier::{AttachmentId, CommentId, IssueId, MilestoneId, ProjectId, UserId},
     };
     use chrono::{TimeZone, Utc};
-    use client::test_utils::setup_client; // Use the common setup_client
-    // Removed: use reqwest::header::CONTENT_DISPOSITION; // reqwest not a dev-dependency here
+    use client::test_utils::setup_client;
     use serde_json::json;
     use wiremock::matchers::{method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
-
-    // Removed local setup_client function definition
 
     fn create_mock_user(id: u32, name: &str) -> User {
         User {

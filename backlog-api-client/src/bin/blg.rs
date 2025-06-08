@@ -1,20 +1,12 @@
 use backlog_api_client::{
-    AttachmentId, // Corrected import
-    GetIssueListParamsBuilder,
-    IssueIdOrKey,
-    PrNumber, // Added PrNumber
-    ProjectId,
-    ProjectIdOrKey,
-    RepositoryIdOrName,
-    StatusId,
-    UserId,
-    client::BacklogApiClient,
+    AttachmentId, GetIssueListParamsBuilder, IssueIdOrKey, PrNumber, ProjectId, ProjectIdOrKey,
+    RepositoryIdOrName, StatusId, UserId, client::BacklogApiClient,
 };
-use clap::{Args, Parser}; // Removed Subcommand
+use clap::{Args, Parser};
 use std::env;
 use std::path::PathBuf;
-use std::str::FromStr; // Added for parsing
-use tokio::fs; // Added for file system operations
+use std::str::FromStr;
+use tokio::fs;
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -270,7 +262,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .await
                 {
                     Ok(downloaded_file) => {
-                        // Changed to use DownloadedFile struct
                         if let Err(e) = fs::write(&dl_args.output, &downloaded_file.bytes).await {
                             eprintln!(
                                 "Error writing attachment to {}: {}",
@@ -357,7 +348,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .await
                 {
                     Ok(downloaded_file) => {
-                        // Changed to use DownloadedFile struct
                         if let Err(e) = fs::write(&dl_args.output, &downloaded_file.bytes).await {
                             eprintln!(
                                 "Error writing attachment to {}: {}",

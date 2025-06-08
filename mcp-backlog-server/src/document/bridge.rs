@@ -4,10 +4,10 @@ use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use super::request::{DownloadDocumentAttachmentRequest, GetDocumentDetailsRequest}; // Added DownloadDocumentAttachmentRequest
+use super::request::{DownloadDocumentAttachmentRequest, GetDocumentDetailsRequest};
 use crate::error::Result;
-use backlog_api_client::DownloadedFile; // Removed unused bytes
-use backlog_core::identifier::DocumentAttachmentId; // Changed to backlog_core::identifier // Changed to backlog_api_client re-export
+use backlog_api_client::DownloadedFile;
+use backlog_core::identifier::DocumentAttachmentId;
 
 pub(crate) async fn get_document_details(
     client: Arc<Mutex<BacklogApiClient>>,
@@ -23,7 +23,6 @@ pub(crate) async fn download_document_attachment_bridge(
     client: Arc<Mutex<BacklogApiClient>>,
     req: DownloadDocumentAttachmentRequest,
 ) -> Result<DownloadedFile> {
-    // Changed return type to DownloadedFile
     let client_guard = client.lock().await;
     let document_id = DocumentId::from_str(req.document_id.trim())?;
     let attachment_id = DocumentAttachmentId::new(req.attachment_id);

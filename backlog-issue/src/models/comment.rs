@@ -3,7 +3,7 @@ use backlog_core::{
     identifier::{CommentId, NotificationId, StarId},
 };
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize}; // Ensured Serialize is here
+use serde::{Deserialize, Serialize};
 
 // Conditionally import and derive JsonSchema
 #[cfg(feature = "schemars")]
@@ -12,8 +12,8 @@ use schemars::JsonSchema;
 /// Represents a comment on a Backlog issue.
 ///
 /// Corresponds to the `Comment` object in the Backlog API.
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)] // Removed JsonSchema from here
-#[cfg_attr(feature = "schemars", derive(JsonSchema))] // Added conditional JsonSchema
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct Comment {
     /// The ID of the comment.
@@ -41,8 +41,8 @@ pub struct Comment {
 ///
 /// This details a specific modification that occurred, such as a change to an issue's
 /// status, assignee, or other attributes, recorded as part of a comment.
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)] // Removed JsonSchema from here
-#[cfg_attr(feature = "schemars", derive(JsonSchema))] // Added conditional JsonSchema
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct ChangeLogEntry {
     /// The field that was changed (e.g., "status", "assignee").
@@ -65,8 +65,8 @@ pub struct ChangeLogEntry {
 /// Represents a "star" given to a comment.
 ///
 /// Users can star comments to mark them as noteworthy or for quick reference.
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)] // Removed JsonSchema from here
-#[cfg_attr(feature = "schemars", derive(JsonSchema))] // Added conditional JsonSchema
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct Star {
     /// The ID of the star.
@@ -84,8 +84,8 @@ pub struct Star {
 /// Represents a notification related to an issue or comment.
 ///
 /// Notifications inform users about activities they are involved in or subscribed to.
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)] // Removed JsonSchema from here
-#[cfg_attr(feature = "schemars", derive(JsonSchema))] // Added conditional JsonSchema
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct Notification {
     /// The ID of the notification.

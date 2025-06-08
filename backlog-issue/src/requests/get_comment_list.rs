@@ -56,7 +56,7 @@ impl FromStr for CommentOrder {
 ///     .unwrap();
 /// ```
 #[derive(Debug, Clone, Default, Builder)]
-#[builder(default, setter(strip_option, into), build_fn(error = "ApiError"))] // Added build_fn
+#[builder(default, setter(strip_option, into), build_fn(error = "ApiError"))]
 pub struct GetCommentListParams {
     /// The minimum comment ID to include in the results.
     #[builder(default)]

@@ -1,20 +1,12 @@
-use crate::error::{Error, Result}; // Added Error
+use crate::error::{Error, Result};
 use crate::git::request::{
     DownloadPullRequestAttachmentRequest, GetPullRequestAttachmentListRequest,
-}; // Added DownloadPullRequestAttachmentRequest
-// Removed: use backlog_api_client::bytes::Bytes; // Unused after DownloadedFile introduction
+};
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
-    AttachmentId,
-    DownloadedFile,
-    PrNumber,
-    ProjectIdOrKey,
-    PullRequest,
-    PullRequestAttachment, // Added DownloadedFile
-    Repository,
-    RepositoryIdOrName,
+    AttachmentId, DownloadedFile, PrNumber, ProjectIdOrKey, PullRequest, PullRequestAttachment,
+    Repository, RepositoryIdOrName,
 };
-// Removed: use backlog_core::Identifier; // Was unused after bridge function refactor
 use std::{str::FromStr, sync::Arc};
 use tokio::sync::Mutex;
 
@@ -47,7 +39,7 @@ pub(crate) async fn get_repository(
 }
 
 pub(crate) async fn get_pull_request_list(
-    client: Arc<Mutex<BacklogApiClient>>, // Changed signature
+    client: Arc<Mutex<BacklogApiClient>>,
     project_id_or_key: String,
     repo_id_or_name: String,
 ) -> Result<Vec<PullRequest>> {
@@ -101,8 +93,6 @@ pub(crate) async fn download_pr_attachment_bridge(
     client: Arc<Mutex<BacklogApiClient>>,
     req: DownloadPullRequestAttachmentRequest,
 ) -> Result<DownloadedFile> {
-    // Changed return type to DownloadedFile
-    // Changed return type
     let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
     let pr_number = PrNumber::from(req.pr_number);
@@ -121,5 +111,5 @@ pub(crate) async fn download_pr_attachment_bridge(
             attachment_id_for_download,
         )
         .await
-        .map_err(Error::from) // Convert ApiError to local McpError
+        .map_err(Error::from)
 }

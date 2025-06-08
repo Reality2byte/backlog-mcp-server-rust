@@ -1,6 +1,6 @@
 use derive_builder::UninitializedFieldError;
 use serde::Deserialize;
-use thiserror::Error; // Added for new structs
+use thiserror::Error;
 
 // Add use statement for backlog_core so its Error type can be referenced.
 // use backlog_core; // This line is redundant as backlog_core::Error is used with its full path.

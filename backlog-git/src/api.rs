@@ -1,12 +1,10 @@
 use crate::models::{PullRequest, PullRequestAttachment, Repository};
-use backlog_api_core::Result; // Removed unused bytes
+use backlog_api_core::Result;
 use backlog_core::{
-    Identifier, // Added Identifier trait for .value()
-    ProjectIdOrKey,
-    RepositoryIdOrName,
-    identifier::{AttachmentId, PrNumber}, // Added PrNumber
+    Identifier, ProjectIdOrKey, RepositoryIdOrName,
+    identifier::{AttachmentId, PrNumber},
 };
-use client::{Client, DownloadedFile}; // Added DownloadedFile
+use client::{Client, DownloadedFile};
 
 /// Provides access to the Git and Pull Request related API functions.
 #[derive(Debug, Clone)]
@@ -124,10 +122,10 @@ impl GitApi {
         &self,
         project_id_or_key: &ProjectIdOrKey, // Keeping as reference based on existing code
         repo_id_or_name: &RepositoryIdOrName, // Keeping as reference
-        pr_number: PrNumber,                // Changed to PrNumber
+        pr_number: PrNumber,
     ) -> backlog_api_core::Result<Vec<PullRequestAttachment>> {
         let path = format!(
-            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments", // "/git/" を追加
+            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments",
             project_id_or_key, // Display trait を利用
             repo_id_or_name,   // Display trait を利用
             pr_number.value()
@@ -149,18 +147,15 @@ impl GitApi {
         &self,
         project_id_or_key: impl Into<ProjectIdOrKey>,
         repo_id_or_name: impl Into<RepositoryIdOrName>,
-        pr_number: PrNumber, // Changed to PrNumber
+        pr_number: PrNumber,
         attachment_id: AttachmentId,
     ) -> Result<DownloadedFile> {
-        // Changed return type to DownloadedFile
-        // Changed return type
-        // Changed Bytes to bytes::Bytes
         let path = format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",
             project_id_or_key.into(),
             repo_id_or_name.into(),
             pr_number.value(),
-            attachment_id.value() // Use .value() to get the u64 ID
+            attachment_id.value(),
         );
         self.client.download_file_raw(&path).await
     }
@@ -173,17 +168,16 @@ mod tests {
     // No, the top level import is `backlog_api_core::bytes`, so here we'd use `bytes::Bytes`.
     // Or, import `backlog_api_core::bytes::Bytes` specifically for the test module if preferred.
     // Let's rely on the top-level `bytes` module being available.
-    use backlog_api_core::bytes::Bytes; // Import Bytes for tests
-    use backlog_core::identifier::{AttachmentId, Identifier, PrNumber}; // Added PrNumber for tests
+    use backlog_api_core::bytes::Bytes;
+    use backlog_core::identifier::{AttachmentId, Identifier, PrNumber};
     use client::test_utils::setup_client;
-    // Removed: use reqwest::header::CONTENT_DISPOSITION; // Was causing error, not a dev-dependency
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[tokio::test]
     async fn test_get_pull_request_attachment_list_success_multiple_attachments() {
         let server = MockServer::start().await;
-        let client = setup_client(&server).await; // server.uri().as_str() から &server に変更
+        let client = setup_client(&server).await;
         let git_api = GitApi::new(client);
 
         let project_key = "TESTPROJECT";
@@ -206,7 +200,7 @@ mod tests {
 
         Mock::given(method("GET"))
             .and(path(format!(
-                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments", // "/git/" を追加
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments",
                 project_key, repo_name, pr_number_val
             )))
             .respond_with(ResponseTemplate::new(200).set_body_json(&mock_response))
@@ -232,7 +226,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_pull_request_attachment_list_success_no_attachments() {
         let server = MockServer::start().await;
-        let client = setup_client(&server).await; // server.uri().as_str() から &server に変更
+        let client = setup_client(&server).await;
         let git_api = GitApi::new(client);
 
         let project_key = "TESTPROJECT";
@@ -243,7 +237,7 @@ mod tests {
 
         Mock::given(method("GET"))
             .and(path(format!(
-                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments", // "/git/" を追加
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments",
                 project_key, repo_name, pr_number_val
             )))
             .respond_with(ResponseTemplate::new(200).set_body_json(&mock_response))
@@ -264,7 +258,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_pull_request_attachment_list_error_404() {
         let server = MockServer::start().await;
-        let client = setup_client(&server).await; // server.uri().as_str() から &server に変更
+        let client = setup_client(&server).await;
         let git_api = GitApi::new(client);
 
         let project_key = "NONEXISTENT";
@@ -274,7 +268,7 @@ mod tests {
 
         Mock::given(method("GET"))
             .and(path(format!(
-                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments", // "/git/" を追加
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments",
                 project_key, repo_name, pr_number_val
             )))
             .respond_with(ResponseTemplate::new(404))
@@ -340,7 +334,7 @@ mod tests {
         let downloaded_file = result.unwrap();
         assert_eq!(downloaded_file.filename, "test_file.txt");
         assert_eq!(downloaded_file.content_type, "application/octet-stream");
-        assert_eq!(downloaded_file.bytes, Bytes::from(attachment_content)); // Use imported Bytes
+        assert_eq!(downloaded_file.bytes, Bytes::from(attachment_content));
     }
 
     #[tokio::test]

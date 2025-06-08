@@ -45,7 +45,7 @@ mod tests {
     use super::*;
     use backlog_api_core::Error as ApiError;
     use backlog_core::identifier::{ProjectId, StatusId};
-    use client::test_utils::setup_client; // Changed to setup_client
+    use client::test_utils::setup_client;
     use std::str::FromStr;
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -53,21 +53,21 @@ mod tests {
     #[tokio::test]
     async fn test_get_status_list_success() {
         let server = MockServer::start().await;
-        let client = setup_client(&server).await; // Changed to setup_client
+        let client = setup_client(&server).await;
         let project_api = ProjectApi::new(client);
         let project_id = ProjectId::new(123);
 
         let expected_statuses = vec![
             Status {
                 id: StatusId::new(1),
-                project_id, // 冗長なフィールド名を修正
+                project_id,
                 name: "Open".to_string(),
                 color: "#ff0000".to_string(),
                 display_order: 1,
             },
             Status {
                 id: StatusId::new(2),
-                project_id, // 冗長なフィールド名を修正
+                project_id,
                 name: "Closed".to_string(),
                 color: "#00ff00".to_string(),
                 display_order: 2,
@@ -91,7 +91,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_status_list_empty() {
         let server = MockServer::start().await;
-        let client = setup_client(&server).await; // Changed to setup_client
+        let client = setup_client(&server).await;
         let project_api = ProjectApi::new(client);
         let project_key = "TEST_PROJECT";
 
@@ -113,7 +113,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_status_list_project_not_found() {
         let server = MockServer::start().await;
-        let client = setup_client(&server).await; // Changed to setup_client
+        let client = setup_client(&server).await;
         let project_api = ProjectApi::new(client);
         let project_id = 999; // Non-existent project
 

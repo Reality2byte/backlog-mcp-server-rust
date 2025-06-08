@@ -1,10 +1,10 @@
-use backlog_core::ProjectIdOrKey; // Corrected import
+use backlog_core::ProjectIdOrKey;
 use backlog_core::identifier::ProjectId;
 use derive_builder::Builder;
-use serde::Serialize; // Only needed if these params are sent as body, for GET they are query params. Builder is enough.
+use serde::Serialize;
 use std::fmt;
 
-#[derive(Debug, Builder, Clone, PartialEq)] // Removed Default
+#[derive(Debug, Builder, Clone, PartialEq)]
 #[builder(setter(strip_option))]
 pub struct ListDocumentsParams {
     // Based on curl: /api/v2/documents?apiKey=xxx&projectId=601486&offset=0&count=1
@@ -21,7 +21,7 @@ pub struct ListDocumentsParams {
     pub count: Option<u32>,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)] // Serialize might not be needed if only for query
+#[derive(Debug, Clone, Serialize, PartialEq)]
 pub enum DocumentSortKey {
     #[serde(rename = "name")]
     Name,
@@ -38,12 +38,12 @@ impl fmt::Display for DocumentSortKey {
     }
 }
 
-#[derive(Debug, Builder, Clone, PartialEq)] // Removed Default
+#[derive(Debug, Builder, Clone, PartialEq)]
 #[builder(setter(strip_option))]
 pub struct GetDocumentTreeParams {
     // Based on curl: /api/v2/documents/tree?apiKey=xxx&projectIdOrKey=MSSP
     #[builder(setter(into))]
-    pub project_id_or_key: ProjectIdOrKey, // Assuming ProjectIdOrKey from backlog-core
+    pub project_id_or_key: ProjectIdOrKey,
 }
 
 // This From implementation is crucial for client.get_with_params

@@ -1,29 +1,14 @@
 use super::request::{
-    DownloadAttachmentRequest, // Added
-    GetAttachmentListRequest,
-    GetIssueCommentsRequest,
-    GetIssueDetailsRequest,
-    GetIssuesByMilestoneNameRequest,
-    GetVersionMilestoneListRequest,
+    DownloadAttachmentRequest, GetAttachmentListRequest, GetIssueCommentsRequest,
+    GetIssueDetailsRequest, GetIssuesByMilestoneNameRequest, GetVersionMilestoneListRequest,
     UpdateIssueRequest,
 };
 use crate::error::{Error as McpError, Result};
 use crate::util::{MatchResult, find_by_name_from_array};
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
-    Attachment,   // This is the model
-    AttachmentId, // Corrected path
-    Comment,
-    // bytes, // Corrected: Use re-exported bytes - now unused
-    DownloadedFile, // Added DownloadedFile
-    // Corrected paths for these comment-related types:
-    GetCommentListParamsBuilder,
-    GetIssueListParamsBuilder,
-    Issue,
-    IssueIdOrKey,
-    IssueKey,
-    Milestone,
-    ProjectIdOrKey,
+    Attachment, AttachmentId, Comment, DownloadedFile, GetCommentListParamsBuilder,
+    GetIssueListParamsBuilder, Issue, IssueIdOrKey, IssueKey, Milestone, ProjectIdOrKey,
     UpdateIssueParamsBuilder,
 };
 use std::str::FromStr;
@@ -161,8 +146,6 @@ pub(crate) async fn download_issue_attachment_file(
     client: Arc<Mutex<BacklogApiClient>>,
     req: DownloadAttachmentRequest,
 ) -> Result<DownloadedFile> {
-    // Changed return type to DownloadedFile
-    // Changed return type to include content_type
     let parsed_issue_id_or_key = IssueIdOrKey::from_str(&req.issue_id_or_key)?;
     let parsed_attachment_id = AttachmentId::new(req.attachment_id);
 
@@ -174,5 +157,5 @@ pub(crate) async fn download_issue_attachment_file(
         .issue()
         .get_attachment_file(parsed_issue_id_or_key, parsed_attachment_id)
         .await
-        .map_err(McpError::from) // Convert ApiError to McpError
+        .map_err(McpError::from)
 }
