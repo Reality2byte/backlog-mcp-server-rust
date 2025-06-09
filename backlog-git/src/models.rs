@@ -2,7 +2,10 @@
 
 use backlog_core::{
     User,
-    identifier::{AttachmentId, IssueId, PrNumber, ProjectId, PullRequestId, RepositoryId},
+    identifier::{
+        AttachmentId, IssueId, NotificationId, PrNumber, ProjectId, PullRequestCommentId,
+        PullRequestId, RepositoryId, StarId,
+    },
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize}; // Assuming User is defined in backlog-core and public, and implements Serialize, JsonSchema
@@ -120,4 +123,52 @@ pub struct PullRequestAttachment {
     pub size: u64,
 }
 
-// TODO: Define other related models like PullRequestComment, Attachment, Star if needed.
+/// Represents a star given to an entity in Backlog.
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+pub struct Star {
+    pub id: StarId,
+    pub comment: Option<String>,
+    pub url: String,
+    pub title: String,
+    pub presenter: User,
+    pub created: DateTime<Utc>,
+}
+
+/// Represents a notification related to an entity in Backlog.
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+pub struct Notification {
+    pub id: NotificationId,
+    pub already_read: bool,
+    pub reason: u8,
+    pub user: User,
+    pub resource_already_read: bool,
+}
+
+/// Represents a log of a change made to a pull request.
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+pub struct ChangeLog {
+    pub field: String,
+    pub new_value: String,
+    pub original_value: Option<String>,
+}
+
+/// Represents a comment on a pull request.
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+pub struct PullRequestComment {
+    pub id: PullRequestCommentId,
+    pub content: String,
+    pub change_log: Vec<ChangeLog>,
+    pub created_user: User,
+    pub created: DateTime<Utc>,
+    pub updated: DateTime<Utc>,
+    pub stars: Vec<Star>,
+    pub notifications: Vec<Notification>,
+}

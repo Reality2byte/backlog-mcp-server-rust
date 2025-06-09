@@ -12,6 +12,7 @@ chrono = { workspace = true }
 backlog-core = { path = "../backlog-core", features = ["schemars"] }
 backlog-api-core = { path = "../backlog-api-core" }
 client = { path = "../client" }
+derive_builder = { workspace = true }
 
 [features]
 default = []

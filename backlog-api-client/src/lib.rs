@@ -15,7 +15,7 @@ pub use backlog_core::{
     // ProjectKey,
     // RepositoryName,
     // UserId,
-    identifier::{AttachmentId, PrNumber, ProjectId, StatusId, UserId},
+    identifier::{AttachmentId, PrNumber, ProjectId, PullRequestCommentId, StatusId, UserId},
 };
 
 // Document module (from backlog_document)
@@ -28,7 +28,7 @@ pub use backlog_document::{
 #[cfg(feature = "issue")]
 pub use backlog_issue::{
     Attachment, Issue, IssueApi,
-    models::comment::{ChangeLogEntry, Comment, Notification, Star},
+    models::comment::{ChangeLogEntry, Comment},
     requests::{
         GetIssueListParams, GetIssueListParamsBuilder, UpdateIssueParams, UpdateIssueParamsBuilder,
         get_comment_list::{CommentOrder, GetCommentListParams, GetCommentListParamsBuilder},
@@ -37,7 +37,16 @@ pub use backlog_issue::{
 
 // Git module (from backlog_git)
 #[cfg(feature = "git")]
-pub use backlog_git::{GitApi, PullRequest, PullRequestAttachment, Repository};
+pub use backlog_git::{
+    api::GitApi,
+    models::{
+        ChangeLog, Notification, PullRequest, PullRequestAttachment, PullRequestComment,
+        Repository, Star,
+    },
+    requests::get_pull_request_comment_list::{
+        GetPullRequestCommentListParams, GetPullRequestCommentListParamsBuilder, Order,
+    },
+};
 
 // Project module (from backlog_project)
 #[cfg(feature = "project")]

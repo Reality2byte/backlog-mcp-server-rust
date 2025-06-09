@@ -89,6 +89,7 @@ impl_identifier!(
     (StarId, u32),
     (RepositoryId, u32),
     (PullRequestId, u32),
+    (PullRequestCommentId, u32),
     // u64 identifiers
     (SvnRevision, u64),
     (PrNumber, u64)

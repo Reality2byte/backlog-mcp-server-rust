@@ -1,4 +1,7 @@
-use crate::models::{PullRequest, PullRequestAttachment, Repository};
+use crate::{
+    models::{PullRequest, PullRequestAttachment, PullRequestComment, Repository},
+    requests::get_pull_request_comment_list::GetPullRequestCommentListParams,
+};
 use backlog_api_core::Result;
 use backlog_core::{
     Identifier, ProjectIdOrKey, RepositoryIdOrName,
@@ -159,6 +162,32 @@ impl GitApi {
         );
         self.client.download_file_raw(&path).await
     }
+
+    /// Fetches the list of comments for a specific pull request.
+    ///
+    /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/comments`.
+    ///
+    /// # Arguments
+    ///
+    /// * `project_id_or_key` - The ID or key of the project.
+    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
+    /// * `pr_number` - The pull request number.
+    /// * `params` - Optional query parameters for filtering and pagination.
+    pub async fn get_pull_request_comment_list(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        repo_id_or_name: impl Into<RepositoryIdOrName>,
+        pr_number: PrNumber,
+        params: Option<GetPullRequestCommentListParams>,
+    ) -> Result<Vec<PullRequestComment>> {
+        let path = format!(
+            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments",
+            project_id_or_key.into(),
+            repo_id_or_name.into(),
+            pr_number.value()
+        );
+        self.client.get_with_params(&path, &params).await
+    }
 }
 
 #[cfg(test)]
@@ -168,9 +197,15 @@ mod tests {
     // No, the top level import is `backlog_api_core::bytes`, so here we'd use `bytes::Bytes`.
     // Or, import `backlog_api_core::bytes::Bytes` specifically for the test module if preferred.
     // Let's rely on the top-level `bytes` module being available.
+    use crate::requests::get_pull_request_comment_list::{
+        GetPullRequestCommentListParamsBuilder, Order,
+    };
     use backlog_api_core::bytes::Bytes;
-    use backlog_core::identifier::{AttachmentId, Identifier, PrNumber};
+    use backlog_core::identifier::{
+        AttachmentId, Identifier, PrNumber, PullRequestCommentId, UserId,
+    };
     use client::test_utils::setup_client;
+    use serde_json::json;
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -377,5 +412,102 @@ mod tests {
         //     backlog_api_core::Error::HttpStatus { status, .. } => assert_eq!(status, reqwest::StatusCode::NOT_FOUND),
         //     _ => panic!("Expected HttpStatus error"),
         // }
+    }
+
+    #[tokio::test]
+    async fn test_get_pull_request_comment_list_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+        let pr_number_val = 127;
+        let pr_number = PrNumber::new(pr_number_val);
+
+        let mock_response = json!([
+            {
+                "id": 35,
+                "content": "from api",
+                "changeLog": [],
+                "createdUser": {
+                    "id": 1,
+                    "userId": "admin",
+                    "name": "admin",
+                    "roleType": 1,
+                    "lang": "ja",
+                    "mailAddress": "eguchi@nulab.example"
+                },
+                "created": "2015-05-14T01:53:38Z",
+                "updated": "2015-05-14T01:53:38Z",
+                "stars": [],
+                "notifications": []
+            }
+        ]);
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments",
+                project_key, repo_name, pr_number_val
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(mock_response))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+
+        let result = git_api
+            .get_pull_request_comment_list(project_id_or_key, repo_id_or_name, pr_number, None)
+            .await;
+
+        assert!(result.is_ok());
+        let comments = result.unwrap();
+        assert_eq!(comments.len(), 1);
+        assert_eq!(comments[0].id, PullRequestCommentId(35));
+        assert_eq!(comments[0].content, "from api");
+        assert_eq!(comments[0].created_user.id, UserId(1));
+    }
+
+    #[tokio::test]
+    async fn test_get_pull_request_comment_list_with_params() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+        let pr_number_val = 128;
+        let pr_number = PrNumber::new(pr_number_val);
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments",
+                project_key, repo_name, pr_number_val
+            )))
+            .and(wiremock::matchers::query_param("count", "1"))
+            .and(wiremock::matchers::query_param("order", "asc"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!([])))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+        let params = GetPullRequestCommentListParamsBuilder::default()
+            .count(Some(1))
+            .order(Some(Order::Asc))
+            .build()
+            .unwrap();
+
+        let result = git_api
+            .get_pull_request_comment_list(
+                project_id_or_key,
+                repo_id_or_name,
+                pr_number,
+                Some(params),
+            )
+            .await;
+
+        assert!(result.is_ok());
     }
 }
