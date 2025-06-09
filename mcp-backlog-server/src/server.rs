@@ -58,9 +58,7 @@ impl Server {
         &self,
         #[tool(aggr)] request: GetRepositoryListRequest,
     ) -> McpResult {
-        let repositories =
-            git::bridge::get_repository_list(self.client.clone(), request.project_id_or_key)
-                .await?;
+        let repositories = git::bridge::get_repository_list(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(repositories)?]))
     }
 
@@ -69,12 +67,7 @@ impl Server {
         &self,
         #[tool(aggr)] request: GetRepositoryDetailsRequest,
     ) -> McpResult {
-        let repository = git::bridge::get_repository(
-            self.client.clone(),
-            request.project_id_or_key,
-            request.repo_id_or_name,
-        )
-        .await?;
+        let repository = git::bridge::get_repository(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(repository)?]))
     }
 
@@ -83,12 +76,8 @@ impl Server {
         &self,
         #[tool(aggr)] request: ListPullRequestsRequest,
     ) -> McpResult {
-        let pull_requests = git::bridge::get_pull_request_list(
-            self.client.clone(),
-            request.project_id_or_key,
-            request.repo_id_or_name,
-        )
-        .await?;
+        let pull_requests =
+            git::bridge::get_pull_request_list(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(pull_requests)?]))
     }
 
@@ -97,19 +86,13 @@ impl Server {
         &self,
         #[tool(aggr)] request: GetPullRequestDetailsRequest,
     ) -> McpResult {
-        let pull_request = git::bridge::get_pull_request(
-            self.client.clone(),
-            request.project_id_or_key,
-            request.repo_id_or_name,
-            request.pr_number,
-        )
-        .await?;
+        let pull_request = git::bridge::get_pull_request(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(pull_request)?]))
     }
 
     #[tool(description = "Get details for a specific Backlog issue.")]
-    async fn get_issue(&self, #[tool(aggr)] req: GetIssueDetailsRequest) -> McpResult {
-        let issue = issue::bridge::get_issue_details(self.client.clone(), req).await?;
+    async fn get_issue(&self, #[tool(aggr)] request: GetIssueDetailsRequest) -> McpResult {
+        let issue = issue::bridge::get_issue_details(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(issue)?]))
     }
 
@@ -117,9 +100,9 @@ impl Server {
      This API returns the document details including its title, `plain` as Markdown and `json` as ProseMirror json, and other metadata.")]
     async fn get_document_details(
         &self,
-        #[tool(aggr)] req: GetDocumentDetailsRequest,
+        #[tool(aggr)] request: GetDocumentDetailsRequest,
     ) -> McpResult {
-        let document = document::bridge::get_document_details(self.client.clone(), req).await?;
+        let document = document::bridge::get_document_details(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(document)?]))
     }
 
@@ -128,18 +111,19 @@ impl Server {
     )]
     async fn download_document_attachment_image(
         &self,
-        #[tool(aggr)] req: DownloadDocumentAttachmentRequest,
+        #[tool(aggr)] request: DownloadDocumentAttachmentRequest,
     ) -> McpResult {
         let file =
-            document::bridge::download_document_attachment_bridge(self.client.clone(), req).await?;
+            document::bridge::download_document_attachment_bridge(self.client.clone(), request)
+                .await?;
         let response_data = SerializableRawAttachment::image(file)?;
         Ok(CallToolResult::success(vec![response_data.try_into()?]))
     }
 
     #[tool(description = "Get the document tree for a specified project.")]
-    async fn get_document_tree(&self, #[tool(aggr)] req: GetDocumentTreeRequest) -> McpResult {
+    async fn get_document_tree(&self, #[tool(aggr)] request: GetDocumentTreeRequest) -> McpResult {
         let document_tree =
-            document::bridge::get_document_tree_tool(self.client.clone(), req).await?;
+            document::bridge::get_document_tree_tool(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(
             document_tree.active_tree,
         )?]))
@@ -148,26 +132,27 @@ impl Server {
     #[tool(description = "Get a list of versions (milestones) for a specified project.")]
     async fn get_version_milestone_list(
         &self,
-        #[tool(aggr)] req: GetVersionMilestoneListRequest,
+        #[tool(aggr)] request: GetVersionMilestoneListRequest,
     ) -> McpResult {
         let milestones =
-            issue::bridge::get_version_milestone_list(self.client.clone(), req).await?;
+            issue::bridge::get_version_milestone_list(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(milestones)?]))
     }
 
     #[tool(description = "Get a list of issues for a specified milestone name within a project.")]
     async fn get_issues_by_milestone_name(
         &self,
-        #[tool(aggr)] req: GetIssuesByMilestoneNameRequest,
+        #[tool(aggr)] request: GetIssuesByMilestoneNameRequest,
     ) -> McpResult {
-        let issues = issue::bridge::get_issues_by_milestone_name(self.client.clone(), req).await?;
+        let issues =
+            issue::bridge::get_issues_by_milestone_name(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(issues)?]))
     }
 
     #[cfg(feature = "issue_writable")]
     #[tool(description = "Update the summary and/or description of a Backlog issue.")]
-    async fn update_issue(&self, #[tool(aggr)] req: UpdateIssueRequest) -> McpResult {
-        let updated_issue = issue::bridge::update_issue_impl(self.client.clone(), req).await?;
+    async fn update_issue(&self, #[tool(aggr)] request: UpdateIssueRequest) -> McpResult {
+        let updated_issue = issue::bridge::update_issue_impl(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(updated_issue)?]))
     }
 
@@ -175,8 +160,11 @@ impl Server {
         name = "get_issue_comments",
         description = "Gets comments for a specific issue. Takes 'issue_id_or_key' (string, required) and optional 'min_id', 'max_id', 'count', 'order' parameters."
     )]
-    async fn get_issue_comments(&self, #[tool(aggr)] req: GetIssueCommentsRequest) -> McpResult {
-        let comments = issue::bridge::get_issue_comments_impl(self.client.clone(), req).await?;
+    async fn get_issue_comments(
+        &self,
+        #[tool(aggr)] request: GetIssueCommentsRequest,
+    ) -> McpResult {
+        let comments = issue::bridge::get_issue_comments_impl(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(comments)?]))
     }
 
@@ -186,15 +174,16 @@ impl Server {
     )]
     async fn get_issue_attachment_list(
         &self,
-        #[tool(aggr)] req: GetAttachmentListRequest,
+        #[tool(aggr)] request: GetAttachmentListRequest,
     ) -> McpResult {
-        let attachments = issue::bridge::get_attachment_list_impl(self.client.clone(), req).await?;
+        let attachments =
+            issue::bridge::get_attachment_list_impl(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(attachments)?]))
     }
 
     #[tool(description = "Get a list of users in the space.")]
-    async fn get_user_list(&self, #[tool(aggr)] req: GetUserListRequest) -> McpResult {
-        let users = user::bridge::get_user_list_bridge(req, self.client.clone()).await?;
+    async fn get_user_list(&self, #[tool(aggr)] request: GetUserListRequest) -> McpResult {
+        let users = user::bridge::get_user_list_bridge(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(users)?]))
     }
 
@@ -203,9 +192,10 @@ impl Server {
     )]
     async fn download_issue_attachment_raw(
         &self,
-        #[tool(aggr)] req: DownloadAttachmentRequest,
+        #[tool(aggr)] request: DownloadAttachmentRequest,
     ) -> McpResult {
-        let file = issue::bridge::download_issue_attachment_file(self.client.clone(), req).await?;
+        let file =
+            issue::bridge::download_issue_attachment_file(self.client.clone(), request).await?;
         let response_data = SerializableRawAttachment::raw(file);
         Ok(CallToolResult::success(vec![response_data.try_into()?]))
     }
@@ -213,9 +203,10 @@ impl Server {
     #[tool(description = "Download an issue attachment image. Returns filename and image content.")]
     async fn download_issue_attachment_image(
         &self,
-        #[tool(aggr)] req: DownloadAttachmentRequest,
+        #[tool(aggr)] request: DownloadAttachmentRequest,
     ) -> McpResult {
-        let file = issue::bridge::download_issue_attachment_file(self.client.clone(), req).await?;
+        let file =
+            issue::bridge::download_issue_attachment_file(self.client.clone(), request).await?;
         let response_data = SerializableRawAttachment::image(file)?;
         Ok(CallToolResult::success(vec![response_data.try_into()?]))
     }
@@ -225,9 +216,10 @@ impl Server {
     )]
     async fn download_issue_attachment_text(
         &self,
-        #[tool(aggr)] req: DownloadAttachmentRequest,
+        #[tool(aggr)] request: DownloadAttachmentRequest,
     ) -> McpResult {
-        let file = issue::bridge::download_issue_attachment_file(self.client.clone(), req).await?;
+        let file =
+            issue::bridge::download_issue_attachment_file(self.client.clone(), request).await?;
         let response_data = SerializableRawAttachment::text(file)?;
         Ok(CallToolResult::success(vec![response_data.try_into()?]))
     }
@@ -235,20 +227,21 @@ impl Server {
     #[tool(description = "Get a list of statuses for a specified project.")]
     async fn get_project_status_list(
         &self,
-        #[tool(aggr)] req: GetProjectStatusListRequest,
+        #[tool(aggr)] request: GetProjectStatusListRequest,
     ) -> McpResult {
         let statuses =
-            project::bridge::get_project_status_list_tool(self.client.clone(), req).await?;
+            project::bridge::get_project_status_list_tool(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(statuses)?]))
     }
 
     #[tool(description = "Get a list of attachments for a specific pull request.")]
     async fn get_pull_request_attachment_list(
         &self,
-        #[tool(aggr)] req: GetPullRequestAttachmentListRequest,
+        #[tool(aggr)] request: GetPullRequestAttachmentListRequest,
     ) -> McpResult {
         let attachments =
-            git::bridge::get_pull_request_attachment_list_tool(self.client.clone(), req).await?;
+            git::bridge::get_pull_request_attachment_list_tool(self.client.clone(), request)
+                .await?;
         Ok(CallToolResult::success(vec![Content::json(attachments)?]))
     }
 
@@ -257,9 +250,9 @@ impl Server {
     )]
     async fn download_pull_request_attachment_raw(
         &self,
-        #[tool(aggr)] req: DownloadPullRequestAttachmentRequest,
+        #[tool(aggr)] request: DownloadPullRequestAttachmentRequest,
     ) -> McpResult {
-        let file = git::bridge::download_pr_attachment_bridge(self.client.clone(), req).await?;
+        let file = git::bridge::download_pr_attachment_bridge(self.client.clone(), request).await?;
         let response_data = SerializableRawAttachment::raw(file);
         Ok(CallToolResult::success(vec![response_data.try_into()?]))
     }
@@ -269,9 +262,9 @@ impl Server {
     )]
     async fn download_pull_request_attachment_image(
         &self,
-        #[tool(aggr)] req: DownloadPullRequestAttachmentRequest,
+        #[tool(aggr)] request: DownloadPullRequestAttachmentRequest,
     ) -> McpResult {
-        let file = git::bridge::download_pr_attachment_bridge(self.client.clone(), req).await?;
+        let file = git::bridge::download_pr_attachment_bridge(self.client.clone(), request).await?;
         let response_data = SerializableRawAttachment::image(file)?;
         Ok(CallToolResult::success(vec![response_data.try_into()?]))
     }
@@ -281,9 +274,9 @@ impl Server {
     )]
     async fn download_pull_request_attachment_text(
         &self,
-        #[tool(aggr)] req: DownloadPullRequestAttachmentRequest,
+        #[tool(aggr)] request: DownloadPullRequestAttachmentRequest,
     ) -> McpResult {
-        let file = git::bridge::download_pr_attachment_bridge(self.client.clone(), req).await?;
+        let file = git::bridge::download_pr_attachment_bridge(self.client.clone(), request).await?;
         let response_data = SerializableRawAttachment::text(file)?;
         Ok(CallToolResult::success(vec![response_data.try_into()?]))
     }
@@ -291,10 +284,10 @@ impl Server {
     #[tool(description = "Get a list of comments for a specific pull request.")]
     async fn get_pull_request_comment_list(
         &self,
-        #[tool(aggr)] req: GetPullRequestCommentListRequest,
+        #[tool(aggr)] request: GetPullRequestCommentListRequest,
     ) -> McpResult {
         let comments =
-            git::bridge::get_pull_request_comment_list_tool(self.client.clone(), req).await?;
+            git::bridge::get_pull_request_comment_list_tool(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(comments)?]))
     }
 }

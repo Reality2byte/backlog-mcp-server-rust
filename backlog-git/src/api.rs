@@ -197,9 +197,8 @@ mod tests {
     // No, the top level import is `backlog_api_core::bytes`, so here we'd use `bytes::Bytes`.
     // Or, import `backlog_api_core::bytes::Bytes` specifically for the test module if preferred.
     // Let's rely on the top-level `bytes` module being available.
-    use crate::requests::get_pull_request_comment_list::{
-        GetPullRequestCommentListParamsBuilder, PrCommentOrder,
-    };
+    use crate::models::PrCommentOrder;
+    use crate::requests::get_pull_request_comment_list::GetPullRequestCommentListParamsBuilder;
     use backlog_api_core::bytes::Bytes;
     use backlog_core::identifier::{
         AttachmentId, Identifier, PrNumber, PullRequestCommentId, UserId,

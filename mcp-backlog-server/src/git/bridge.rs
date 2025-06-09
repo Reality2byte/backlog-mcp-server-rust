@@ -1,7 +1,8 @@
 use crate::error::{Error, Result};
 use crate::git::request::{
     DownloadPullRequestAttachmentRequest, GetPullRequestAttachmentListRequest,
-    GetPullRequestCommentListRequest,
+    GetPullRequestCommentListRequest, GetPullRequestDetailsRequest, GetRepositoryDetailsRequest,
+    GetRepositoryListRequest, ListPullRequestsRequest,
 };
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
@@ -15,9 +16,9 @@ use tokio::sync::Mutex;
 /// Helper function to implement the get_repository_list tool.
 pub(crate) async fn get_repository_list(
     client: Arc<Mutex<BacklogApiClient>>,
-    project_id_or_key: String,
+    req: GetRepositoryListRequest,
 ) -> Result<Vec<Repository>> {
-    let project_id = project_id_or_key.parse::<ProjectIdOrKey>()?;
+    let project_id = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
 
     let client_guard = client.lock().await;
     let repositories = client_guard.git().get_repository_list(project_id).await?;
@@ -26,11 +27,10 @@ pub(crate) async fn get_repository_list(
 
 pub(crate) async fn get_repository(
     client: Arc<Mutex<BacklogApiClient>>,
-    project_id_or_key: String,
-    repo_id_or_name: String,
+    req: GetRepositoryDetailsRequest,
 ) -> Result<Repository> {
-    let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
-    let repo_id_or_name = RepositoryIdOrName::from_str(repo_id_or_name.trim())?;
+    let proj_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+    let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
 
     let client_guard = client.lock().await;
     let repository = client_guard
@@ -42,11 +42,10 @@ pub(crate) async fn get_repository(
 
 pub(crate) async fn get_pull_request_list(
     client: Arc<Mutex<BacklogApiClient>>,
-    project_id_or_key: String,
-    repo_id_or_name: String,
+    req: ListPullRequestsRequest,
 ) -> Result<Vec<PullRequest>> {
-    let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
-    let repo_id_or_name = RepositoryIdOrName::from_str(repo_id_or_name.trim())?;
+    let proj_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+    let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
 
     let client_guard = client.lock().await;
     let pull_requests = client_guard
@@ -58,17 +57,16 @@ pub(crate) async fn get_pull_request_list(
 
 pub(crate) async fn get_pull_request(
     client: Arc<Mutex<BacklogApiClient>>,
-    project_id_or_key: String,
-    repo_id_or_name: String,
-    pr_number: u64,
+    req: GetPullRequestDetailsRequest,
 ) -> Result<PullRequest> {
-    let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
-    let repo_id_or_name = RepositoryIdOrName::from_str(repo_id_or_name.trim())?;
+    let proj_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+    let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
+    let pr_number = PrNumber::from(req.pr_number);
 
     let client_guard = client.lock().await;
     let pull_request = client_guard
         .git()
-        .get_pull_request(proj_id_or_key, repo_id_or_name, PrNumber::from(pr_number))
+        .get_pull_request(proj_id_or_key, repo_id_or_name, pr_number)
         .await?;
     Ok(pull_request)
 }
@@ -140,11 +138,6 @@ pub(crate) async fn get_pull_request_comment_list_tool(
     let client_guard = client.lock().await;
     Ok(client_guard
         .git()
-        .get_pull_request_comment_list(
-            project_id_or_key,
-            repo_id_or_name,
-            pr_number,
-            Some(params),
-        )
+        .get_pull_request_comment_list(project_id_or_key, repo_id_or_name, pr_number, Some(params))
         .await?)
 }

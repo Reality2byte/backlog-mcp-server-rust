@@ -6,8 +6,8 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 pub(crate) async fn get_user_list_bridge(
-    _req: GetUserListRequest,
     client: Arc<Mutex<BacklogApiClient>>,
+    _req: GetUserListRequest,
 ) -> Result<Vec<User>> {
     let client_guard = client.lock().await;
     // The get_user_list method in backlog_user::UserApi takes no parameters.

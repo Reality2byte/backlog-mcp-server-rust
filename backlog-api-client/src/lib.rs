@@ -40,11 +40,11 @@ pub use backlog_issue::{
 pub use backlog_git::{
     api::GitApi,
     models::{
-        ChangeLog, Notification, PullRequest, PullRequestAttachment, PullRequestComment,
-        Repository, Star,
+        ChangeLog, Notification, PrCommentOrder, PullRequest, PullRequestAttachment,
+        PullRequestComment, Repository, Star,
     },
     requests::get_pull_request_comment_list::{
-        GetPullRequestCommentListParams, GetPullRequestCommentListParamsBuilder, PrCommentOrder,
+        GetPullRequestCommentListParams, GetPullRequestCommentListParamsBuilder,
     },
 };
 
