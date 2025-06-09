@@ -55,3 +55,29 @@ pub struct GetPullRequestAttachmentListRequest {
     /// The pull request number.
     pub pr_number: u64,
 }
+
+#[derive(Deserialize, JsonSchema, Debug)]
+pub struct GetPullRequestCommentListRequest {
+    /// The project ID or project key.
+    pub project_id_or_key: String,
+    /// The repository ID (as a string) or repository name.
+    pub repo_id_or_name: String,
+    /// The pull request number.
+    pub pr_number: u64,
+    /// The minimum comment ID to retrieve.
+    #[serde(default)]
+    #[schemars(description = "The minimum comment ID to retrieve.")]
+    pub min_id: Option<u32>,
+    /// The maximum comment ID to retrieve.
+    #[serde(default)]
+    #[schemars(description = "The maximum comment ID to retrieve.")]
+    pub max_id: Option<u32>,
+    /// The number of comments to retrieve (1-100).
+    #[serde(default)]
+    #[schemars(description = "The number of comments to retrieve (1-100).")]
+    pub count: Option<u8>,
+    /// The sort order: 'asc' or 'desc'.
+    #[serde(default)]
+    #[schemars(description = "The sort order: 'asc' or 'desc'.")]
+    pub order: Option<String>,
+}

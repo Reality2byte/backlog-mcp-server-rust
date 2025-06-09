@@ -1,11 +1,12 @@
 use crate::error::{Error, Result};
 use crate::git::request::{
     DownloadPullRequestAttachmentRequest, GetPullRequestAttachmentListRequest,
+    GetPullRequestCommentListRequest,
 };
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
-    AttachmentId, DownloadedFile, PrNumber, ProjectIdOrKey, PullRequest, PullRequestAttachment,
-    Repository, RepositoryIdOrName,
+    AttachmentId, DownloadedFile, GetPullRequestCommentListParams, Order, PrNumber, ProjectIdOrKey,
+    PullRequest, PullRequestAttachment, PullRequestComment, Repository, RepositoryIdOrName,
 };
 use std::{str::FromStr, sync::Arc};
 use tokio::sync::Mutex;
@@ -112,4 +113,43 @@ pub(crate) async fn download_pr_attachment_bridge(
         )
         .await
         .map_err(Error::from)
+}
+
+pub(crate) async fn get_pull_request_comment_list_tool(
+    client: Arc<Mutex<BacklogApiClient>>,
+    req: GetPullRequestCommentListRequest,
+) -> Result<Vec<PullRequestComment>> {
+    let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+    let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
+    let pr_number = PrNumber::from(req.pr_number);
+
+    let order = match req.order {
+        Some(o) => {
+            let o_lower = o.to_lowercase();
+            if o_lower == "asc" {
+                Some(Order::Asc)
+            } else if o_lower == "desc" {
+                Some(Order::Desc)
+            } else {
+                return Err(Error::Parameter(format!(
+                    "Invalid order value: {}. Must be 'asc' or 'desc'.",
+                    o
+                )));
+            }
+        }
+        None => None,
+    };
+
+    let params = GetPullRequestCommentListParams {
+        min_id: req.min_id,
+        max_id: req.max_id,
+        count: req.count,
+        order,
+    };
+
+    let client_guard = client.lock().await;
+    Ok(client_guard
+        .git()
+        .get_pull_request_comment_list(project_id_or_key, repo_id_or_name, pr_number, Some(params))
+        .await?)
 }

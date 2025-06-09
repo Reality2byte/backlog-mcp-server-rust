@@ -48,6 +48,16 @@ The following tools are grouped by their respective modules:
         -   `project_id_or_key` (Project ID or project key)
         -   `repo_id_or_name` (Repository ID (as string) or repository name)
         -   `pr_number` (Pull request number)
+-   **`get_pull_request_comment_list`**
+    -   Description: Get a list of comments for a specific pull request.
+    -   Input:
+        -   `project_id_or_key` (Project ID or project key)
+        -   `repo_id_or_name` (Repository ID (as string) or repository name)
+        -   `pr_number` (Pull request number)
+        -   `min_id` (Optional `u32`): Filter comments by minimum ID.
+        -   `max_id` (Optional `u32`): Filter comments by maximum ID.
+        -   `count` (Optional `u8`): Number of comments to retrieve (1-100).
+        -   `order` (Optional `string`): Sort order: "asc" or "desc".
 -   **`download_pull_request_attachment_raw`**
     -   Description: Download a pull request attachment as raw bytes. Returns a JSON object with filename, MIME type, and base64-encoded content.
     -   Input:

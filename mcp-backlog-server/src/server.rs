@@ -11,8 +11,8 @@ use crate::{
         self,
         request::{
             DownloadPullRequestAttachmentRequest, GetPullRequestAttachmentListRequest,
-            GetPullRequestDetailsRequest, GetRepositoryDetailsRequest, GetRepositoryListRequest,
-            ListPullRequestsRequest,
+            GetPullRequestCommentListRequest, GetPullRequestDetailsRequest,
+            GetRepositoryDetailsRequest, GetRepositoryListRequest, ListPullRequestsRequest,
         },
     },
     issue::{
@@ -286,6 +286,16 @@ impl Server {
         let file = git::bridge::download_pr_attachment_bridge(self.client.clone(), req).await?;
         let response_data = SerializableRawAttachment::text(file)?;
         Ok(CallToolResult::success(vec![response_data.try_into()?]))
+    }
+
+    #[tool(description = "Get a list of comments for a specific pull request.")]
+    async fn get_pull_request_comment_list(
+        &self,
+        #[tool(aggr)] req: GetPullRequestCommentListRequest,
+    ) -> McpResult {
+        let comments =
+            git::bridge::get_pull_request_comment_list_tool(self.client.clone(), req).await?;
+        Ok(CallToolResult::success(vec![Content::json(comments)?]))
     }
 }
 
