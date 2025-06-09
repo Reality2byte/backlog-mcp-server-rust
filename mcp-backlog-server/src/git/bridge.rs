@@ -6,9 +6,8 @@ use crate::git::request::{
 };
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
-    AttachmentId, DownloadedFile, GetPullRequestCommentListParams, PrCommentOrder, PrNumber,
-    ProjectIdOrKey, PullRequest, PullRequestAttachment, PullRequestComment, Repository,
-    RepositoryIdOrName,
+    AttachmentId, DownloadedFile, GetPullRequestCommentListParams, PrNumber, ProjectIdOrKey,
+    PullRequest, PullRequestAttachment, PullRequestComment, Repository, RepositoryIdOrName,
 };
 use std::{str::FromStr, sync::Arc};
 use tokio::sync::Mutex;
@@ -122,22 +121,11 @@ pub(crate) async fn get_pull_request_comment_list_tool(
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
     let pr_number = PrNumber::from(req.pr_number);
 
-    let order = req
-        .order
-        .as_deref()
-        .map(PrCommentOrder::from_str)
-        .transpose()?;
-
-    let params = GetPullRequestCommentListParams {
-        min_id: req.min_id,
-        max_id: req.max_id,
-        count: req.count,
-        order,
-    };
+    let params = GetPullRequestCommentListParams::try_from(req)?;
 
     let client_guard = client.lock().await;
     Ok(client_guard
         .git()
-        .get_pull_request_comment_list(project_id_or_key, repo_id_or_name, pr_number, Some(params))
+        .get_pull_request_comment_list(project_id_or_key, repo_id_or_name, pr_number, params)
         .await?)
 }

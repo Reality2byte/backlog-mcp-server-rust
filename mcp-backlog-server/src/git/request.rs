@@ -1,5 +1,10 @@
+use backlog_api_client::{
+    ApiError, GetPullRequestCommentListParams, GetPullRequestCommentListParamsBuilder,
+    PrCommentOrder,
+};
 use rmcp::schemars::{self, JsonSchema}; // rmcp::schemars を使用
 use serde::Deserialize;
+use std::str::FromStr;
 
 #[derive(Deserialize, JsonSchema, Debug)]
 pub struct ListPullRequestsRequest {
@@ -80,4 +85,23 @@ pub struct GetPullRequestCommentListRequest {
     #[serde(default)]
     #[schemars(description = "The sort order: 'asc' or 'desc'.")]
     pub order: Option<String>,
+}
+
+impl TryFrom<GetPullRequestCommentListRequest> for GetPullRequestCommentListParams {
+    type Error = ApiError;
+
+    fn try_from(req: GetPullRequestCommentListRequest) -> Result<Self, Self::Error> {
+        let order = req
+            .order
+            .as_deref()
+            .map(PrCommentOrder::from_str)
+            .transpose()?;
+
+        GetPullRequestCommentListParamsBuilder::default()
+            .min_id(req.min_id)
+            .max_id(req.max_id)
+            .count(req.count)
+            .order(order)
+            .build()
+    }
 }

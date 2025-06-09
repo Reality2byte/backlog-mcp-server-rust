@@ -178,7 +178,7 @@ impl GitApi {
         project_id_or_key: impl Into<ProjectIdOrKey>,
         repo_id_or_name: impl Into<RepositoryIdOrName>,
         pr_number: PrNumber,
-        params: Option<GetPullRequestCommentListParams>,
+        params: GetPullRequestCommentListParams,
     ) -> Result<Vec<PullRequestComment>> {
         let path = format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments",
@@ -457,7 +457,12 @@ mod tests {
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
         let result = git_api
-            .get_pull_request_comment_list(project_id_or_key, repo_id_or_name, pr_number, None)
+            .get_pull_request_comment_list(
+                project_id_or_key,
+                repo_id_or_name,
+                pr_number,
+                GetPullRequestCommentListParams::default(),
+            )
             .await;
 
         assert!(result.is_ok());
@@ -499,12 +504,7 @@ mod tests {
             .unwrap();
 
         let result = git_api
-            .get_pull_request_comment_list(
-                project_id_or_key,
-                repo_id_or_name,
-                pr_number,
-                Some(params),
-            )
+            .get_pull_request_comment_list(project_id_or_key, repo_id_or_name, pr_number, params)
             .await;
 
         assert!(result.is_ok());
