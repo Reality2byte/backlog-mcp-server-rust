@@ -198,7 +198,7 @@ mod tests {
     // Or, import `backlog_api_core::bytes::Bytes` specifically for the test module if preferred.
     // Let's rely on the top-level `bytes` module being available.
     use crate::requests::get_pull_request_comment_list::{
-        GetPullRequestCommentListParamsBuilder, Order,
+        GetPullRequestCommentListParamsBuilder, PrCommentOrder,
     };
     use backlog_api_core::bytes::Bytes;
     use backlog_core::identifier::{
@@ -495,7 +495,7 @@ mod tests {
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
         let params = GetPullRequestCommentListParamsBuilder::default()
             .count(Some(1))
-            .order(Some(Order::Asc))
+            .order(Some(PrCommentOrder::Asc))
             .build()
             .unwrap();
 

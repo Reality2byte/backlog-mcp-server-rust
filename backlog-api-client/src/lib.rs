@@ -44,7 +44,7 @@ pub use backlog_git::{
         Repository, Star,
     },
     requests::get_pull_request_comment_list::{
-        GetPullRequestCommentListParams, GetPullRequestCommentListParamsBuilder, Order,
+        GetPullRequestCommentListParams, GetPullRequestCommentListParamsBuilder, PrCommentOrder,
     },
 };
 
