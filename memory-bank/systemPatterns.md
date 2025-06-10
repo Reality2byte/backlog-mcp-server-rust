@@ -96,7 +96,7 @@ graph TD
     *   Provides common test utilities (e.g., `setup_client`) via a `test-utils` feature.
 
 2.  **`backlog-core` (crate)**:
-    *   Defines core data structures (ID types, `User`, `IssueKey`, etc.) and enums shared across modules.
+    *   Defines core data structures (ID types, `User`, `IssueKey`, `Star`, etc.) and enums shared across modules.
 
 3.  **`backlog-api-core` (crate)**:
     *   Provides common API utilities, including the central `Error` type (`ApiError`) and `Result`.
@@ -109,7 +109,7 @@ graph TD
 
 5.  **`backlog-issue` (API module crate)**:
     *   Responsible for the Issue domain.
-    *   Defines models like `Issue`, `Milestone`, `Comment`, and `Attachment`.
+    *   Defines models like `Issue`, `Milestone`, `Comment`, `Attachment`, `CustomField`, `SharedFile`, and `ExternalFileLink`.
     *   Uses `backlog_project::Status` for the `Issue.status` field.
     *   Implements API endpoint wrappers like `get_issue`, `get_issue_list`, `get_comment_list`, `get_attachment_list`, and `get_attachment_file` (for downloading attachment content as `bytes::Bytes`).
     *   Depends on `backlog-core`, `client`, and now `backlog-project` (for `Status`).

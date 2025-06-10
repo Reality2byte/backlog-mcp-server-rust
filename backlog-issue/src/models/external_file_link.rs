@@ -1,7 +1,7 @@
-use backlog_core::User;
-use serde::{Deserialize, Serialize};
+use backlog_core::{User, identifier::ExternalFileLinkId};
 #[cfg(feature = "schemars")]
 use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 /// Represents a link to an external file.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -9,7 +9,7 @@ use schemars::JsonSchema;
 #[serde(rename_all = "camelCase")]
 pub struct ExternalFileLink {
     /// The ID of the external file link.
-    pub id: u32,
+    pub id: ExternalFileLinkId,
     /// The type of the external file link.
     pub r#type: String,
     /// The URL of the external file.

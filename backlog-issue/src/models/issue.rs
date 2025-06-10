@@ -1,7 +1,7 @@
 use crate::models::{Attachment, CustomField, ExternalFileLink, Priority, Resolution, SharedFile};
 use backlog_core::{
-    identifier::{IssueId, ProjectId},
     IssueKey, Star, User,
+    identifier::{IssueId, ProjectId},
 };
 use backlog_project::{Category, IssueType, Milestone, Status};
 use serde::{Deserialize, Serialize};

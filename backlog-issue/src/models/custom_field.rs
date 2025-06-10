@@ -1,5 +1,8 @@
+use crate::models::CustomFieldTypeId;
+use backlog_core::identifier::CustomFieldId;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+
 #[cfg(feature = "schemars")]
 use schemars::JsonSchema;
 
@@ -9,9 +12,9 @@ use schemars::JsonSchema;
 #[serde(rename_all = "camelCase")]
 pub struct CustomField {
     /// The ID of the custom field.
-    pub id: u32,
+    pub id: CustomFieldId,
     /// The field type ID.
-    pub field_type_id: u8,
+    pub field_type_id: CustomFieldTypeId,
     /// The name of the custom field.
     pub name: String,
     /// The value of the custom field.

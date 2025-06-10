@@ -1,7 +1,7 @@
-use backlog_core::User;
-use serde::{Deserialize, Serialize};
+use backlog_core::{User, identifier::SharedFileId};
 #[cfg(feature = "schemars")]
 use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 /// Represents a shared file in Backlog.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -9,7 +9,7 @@ use schemars::JsonSchema;
 #[serde(rename_all = "camelCase")]
 pub struct SharedFile {
     /// The ID of the shared file.
-    pub id: u32,
+    pub id: SharedFileId,
     /// The type of the shared file.
     pub r#type: String,
     /// The directory path of the shared file.

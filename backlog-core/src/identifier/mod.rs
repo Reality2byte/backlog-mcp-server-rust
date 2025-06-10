@@ -82,8 +82,11 @@ impl_identifier!(
     (WikiAttachmentId, u32),        // Wiki attachment ID
     (PullRequestAttachmentId, u32), // PR attachment ID
     (DocumentAttachmentId, u32),    // Document attachment ID
+    (ExternalFileLinkId, u32),
     (NotificationId, u32),
     (StarId, u32),
+    (SharedFileId, u32),
+    (CustomFieldId, u32),
     (RepositoryId, u32),
     (PullRequestId, u32),
     (PullRequestCommentId, u32),
