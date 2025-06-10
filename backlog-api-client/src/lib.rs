@@ -28,7 +28,7 @@ pub use backlog_document::{
 #[cfg(feature = "issue")]
 pub use backlog_issue::{
     Attachment, Issue, IssueApi,
-    models::comment::{ChangeLogEntry, Comment},
+    models::{ChangeLogEntry, comment::Comment},
     requests::{
         GetIssueListParams, GetIssueListParamsBuilder, UpdateIssueParams, UpdateIssueParamsBuilder,
         get_comment_list::{CommentOrder, GetCommentListParams, GetCommentListParamsBuilder},

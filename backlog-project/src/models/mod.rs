@@ -1,14 +1,11 @@
-pub mod project;
-pub use project::Project;
-
-pub mod status;
-pub use status::Status;
-
-pub mod issue_type;
-pub use issue_type::IssueType;
-
-pub mod milestone;
-pub use milestone::Milestone;
-
 pub mod category;
+pub mod issue_type;
+pub mod milestone;
+pub mod project;
+pub mod status;
+
 pub use category::Category;
+pub use issue_type::IssueType;
+pub use milestone::Milestone;
+pub use project::Project;
+pub use status::Status;
