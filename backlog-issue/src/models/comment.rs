@@ -1,5 +1,5 @@
-use crate::models::{ChangeLogEntry, Notification, Star};
-use backlog_core::{User, identifier::CommentId};
+use crate::models::{ChangeLogEntry, Notification};
+use backlog_core::{Star, User, identifier::CommentId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 

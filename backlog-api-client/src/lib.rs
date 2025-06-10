@@ -5,7 +5,6 @@ pub use backlog_api_core::bytes; // Re-export bytes
 
 // Core types (from backlog_core)
 pub use backlog_core::{
-    DocumentId,
     Error as CoreError,
     IssueIdOrKey,
     IssueKey,
@@ -15,7 +14,9 @@ pub use backlog_core::{
     // ProjectKey,
     // RepositoryName,
     // UserId,
-    identifier::{AttachmentId, PrNumber, ProjectId, PullRequestCommentId, StatusId, UserId},
+    identifier::{
+        AttachmentId, DocumentId, PrNumber, ProjectId, PullRequestCommentId, StatusId, UserId,
+    },
 };
 
 // Document module (from backlog_document)
@@ -27,8 +28,8 @@ pub use backlog_document::{
 // Issue module (from backlog_issue)
 #[cfg(feature = "issue")]
 pub use backlog_issue::{
-    Attachment, Issue, IssueApi,
-    models::{ChangeLogEntry, comment::Comment},
+    IssueApi,
+    models::{Attachment, ChangeLogEntry, Comment, Issue},
     requests::{
         GetIssueListParams, GetIssueListParamsBuilder, UpdateIssueParams, UpdateIssueParamsBuilder,
         get_comment_list::{CommentOrder, GetCommentListParams, GetCommentListParamsBuilder},

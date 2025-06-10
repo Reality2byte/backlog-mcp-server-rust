@@ -1,4 +1,7 @@
-use crate::{Error, Identifier, ProjectKey, identifier::ProjectId};
+use crate::{
+    Error, ProjectKey,
+    identifier::{Identifier, ProjectId},
+};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 

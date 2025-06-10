@@ -8,11 +8,6 @@ pub trait Identifier {
     fn value(&self) -> Self::Id;
 }
 
-pub trait Entity {
-    type Identifier: Identifier;
-    fn id(&self) -> &Self::Identifier;
-}
-
 macro_rules! impl_identifier {
     ($(($type_name:ident,$ty:ty)),*) => {
         $(
@@ -39,21 +34,21 @@ macro_rules! impl_identifier {
                 }
             }
 
-impl std::str::FromStr for $type_name {
-    type Err = crate::error::Error;
+            impl std::str::FromStr for $type_name {
+                type Err = crate::error::Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.parse::<$ty>() {
-            Ok(val) => Ok($type_name(val)),
-            Err(_) => Err(crate::error::Error::InvalidParameter(format!(
-                "Failed to parse {} from string '{}': expected a {} integer.",
-                stringify!($type_name),
-                s,
-                stringify!($ty)
-            ))),
-        }
-    }
-}
+                fn from_str(s: &str) -> Result<Self, Self::Err> {
+                    match s.parse::<$ty>() {
+                        Ok(val) => Ok($type_name(val)),
+                        Err(_) => Err(crate::error::Error::InvalidParameter(format!(
+                            "Failed to parse {} from string '{}': expected a {} integer.",
+                            stringify!($type_name),
+                            s,
+                            stringify!($ty)
+                        ))),
+                    }
+                }
+            }
 
             impl std::fmt::Display for $type_name {
                 fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -94,3 +89,6 @@ impl_identifier!(
     (SvnRevision, u64),
     (PrNumber, u64)
 );
+
+mod document_id;
+pub use document_id::DocumentId;

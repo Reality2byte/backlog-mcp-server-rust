@@ -1,46 +1,30 @@
+mod active_type_id;
 mod error;
-pub use error::{Error, Result};
-
-mod user;
-pub use user::User;
-
-mod language;
-pub use language::Language;
-
-mod role;
-pub use role::Role;
-
 pub mod identifier;
-pub use self::identifier::DocumentAttachmentId;
-pub use self::identifier::Identifier;
-pub use self::identifier::PrNumber;
-
-pub mod active_type_id;
-pub use self::active_type_id::ActiveTypeId;
-
-pub mod space_key;
-pub use self::space_key::SpaceKey;
-
-pub mod project_key;
-pub use self::project_key::ProjectKey;
-
-pub mod issue_key;
-pub use self::issue_key::IssueKey;
-
-pub mod project_id_or_key;
-pub use self::project_id_or_key::ProjectIdOrKey;
-
-pub mod issue_id_or_key;
-pub use self::issue_id_or_key::IssueIdOrKey;
-
-mod text_formatting_rule;
-pub use text_formatting_rule::TextFormattingRule;
-
-mod document_id;
-pub use document_id::DocumentId;
-
+mod issue_id_or_key;
+mod issue_key;
+mod language;
+mod project_id_or_key;
+mod project_key;
 mod repository_id_or_name;
-pub use repository_id_or_name::RepositoryIdOrName;
+mod repository_name;
+mod role;
+mod space_key;
+mod star;
+mod text_formatting_rule;
+mod user;
 
-pub mod repository_name;
+pub use active_type_id::ActiveTypeId;
+pub use error::{Error, Result};
+pub use issue_id_or_key::IssueIdOrKey;
+pub use issue_key::IssueKey;
+pub use language::Language;
+pub use project_id_or_key::ProjectIdOrKey;
+pub use project_key::ProjectKey;
+pub use repository_id_or_name::RepositoryIdOrName;
 pub use repository_name::RepositoryName;
+pub use role::Role;
+pub use space_key::SpaceKey;
+pub use star::Star;
+pub use text_formatting_rule::TextFormattingRule;
+pub use user::User;

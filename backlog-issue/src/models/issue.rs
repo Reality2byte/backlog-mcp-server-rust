@@ -1,4 +1,4 @@
-use crate::{Priority, Resolution};
+use crate::models::{Priority, Resolution};
 use backlog_core::{
     IssueKey, User,
     identifier::{IssueId, ProjectId},

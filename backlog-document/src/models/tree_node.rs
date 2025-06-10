@@ -1,4 +1,4 @@
-use backlog_core::{DocumentId, identifier::StatusId};
+use backlog_core::identifier::{DocumentId, StatusId};
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "schemars")]

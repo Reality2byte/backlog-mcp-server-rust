@@ -1,5 +1,8 @@
 use crate::models::tag::DocumentTag;
-use backlog_core::{DocumentId, User, identifier::ProjectId};
+use backlog_core::{
+    User,
+    identifier::{DocumentId, ProjectId},
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 

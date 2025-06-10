@@ -1,4 +1,4 @@
-use crate::{Attachment, Comment, Issue};
+use crate::models::{Attachment, Comment, Issue};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]

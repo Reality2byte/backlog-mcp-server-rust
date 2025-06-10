@@ -7,7 +7,10 @@ use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
     DocumentDetail, DocumentTreeResponse, DownloadedFile, GetDocumentTreeParams,
 };
-use backlog_core::{DocumentId, ProjectIdOrKey, identifier::DocumentAttachmentId};
+use backlog_core::{
+    ProjectIdOrKey,
+    identifier::{DocumentAttachmentId, DocumentId},
+};
 
 use super::request::{
     DownloadDocumentAttachmentRequest, GetDocumentDetailsRequest, GetDocumentTreeRequest,

@@ -1,6 +1,6 @@
+use crate::RepositoryName;
 use crate::error::Error;
-use crate::identifier::RepositoryId;
-use crate::{Identifier, RepositoryName};
+use crate::identifier::{Identifier, RepositoryId};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;

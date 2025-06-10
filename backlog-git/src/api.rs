@@ -4,8 +4,8 @@ use crate::{
 };
 use backlog_api_core::Result;
 use backlog_core::{
-    Identifier, ProjectIdOrKey, RepositoryIdOrName,
-    identifier::{AttachmentId, PrNumber},
+    ProjectIdOrKey, RepositoryIdOrName,
+    identifier::{AttachmentId, Identifier, PrNumber},
 };
 use client::{Client, DownloadedFile};
 

@@ -1,6 +1,5 @@
-use crate::Identifier;
 use crate::error::Error;
-use crate::identifier::IssueId;
+use crate::identifier::{Identifier, IssueId};
 use crate::issue_key::IssueKey;
 use serde::{Deserialize, Serialize};
 use std::fmt;

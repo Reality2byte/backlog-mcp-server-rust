@@ -77,7 +77,7 @@ type GetVersionMilestoneListResponse = Vec<Milestone>;
 mod tests {
     use super::*;
     use backlog_api_core::Error as ApiError;
-    use backlog_core::identifier::{IssueTypeId, MilestoneId, ProjectId, StatusId}; // Added IssueTypeId
+    use backlog_core::identifier::{IssueTypeId, MilestoneId, ProjectId, StatusId};
     use chrono::TimeZone;
     use client::test_utils::setup_client;
     use std::str::FromStr;

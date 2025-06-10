@@ -1,4 +1,4 @@
-use backlog_core::{User, identifier::StarId};
+use crate::{User, identifier::StarId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 

@@ -1,5 +1,5 @@
 use backlog_api_core::Result;
-use backlog_core::{Identifier, IssueIdOrKey, IssueKey};
+use backlog_core::{IssueIdOrKey, IssueKey, identifier::Identifier};
 use client::{Client, DownloadedFile};
 
 #[cfg(feature = "writable")]
@@ -119,7 +119,7 @@ impl IssueApi {
 mod tests {
     use super::*;
     use crate::{
-        models::{attachment::Attachment, comment::Comment, issue::Issue},
+        models::{Attachment, Comment, Issue},
         requests::{
             GetIssueListParamsBuilder,
             get_comment_list::{CommentOrder, GetCommentListParamsBuilder},

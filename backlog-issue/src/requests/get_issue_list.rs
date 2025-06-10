@@ -1,4 +1,4 @@
-use crate::models::parent_child::ParentChildCondition;
+use crate::models::ParentChildCondition;
 use backlog_api_core::Error as ApiError;
 use backlog_core::identifier::{
     CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ProjectId, ResolutionId, StatusId,
