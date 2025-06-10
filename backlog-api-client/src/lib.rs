@@ -15,7 +15,8 @@ pub use backlog_core::{
     // RepositoryName,
     // UserId,
     identifier::{
-        AttachmentId, DocumentId, PrNumber, ProjectId, PullRequestCommentId, StatusId, UserId,
+        AttachmentId, DocumentId, ProjectId, PullRequestAttachmentId, PullRequestCommentId,
+        PullRequestNumber, StatusId, UserId,
     },
 };
 

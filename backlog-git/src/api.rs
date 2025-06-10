@@ -5,7 +5,7 @@ use crate::{
 use backlog_api_core::Result;
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
-    identifier::{AttachmentId, Identifier, PrNumber},
+    identifier::{Identifier, PullRequestAttachmentId, PullRequestNumber},
 };
 use client::{Client, DownloadedFile};
 
@@ -101,7 +101,7 @@ impl GitApi {
         &self,
         project_id_or_key: impl Into<ProjectIdOrKey>,
         repo_id_or_name: impl Into<RepositoryIdOrName>,
-        pr_number: PrNumber,
+        pr_number: PullRequestNumber,
     ) -> Result<PullRequest> {
         let path = format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}",
@@ -125,7 +125,7 @@ impl GitApi {
         &self,
         project_id_or_key: &ProjectIdOrKey, // Keeping as reference based on existing code
         repo_id_or_name: &RepositoryIdOrName, // Keeping as reference
-        pr_number: PrNumber,
+        pr_number: PullRequestNumber,
     ) -> backlog_api_core::Result<Vec<PullRequestAttachment>> {
         let path = format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments",
@@ -150,8 +150,8 @@ impl GitApi {
         &self,
         project_id_or_key: impl Into<ProjectIdOrKey>,
         repo_id_or_name: impl Into<RepositoryIdOrName>,
-        pr_number: PrNumber,
-        attachment_id: AttachmentId,
+        pr_number: PullRequestNumber,
+        attachment_id: PullRequestAttachmentId,
     ) -> Result<DownloadedFile> {
         let path = format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",
@@ -177,7 +177,7 @@ impl GitApi {
         &self,
         project_id_or_key: impl Into<ProjectIdOrKey>,
         repo_id_or_name: impl Into<RepositoryIdOrName>,
-        pr_number: PrNumber,
+        pr_number: PullRequestNumber,
         params: GetPullRequestCommentListParams,
     ) -> Result<Vec<PullRequestComment>> {
         let path = format!(
@@ -201,7 +201,7 @@ mod tests {
     use crate::requests::get_pull_request_comment_list::GetPullRequestCommentListParamsBuilder;
     use backlog_api_core::bytes::Bytes;
     use backlog_core::identifier::{
-        AttachmentId, Identifier, PrNumber, PullRequestCommentId, UserId,
+        Identifier, PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber, UserId,
     };
     use client::test_utils::setup_client;
     use serde_json::json;
@@ -217,16 +217,16 @@ mod tests {
         let project_key = "TESTPROJECT";
         let repo_name = "test-repo";
         let pr_number_val = 123;
-        let pr_number = PrNumber::new(pr_number_val);
+        let pr_number = PullRequestNumber::new(pr_number_val);
 
         let mock_response = vec![
             PullRequestAttachment {
-                id: AttachmentId::new(101),
+                id: PullRequestAttachmentId::new(101),
                 name: "image.png".to_string(),
                 size: 12345,
             },
             PullRequestAttachment {
-                id: AttachmentId::new(102),
+                id: PullRequestAttachmentId::new(102),
                 name: "document.pdf".to_string(),
                 size: 67890,
             },
@@ -266,7 +266,7 @@ mod tests {
         let project_key = "TESTPROJECT";
         let repo_name = "test-repo";
         let pr_number_val = 124;
-        let pr_number = PrNumber::new(pr_number_val);
+        let pr_number = PullRequestNumber::new(pr_number_val);
         let mock_response: Vec<PullRequestAttachment> = vec![];
 
         Mock::given(method("GET"))
@@ -298,7 +298,7 @@ mod tests {
         let project_key = "NONEXISTENT";
         let repo_name = "norepo";
         let pr_number_val = 1;
-        let pr_number = PrNumber::new(pr_number_val);
+        let pr_number = PullRequestNumber::new(pr_number_val);
 
         Mock::given(method("GET"))
             .and(path(format!(
@@ -330,7 +330,7 @@ mod tests {
         let project_key = "TESTPROJECT";
         let repo_name = "test-repo";
         let pr_number_val = 125;
-        let pr_number = PrNumber::new(pr_number_val);
+        let pr_number = PullRequestNumber::new(pr_number_val);
         let attachment_id_val = 201;
         let attachment_content = "This is a test file content.";
 
@@ -353,7 +353,7 @@ mod tests {
 
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
-        let attachment_id = AttachmentId::new(attachment_id_val);
+        let attachment_id = PullRequestAttachmentId::new(attachment_id_val);
 
         let result = git_api
             .download_pull_request_attachment(
@@ -380,7 +380,7 @@ mod tests {
         let project_key = "TESTPROJECT";
         let repo_name = "test-repo";
         let pr_number_val = 126;
-        let pr_number = PrNumber::new(pr_number_val);
+        let pr_number = PullRequestNumber::new(pr_number_val);
         let attachment_id_val = 202;
 
         Mock::given(method("GET"))
@@ -394,7 +394,7 @@ mod tests {
 
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
-        let attachment_id = AttachmentId::new(attachment_id_val);
+        let attachment_id = PullRequestAttachmentId::new(attachment_id_val);
 
         let result = git_api
             .download_pull_request_attachment(
@@ -422,7 +422,7 @@ mod tests {
         let project_key = "TESTPROJECT";
         let repo_name = "test-repo";
         let pr_number_val = 127;
-        let pr_number = PrNumber::new(pr_number_val);
+        let pr_number = PullRequestNumber::new(pr_number_val);
 
         let mock_response = json!([
             {
@@ -482,7 +482,7 @@ mod tests {
         let project_key = "TESTPROJECT";
         let repo_name = "test-repo";
         let pr_number_val = 128;
-        let pr_number = PrNumber::new(pr_number_val);
+        let pr_number = PullRequestNumber::new(pr_number_val);
 
         Mock::given(method("GET"))
             .and(path(format!(

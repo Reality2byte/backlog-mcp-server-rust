@@ -4,8 +4,8 @@ use backlog_core::Error as CoreError;
 use backlog_core::{
     User,
     identifier::{
-        AttachmentId, IssueId, NotificationId, PrNumber, ProjectId, PullRequestCommentId,
-        PullRequestId, RepositoryId, StarId,
+        IssueId, NotificationId, ProjectId, PullRequestAttachmentId, PullRequestCommentId,
+        PullRequestId, PullRequestNumber, RepositoryId, StarId,
     },
 };
 use chrono::{DateTime, Utc};
@@ -58,7 +58,7 @@ pub struct PullRequest {
     /// The ID of the repository that the pull request belongs to.
     pub repository_id: RepositoryId,
     /// The number of the pull request, unique within the repository.
-    pub number: PrNumber,
+    pub number: PullRequestNumber,
     /// The summary (title) of the pull request.
     pub summary: String,
     /// The description of the pull request.
@@ -118,7 +118,7 @@ pub struct IssueLink {
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 pub struct PullRequestAttachment {
     /// The unique identifier for the attachment.
-    pub id: AttachmentId,
+    pub id: PullRequestAttachmentId,
     /// The name of the attachment file.
     pub name: String,
     /// The size of the attachment file in bytes.

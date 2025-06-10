@@ -1,6 +1,7 @@
 use backlog_api_client::{
-    AttachmentId, GetIssueListParamsBuilder, IssueIdOrKey, PrNumber, ProjectId, ProjectIdOrKey,
-    RepositoryIdOrName, StatusId, UserId, client::BacklogApiClient,
+    AttachmentId, GetIssueListParamsBuilder, IssueIdOrKey, ProjectId, ProjectIdOrKey,
+    PullRequestAttachmentId, PullRequestNumber, RepositoryIdOrName, StatusId, UserId,
+    client::BacklogApiClient,
 };
 use clap::{Args, Parser};
 use std::env;
@@ -222,7 +223,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
                 let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
                 let repo_id_or_name = repo_id.parse::<RepositoryIdOrName>()?;
-                let pr_num = PrNumber::from(pr_number);
+                let pr_num = PullRequestNumber::from(pr_number);
 
                 let pr = client
                     .git()
@@ -247,9 +248,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     })?;
                 let parsed_repo_id = RepositoryIdOrName::from_str(&dl_args.repo_id)
                     .map_err(|e| format!("Failed to parse repo_id '{}': {}", dl_args.repo_id, e))?;
-                let parsed_attachment_id = AttachmentId::new(dl_args.attachment_id);
+                let parsed_attachment_id = PullRequestAttachmentId::new(dl_args.attachment_id);
 
-                let parsed_pr_number = PrNumber::from(dl_args.pr_number);
+                let parsed_pr_number = PullRequestNumber::from(dl_args.pr_number);
 
                 match client
                     .git()

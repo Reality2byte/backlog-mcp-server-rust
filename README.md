@@ -8,7 +8,7 @@ Below is an overview of the main directories within this workspace:
 
 -   `backlog-api-client/`: Contains the primary library crate that aggregates all API modules and the source code for the `blg` CLI tool.
 -   `backlog-api-core/`: Provides core utilities shared across API client modules, such as common error types and result aliases.
--   `backlog-core/`: Defines fundamental data structures, newtype identifiers (e.g., `ProjectId`, `IssueKey`, `PrNumber`), and shared enums used throughout the Backlog API client ecosystem.
+-   `backlog-core/`: Defines fundamental data structures, newtype identifiers (e.g., `ProjectId`, `IssueKey`, `PullRequestNumber`), and shared enums used throughout the Backlog API client ecosystem.
 -   `backlog-document/`: Implements the client module for interacting with Backlog's Document API endpoints.
 -   `backlog-git/`: Implements the client module for interacting with Backlog's Git repository and Pull Request API endpoints.
 -   `backlog-issue/`: Implements the client module for interacting with Backlog's Issue API endpoints (including comments and attachments).

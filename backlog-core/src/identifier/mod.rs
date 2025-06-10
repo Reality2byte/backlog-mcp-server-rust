@@ -78,8 +78,10 @@ impl_identifier!(
     (PriorityId, u32),
     (ResolutionId, u32),
     (CommentId, u32),
-    (AttachmentId, u32),         // Generic attachment ID, used for Issues and PRs
-    (DocumentAttachmentId, u32), // Specific for Document attachments
+    (AttachmentId, u32),            // Issue attachment ID
+    (WikiAttachmentId, u32),        // Wiki attachment ID
+    (PullRequestAttachmentId, u32), // PR attachment ID
+    (DocumentAttachmentId, u32),    // Document attachment ID
     (NotificationId, u32),
     (StarId, u32),
     (RepositoryId, u32),
@@ -87,7 +89,7 @@ impl_identifier!(
     (PullRequestCommentId, u32),
     // u64 identifiers
     (SvnRevision, u64),
-    (PrNumber, u64)
+    (PullRequestNumber, u64)
 );
 
 mod document_id;

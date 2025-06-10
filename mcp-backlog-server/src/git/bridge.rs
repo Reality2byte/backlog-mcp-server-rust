@@ -6,8 +6,9 @@ use crate::git::request::{
 };
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
-    AttachmentId, DownloadedFile, GetPullRequestCommentListParams, PrNumber, ProjectIdOrKey,
-    PullRequest, PullRequestAttachment, PullRequestComment, Repository, RepositoryIdOrName,
+    DownloadedFile, GetPullRequestCommentListParams, ProjectIdOrKey, PullRequest,
+    PullRequestAttachment, PullRequestAttachmentId, PullRequestComment, PullRequestNumber,
+    Repository, RepositoryIdOrName,
 };
 use std::{str::FromStr, sync::Arc};
 use tokio::sync::Mutex;
@@ -60,7 +61,7 @@ pub(crate) async fn get_pull_request(
 ) -> Result<PullRequest> {
     let proj_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
-    let pr_number = PrNumber::from(req.pr_number);
+    let pr_number = PullRequestNumber::from(req.pr_number);
 
     let client_guard = client.lock().await;
     let pull_request = client_guard
@@ -83,7 +84,7 @@ pub(crate) async fn get_pull_request_attachment_list_tool(
         .get_pull_request_attachment_list(
             &project_id_or_key,
             &repo_id_or_name,
-            PrNumber::from(req.pr_number),
+            PullRequestNumber::from(req.pr_number),
         )
         .await?)
 }
@@ -94,8 +95,8 @@ pub(crate) async fn download_pr_attachment_bridge(
 ) -> Result<DownloadedFile> {
     let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
-    let pr_number = PrNumber::from(req.pr_number);
-    let attachment_id_for_download = AttachmentId::new(req.attachment_id);
+    let pr_number = PullRequestNumber::from(req.pr_number);
+    let attachment_id_for_download = PullRequestAttachmentId::new(req.attachment_id);
 
     let client_guard = client.lock().await;
 
@@ -119,7 +120,7 @@ pub(crate) async fn get_pull_request_comment_list_tool(
 ) -> Result<Vec<PullRequestComment>> {
     let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
-    let pr_number = PrNumber::from(req.pr_number);
+    let pr_number = PullRequestNumber::from(req.pr_number);
 
     let params = GetPullRequestCommentListParams::try_from(req)?;
 

@@ -12,7 +12,7 @@
     -   Implemented `download_issue_attachment_text` MCP tool in `mcp-backlog-server`.
     -   Implemented "Get List of Pull Request Attachments" API in `backlog-git` and `mcp-backlog-server`.
 -   Implemented Pull Request Attachment Download functionality (library, CLI, MCP).
--   Refactored pull request number handling to use a newtype `PrNumber(u64)` for improved type safety across the codebase.
+-   Refactored pull request number handling to use a newtype `PullRequestNumber(u64)` for improved type safety across the codebase.
 -   Implemented `download_issue_attachment_raw` MCP tool.
 -   Reorganized `mcp-backlog-server/README.md` to group tools by module.
 -   Implemented `download_attachment` method in `backlog-document` crate (and refactored client for all downloads) to return filename, content type, and `bytes::Bytes`.
@@ -93,8 +93,8 @@
 -   **Consistent Error Propagation**.
 -   **Builder Pattern for Request Params**.
 -   Standard Rust project structure, workspace, feature flags, `thiserror`, `schemars`.
-    -   **Model Placement**: Shared core types and identifiers (like `User`, `AttachmentId`, `PrNumber`, `IssueTypeId`) in `backlog-core`. Domain-specific models in their respective crates.
-    -   **Serialization of Newtypes**: For simple numeric newtypes like `PrNumber(u64)` or existing `Id(u32)` types, deriving `Serialize` and `Deserialize` directly is sufficient for them to be treated as their inner numeric type in JSON. `#[serde(transparent)]` is an option for explicitness but not strictly necessary if the default behavior is as desired and consistent with project patterns.
+    -   **Model Placement**: Shared core types and identifiers (like `User`, `AttachmentId`, `PullRequestNumber`, `IssueTypeId`) in `backlog-core`. Domain-specific models in their respective crates.
+    -   **Serialization of Newtypes**: For simple numeric newtypes like `PullRequestNumber(u64)` or existing `Id(u32)` types, deriving `Serialize` and `Deserialize` directly is sufficient for them to be treated as their inner numeric type in JSON. `#[serde(transparent)]` is an option for explicitness but not strictly necessary if the default behavior is as desired and consistent with project patterns.
     -   **Serialization of Structs**: Use `#[serde(rename_all = "camelCase")]` for structs that map to JSON objects to match Backlog API conventions. Use `#[serde(default, skip_serializing_if = "Option::is_none")]` for optional fields.
 -   **MCP Tool Structure**: Tools in `mcp-backlog-server` are organized by domain into modules (e.g., `issue`, `git`, `project`). Each module typically contains:
     -   `request.rs`: Defines request structs deriving `serde::Deserialize` and `rmcp::schemars::JsonSchema` (using `use rmcp::schemars;`).

@@ -1,7 +1,6 @@
 pub mod api;
 pub mod models;
+pub mod responses;
 
 pub use api::SpaceApi;
-
-pub mod responses;
 pub use responses::GetSpaceResponse;

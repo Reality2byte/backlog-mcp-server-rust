@@ -74,7 +74,7 @@
     -   Added `get_pull_request_attachment_list` tool method to `Server` in `mcp-backlog-server`.
     -   All changes verified with `cargo check`, `cargo test`, `cargo clippy`, and `cargo fmt`.
 -   **Pull Request Attachment Download Implemented**: Added functionality to download pull request attachments in the library (`backlog-git`), CLI (`blg pr download-attachment`), and MCP server (`download_pull_request_attachment_raw/image/text` tools).
--   **`PrNumber` Newtype Refactoring**: Refactored pull request number handling to use `PrNumber(u64)` newtype for improved type safety across `backlog-core`, `backlog-git`, `backlog-api-client` (library and CLI), and `mcp-backlog-server`.
+-   **`PullRequestNumber` Newtype Refactoring**: Refactored pull request number handling to use `PullRequestNumber(u64)` newtype for improved type safety across `backlog-core`, `backlog-git`, `backlog-api-client` (library and CLI), and `mcp-backlog-server`.
 -   **`download_issue_attachment_raw` MCP Tool Implemented**: Added a new MCP tool to download issue attachments as raw (JSON with base64) data.
 -   **`get_user_list` MCP Tool Implemented**: Added a new MCP tool to retrieve a list of all users in the Backlog space.
 -   **`mcp-backlog-server/README.md` Reorganized**: Grouped the 'Available Tools' section by module for better clarity.
@@ -211,10 +211,10 @@
     -   Added `download_pull_request_attachment_raw` (returning JSON with base64 data), `_image`, and `_text` tools to MCP server.
     -   Resolved several compiler issues related to type inference (u32/u64 comparison) and `rmcp` content types during implementation.
     -   All changes verified with `cargo check`, `test`, `clippy`, and `fmt`.
--   **`PrNumber` Newtype Refactoring**:
-    -   User requested to wrap `u64` pull request numbers with a `PrNumber(u64)` newtype for type safety.
-    -   Defined `PrNumber` in `backlog-core` with necessary traits (`Identifier`, `Display`, `FromStr`, `Serialize`, `Deserialize`, etc.).
-    -   Updated `backlog-git` (models and API methods), `backlog-api-client` (library facade and CLI tool), and `mcp-backlog-server` (bridge functions and error types) to use `PrNumber`.
+-   **`PullRequestNumber` Newtype Refactoring**:
+    -   User requested to wrap `u64` pull request numbers with a `PullRequestNumber(u64)` newtype for type safety.
+    -   Defined `PullRequestNumber` in `backlog-core` with necessary traits (`Identifier`, `Display`, `FromStr`, `Serialize`, `Deserialize`, etc.).
+    -   Updated `backlog-git` (models and API methods), `backlog-api-client` (library facade and CLI tool), and `mcp-backlog-server` (bridge functions and error types) to use `PullRequestNumber`.
     -   Ensured consistency with existing ID patterns (e.g., placement in `backlog-core`, `serde` derive without `transparent`).
     -   Resolved compiler errors related to `FromStr` error construction in `backlog-core`.
     -   All changes verified with `cargo check`, `test`, `clippy`, and `fmt`.
