@@ -112,7 +112,7 @@
 -   The `backlog-api-client` library provides core functionality for Backlog API interaction, including:
     -   Git repository listing and details.
     -   Pull request listing, details, **attachment listing**, and **attachment download** (now returns `DownloadedFile`).
-    -   Issue listing, details, updates, comment listing, **attachment listing**, and **attachment file download** (now returns `DownloadedFile`). (Issue status now uses a complete model from `backlog-project`).
+    -   Issue listing, details, updates, comment listing, **attachment listing**, and **attachment file download** (now returns `DownloadedFile`). The `Issue` model is now more robust, including fields for `customFields`, `attachments`, `sharedFiles`, `externalFileLinks`, and `stars`. (Issue status now uses a complete model from `backlog-project`).
     -   Document listing, details, **document tree retrieval**, and **attachment download** (now returns `DownloadedFile`). Document detail model now includes attachments and supports `JsonSchema`. Document tree models also support `JsonSchema`.
     -   Project listing, details, **project status listing**, and **project issue type listing**.
     -   Space details.

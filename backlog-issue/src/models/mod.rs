@@ -1,17 +1,23 @@
 mod attachment;
 mod changelog;
 mod comment;
+mod custom_field;
+mod external_file_link;
 mod issue;
 mod notification;
 mod parent_child;
 mod priority;
 mod resolution;
+mod shared_file;
 
 pub use attachment::Attachment;
 pub use changelog::ChangeLogEntry;
 pub use comment::Comment;
+pub use custom_field::CustomField;
+pub use external_file_link::ExternalFileLink;
 pub use issue::Issue;
 pub use notification::Notification;
 pub use parent_child::ParentChildCondition;
 pub use priority::Priority;
 pub use resolution::Resolution;
+pub use shared_file::SharedFile;

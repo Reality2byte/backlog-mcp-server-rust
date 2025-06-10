@@ -74,6 +74,12 @@
     -   Verified all changes.
 -   **Implemented Document Attachment Image Download (MCP Tool & Client/Library Refactor)**: (Details omitted for brevity, see previous context if needed)
     -   Verified all changes.
+-   **Enhanced `Issue` Model in `backlog-issue`**:
+    -   **`backlog-issue/src/models/issue.rs`**: Added `custom_fields`, `attachments`, `shared_files`, `external_file_links`, and `stars` fields to the `Issue` struct. Used `#[serde(default)]` to handle cases where these fields are absent from API responses (e.g., in list views).
+    -   **New Model Files**: Created `custom_field.rs`, `shared_file.rs`, and `external_file_link.rs` to define the corresponding structs.
+    -   **`backlog-issue/src/models/mod.rs`**: Updated to export the new models.
+    -   **`backlog-core/src/role.rs`**: Added the `Guest = 5` variant to the `Role` enum to correctly handle all possible `roleType` values from the API, fixing a deserialization failure.
+    -   **Testing**: Added a new unit test `test_issue_deserialization` to `backlog-issue/src/lib.rs` to verify that a full JSON payload for an issue can be correctly deserialized into the enhanced `Issue` struct. This test now passes along with all pre-existing tests.
 
 ## Next Steps
 -   Await further instructions from the user.

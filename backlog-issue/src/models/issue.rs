@@ -1,7 +1,7 @@
-use crate::models::{Priority, Resolution};
+use crate::models::{Attachment, CustomField, ExternalFileLink, Priority, Resolution, SharedFile};
 use backlog_core::{
-    IssueKey, User,
     identifier::{IssueId, ProjectId},
+    IssueKey, Star, User,
 };
 use backlog_project::{Category, IssueType, Milestone, Status};
 use serde::{Deserialize, Serialize};
@@ -32,4 +32,14 @@ pub struct Issue {
     pub created: String,
     pub updated_user: Option<Box<User>>,
     pub updated: String,
+    #[serde(default)]
+    pub custom_fields: Vec<CustomField>,
+    #[serde(default)]
+    pub attachments: Vec<Attachment>,
+    #[serde(default)]
+    pub shared_files: Vec<SharedFile>,
+    #[serde(default)]
+    pub external_file_links: Vec<ExternalFileLink>,
+    #[serde(default)]
+    pub stars: Vec<Star>,
 }
