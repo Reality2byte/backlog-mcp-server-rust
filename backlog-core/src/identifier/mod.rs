@@ -90,6 +90,7 @@ impl_identifier!(
     (RepositoryId, u32),
     (PullRequestId, u32),
     (PullRequestCommentId, u32),
+    (CustomListItemId, u32),
     // u64 identifiers
     (SvnRevision, u64),
     (PullRequestNumber, u64)
