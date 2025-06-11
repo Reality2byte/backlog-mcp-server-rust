@@ -151,6 +151,12 @@ graph TD
     -   Consistent error handling is achieved by bridge functions returning `crate::error::Result`, which is then converted to `rmcp::Error` in `server.rs` using `?`.
 -   **Layered Architecture**.
 -   **Shared Test Utilities**: Common test helpers (like `setup_client`) are provided by the `client` crate via a feature flag (`test-utils`) to promote consistency and reduce duplication in tests of other crates.
+-   **Custom Deserialization for Complex Types**: For complex JSON structures where `serde`'s automatic `derive` is insufficient (e.g., a field's type depends on the value of another field), a manual `impl Deserialize` is used. The pattern involves:
+    1.  Defining a temporary `Raw...` struct that derives `Deserialize` and captures all possible fields from the JSON, using `serde_json::Value` for fields with ambiguous types.
+    2.  In the manual `impl Deserialize` for the final struct, first deserialize the JSON into the `Raw...` struct.
+    3.  Use a `match` or `if/else` on a type-discriminating field (e.g., `type_id`) from the `Raw` struct.
+    4.  Within the match arms, construct the final, strongly-typed data, deserializing the `serde_json::Value` fields into their correct types (e.g., using `serde_json::from_value`).
+    5.  This pattern was used for `CustomFieldType` to handle the various settings based on `typeId`.
 
 ## Component Relationships
 -   `blg` (CLI) depends on `backlog-api-client` (library).

@@ -73,20 +73,14 @@ mod tests {
     fn test_date_deserialization_from_date() {
         let json = "\"2025-12-24\"";
         let date: Date = serde_json::from_str(json).unwrap();
-        assert_eq!(
-            date,
-            Date(NaiveDate::from_ymd_opt(2025, 12, 24).unwrap())
-        );
+        assert_eq!(date, Date(NaiveDate::from_ymd_opt(2025, 12, 24).unwrap()));
     }
 
     #[test]
     fn test_date_deserialization_from_datetime() {
         let json = "\"2025-12-24T10:30:00Z\"";
         let date: Date = serde_json::from_str(json).unwrap();
-        assert_eq!(
-            date,
-            Date(NaiveDate::from_ymd_opt(2025, 12, 24).unwrap())
-        );
+        assert_eq!(date, Date(NaiveDate::from_ymd_opt(2025, 12, 24).unwrap()));
     }
 
     #[test]

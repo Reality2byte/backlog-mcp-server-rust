@@ -74,15 +74,19 @@
     -   Verified all changes.
 -   **Implemented Document Attachment Image Download (MCP Tool & Client/Library Refactor)**: (Details omitted for brevity, see previous context if needed)
     -   Verified all changes.
--   **Enhanced `Issue` Model in `backlog-issue`**:
-    -   **`backlog-issue/src/models/issue.rs`**: Added `custom_fields`, `attachments`, `shared_files`, `external_file_links`, and `stars` fields to the `Issue` struct. Used `#[serde(default)]` to handle cases where these fields are absent from API responses (e.g., in list views).
-    -   **New Model Files**: Created `custom_field.rs`, `shared_file.rs`, and `external_file_link.rs` to define the corresponding structs.
-    -   **`backlog-issue/src/models/mod.rs`**: Updated to export the new models.
-    -   **`backlog-core/src/role.rs`**: Added the `Guest = 5` variant to the `Role` enum to correctly handle all possible `roleType` values from the API, fixing a deserialization failure.
-    -   **Testing**: Added a new unit test `test_issue_deserialization` to `backlog-issue/src/lib.rs` to verify that a full JSON payload for an issue can be correctly deserialized into the enhanced `Issue` struct. This test now passes along with all pre-existing tests.
+-   **Enhanced `Issue` Model in `backlog-issue`**: (Details omitted for brevity)
+-   **Implemented `CustomFieldType` Deserialization and Models**:
+    -   **`backlog-core/src/date.rs`**: Created a new `Date` newtype over `chrono::NaiveDate`. Implemented `FromStr` and `serde::Deserialize` to handle two possible date formats from the API (`yyyy-MM-dd` and `yyyy-MM-ddTHH:mm:ssZ`). Implemented `serde::Serialize` to output a consistent `yyyy-MM-ddT00:00:00Z` format.
+    -   **`backlog-issue/src/models/`**: Created `list_item.rs` and `initial_date.rs` for related models.
+    -   **`backlog-issue/src/models/custom_field_type.rs`**:
+        -   Defined `CustomFieldSettings` enum and associated `...Settings` structs to represent the different custom field configurations.
+        -   Implemented a manual `Deserialize` for `CustomFieldType` to handle the complex, flattened JSON structure where field types depend on the `typeId` value.
+        -   The deserializer uses a temporary `RawCustomFieldType` struct to parse the initial JSON, including fields with ambiguous types like `min` and `max` into `serde_json::Value`.
+        -   It then uses a `match` on `type_id` to correctly deserialize the `serde_json::Value` fields into their proper, final types (`f64` or `Date`).
+        -   Added comprehensive unit tests for both deserialization and serialization of all custom field types.
 
 ## Next Steps
--   Await further instructions from the user.
+-   Add serialization tests for `CustomFieldType`.
 
 ## Active Decisions & Considerations
 -   **Model Ownership and Dependencies**:
@@ -100,8 +104,9 @@
 -   **Builder Pattern for Request Params**.
 -   Standard Rust project structure, workspace, feature flags, `thiserror`, `schemars`.
     -   **Model Placement**: Shared core types and identifiers (like `User`, `AttachmentId`, `PullRequestNumber`, `IssueTypeId`) in `backlog-core`. Domain-specific models in their respective crates.
-    -   **Serialization of Newtypes**: For simple numeric newtypes like `PullRequestNumber(u64)` or existing `Id(u32)` types, deriving `Serialize` and `Deserialize` directly is sufficient for them to be treated as their inner numeric type in JSON. `#[serde(transparent)]` is an option for explicitness but not strictly necessary if the default behavior is as desired and consistent with project patterns.
-    -   **Serialization of Structs**: Use `#[serde(rename_all = "camelCase")]` for structs that map to JSON objects to match Backlog API conventions. Use `#[serde(default, skip_serializing_if = "Option::is_none")]` for optional fields.
+-   **Serialization of Newtypes**: For simple numeric newtypes like `PullRequestNumber(u64)` or existing `Id(u32)` types, deriving `Serialize` and `Deserialize` directly is sufficient for them to be treated as their inner numeric type in JSON. `#[serde(transparent)]` is an option for explicitness but not strictly necessary if the default behavior is as desired and consistent with project patterns.
+-   **Serialization of Structs**: Use `#[serde(rename_all = "camelCase")]` for structs that map to JSON objects to match Backlog API conventions. Use `#[serde(default, skip_serializing_if = "Option::is_none")]` for optional fields.
+-   **Custom Deserialization for Ambiguous/Complex JSON**: When a JSON object's structure is ambiguous (e.g., fields like `min` can be a number or a date string depending on a `typeId` field), a manual `impl Deserialize` is the most robust pattern. This involves deserializing to a temporary `Raw...` struct with `serde_json::Value` for the ambiguous fields, then matching on the `typeId` to correctly parse the `Value` into the final, strongly-typed struct. This avoids `serde`'s limitations with tagged enums where the tag value is not a string.
 -   **MCP Tool Structure**: Tools in `mcp-backlog-server` are organized by domain into modules (e.g., `issue`, `git`, `project`). Each module typically contains:
     -   `request.rs`: Defines request structs deriving `serde::Deserialize` and `rmcp::schemars::JsonSchema` (using `use rmcp::schemars;`).
     -   `bridge.rs`: Contains functions that take these request structs and the `BacklogApiClient` (wrapped in `Arc<Mutex<>>`), perform the API call, and return a `crate::error::Result`.

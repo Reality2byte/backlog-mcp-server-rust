@@ -1,14 +1,14 @@
 use crate::models::{InitialDate, ListItem};
 use backlog_core::{
-    identifier::{CustomFieldId, IssueTypeId, ProjectId},
     Date,
+    identifier::{CustomFieldId, IssueTypeId, ProjectId},
 };
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "schemars")]
 use schemars::JsonSchema;
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct CustomFieldType {
@@ -20,6 +20,7 @@ pub struct CustomFieldType {
     pub use_issue_type: bool,
     pub applicable_issue_types: Vec<IssueTypeId>,
     pub display_order: i64,
+    #[serde(flatten)]
     pub settings: CustomFieldSettings,
 }
 
@@ -73,6 +74,76 @@ pub struct ListSettings {
     pub allow_input: bool,
 }
 
+impl Serialize for CustomFieldType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeMap;
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("id", &self.id)?;
+        map.serialize_entry("projectId", &self.project_id)?;
+        map.serialize_entry("name", &self.name)?;
+        map.serialize_entry("description", &self.description)?;
+        map.serialize_entry("required", &self.required)?;
+        map.serialize_entry("useIssueType", &self.use_issue_type)?;
+        map.serialize_entry("applicableIssueTypes", &self.applicable_issue_types)?;
+        map.serialize_entry("displayOrder", &self.display_order)?;
+        let type_id = match self.settings {
+            CustomFieldSettings::Text => 1,
+            CustomFieldSettings::TextArea => 2,
+            CustomFieldSettings::Numeric(_) => 3,
+            CustomFieldSettings::Date(_) => 4,
+            CustomFieldSettings::SingleList(_) => 5,
+            CustomFieldSettings::MultipleList(_) => 6,
+            CustomFieldSettings::Checkbox(_) => 7,
+            CustomFieldSettings::Radio(_) => 8,
+        };
+        map.serialize_entry("typeId", &type_id)?;
+        match &self.settings {
+            CustomFieldSettings::Numeric(settings) => {
+                let val = serde_json::to_value(settings).map_err(serde::ser::Error::custom)?;
+                if let serde_json::Value::Object(m) = val {
+                    for (k, v) in m {
+                        if !v.is_null() {
+                            map.serialize_entry(&k, &v)?;
+                        }
+                    }
+                }
+            }
+            CustomFieldSettings::Date(settings) => {
+                let val = serde_json::to_value(settings).map_err(serde::ser::Error::custom)?;
+                if let serde_json::Value::Object(m) = val {
+                    for (k, v) in m {
+                        if !v.is_null() {
+                            map.serialize_entry(&k, &v)?;
+                        }
+                    }
+                }
+            }
+            CustomFieldSettings::SingleList(settings)
+            | CustomFieldSettings::MultipleList(settings)
+            | CustomFieldSettings::Checkbox(settings)
+            | CustomFieldSettings::Radio(settings) => {
+                let val = serde_json::to_value(settings).map_err(serde::ser::Error::custom)?;
+                if let serde_json::Value::Object(m) = val {
+                    for (k, v) in m {
+                        if !v.is_null() {
+                            map.serialize_entry(&k, &v)?;
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+        map.end()
+    }
+}
+
+// A custom `Deserialize` implementation is required for `CustomFieldType` due to two main complexities in the Backlog API's JSON response:
+// 1.  **Numeric Enum Tag**: The `typeId` field, which discriminates between different custom field types, is a number (e.g., `3`) rather than a string. Serde's `#[serde(tag = "...")]` attribute expects a string tag by default, which causes automatic derivation to fail.
+// 2.  **Ambiguous Field Types**: Field names like `min` and `max` are reused across different custom field types but have different data types (e.g., a number for numeric fields, a date-string for date fields).
+// To handle this, we use the "Raw Struct" pattern: first, we deserialize into a temporary `RawCustomFieldType` struct where ambiguous fields are parsed into `serde_json::Value`. Then, we manually match on `type_id` to parse the `Value` fields into their correct, final types.
 impl<'de> Deserialize<'de> for CustomFieldType {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -111,8 +182,18 @@ impl<'de> Deserialize<'de> for CustomFieldType {
             1 => CustomFieldSettings::Text,
             2 => CustomFieldSettings::TextArea,
             3 => {
-                let min = raw.min.map(serde_json::from_value).transpose().map_err(serde::de::Error::custom)?.flatten();
-                let max = raw.max.map(serde_json::from_value).transpose().map_err(serde::de::Error::custom)?.flatten();
+                let min = raw
+                    .min
+                    .map(serde_json::from_value)
+                    .transpose()
+                    .map_err(serde::de::Error::custom)?
+                    .flatten();
+                let max = raw
+                    .max
+                    .map(serde_json::from_value)
+                    .transpose()
+                    .map_err(serde::de::Error::custom)?
+                    .flatten();
                 CustomFieldSettings::Numeric(NumericSettings {
                     min,
                     max,
@@ -121,8 +202,18 @@ impl<'de> Deserialize<'de> for CustomFieldType {
                 })
             }
             4 => {
-                let min = raw.min.map(serde_json::from_value).transpose().map_err(serde::de::Error::custom)?.flatten();
-                let max = raw.max.map(serde_json::from_value).transpose().map_err(serde::de::Error::custom)?.flatten();
+                let min = raw
+                    .min
+                    .map(serde_json::from_value)
+                    .transpose()
+                    .map_err(serde::de::Error::custom)?
+                    .flatten();
+                let max = raw
+                    .max
+                    .map(serde_json::from_value)
+                    .transpose()
+                    .map_err(serde::de::Error::custom)?
+                    .flatten();
                 CustomFieldSettings::Date(DateSettings {
                     min,
                     max,
@@ -153,7 +244,7 @@ impl<'de> Deserialize<'de> for CustomFieldType {
                 return Err(serde::de::Error::custom(format!(
                     "unknown typeId: {}",
                     raw.type_id
-                )))
+                )));
             }
         };
 
@@ -307,9 +398,37 @@ mod tests {
         assert_eq!(field.id, 978982.into());
         if let CustomFieldSettings::SingleList(settings) = field.settings {
             assert_eq!(settings.items.len(), 3);
-            assert_eq!(settings.allow_add_item, true);
+            assert!(settings.allow_add_item);
         } else {
             panic!("Wrong settings type");
         }
+    }
+
+    #[test]
+    fn test_serialize_date_field() {
+        let field = CustomFieldType {
+            id: 978979.into(),
+            project_id: 615400.into(),
+            name: "日付フィールド（全）".to_string(),
+            description: "これは日付型のカスタムフィールドです。".to_string(),
+            required: true,
+            use_issue_type: false,
+            applicable_issue_types: vec![],
+            display_order: 2147483646,
+            settings: CustomFieldSettings::Date(DateSettings {
+                min: Some(Date::from(NaiveDate::from_ymd_opt(2025, 1, 1).unwrap())),
+                max: Some(Date::from(NaiveDate::from_ymd_opt(2025, 12, 31).unwrap())),
+                initial_date: Some(InitialDate {
+                    id: 1,
+                    shift: None,
+                    date: Some(Date::from(NaiveDate::from_ymd_opt(2025, 12, 24).unwrap())),
+                }),
+            }),
+        };
+        let json = serde_json::to_string(&field).unwrap();
+        let expected = r#"{"id":978979,"projectId":615400,"name":"日付フィールド（全）","description":"これは日付型のカスタムフィールドです。","required":true,"useIssueType":false,"applicableIssueTypes":[],"displayOrder":2147483646,"typeId":4,"min":"2025-01-01T00:00:00Z","max":"2025-12-31T00:00:00Z","initialDate":{"id":1,"shift":null,"date":"2025-12-24T00:00:00Z"}}"#;
+        let expected_val: serde_json::Value = serde_json::from_str(expected).unwrap();
+        let actual_val: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert_eq!(actual_val, expected_val);
     }
 }

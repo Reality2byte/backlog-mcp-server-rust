@@ -7,8 +7,8 @@ use schemars::JsonSchema;
 #[derive(Eq, PartialEq, Debug, Clone, Serialize_repr, Deserialize_repr)]
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 pub enum CustomFieldTypeId {
-    SingleText = 1,
-    MultipleText = 2,
+    Text = 1,
+    TextArea = 2,
     Numeric = 3,
     Date = 4,
     SingleList = 5,

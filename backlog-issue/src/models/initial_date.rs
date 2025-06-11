@@ -9,7 +9,6 @@ use schemars::JsonSchema;
 #[serde(rename_all = "camelCase")]
 pub struct InitialDate {
     pub id: u32,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub shift: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub date: Option<Date>,
