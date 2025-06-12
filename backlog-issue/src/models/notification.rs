@@ -1,3 +1,4 @@
+use crate::models::NotificationReason;
 use backlog_core::{User, identifier::NotificationId};
 use serde::{Deserialize, Serialize};
 
@@ -11,14 +12,13 @@ use schemars::JsonSchema;
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[serde(rename_all = "camelCase")]
-pub struct Notification {
+pub struct NotificationForComment {
     /// The ID of the notification.
     pub id: NotificationId,
     /// Indicates if the notification has been read by the user.
     pub already_read: bool,
     /// A code indicating the reason for the notification.
-    /// The specific meanings of these codes are defined by the Backlog API.
-    pub reason: u8, // Consider making this an enum if specific values are known
+    pub reason: NotificationReason,
     /// The user to whom this notification is addressed.
     pub user: User,
     /// Indicates if the resource related to the notification has been read.

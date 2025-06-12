@@ -1,4 +1,5 @@
 use backlog_core::{User, identifier::SharedFileId};
+use chrono::{DateTime, Utc};
 #[cfg(feature = "schemars")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -27,5 +28,5 @@ pub struct SharedFile {
     pub updated_user: Option<User>,
     /// The timestamp of when the shared file was last updated, if any.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub updated: Option<String>,
+    pub updated: Option<DateTime<Utc>>,
 }

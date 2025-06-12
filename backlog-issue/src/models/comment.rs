@@ -1,4 +1,4 @@
-use crate::models::{ChangeLogEntry, Notification};
+use crate::models::{ChangeLogEntry, NotificationForComment};
 use backlog_core::{Star, User, identifier::CommentId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -32,5 +32,5 @@ pub struct Comment {
     pub stars: Vec<Star>,
     /// A list of notifications related to this comment.
     #[serde(default)]
-    pub notifications: Vec<Notification>,
+    pub notifications: Vec<NotificationForComment>,
 }
