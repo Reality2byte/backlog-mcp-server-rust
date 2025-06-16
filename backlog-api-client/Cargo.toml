@@ -5,13 +5,14 @@ edition.workspace = true
 license.workspace = true
 
 [features]
-default = ["issue", "project", "space", "user", "document", "git", "all_writable"] # Added "document", "git"
+default = ["issue", "project", "space", "user", "document", "git", "file", "all_writable"] # Added "file"
 issue = ["backlog-issue"]
 project = ["backlog-project"]
 space = ["backlog-space"]
 user = ["backlog-user"]
 document = ["backlog-document"] # Added document feature
 git = ["backlog-git"] # Added git feature
+file = ["backlog-file"] # Added file feature
 schemars = [ # Added schemars feature to propagate to sub-crates
     "backlog-core/schemars",
     "backlog-issue/schemars",
@@ -20,6 +21,7 @@ schemars = [ # Added schemars feature to propagate to sub-crates
     # "backlog-user/schemars", # Removed as backlog-user doesn't have this feature
     "backlog-document/schemars",
     "backlog-git/schemars",
+    "backlog-file/schemars",
 ]
 cli = ["clap"] # Added cli feature for clap dependency
 all_writable = ["backlog-issue/writable", "backlog-project/writable", "backlog-space/writable", "backlog-user/writable"]
@@ -38,6 +40,7 @@ backlog-space = { path = "../backlog-space", optional = true }
 backlog-user = { path = "../backlog-user", optional = true }
 backlog-document = { path = "../backlog-document", optional = true }
 backlog-git = { path = "../backlog-git", optional = true }
+backlog-file = { path = "../backlog-file", optional = true }
 clap = { version = "4.5", features = ["derive"], optional = true } # For CLI arg parsing
 tokio = { workspace = true }
 url = { workspace = true }

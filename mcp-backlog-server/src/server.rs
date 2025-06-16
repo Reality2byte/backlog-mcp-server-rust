@@ -7,6 +7,7 @@ use crate::{
             DownloadDocumentAttachmentRequest, GetDocumentDetailsRequest, GetDocumentTreeRequest,
         },
     },
+    file::{self, request::GetSharedFilesListRequest},
     git::{
         self,
         request::{
@@ -240,6 +241,15 @@ impl Server {
         let statuses =
             project::bridge::get_project_status_list_tool(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(statuses)?]))
+    }
+
+    #[tool(description = "Get a list of shared files for a specified project directory.")]
+    async fn get_shared_files_list(
+        &self,
+        #[tool(aggr)] request: GetSharedFilesListRequest,
+    ) -> McpResult {
+        let files = file::bridge::get_shared_files_list_tool(self.client.clone(), request).await?;
+        Ok(CallToolResult::success(vec![Content::json(files)?]))
     }
 
     #[tool(description = "Get a list of attachments for a specific pull request.")]

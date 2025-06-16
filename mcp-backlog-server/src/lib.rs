@@ -1,6 +1,7 @@
 mod attachment;
 pub mod document;
 mod error;
+pub mod file;
 pub mod git;
 pub mod issue;
 pub mod project;

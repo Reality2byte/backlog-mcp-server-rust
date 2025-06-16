@@ -112,7 +112,7 @@
 
 ## Files
 - [ ] GetFile: Downloads the file: GET /api/v2/projects/:projectIdOrKey/files/:sharedFileId
-- [ ] GetListOfSharedFiles: Gets list of Shared Files: GET /api/v2/projects/:projectIdOrKey/files/metadata/:path
+- [x] GetListOfSharedFiles: Gets list of Shared Files: GET /api/v2/projects/:projectIdOrKey/files/metadata/:path
 
 ## Wikis
 - [ ] UpdateWikiPage: Updates information about Wiki page: PATCH /api/v2/wikis/:wikiId

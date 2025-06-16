@@ -26,6 +26,12 @@ pub use backlog_document::{
     DocumentApi, DocumentDetail, DocumentTreeResponse, DocumentTreeRootNode, GetDocumentTreeParams,
 };
 
+// File module (from backlog_file)
+#[cfg(feature = "file")]
+pub use backlog_file::{
+    FileApi, SharedFile, GetSharedFilesListParams, GetSharedFilesListResponse,
+};
+
 // Issue module (from backlog_issue)
 #[cfg(feature = "issue")]
 pub use backlog_issue::{
