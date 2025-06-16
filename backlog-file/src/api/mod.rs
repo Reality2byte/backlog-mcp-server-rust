@@ -68,7 +68,7 @@ mod tests {
             name: "test.txt".to_string(),
             size: Some(1024),
             created_user: user.clone(),
-            created: "2023-01-01T00:00:00Z".to_string(),
+            created: chrono::Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap(),
             updated_user: Some(user.clone()),
             updated: Some(chrono::Utc.with_ymd_and_hms(2023, 1, 2, 0, 0, 0).unwrap()),
         }];

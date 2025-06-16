@@ -22,7 +22,7 @@ pub struct SharedFile {
     /// The user who created the shared file.
     pub created_user: User,
     /// The timestamp of when the shared file was created.
-    pub created: String,
+    pub created: DateTime<Utc>,
     /// The user who last updated the shared file, if any.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub updated_user: Option<User>,
