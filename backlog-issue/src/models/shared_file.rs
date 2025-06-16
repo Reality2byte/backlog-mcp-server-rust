@@ -1,4 +1,4 @@
-use backlog_core::{User, identifier::SharedFileId};
+use backlog_core::{FileType, User, identifier::SharedFileId};
 use chrono::{DateTime, Utc};
 #[cfg(feature = "schemars")]
 use schemars::JsonSchema;
@@ -12,7 +12,7 @@ pub struct SharedFile {
     /// The ID of the shared file.
     pub id: SharedFileId,
     /// The type of the shared file.
-    pub r#type: String,
+    pub r#type: FileType,
     /// The directory path of the shared file.
     pub dir: String,
     /// The name of the shared file.

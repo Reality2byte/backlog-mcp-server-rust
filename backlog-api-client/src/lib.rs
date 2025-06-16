@@ -28,9 +28,7 @@ pub use backlog_document::{
 
 // File module (from backlog_file)
 #[cfg(feature = "file")]
-pub use backlog_file::{
-    FileApi, SharedFile, GetSharedFilesListParams, GetSharedFilesListResponse,
-};
+pub use backlog_file::{FileApi, GetSharedFilesListParams, GetSharedFilesListResponse, SharedFile};
 
 // Issue module (from backlog_issue)
 #[cfg(feature = "issue")]

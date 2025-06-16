@@ -34,7 +34,7 @@ impl FileApi {
 mod tests {
     use super::*;
     use backlog_api_core::Error as ApiError;
-    use backlog_core::identifier::{ProjectId, SharedFileId, UserId};
+    use backlog_core::identifier::{Identifier, ProjectId, SharedFileId, UserId};
     use backlog_core::{Language, Role};
     use chrono::TimeZone;
     use client::test_utils::setup_client;
@@ -60,23 +60,24 @@ mod tests {
             last_login_time: Some(chrono::Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap()),
         };
 
-        let expected_files = vec![
-            crate::models::SharedFile {
-                id: SharedFileId::new(1),
-                project_id: 123,
-                r#type: "file".to_string(),
-                dir: "/documents".to_string(),
-                name: "test.txt".to_string(),
-                size: Some(1024),
-                created_user: user.clone(),
-                created: "2023-01-01T00:00:00Z".to_string(),
-                updated_user: Some(user.clone()),
-                updated: Some(chrono::Utc.with_ymd_and_hms(2023, 1, 2, 0, 0, 0).unwrap()),
-            },
-        ];
+        let expected_files = vec![crate::models::SharedFile {
+            id: SharedFileId::new(1),
+            project_id: ProjectId(123),
+            r#type: backlog_core::FileType::File,
+            dir: "/documents".to_string(),
+            name: "test.txt".to_string(),
+            size: Some(1024),
+            created_user: user.clone(),
+            created: "2023-01-01T00:00:00Z".to_string(),
+            updated_user: Some(user.clone()),
+            updated: Some(chrono::Utc.with_ymd_and_hms(2023, 1, 2, 0, 0, 0).unwrap()),
+        }];
 
         Mock::given(method("GET"))
-            .and(path(format!("/api/v2/projects/{}/files/metadata/{}", project_id, dir_path)))
+            .and(path(format!(
+                "/api/v2/projects/{}/files/metadata/{}",
+                project_id, dir_path
+            )))
             .and(query_param("order", "desc"))
             .and(query_param("offset", "0"))
             .and(query_param("count", "20"))
@@ -90,13 +91,15 @@ mod tests {
             count: Some(20),
         };
 
-        let result = file_api.get_shared_files_list(project_id, dir_path, params).await;
+        let result = file_api
+            .get_shared_files_list(project_id, dir_path, params)
+            .await;
         assert!(result.is_ok());
         let files = result.unwrap();
         assert_eq!(files.len(), 1);
         assert_eq!(files[0].name, "test.txt");
         assert_eq!(files[0].size, Some(1024));
-        assert_eq!(files[0].project_id, 123);
+        assert_eq!(files[0].project_id.value(), 123);
     }
 
     #[tokio::test]
@@ -110,14 +113,21 @@ mod tests {
         let expected_files: Vec<crate::models::SharedFile> = Vec::new();
 
         Mock::given(method("GET"))
-            .and(path(format!("/api/v2/projects/{}/files/metadata/{}", project_key, dir_path)))
+            .and(path(format!(
+                "/api/v2/projects/{}/files/metadata/{}",
+                project_key, dir_path
+            )))
             .respond_with(ResponseTemplate::new(200).set_body_json(&expected_files))
             .mount(&server)
             .await;
 
         let params = GetSharedFilesListParams::default();
         let result = file_api
-            .get_shared_files_list(ProjectIdOrKey::from_str(project_key).unwrap(), dir_path, params)
+            .get_shared_files_list(
+                ProjectIdOrKey::from_str(project_key).unwrap(),
+                dir_path,
+                params,
+            )
             .await;
         assert!(result.is_ok());
         assert!(result.unwrap().is_empty());
@@ -142,7 +152,10 @@ mod tests {
         });
 
         Mock::given(method("GET"))
-            .and(path(format!("/api/v2/projects/{}/files/metadata/{}", project_id, dir_path)))
+            .and(path(format!(
+                "/api/v2/projects/{}/files/metadata/{}",
+                project_id, dir_path
+            )))
             .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
             .mount(&server)
             .await;
@@ -171,7 +184,10 @@ mod tests {
         let expected_files: Vec<crate::models::SharedFile> = Vec::new();
 
         Mock::given(method("GET"))
-            .and(path(format!("/api/v2/projects/{}/files/metadata/{}", project_id, dir_path)))
+            .and(path(format!(
+                "/api/v2/projects/{}/files/metadata/{}",
+                project_id, dir_path
+            )))
             .and(query_param("order", "asc"))
             .and(query_param("offset", "10"))
             .and(query_param("count", "50"))
@@ -185,7 +201,9 @@ mod tests {
             count: Some(50),
         };
 
-        let result = file_api.get_shared_files_list(project_id, dir_path, params).await;
+        let result = file_api
+            .get_shared_files_list(project_id, dir_path, params)
+            .await;
         assert!(result.is_ok());
         assert!(result.unwrap().is_empty());
     }

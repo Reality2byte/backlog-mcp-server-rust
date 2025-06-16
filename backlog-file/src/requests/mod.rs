@@ -26,7 +26,7 @@ pub struct GetSharedFilesListParams {
 impl From<GetSharedFilesListParams> for Vec<(String, String)> {
     fn from(params: GetSharedFilesListParams) -> Self {
         let mut query_params = Vec::new();
-        
+
         if let Some(order) = params.order {
             query_params.push(("order".to_string(), order));
         }
@@ -36,7 +36,7 @@ impl From<GetSharedFilesListParams> for Vec<(String, String)> {
         if let Some(count) = params.count {
             query_params.push(("count".to_string(), count.to_string()));
         }
-        
+
         query_params
     }
 }

@@ -1,6 +1,7 @@
 mod active_type_id;
 pub mod date;
 mod error;
+mod file_type;
 pub mod identifier;
 mod issue_id_or_key;
 mod issue_key;
@@ -18,6 +19,7 @@ mod user;
 pub use active_type_id::ActiveTypeId;
 pub use date::Date;
 pub use error::{Error, Result};
+pub use file_type::FileType;
 pub use issue_id_or_key::IssueIdOrKey;
 pub use issue_key::IssueKey;
 pub use language::Language;
