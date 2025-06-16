@@ -63,14 +63,13 @@ mod tests {
         let expected_files = vec![crate::models::SharedFile {
             id: SharedFileId::new(1),
             project_id: ProjectId(123),
-            r#type: backlog_core::FileType::File,
             dir: "/documents".to_string(),
             name: "test.txt".to_string(),
-            size: Some(1024),
             created_user: user.clone(),
             created: chrono::Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap(),
             updated_user: Some(user.clone()),
             updated: Some(chrono::Utc.with_ymd_and_hms(2023, 1, 2, 0, 0, 0).unwrap()),
+            content: crate::models::FileContent::File { size: 1024 },
         }];
 
         Mock::given(method("GET"))
@@ -98,7 +97,10 @@ mod tests {
         let files = result.unwrap();
         assert_eq!(files.len(), 1);
         assert_eq!(files[0].name, "test.txt");
-        assert_eq!(files[0].size, Some(1024));
+        match &files[0].content {
+            crate::models::FileContent::File { size } => assert_eq!(*size, 1024),
+            _ => panic!("Expected file content"),
+        }
         assert_eq!(files[0].project_id.value(), 123);
     }
 

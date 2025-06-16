@@ -1,8 +1,19 @@
-use backlog_core::{FileType, User, identifier::SharedFileId};
+use backlog_core::{User, identifier::SharedFileId};
 use chrono::{DateTime, Utc};
 #[cfg(feature = "schemars")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+/// Represents the content type of a shared file.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[serde(tag = "type", rename_all = "lowercase")]
+pub enum FileContent {
+    /// A regular file with size information
+    File { size: u64 },
+    /// A directory (no size information)
+    Directory,
+}
 
 /// Represents a shared file in Backlog.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -11,14 +22,10 @@ use serde::{Deserialize, Serialize};
 pub struct SharedFile {
     /// The ID of the shared file.
     pub id: SharedFileId,
-    /// The type of the shared file.
-    pub r#type: FileType,
     /// The directory path of the shared file.
     pub dir: String,
     /// The name of the shared file.
     pub name: String,
-    /// The size of the shared file in bytes.
-    pub size: u64,
     /// The user who created the shared file.
     pub created_user: User,
     /// The timestamp of when the shared file was created.
@@ -29,4 +36,7 @@ pub struct SharedFile {
     /// The timestamp of when the shared file was last updated, if any.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub updated: Option<DateTime<Utc>>,
+    /// The content type and type-specific information.
+    #[serde(flatten)]
+    pub content: FileContent,
 }

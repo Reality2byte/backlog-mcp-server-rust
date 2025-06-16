@@ -30,4 +30,4 @@ pub use notification_reason::NotificationReason;
 pub use parent_child::ParentChildCondition;
 pub use priority::Priority;
 pub use resolution::Resolution;
-pub use shared_file::SharedFile;
+pub use shared_file::{FileContent, SharedFile};
