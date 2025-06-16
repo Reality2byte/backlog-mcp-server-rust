@@ -1,13 +1,13 @@
 use super::request::{
-    DownloadAttachmentRequest, GetAttachmentListRequest, GetIssueCommentsRequest,
-    GetIssueDetailsRequest, GetIssuesByMilestoneNameRequest, GetVersionMilestoneListRequest,
-    UpdateIssueRequest,
+    AddCommentRequest, DownloadAttachmentRequest, GetAttachmentListRequest,
+    GetIssueCommentsRequest, GetIssueDetailsRequest, GetIssuesByMilestoneNameRequest,
+    GetVersionMilestoneListRequest, UpdateIssueRequest,
 };
 use crate::error::{Error as McpError, Result};
 use crate::util::{MatchResult, find_by_name_from_array};
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
-    Attachment, AttachmentId, Comment, DownloadedFile, GetCommentListParams,
+    AddCommentParams, Attachment, AttachmentId, Comment, DownloadedFile, GetCommentListParams,
     GetIssueListParamsBuilder, Issue, IssueIdOrKey, IssueKey, Milestone, ProjectIdOrKey,
     UpdateIssueParams,
 };
@@ -153,4 +153,20 @@ pub(crate) async fn download_issue_attachment_file(
         .get_attachment_file(parsed_issue_id_or_key, parsed_attachment_id)
         .await?;
     Ok(attachment)
+}
+
+#[cfg(feature = "issue_writable")]
+pub(crate) async fn add_comment_impl(
+    client: Arc<Mutex<BacklogApiClient>>,
+    req: AddCommentRequest,
+) -> Result<Comment> {
+    let parsed_issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
+    let add_comment_params = AddCommentParams::try_from(req)?;
+
+    let client_guard = client.lock().await;
+    let comment = client_guard
+        .issue()
+        .add_comment(parsed_issue_id_or_key, &add_comment_params)
+        .await?;
+    Ok(comment)
 }

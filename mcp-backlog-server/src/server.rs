@@ -18,8 +18,9 @@ use crate::{
     issue::{
         self,
         request::{
-            DownloadAttachmentRequest, GetAttachmentListRequest, GetIssueDetailsRequest,
-            GetIssuesByMilestoneNameRequest, GetVersionMilestoneListRequest,
+            AddCommentRequest, DownloadAttachmentRequest, GetAttachmentListRequest,
+            GetIssueDetailsRequest, GetIssuesByMilestoneNameRequest,
+            GetVersionMilestoneListRequest,
         },
     },
     project::{self, request::GetProjectStatusListRequest},
@@ -154,6 +155,13 @@ impl Server {
     async fn update_issue(&self, #[tool(aggr)] request: UpdateIssueRequest) -> McpResult {
         let updated_issue = issue::bridge::update_issue_impl(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(updated_issue)?]))
+    }
+
+    #[cfg(feature = "issue_writable")]
+    #[tool(description = "Add a comment to a Backlog issue.")]
+    async fn add_comment_to_issue(&self, #[tool(aggr)] request: AddCommentRequest) -> McpResult {
+        let comment = issue::bridge::add_comment_impl(self.client.clone(), request).await?;
+        Ok(CallToolResult::success(vec![Content::json(comment)?]))
     }
 
     #[tool(

@@ -1,6 +1,6 @@
 use backlog_api_client::{
-    ApiError, CommentOrder, GetCommentListParams, GetCommentListParamsBuilder, UpdateIssueParams,
-    UpdateIssueParamsBuilder,
+    AddCommentParams, AddCommentParamsBuilder, ApiError, CommentOrder, GetCommentListParams,
+    GetCommentListParamsBuilder, UpdateIssueParams, UpdateIssueParamsBuilder,
 };
 use rmcp::schemars;
 use std::str::FromStr;
@@ -114,5 +114,42 @@ impl TryFrom<GetIssueCommentsRequest> for GetCommentListParams {
             params_builder.order(order);
         }
         params_builder.build()
+    }
+}
+
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct AddCommentRequest {
+    #[schemars(
+        description = "The issue ID or issue key to add the comment to. Examples: 'MYPROJECTKEY-123', '12345'."
+    )]
+    pub issue_id_or_key: String,
+    #[schemars(description = "The content of the comment to add.")]
+    pub content: String,
+    #[schemars(description = "User IDs to notify about this comment (optional).")]
+    pub notified_user_ids: Option<Vec<u32>>,
+    #[schemars(description = "Attachment IDs to include with this comment (optional).")]
+    pub attachment_ids: Option<Vec<u32>>,
+}
+
+impl TryFrom<AddCommentRequest> for AddCommentParams {
+    type Error = ApiError;
+    fn try_from(req: AddCommentRequest) -> Result<Self, Self::Error> {
+        use backlog_api_client::{AttachmentId, UserId};
+
+        let mut builder = AddCommentParamsBuilder::default();
+        builder.content(req.content);
+
+        if let Some(user_ids) = req.notified_user_ids {
+            let parsed_user_ids: Vec<UserId> = user_ids.into_iter().map(UserId::new).collect();
+            builder.notified_user_id(parsed_user_ids);
+        }
+
+        if let Some(attachment_ids) = req.attachment_ids {
+            let parsed_attachment_ids: Vec<AttachmentId> =
+                attachment_ids.into_iter().map(AttachmentId::new).collect();
+            builder.attachment_id(parsed_attachment_ids);
+        }
+
+        builder.build()
     }
 }

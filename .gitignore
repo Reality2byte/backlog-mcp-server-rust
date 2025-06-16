@@ -1,3 +1,4 @@
 /target
 .openapi-tmp/
 .clinerules
+.claude/

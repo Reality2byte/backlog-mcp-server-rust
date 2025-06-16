@@ -50,9 +50,9 @@
 ### Comment
 - [ ] UpdateComment: Updates content of comment: PATCH /api/v2/issues/:issueIdOrKey/comments/:commentId
 - [ ] CountComment: Returns number of comments in issue: GET /api/v2/issues/:issueIdOrKey/comments/count
-- [ ] AddComment: Adds a comment to the issue: POST /api/v2/issues/:issueIdOrKey/comments
+- [x] AddComment: Adds a comment to the issue: POST /api/v2/issues/:issueIdOrKey/comments
 - [ ] DeleteComment: Delete comment: DELETE /api/v2/issues/:issueIdOrKey/comments/:commentId
-- [ ] GetCommentList: Returns list of comments in issue: GET /api/v2/issues/:issueIdOrKey/comments
+- [x] GetCommentList: Returns list of comments in issue: GET /api/v2/issues/:issueIdOrKey/comments
 - [ ] GetComment: Returns information about comment: GET /api/v2/issues/:issueIdOrKey/comments/:commentId
 - [ ] GetListOfCommentNotifications: Returns the list of comment notifications: GET /api/v2/issues/:issueIdOrKey/comments/:commentId/notifications
 - [ ] AddCommentNotification: Adds notifications to the comment. Only the user who added the comment can add notifications: POST /api/v2/issues/:issueIdOrKey/comments/:commentId/notifications

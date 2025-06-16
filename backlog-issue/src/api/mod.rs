@@ -3,7 +3,11 @@ use backlog_core::{IssueIdOrKey, IssueKey, identifier::Identifier};
 use client::{Client, DownloadedFile};
 
 #[cfg(feature = "writable")]
-use crate::responses::{AddIssueResponse, DeleteIssueResponse, UpdateIssueResponse};
+use crate::requests::AddCommentParams;
+#[cfg(feature = "writable")]
+use crate::responses::{
+    AddCommentResponse, AddIssueResponse, DeleteIssueResponse, UpdateIssueResponse,
+};
 use crate::{
     requests::{
         AddIssueParams, CountIssueParams, GetCommentListParams, GetIssueListParams,
@@ -77,6 +81,23 @@ impl IssueApi {
             .await
     }
 
+    /// Add a new comment to an existing issue.
+    #[cfg(feature = "writable")]
+    pub async fn add_comment(
+        &self,
+        issue_id_or_key: impl Into<IssueIdOrKey>,
+        params: &AddCommentParams,
+    ) -> Result<AddCommentResponse> {
+        let issue_id_or_key_str: String = issue_id_or_key.into().into();
+        let params_vec: Vec<(String, String)> = params.into();
+        self.0
+            .post(
+                &format!("/api/v2/issues/{}/comments", issue_id_or_key_str),
+                &params_vec,
+            )
+            .await
+    }
+
     /// Get a list of comments for an issue by its ID or key.
     pub async fn get_comment_list(
         &self,
@@ -118,6 +139,8 @@ impl IssueApi {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(feature = "writable")]
+    use crate::requests::AddCommentParamsBuilder;
     use crate::{
         models::{Attachment, Comment, Issue},
         requests::{
@@ -566,5 +589,100 @@ mod tests {
         assert!(result.is_err());
         // Optionally, check for specific error type if ApiError exposes it well
         // e.g., matches!(result.unwrap_err(), backlog_api_core::Error::HttpStatus { status: reqwest::StatusCode::NOT_FOUND, .. })
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_comment_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_key = "TESTKEY-1";
+
+        let expected_comment = create_mock_comment(1001, "This is a test comment", 101, "alice");
+
+        Mock::given(method("POST"))
+            .and(path(format!("/api/v2/issues/{}/comments", issue_key)))
+            .respond_with(ResponseTemplate::new(201).set_body_json(&expected_comment))
+            .mount(&mock_server)
+            .await;
+
+        let params = AddCommentParamsBuilder::default()
+            .content("This is a test comment")
+            .build()
+            .unwrap();
+
+        let result = issue_api
+            .add_comment(IssueIdOrKey::Key(issue_key.parse().unwrap()), &params)
+            .await;
+
+        assert!(result.is_ok());
+        let comment = result.unwrap();
+        assert_eq!(comment.id, CommentId::new(1001));
+        assert_eq!(comment.content, Some("This is a test comment".to_string()));
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_comment_with_notifications_and_attachments() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_key = "TESTKEY-2";
+
+        let expected_comment = create_mock_comment(1002, "Comment with notifications", 102, "bob");
+
+        Mock::given(method("POST"))
+            .and(path(format!("/api/v2/issues/{}/comments", issue_key)))
+            .respond_with(ResponseTemplate::new(201).set_body_json(&expected_comment))
+            .mount(&mock_server)
+            .await;
+
+        let params = AddCommentParamsBuilder::default()
+            .content("Comment with notifications")
+            .notified_user_id(vec![UserId::new(123), UserId::new(456)])
+            .attachment_id(vec![AttachmentId::new(789)])
+            .build()
+            .unwrap();
+
+        let result = issue_api
+            .add_comment(IssueIdOrKey::Key(issue_key.parse().unwrap()), &params)
+            .await;
+
+        if let Err(e) = &result {
+            panic!("Expected success, but got error: {:?}", e);
+        }
+        let comment = result.unwrap();
+        assert_eq!(comment.id, CommentId::new(1002));
+        assert_eq!(
+            comment.content,
+            Some("Comment with notifications".to_string())
+        );
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_comment_issue_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_key = "TESTKEY-404";
+
+        Mock::given(method("POST"))
+            .and(path(format!("/api/v2/issues/{}/comments", issue_key)))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&mock_server)
+            .await;
+
+        let params = AddCommentParamsBuilder::default()
+            .content("Test comment")
+            .build()
+            .unwrap();
+
+        let result = issue_api
+            .add_comment(IssueIdOrKey::Key(issue_key.parse().unwrap()), &params)
+            .await;
+
+        assert!(result.is_err());
     }
 }

@@ -10,7 +10,6 @@ use schemars::JsonSchema;
 
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
-#[serde(rename_all = "camelCase")]
 pub struct CustomFieldType {
     pub id: CustomFieldId,
     pub project_id: ProjectId,
@@ -20,7 +19,6 @@ pub struct CustomFieldType {
     pub use_issue_type: bool,
     pub applicable_issue_types: Vec<IssueTypeId>,
     pub display_order: i64,
-    #[serde(flatten)]
     pub settings: CustomFieldSettings,
 }
 

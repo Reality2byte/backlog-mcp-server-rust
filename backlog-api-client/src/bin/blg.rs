@@ -1,7 +1,7 @@
 use backlog_api_client::{
-    AttachmentId, GetIssueListParamsBuilder, IssueIdOrKey, ProjectId, ProjectIdOrKey,
-    PullRequestAttachmentId, PullRequestNumber, RepositoryIdOrName, StatusId, UserId,
-    client::BacklogApiClient,
+    AddCommentParamsBuilder, AttachmentId, GetIssueListParamsBuilder, IssueIdOrKey, ProjectId,
+    ProjectIdOrKey, PullRequestAttachmentId, PullRequestNumber, RepositoryIdOrName, StatusId,
+    UserId, client::BacklogApiClient,
 };
 use clap::{Args, Parser};
 use std::env;
@@ -126,6 +126,9 @@ enum IssueCommands {
     /// Download an issue attachment
     #[command(about = "Download an issue attachment")]
     DownloadAttachment(DownloadAttachmentArgs),
+    /// Add a comment to an issue
+    #[command(about = "Add a comment to an issue")]
+    AddComment(AddCommentArgs),
 }
 
 #[derive(Args, Debug)]
@@ -139,6 +142,24 @@ struct DownloadAttachmentArgs {
     /// Output file path to save the attachment
     #[arg(short, long, value_name = "FILE_PATH")]
     output: PathBuf,
+}
+
+#[derive(Args, Debug)]
+struct AddCommentArgs {
+    /// The ID or key of the issue (e.g., "PROJECT-123" or "12345")
+    issue_id_or_key: String,
+
+    /// The comment content
+    #[arg(short, long)]
+    content: String,
+
+    /// User IDs to notify (comma-separated, e.g., "123,456")
+    #[arg(short, long)]
+    notify_users: Option<String>,
+
+    /// Attachment IDs to include (comma-separated, e.g., "789,101112")
+    #[arg(short, long)]
+    attachments: Option<String>,
 }
 
 #[derive(Parser, Debug, Default)]
@@ -364,6 +385,74 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error downloading attachment: {}", e);
+                    }
+                }
+            }
+            IssueCommands::AddComment(add_args) => {
+                println!(
+                    "Adding comment to issue {}: {}",
+                    add_args.issue_id_or_key, add_args.content
+                );
+
+                let parsed_issue_id_or_key = IssueIdOrKey::from_str(&add_args.issue_id_or_key)
+                    .map_err(|e| {
+                        format!(
+                            "Failed to parse issue_id_or_key '{}': {}",
+                            add_args.issue_id_or_key, e
+                        )
+                    })?;
+
+                let mut builder = AddCommentParamsBuilder::default();
+                builder.content(&add_args.content);
+
+                // Parse notify_users if provided
+                if let Some(notify_str) = &add_args.notify_users {
+                    let user_ids: Result<Vec<UserId>, _> = notify_str
+                        .split(',')
+                        .map(|s| s.trim().parse::<u32>().map(UserId::new))
+                        .collect();
+                    match user_ids {
+                        Ok(ids) => builder.notified_user_id(ids),
+                        Err(e) => {
+                            eprintln!("Error parsing notify_users '{}': {}", notify_str, e);
+                            return Ok(());
+                        }
+                    };
+                }
+
+                // Parse attachments if provided
+                if let Some(attach_str) = &add_args.attachments {
+                    let attachment_ids: Result<Vec<AttachmentId>, _> = attach_str
+                        .split(',')
+                        .map(|s| s.trim().parse::<u32>().map(AttachmentId::new))
+                        .collect();
+                    match attachment_ids {
+                        Ok(ids) => builder.attachment_id(ids),
+                        Err(e) => {
+                            eprintln!("Error parsing attachments '{}': {}", attach_str, e);
+                            return Ok(());
+                        }
+                    };
+                }
+
+                let params = builder.build()?;
+
+                match client
+                    .issue()
+                    .add_comment(parsed_issue_id_or_key, &params)
+                    .await
+                {
+                    Ok(comment) => {
+                        println!("Comment added successfully!");
+                        println!("Comment ID: {}", comment.id);
+                        println!("Created by: {}", comment.created_user.name);
+                        println!("Created at: {}", comment.created);
+                        if let Some(content) = &comment.content {
+                            println!("Content: {}", content);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error adding comment: {}", e);
                     }
                 }
             }
