@@ -30,6 +30,9 @@ use crate::{
     project::{self, request::GetProjectStatusListRequest},
     user::{self, request::GetUserListRequest},
 };
+
+#[cfg(feature = "git_writable")]
+use crate::git::request::AddPullRequestCommentRequest;
 use backlog_api_client::client::BacklogApiClient;
 use rmcp::{
     Error as McpError,
@@ -342,6 +345,19 @@ impl Server {
         let comments =
             git::bridge::get_pull_request_comment_list_tool(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(comments)?]))
+    }
+
+    #[cfg(feature = "git_writable")]
+    #[tool(
+        description = "Add a comment to a specific pull request. Optionally notify specified users."
+    )]
+    async fn add_pull_request_comment(
+        &self,
+        #[tool(aggr)] request: AddPullRequestCommentRequest,
+    ) -> McpResult {
+        let comment =
+            git::bridge::add_pull_request_comment_bridge(self.client.clone(), request).await?;
+        Ok(CallToolResult::success(vec![Content::json(comment)?]))
     }
 }
 

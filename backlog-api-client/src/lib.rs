@@ -55,6 +55,11 @@ pub use backlog_git::{
     },
 };
 
+#[cfg(all(feature = "git", feature = "git_writable"))]
+pub use backlog_git::requests::add_pull_request_comment::{
+    AddPullRequestCommentParams, AddPullRequestCommentParamsBuilder,
+};
+
 // Project module (from backlog_project)
 #[cfg(feature = "project")]
 pub use backlog_project::{IssueType, Milestone, Project, ProjectApi, Status};

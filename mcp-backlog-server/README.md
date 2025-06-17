@@ -75,6 +75,14 @@ The following tools are grouped by their respective modules:
         -   `attachment_id` (Numeric ID of the attachment)
         -   `format` (string, optional): Format specification - 'image', 'text', or 'raw'. If not specified, format will be auto-detected.
     -   Output: Content via `rmcp::model::Content::image` for images, `rmcp::model::Content::text` for text files, or JSON with base64-encoded content for raw bytes.
+-   **`add_pull_request_comment`**
+    -   Description: Add a comment to a specific pull request. Optionally notify specified users. This tool is only available if the `git_writable` feature is enabled.
+    -   Input:
+        -   `project_id_or_key` (string, required): The project ID or project key
+        -   `repo_id_or_name` (string, required): The repository ID (as string) or repository name
+        -   `pr_number` (number, required): The pull request number
+        -   `content` (string, required): The content of the comment
+        -   `notified_user_ids` (array of numbers, optional): List of user IDs to notify about this comment
 
 ### Issue Tools
 -   **`get_issue_details`**
@@ -165,11 +173,18 @@ The system uses multiple strategies to determine if a file is text:
 ## Feature Flags
 
 -   **`issue_writable`**
-    -   Enabling this feature flag makes the `update_issue` tool available.
+    -   Enabling this feature flag makes the `update_issue` and `add_comment` tools available.
     -   It is enabled by default.
     -   To control features during build:
         -   Disable: `cargo build --no-default-features`
         -   Enable explicitly: `cargo build --features issue_writable`
+
+-   **`git_writable`**
+    -   Enabling this feature flag makes the `add_pull_request_comment` tool available.
+    -   It is not enabled by default.
+    -   To enable this feature:
+        -   `cargo build --features git_writable`
+        -   Combined with issue_writable: `cargo build --features "issue_writable,git_writable"`
 
 ## Configuration
 
@@ -195,6 +210,8 @@ To build with specific features:
 ```bash
 cargo build --package mcp-backlog-server --no-default-features
 cargo build --package mcp-backlog-server --features issue_writable
+cargo build --package mcp-backlog-server --features git_writable
+cargo build --package mcp-backlog-server --features "issue_writable,git_writable"
 ```
 
 ### Run (for local testing)
@@ -205,6 +222,14 @@ After setting the environment variables, you can run the server directly with th
 BACKLOG_BASE_URL="your_backlog_base_url" \
 BACKLOG_API_KEY="your_backlog_api_key" \
 cargo run --package mcp-backlog-server
+```
+
+To run with specific features (e.g., enabling both issue and git writable features):
+
+```bash
+BACKLOG_BASE_URL="your_backlog_base_url" \
+BACKLOG_API_KEY="your_backlog_api_key" \
+cargo run --package mcp-backlog-server --features "issue_writable,git_writable"
 ```
 
 The server will listen for MCP client requests on standard input/output.

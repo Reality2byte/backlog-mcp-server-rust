@@ -2,8 +2,8 @@ use backlog_api_core::Result;
 use backlog_core::ProjectIdOrKey;
 use client::Client;
 
-use backlog_domain_models::{Category, IssueType, Milestone, Priority, Resolution, Status};
 use crate::requests::{GetProjectListResponse, GetProjectParams, GetProjectResponse};
+use backlog_domain_models::{Category, IssueType, Milestone, Priority, Resolution, Status};
 
 pub struct ProjectApi(Client);
 

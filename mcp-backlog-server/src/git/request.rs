@@ -1,7 +1,11 @@
+#[cfg(feature = "git_writable")]
+use backlog_api_client::{AddPullRequestCommentParams, AddPullRequestCommentParamsBuilder};
 use backlog_api_client::{
     ApiError, GetPullRequestCommentListParams, GetPullRequestCommentListParamsBuilder,
     PrCommentOrder,
 };
+#[cfg(feature = "git_writable")]
+use backlog_core::identifier::UserId;
 use rmcp::schemars::{self, JsonSchema}; // rmcp::schemars を使用
 use serde::Deserialize;
 use std::str::FromStr;
@@ -105,6 +109,39 @@ impl TryFrom<GetPullRequestCommentListRequest> for GetPullRequestCommentListPara
             .max_id(req.max_id)
             .count(req.count)
             .order(order)
+            .build()
+    }
+}
+
+#[cfg(feature = "git_writable")]
+#[derive(Deserialize, JsonSchema, Debug)]
+pub struct AddPullRequestCommentRequest {
+    /// The project ID or project key.
+    pub project_id_or_key: String,
+    /// The repository ID (as a string) or repository name.
+    pub repo_id_or_name: String,
+    /// The pull request number.
+    pub pr_number: u64,
+    /// The content of the comment.
+    pub content: String,
+    /// Optional list of user IDs to notify about this comment.
+    #[serde(default)]
+    #[schemars(description = "Optional list of user IDs to notify about this comment.")]
+    pub notified_user_ids: Option<Vec<u32>>,
+}
+
+#[cfg(feature = "git_writable")]
+impl TryFrom<AddPullRequestCommentRequest> for AddPullRequestCommentParams {
+    type Error = ApiError;
+
+    fn try_from(req: AddPullRequestCommentRequest) -> Result<Self, Self::Error> {
+        let notified_user_ids = req
+            .notified_user_ids
+            .map(|ids| ids.into_iter().map(UserId::new).collect());
+
+        AddPullRequestCommentParamsBuilder::default()
+            .content(req.content)
+            .notified_user_ids(notified_user_ids)
             .build()
     }
 }

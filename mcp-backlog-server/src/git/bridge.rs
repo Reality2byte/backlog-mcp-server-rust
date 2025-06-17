@@ -1,9 +1,13 @@
 use crate::error::{Error, Result};
+#[cfg(feature = "git_writable")]
+use crate::git::request::AddPullRequestCommentRequest;
 use crate::git::request::{
     DownloadPullRequestAttachmentRequest, GetPullRequestAttachmentListRequest,
     GetPullRequestCommentListRequest, GetPullRequestDetailsRequest, GetRepositoryDetailsRequest,
     GetRepositoryListRequest, ListPullRequestsRequest,
 };
+#[cfg(feature = "git_writable")]
+use backlog_api_client::AddPullRequestCommentParams;
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
     DownloadedFile, GetPullRequestCommentListParams, ProjectIdOrKey, PullRequest,
@@ -128,5 +132,23 @@ pub(crate) async fn get_pull_request_comment_list_tool(
     Ok(client_guard
         .git()
         .get_pull_request_comment_list(project_id_or_key, repo_id_or_name, pr_number, params)
+        .await?)
+}
+
+#[cfg(feature = "git_writable")]
+pub(crate) async fn add_pull_request_comment_bridge(
+    client: Arc<Mutex<BacklogApiClient>>,
+    req: AddPullRequestCommentRequest,
+) -> Result<PullRequestComment> {
+    let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+    let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
+    let pr_number = PullRequestNumber::from(req.pr_number);
+
+    let params = AddPullRequestCommentParams::try_from(req)?;
+
+    let client_guard = client.lock().await;
+    Ok(client_guard
+        .git()
+        .add_pull_request_comment(project_id_or_key, repo_id_or_name, pr_number, &params)
         .await?)
 }

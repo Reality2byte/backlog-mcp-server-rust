@@ -1,4 +1,5 @@
 use backlog_api_core::Error as ApiError;
+use backlog_core::identifier::{Identifier, UserId};
 use derive_builder::Builder;
 
 /// Parameters for adding a comment to a pull request.
@@ -9,7 +10,7 @@ pub struct AddPullRequestCommentParams {
     pub content: String,
     /// List of user IDs to notify about this comment.
     #[builder(default)]
-    pub notified_user_ids: Option<Vec<u32>>,
+    pub notified_user_ids: Option<Vec<UserId>>,
 }
 
 impl AddPullRequestCommentParams {
@@ -35,7 +36,7 @@ impl From<&AddPullRequestCommentParams> for Vec<(String, String)> {
         if let Some(user_ids) = &params.notified_user_ids {
             user_ids
                 .iter()
-                .for_each(|id| seq.push(("notifiedUserId[]".to_string(), id.to_string())));
+                .for_each(|id| seq.push(("notifiedUserId[]".to_string(), id.value().to_string())));
         }
 
         seq

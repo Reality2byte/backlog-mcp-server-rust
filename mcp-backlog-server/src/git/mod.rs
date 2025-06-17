@@ -6,3 +6,6 @@ pub use request::{
     GetPullRequestCommentListRequest, GetPullRequestDetailsRequest, GetRepositoryDetailsRequest,
     GetRepositoryListRequest, ListPullRequestsRequest,
 };
+
+#[cfg(feature = "git_writable")]
+pub use request::AddPullRequestCommentRequest;

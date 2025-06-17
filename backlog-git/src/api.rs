@@ -1,9 +1,9 @@
+#[cfg(feature = "writable")]
+use crate::requests::add_pull_request_comment::AddPullRequestCommentParams;
 use crate::{
     models::{PullRequest, PullRequestAttachment, PullRequestComment, Repository},
     requests::get_pull_request_comment_list::GetPullRequestCommentListParams,
 };
-#[cfg(feature = "writable")]
-use crate::requests::add_pull_request_comment::AddPullRequestCommentParams;
 use backlog_api_core::Result;
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
@@ -228,9 +228,11 @@ mod tests {
     // Or, import `backlog_api_core::bytes::Bytes` specifically for the test module if preferred.
     // Let's rely on the top-level `bytes` module being available.
     use crate::models::PrCommentOrder;
-    use crate::requests::get_pull_request_comment_list::GetPullRequestCommentListParamsBuilder;
     #[cfg(feature = "writable")]
-    use crate::requests::add_pull_request_comment::{AddPullRequestCommentParams, AddPullRequestCommentParamsBuilder};
+    use crate::requests::add_pull_request_comment::{
+        AddPullRequestCommentParams, AddPullRequestCommentParamsBuilder,
+    };
+    use crate::requests::get_pull_request_comment_list::GetPullRequestCommentListParamsBuilder;
     use backlog_api_core::bytes::Bytes;
     use backlog_core::identifier::{
         Identifier, PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber, UserId,
@@ -639,7 +641,7 @@ mod tests {
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
         let params = AddPullRequestCommentParamsBuilder::default()
             .content("Comment with notifications".to_string())
-            .notified_user_ids(Some(vec![101, 102]))
+            .notified_user_ids(Some(vec![UserId::new(101), UserId::new(102)]))
             .build()
             .unwrap();
 
@@ -689,12 +691,15 @@ mod tests {
     async fn test_add_pull_request_comment_parameter_builder() {
         let params_with_all_fields = AddPullRequestCommentParamsBuilder::default()
             .content("Test content".to_string())
-            .notified_user_ids(Some(vec![1, 2, 3]))
+            .notified_user_ids(Some(vec![UserId::new(1), UserId::new(2), UserId::new(3)]))
             .build()
             .unwrap();
 
         assert_eq!(params_with_all_fields.content, "Test content");
-        assert_eq!(params_with_all_fields.notified_user_ids, Some(vec![1, 2, 3]));
+        assert_eq!(
+            params_with_all_fields.notified_user_ids,
+            Some(vec![UserId::new(1), UserId::new(2), UserId::new(3)])
+        );
 
         let params_minimal = AddPullRequestCommentParamsBuilder::default()
             .content("Minimal content".to_string())

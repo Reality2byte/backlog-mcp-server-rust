@@ -25,11 +25,12 @@ schemars = [ # Added schemars feature to propagate to sub-crates
     "backlog-file/schemars",
 ]
 cli = ["clap"] # Added cli feature for clap dependency
-all_writable = ["backlog-issue/writable", "backlog-project/writable", "backlog-space/writable", "backlog-user/writable"]
+all_writable = ["backlog-issue/writable", "backlog-project/writable", "backlog-space/writable", "backlog-user/writable", "backlog-git/writable"]
 issue_writable = ["backlog-issue/writable"]
 project_writable = ["backlog-project/writable"]
 space_writable = ["backlog-space/writable"]
 user_writable = ["backlog-user/writable"]
+git_writable = ["backlog-git/writable"]
 
 [dependencies]
 client = { path = "../client" }
