@@ -64,6 +64,53 @@ export BACKLOG_API_KEY="your_api_key"
 - Builder pattern for complex request parameters
 - Custom deserialization for complex JSON structures using temporary `Raw*` structs
 
+### Form Encoding for Array Parameters
+When implementing writable APIs that require form-encoded data with array parameters (e.g., `foo[]`), follow this pattern:
+
+1. **Parameter Structure**: Define request parameters without `serde::Serialize`
+2. **Manual Serialization**: Implement `From<&ParamsStruct> for Vec<(String, String)>`
+3. **Array Handling**: Use array syntax (e.g., `"notifiedUserId[]"`) for array parameters
+4. **API Integration**: Convert parameters using `.into()` before passing to `client.post()`
+
+**Example Pattern:**
+```rust
+// Parameter struct without Serialize
+#[derive(Builder, Debug, Clone)]
+pub struct AddCommentParams {
+    pub content: String,
+    #[builder(default)]
+    pub notified_user_ids: Option<Vec<u32>>,
+}
+
+// Manual serialization for form encoding
+impl From<&AddCommentParams> for Vec<(String, String)> {
+    fn from(params: &AddCommentParams) -> Self {
+        let mut seq = Vec::new();
+        seq.push(("content".to_string(), params.content.clone()));
+        
+        // Handle array parameters with [] syntax
+        if let Some(user_ids) = &params.notified_user_ids {
+            user_ids.iter().for_each(|id| {
+                seq.push(("notifiedUserId[]".to_string(), id.to_string()));
+            });
+        }
+        seq
+    }
+}
+
+// API method using the pattern
+pub async fn add_comment(&self, params: &AddCommentParams) -> Result<Comment> {
+    let params_vec: Vec<(String, String)> = params.into();
+    self.client.post("/api/v2/comments", &params_vec).await
+}
+```
+
+**Why This Pattern:**
+- Backlog API expects `application/x-www-form-urlencoded` format for writable operations
+- Array parameters require special `foo[]` syntax that serde cannot handle automatically
+- Manual serialization provides precise control over parameter formatting
+- Consistent with existing patterns in `backlog-issue` and other domain crates
+
 ### MCP Server Organization
 - Tools organized by domain modules (`issue/`, `git/`, `document/`, `project/`, `file/`)
 - Each module contains:

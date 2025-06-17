@@ -2,6 +2,8 @@ use crate::{
     models::{PullRequest, PullRequestAttachment, PullRequestComment, Repository},
     requests::get_pull_request_comment_list::GetPullRequestCommentListParams,
 };
+#[cfg(feature = "writable")]
+use crate::requests::add_pull_request_comment::AddPullRequestCommentParams;
 use backlog_api_core::Result;
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
@@ -188,6 +190,34 @@ impl GitApi {
         );
         self.client.get_with_params(&path, &params).await
     }
+
+    /// Adds a comment to a specific pull request.
+    ///
+    /// Corresponds to `POST /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/comments`.
+    ///
+    /// # Arguments
+    ///
+    /// * `project_id_or_key` - The ID or key of the project.
+    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
+    /// * `pr_number` - The pull request number.
+    /// * `params` - Parameters for the comment including content and optional user notifications.
+    #[cfg(feature = "writable")]
+    pub async fn add_pull_request_comment(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        repo_id_or_name: impl Into<RepositoryIdOrName>,
+        pr_number: PullRequestNumber,
+        params: &AddPullRequestCommentParams,
+    ) -> Result<PullRequestComment> {
+        let path = format!(
+            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments",
+            project_id_or_key.into(),
+            repo_id_or_name.into(),
+            pr_number.value()
+        );
+        let params_vec: Vec<(String, String)> = params.into();
+        self.client.post(&path, &params_vec).await
+    }
 }
 
 #[cfg(test)]
@@ -199,6 +229,8 @@ mod tests {
     // Let's rely on the top-level `bytes` module being available.
     use crate::models::PrCommentOrder;
     use crate::requests::get_pull_request_comment_list::GetPullRequestCommentListParamsBuilder;
+    #[cfg(feature = "writable")]
+    use crate::requests::add_pull_request_comment::{AddPullRequestCommentParams, AddPullRequestCommentParamsBuilder};
     use backlog_api_core::bytes::Bytes;
     use backlog_core::identifier::{
         Identifier, PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber, UserId,
@@ -508,5 +540,172 @@ mod tests {
             .await;
 
         assert!(result.is_ok());
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_pull_request_comment_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+        let pr_number_val = 129;
+        let pr_number = PullRequestNumber::new(pr_number_val);
+
+        let mock_response = json!({
+            "id": 36,
+            "content": "This is a test comment",
+            "changeLog": [],
+            "createdUser": {
+                "id": 1,
+                "userId": "admin",
+                "name": "admin",
+                "roleType": 1,
+                "lang": "ja",
+                "mailAddress": "admin@example.com"
+            },
+            "created": "2024-01-01T12:00:00Z",
+            "updated": "2024-01-01T12:00:00Z",
+            "stars": [],
+            "notifications": []
+        });
+
+        Mock::given(method("POST"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments",
+                project_key, repo_name, pr_number_val
+            )))
+            .respond_with(ResponseTemplate::new(201).set_body_json(mock_response))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+        let params = AddPullRequestCommentParams::new("This is a test comment");
+
+        let result = git_api
+            .add_pull_request_comment(project_id_or_key, repo_id_or_name, pr_number, &params)
+            .await;
+
+        assert!(result.is_ok());
+        let comment = result.unwrap();
+        assert_eq!(comment.id, PullRequestCommentId(36));
+        assert_eq!(comment.content, "This is a test comment");
+        assert_eq!(comment.created_user.id, UserId(1));
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_pull_request_comment_with_notifications() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+        let pr_number_val = 130;
+        let pr_number = PullRequestNumber::new(pr_number_val);
+
+        let mock_response = json!({
+            "id": 37,
+            "content": "Comment with notifications",
+            "changeLog": [],
+            "createdUser": {
+                "id": 2,
+                "userId": "user",
+                "name": "User",
+                "roleType": 2,
+                "lang": "ja",
+                "mailAddress": "user@example.com"
+            },
+            "created": "2024-01-01T13:00:00Z",
+            "updated": "2024-01-01T13:00:00Z",
+            "stars": [],
+            "notifications": []
+        });
+
+        Mock::given(method("POST"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments",
+                project_key, repo_name, pr_number_val
+            )))
+            .respond_with(ResponseTemplate::new(201).set_body_json(mock_response))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+        let params = AddPullRequestCommentParamsBuilder::default()
+            .content("Comment with notifications".to_string())
+            .notified_user_ids(Some(vec![101, 102]))
+            .build()
+            .unwrap();
+
+        let result = git_api
+            .add_pull_request_comment(project_id_or_key, repo_id_or_name, pr_number, &params)
+            .await;
+        assert!(result.is_ok());
+        let comment = result.unwrap();
+        assert_eq!(comment.id, PullRequestCommentId(37));
+        assert_eq!(comment.content, "Comment with notifications");
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_pull_request_comment_error_404() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "NONEXISTENT";
+        let repo_name = "norepo";
+        let pr_number_val = 999;
+        let pr_number = PullRequestNumber::new(pr_number_val);
+
+        Mock::given(method("POST"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments",
+                project_key, repo_name, pr_number_val
+            )))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+        let params = AddPullRequestCommentParams::new("This comment should fail");
+
+        let result = git_api
+            .add_pull_request_comment(project_id_or_key, repo_id_or_name, pr_number, &params)
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_pull_request_comment_parameter_builder() {
+        let params_with_all_fields = AddPullRequestCommentParamsBuilder::default()
+            .content("Test content".to_string())
+            .notified_user_ids(Some(vec![1, 2, 3]))
+            .build()
+            .unwrap();
+
+        assert_eq!(params_with_all_fields.content, "Test content");
+        assert_eq!(params_with_all_fields.notified_user_ids, Some(vec![1, 2, 3]));
+
+        let params_minimal = AddPullRequestCommentParamsBuilder::default()
+            .content("Minimal content".to_string())
+            .build()
+            .unwrap();
+
+        assert_eq!(params_minimal.content, "Minimal content");
+        assert_eq!(params_minimal.notified_user_ids, None);
+
+        let params_from_new = AddPullRequestCommentParams::new("From new method");
+        assert_eq!(params_from_new.content, "From new method");
+        assert_eq!(params_from_new.notified_user_ids, None);
     }
 }

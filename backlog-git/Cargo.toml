@@ -16,6 +16,7 @@ derive_builder = { workspace = true }
 
 [features]
 default = []
+writable = ["client/writable"]
 schemars = ["dep:schemars", "backlog-core/schemars"]
 
 [dependencies.schemars]
