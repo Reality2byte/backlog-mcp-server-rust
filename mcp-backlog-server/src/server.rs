@@ -7,7 +7,10 @@ use crate::{
             DownloadDocumentAttachmentRequest, GetDocumentDetailsRequest, GetDocumentTreeRequest,
         },
     },
-    file::{self, request::GetSharedFilesListRequest},
+    file::{
+        self,
+        request::{DownloadSharedFileRequest, GetSharedFilesListRequest},
+    },
     git::{
         self,
         request::{
@@ -260,6 +263,35 @@ impl Server {
     ) -> McpResult {
         let files = file::bridge::get_shared_files_list_tool(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(files)?]))
+    }
+
+    #[tool(
+        description = "Download a shared file. Automatically detects format (image, text, or raw bytes) or you can specify the format parameter. Returns the file content in the appropriate format."
+    )]
+    async fn download_shared_file(
+        &self,
+        #[tool(aggr)] request: DownloadSharedFileRequest,
+    ) -> McpResult {
+        let explicit_format = match request.format.as_deref() {
+            Some("image") => Some(FileFormat::Image),
+            Some("text") => Some(FileFormat::Text),
+            Some("raw") => Some(FileFormat::Raw),
+            Some(other) => {
+                return Err(McpError::invalid_request(
+                    format!(
+                        "Invalid format '{}'. Valid options: 'image', 'text', 'raw'",
+                        other
+                    ),
+                    None,
+                ));
+            }
+            None => None,
+        };
+
+        let file = file::bridge::download_shared_file_bridge(self.client.clone(), request).await?;
+
+        let response_data = SerializableFile::new(file, explicit_format)?;
+        Ok(CallToolResult::success(vec![response_data.try_into()?]))
     }
 
     #[tool(description = "Get a list of attachments for a specific pull request.")]
