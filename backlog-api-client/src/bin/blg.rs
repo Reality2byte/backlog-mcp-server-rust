@@ -3,6 +3,7 @@ use backlog_api_client::{
     ProjectIdOrKey, PullRequestAttachmentId, PullRequestNumber, RepositoryIdOrName, StatusId,
     UserId, client::BacklogApiClient,
 };
+use backlog_project::requests::GetProjectParams;
 use clap::{Args, Parser};
 use std::env;
 use std::path::PathBuf;
@@ -26,6 +27,8 @@ enum Commands {
     Issue(IssueArgs),
     /// Manage space
     Space(SpaceArgs),
+    /// Manage projects
+    Project(ProjectArgs),
 }
 
 #[derive(Parser)]
@@ -177,6 +180,30 @@ enum SpaceCommands {
         /// Output file path to save the logo
         #[clap(short, long, value_name = "FILE_PATH")]
         output: PathBuf,
+    },
+}
+
+#[derive(Parser)]
+struct ProjectArgs {
+    #[clap(subcommand)]
+    command: ProjectCommands,
+}
+
+#[derive(Parser)]
+enum ProjectCommands {
+    /// List all projects
+    List,
+    /// Show details of a specific project
+    Show {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+    },
+    /// List statuses for a project
+    StatusList {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
     },
 }
 
@@ -492,6 +519,92 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error downloading space logo: {}", e);
+                    }
+                }
+            }
+        },
+        Commands::Project(project_args) => match project_args.command {
+            ProjectCommands::List => {
+                println!("Listing all projects");
+
+                let params = GetProjectParams {
+                    archived: None,
+                    all: true,
+                };
+
+                match client.project().get_project_list(params).await {
+                    Ok(projects) => {
+                        if projects.is_empty() {
+                            println!("No projects found");
+                        } else {
+                            for project in projects {
+                                println!(
+                                    "[{}] {} (Key: {})",
+                                    project.id, project.name, project.project_key
+                                );
+                                println!("  Chart Enabled: {}", project.chart_enabled);
+                                println!("  Subtasking Enabled: {}", project.subtasking_enabled);
+                                println!("  Archived: {}", project.archived);
+                                println!();
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error listing projects: {}", e);
+                    }
+                }
+            }
+            ProjectCommands::Show { project_id_or_key } => {
+                println!("Showing project: {}", project_id_or_key);
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                match client.project().get_project(proj_id_or_key).await {
+                    Ok(project) => {
+                        println!("Project ID: {}", project.id);
+                        println!("Project Key: {}", project.project_key);
+                        println!("Name: {}", project.name);
+                        println!("Chart Enabled: {}", project.chart_enabled);
+                        println!("Subtasking Enabled: {}", project.subtasking_enabled);
+                        println!(
+                            "Project Leader Can Edit Project Leader: {}",
+                            project.project_leader_can_edit_project_leader
+                        );
+                        println!("Use Wiki: {}", project.use_wiki);
+                        println!("Use File Sharing: {}", project.use_file_sharing);
+                        println!("Use Wiki Tree View: {}", project.use_wiki_tree_view);
+                        println!(
+                            "Use Original Image Size at Wiki: {}",
+                            project.use_original_image_size_at_wiki
+                        );
+                        println!("Text Formatting Rule: {:?}", project.text_formatting_rule);
+                        println!("Archived: {}", project.archived);
+                        println!("Display Order: {}", project.display_order);
+                        println!("Use Dev Attributes: {}", project.use_dev_attributes);
+                    }
+                    Err(e) => {
+                        eprintln!("Error getting project: {}", e);
+                    }
+                }
+            }
+            ProjectCommands::StatusList { project_id_or_key } => {
+                println!("Listing statuses for project: {}", project_id_or_key);
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                match client.project().get_status_list(proj_id_or_key).await {
+                    Ok(statuses) => {
+                        if statuses.is_empty() {
+                            println!("No statuses found");
+                        } else {
+                            for status in statuses {
+                                println!(
+                                    "[{}] {} (Color: {})",
+                                    status.id, status.name, status.color
+                                );
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error listing statuses: {}", e);
                     }
                 }
             }

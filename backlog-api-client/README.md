@@ -13,16 +13,16 @@
 To build the `blg` executable, navigate to the workspace root (`/Users/mac/src/_mydev/backlog-api-client`) and run:
 
 ```bash
-cargo build --package backlog-api-client --features "cli git issue" --bin blg
+cargo build --package backlog-api-client --features "cli git issue project space" --bin blg
 ```
 
 Alternatively, if you are in the `backlog-api-client` directory:
 
 ```bash
-cargo build --features "cli git issue" 
+cargo build --features "cli git issue project space" 
 ```
 
-The `cli`, `git`, and `issue` features are required to build the `blg` binary as specified in its `Cargo.toml`. The executable will be located at `target/debug/blg` (or `target/release/blg` if you add `--release`).
+The `cli`, `git`, `issue`, `project`, and `space` features are required to build the `blg` binary with full functionality. The executable will be located at `target/debug/blg` (or `target/release/blg` if you add `--release`).
 
 ## Configuration
 
@@ -50,27 +50,57 @@ You can get help for any command or subcommand by appending `--help`.
 
 ### Examples:
 
-**List issues for a project:**
-(Assuming `MYPROJ` is your project key)
+**Project Management:**
 ```bash
+# List all projects
+blg project list
+
+# Show details of a specific project
+blg project show MFP
+
+# List statuses for a project
+blg project status-list MFP
+```
+
+**Space Management:**
+```bash
+# Download space logo
+blg space logo --output logo.png
+```
+
+**Issue Management:**
+```bash
+# List issues for a project
 blg issue list --project-id MYPROJ 
-```
 
-**Show details of a specific pull request:**
-(Assuming PR #42 in repository `my-repo` under project `MYPROJ`)
-```bash
-blg pr show --project-id MYPROJ --repo-id my-repo --pr-number 42
-```
+# Show details of a specific issue
+blg issue show MYPROJ-101
 
-**Download an issue attachment:**
-(Assuming issue `MYPROJ-101`, attachment ID `12345`, save to `downloaded_file.dat`)
-```bash
+# Add a comment to an issue
+blg issue add-comment MYPROJ-101 --content "This is a comment"
+
+# Download an issue attachment
 blg issue download-attachment MYPROJ-101 12345 --output downloaded_file.dat
 ```
 
-**Download a pull request attachment:**
-(Assuming project `MYPROJ`, repo `my-repo`, PR #42, attachment ID `56789`, save to `pr_attachment.zip`)
+**Repository Management:**
 ```bash
+# List repositories in a project
+blg repo list --project-id MYPROJ
+
+# Show details of a specific repository
+blg repo show --project-id MYPROJ --repo-id my-repo
+```
+
+**Pull Request Management:**
+```bash
+# List pull requests in a repository
+blg pr list --project-id MYPROJ --repo-id my-repo
+
+# Show details of a specific pull request
+blg pr show --project-id MYPROJ --repo-id my-repo --pr-number 42
+
+# Download a pull request attachment
 blg pr download-attachment -p MYPROJ -r my-repo -n 42 -a 56789 -o pr_attachment.zip
 ```
 
@@ -80,10 +110,38 @@ blg pr download-attachment -p MYPROJ -r my-repo -n 42 -a 56789 -o pr_attachment.
     ```bash
     blg --help
     ```
--   For help with a specific command (e.g., `issue`):
+-   For help with a specific command (e.g., `project`):
     ```bash
-    blg issue --help
+    blg project --help
     ```
--   For help with a specific subcommand (e.g., `issue list`):
+-   For help with a specific subcommand (e.g., `project list`):
     ```bash
-    blg issue list --help
+    blg project list --help
+    ```
+
+## Available Commands
+
+The `blg` CLI currently supports the following commands:
+
+### Project Commands
+- `project list` - List all projects in the Backlog space
+- `project show <PROJECT_ID_OR_KEY>` - Show detailed information about a specific project
+- `project status-list <PROJECT_ID_OR_KEY>` - List all statuses for a specific project
+
+### Space Commands
+- `space logo --output <FILE_PATH>` - Download the space logo
+
+### Issue Commands
+- `issue list [OPTIONS]` - List issues with optional filters
+- `issue show <ISSUE_ID_OR_KEY>` - Show detailed information about a specific issue
+- `issue add-comment <ISSUE_ID_OR_KEY> --content <CONTENT>` - Add a comment to an issue
+- `issue download-attachment <ISSUE_ID_OR_KEY> <ATTACHMENT_ID> --output <FILE_PATH>` - Download an issue attachment
+
+### Repository Commands
+- `repo list --project-id <PROJECT_ID_OR_KEY>` - List repositories in a project
+- `repo show --project-id <PROJECT_ID_OR_KEY> --repo-id <REPO_ID_OR_NAME>` - Show repository details
+
+### Pull Request Commands
+- `pr list --project-id <PROJECT_ID_OR_KEY> --repo-id <REPO_ID_OR_NAME>` - List pull requests in a repository
+- `pr show --project-id <PROJECT_ID_OR_KEY> --repo-id <REPO_ID_OR_NAME> --pr-number <NUMBER>` - Show pull request details
+- `pr download-attachment -p <PROJECT_ID> -r <REPO_ID> -n <PR_NUMBER> -a <ATTACHMENT_ID> -o <FILE_PATH>` - Download a pull request attachment
