@@ -131,6 +131,7 @@ dependencies = [
  "backlog-api-core",
  "backlog-core",
  "backlog-document",
+ "backlog-domain-models",
  "backlog-file",
  "backlog-git",
  "backlog-issue",
@@ -189,6 +190,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "backlog-domain-models"
+version = "0.1.0"
+dependencies = [
+ "backlog-core",
+ "chrono",
+ "schemars 0.9.0",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "backlog-file"
 version = "0.1.0"
 dependencies = [
@@ -227,7 +239,7 @@ version = "0.1.0"
 dependencies = [
  "backlog-api-core",
  "backlog-core",
- "backlog-project",
+ "backlog-domain-models",
  "chrono",
  "client",
  "derive_builder",
@@ -246,6 +258,7 @@ version = "0.1.0"
 dependencies = [
  "backlog-api-core",
  "backlog-core",
+ "backlog-domain-models",
  "chrono",
  "client",
  "schemars 0.9.0",

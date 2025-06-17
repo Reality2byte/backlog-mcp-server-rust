@@ -14,6 +14,7 @@ This is a Rust workspace providing a comprehensive Backlog API client ecosystem 
 ```
 backlog-core/                 # Core types and identifiers shared across all modules
 backlog-api-core/            # Common API utilities and error types
+backlog-domain-models/       # Shared domain models (Priority, Status, Category, etc.)
 backlog-{issue,project,space,user,document,git,file}/ # Domain-specific API modules
 client/                      # Generic HTTP client wrapper
 backlog-api-client/          # Main library facade + CLI binary
@@ -49,8 +50,8 @@ export BACKLOG_API_KEY="your_api_key"
 
 ### Modular API Structure
 - Each API domain has its own crate (e.g., `backlog-issue`, `backlog-project`)
-- Domain crates depend on `client` for HTTP operations and `backlog-core` for shared types
-- Cross-domain dependencies exist where needed (e.g., `backlog-issue` uses `backlog-project::Status`)
+- Domain crates depend on `client` for HTTP operations, `backlog-core` for shared types, and `backlog-domain-models` for shared domain models
+- Shared domain models (Priority, Status, Category, etc.) are centralized in `backlog-domain-models` to avoid duplication and circular dependencies
 
 ### Error Handling
 - Unified error handling via `ApiError` in `backlog-api-core`
@@ -80,10 +81,11 @@ For complex JSON where field types depend on other field values:
 3. Use type-discriminating field to construct strongly-typed final struct
 4. Example: `CustomFieldType` handles different settings based on `typeId`
 
-### Cross-Domain Dependencies
-- `backlog-issue` depends on `backlog-project` for `Status` type
+### Domain Model Architecture
+- Shared domain models (Priority, Resolution, Status, Category, IssueType, Milestone) are centralized in `backlog-domain-models`
+- Domain API crates (`backlog-issue`, `backlog-project`) depend on `backlog-domain-models` for these shared models
+- This eliminates circular dependencies and model duplication while maintaining clear domain boundaries
 - All domain crates use `backlog-core::FileType` for consistent file type handling
-- This establishes semantic relationships between domains while maintaining modularity
 
 ### Unified File Download System (MCP Server)
 The MCP server implements a unified file download system that consolidates multiple format-specific tools into single, intelligent tools:
@@ -131,6 +133,7 @@ The system now includes comprehensive shared file support:
 - Use `--no-default-features` to disable optional functionality
 
 ### Recent Major Updates
+- **Domain Model Refactoring**: Extracted shared domain models into `backlog-domain-models` crate to eliminate circular dependencies and reduce code duplication
 - **Unified File Downloads**: Consolidated 12 format-specific download tools into 4 intelligent tools
 - **Shared File API**: Added complete support for browsing and downloading shared files
 - **Type Safety Improvements**: Added `FileType` enum and `SharedFileId` for better type safety

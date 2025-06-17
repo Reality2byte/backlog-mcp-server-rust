@@ -11,8 +11,6 @@ mod list_item;
 mod notification;
 mod notification_reason;
 mod parent_child;
-mod priority;
-mod resolution;
 mod shared_file;
 
 pub use attachment::Attachment;
@@ -28,6 +26,4 @@ pub use list_item::ListItem;
 pub use notification::NotificationForComment;
 pub use notification_reason::NotificationReason;
 pub use parent_child::ParentChildCondition;
-pub use priority::Priority;
-pub use resolution::Resolution;
 pub use shared_file::{FileContent, SharedFile};

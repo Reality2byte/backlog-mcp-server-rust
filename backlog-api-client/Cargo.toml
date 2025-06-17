@@ -15,6 +15,7 @@ git = ["backlog-git"] # Added git feature
 file = ["backlog-file"] # Added file feature
 schemars = [ # Added schemars feature to propagate to sub-crates
     "backlog-core/schemars",
+    "backlog-domain-models/schemars",
     "backlog-issue/schemars",
     "backlog-project/schemars",
     # "backlog-space/schemars", # Add if/when space has schemars
@@ -34,6 +35,7 @@ user_writable = ["backlog-user/writable"]
 client = { path = "../client" }
 backlog-core = { path = "../backlog-core" }
 backlog-api-core = { path = "../backlog-api-core" }
+backlog-domain-models = { path = "../backlog-domain-models", optional = true }
 backlog-issue = { path = "../backlog-issue", optional = true }
 backlog-project = { path = "../backlog-project", optional = true }
 backlog-space = { path = "../backlog-space", optional = true }

@@ -1,9 +1,9 @@
-use crate::models::{Attachment, CustomField, ExternalFileLink, Priority, Resolution, SharedFile};
+use crate::models::{Attachment, CustomField, ExternalFileLink, SharedFile};
 use backlog_core::{
     IssueKey, Star, User,
     identifier::{IssueId, ProjectId},
 };
-use backlog_project::{Category, IssueType, Milestone, Status};
+use backlog_domain_models::{Category, IssueType, Milestone, Priority, Resolution, Status};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

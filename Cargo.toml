@@ -4,6 +4,7 @@ members = [
     "client",
     "backlog-core",
     "backlog-api-core",
+    "backlog-domain-models",
     "backlog-issue",
     "backlog-project",
     "backlog-space",

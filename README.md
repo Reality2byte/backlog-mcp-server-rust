@@ -17,6 +17,7 @@ Below is an overview of the main directories within this workspace:
 -   `backlog-api-client/`: Contains the primary library crate that aggregates all API modules and the source code for the `blg` CLI tool.
 -   `backlog-api-core/`: Provides core utilities shared across API client modules, such as common error types and result aliases.
 -   `backlog-core/`: Defines fundamental data structures, newtype identifiers (e.g., `ProjectId`, `IssueKey`, `SharedFileId`), and shared enums (`FileType`, etc.) used throughout the ecosystem.
+-   `backlog-domain-models/`: Contains shared domain models (e.g., `Priority`, `Resolution`, `Status`, `Category`, `IssueType`, `Milestone`) used across multiple API domains.
 -   `client/`: A foundational crate providing a generic HTTP client wrapper (around `reqwest`) and shared test utilities.
 
 ### API Domain Modules

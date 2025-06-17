@@ -2,7 +2,7 @@ use backlog_api_core::Result;
 use backlog_core::ProjectIdOrKey;
 use client::Client;
 
-use crate::models::{Category, IssueType, Milestone, Status};
+use backlog_domain_models::{Category, IssueType, Milestone, Priority, Resolution, Status};
 use crate::requests::{GetProjectListResponse, GetProjectParams, GetProjectResponse};
 
 pub struct ProjectApi(Client);
@@ -80,6 +80,20 @@ impl ProjectApi {
         let path = format!("/api/v2/projects/{}/categories", project_id_or_key.into());
         self.0.get(&path).await
     }
+
+    /// Gets the list of priorities.
+    ///
+    /// Corresponds to `GET /api/v2/priorities`.
+    pub async fn get_priority_list(&self) -> Result<Vec<Priority>> {
+        self.0.get("/api/v2/priorities").await
+    }
+
+    /// Gets the list of resolutions.
+    ///
+    /// Corresponds to `GET /api/v2/resolutions`.
+    pub async fn get_resolution_list(&self) -> Result<Vec<Resolution>> {
+        self.0.get("/api/v2/resolutions").await
+    }
 }
 
 type GetVersionMilestoneListResponse = Vec<Milestone>;
@@ -88,7 +102,9 @@ type GetVersionMilestoneListResponse = Vec<Milestone>;
 mod tests {
     use super::*;
     use backlog_api_core::Error as ApiError;
-    use backlog_core::identifier::{CategoryId, IssueTypeId, MilestoneId, ProjectId, StatusId};
+    use backlog_core::identifier::{
+        CategoryId, IssueTypeId, MilestoneId, PriorityId, ProjectId, ResolutionId, StatusId,
+    };
     use chrono::TimeZone;
     use client::test_utils::setup_client;
     use std::str::FromStr;
@@ -455,5 +471,125 @@ mod tests {
         } else {
             panic!("Expected ApiError::HttpStatus, got {:?}", result);
         }
+    }
+
+    #[tokio::test]
+    async fn test_get_priority_list_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+
+        let expected_priorities = vec![
+            Priority {
+                id: PriorityId::new(2),
+                name: "High".to_string(),
+            },
+            Priority {
+                id: PriorityId::new(3),
+                name: "Normal".to_string(),
+            },
+            Priority {
+                id: PriorityId::new(4),
+                name: "Low".to_string(),
+            },
+        ];
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/priorities"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_priorities))
+            .mount(&server)
+            .await;
+
+        let result = project_api.get_priority_list().await;
+        assert!(result.is_ok());
+        let priorities = result.unwrap();
+        assert_eq!(priorities.len(), 3);
+        assert_eq!(priorities[0].name, "High");
+        assert_eq!(priorities[1].name, "Normal");
+        assert_eq!(priorities[2].name, "Low");
+    }
+
+    #[tokio::test]
+    async fn test_get_resolution_list_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+
+        let expected_resolutions = vec![
+            Resolution {
+                id: ResolutionId::new(0),
+                name: "Fixed".to_string(),
+            },
+            Resolution {
+                id: ResolutionId::new(1),
+                name: "Won't Fix".to_string(),
+            },
+            Resolution {
+                id: ResolutionId::new(2),
+                name: "Invalid".to_string(),
+            },
+            Resolution {
+                id: ResolutionId::new(3),
+                name: "Duplication".to_string(),
+            },
+            Resolution {
+                id: ResolutionId::new(4),
+                name: "Cannot Reproduce".to_string(),
+            },
+        ];
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/resolutions"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_resolutions))
+            .mount(&server)
+            .await;
+
+        let result = project_api.get_resolution_list().await;
+        assert!(result.is_ok());
+        let resolutions = result.unwrap();
+        assert_eq!(resolutions.len(), 5);
+        assert_eq!(resolutions[0].name, "Fixed");
+        assert_eq!(resolutions[1].name, "Won't Fix");
+        assert_eq!(resolutions[2].name, "Invalid");
+        assert_eq!(resolutions[3].name, "Duplication");
+        assert_eq!(resolutions[4].name, "Cannot Reproduce");
+    }
+
+    #[tokio::test]
+    async fn test_get_priority_list_empty() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+
+        let expected_priorities: Vec<Priority> = Vec::new();
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/priorities"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_priorities))
+            .mount(&server)
+            .await;
+
+        let result = project_api.get_priority_list().await;
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_get_resolution_list_empty() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+
+        let expected_resolutions: Vec<Resolution> = Vec::new();
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/resolutions"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_resolutions))
+            .mount(&server)
+            .await;
+
+        let result = project_api.get_resolution_list().await;
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_empty());
     }
 }
