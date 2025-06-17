@@ -72,7 +72,7 @@
 ### Category
 - [ ] AddCategory: Adds new Category to the project: POST /api/v2/projects/:projectIdOrKey/categories
 - [ ] DeleteCategory: Deletes Category: DELETE /api/v2/projects/:projectIdOrKey/categories/:id
-- [ ] GetCategoryList: Returns list of Categories in the project: GET /api/v2/projects/:projectIdOrKey/categories
+- [x] GetCategoryList: Returns list of Categories in the project: GET /api/v2/projects/:projectIdOrKey/categories
 - [ ] UpdateCategory: Updates information about Category: PATCH /api/v2/projects/:projectIdOrKey/categories/:id
 
 ### Custom Fields

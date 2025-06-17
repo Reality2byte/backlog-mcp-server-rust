@@ -2,7 +2,7 @@ use backlog_api_core::Result;
 use backlog_core::ProjectIdOrKey;
 use client::Client;
 
-use crate::models::{IssueType, Milestone, Status};
+use crate::models::{Category, IssueType, Milestone, Status};
 use crate::requests::{GetProjectListResponse, GetProjectParams, GetProjectResponse};
 
 pub struct ProjectApi(Client);
@@ -69,6 +69,17 @@ impl ProjectApi {
             ))
             .await
     }
+
+    /// Gets the list of categories for a project.
+    ///
+    /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/categories`.
+    pub async fn get_category_list(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+    ) -> Result<Vec<Category>> {
+        let path = format!("/api/v2/projects/{}/categories", project_id_or_key.into());
+        self.0.get(&path).await
+    }
 }
 
 type GetVersionMilestoneListResponse = Vec<Milestone>;
@@ -77,7 +88,7 @@ type GetVersionMilestoneListResponse = Vec<Milestone>;
 mod tests {
     use super::*;
     use backlog_api_core::Error as ApiError;
-    use backlog_core::identifier::{IssueTypeId, MilestoneId, ProjectId, StatusId};
+    use backlog_core::identifier::{CategoryId, IssueTypeId, MilestoneId, ProjectId, StatusId};
     use chrono::TimeZone;
     use client::test_utils::setup_client;
     use std::str::FromStr;
@@ -343,6 +354,99 @@ mod tests {
 
         let result = project_api
             .get_issue_type_list(ProjectId::new(project_id))
+            .await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such project.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_category_list_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+
+        let expected_categories = vec![
+            Category {
+                id: CategoryId::new(1),
+                project_id,
+                name: "Development".to_string(),
+                display_order: 0,
+            },
+            Category {
+                id: CategoryId::new(2),
+                project_id,
+                name: "Bug".to_string(),
+                display_order: 1,
+            },
+        ];
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/projects/123/categories"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_categories))
+            .mount(&server)
+            .await;
+
+        let result = project_api.get_category_list(project_id).await;
+        assert!(result.is_ok());
+        let categories = result.unwrap();
+        assert_eq!(categories.len(), 2);
+        assert_eq!(categories[0].name, "Development");
+        assert_eq!(categories[1].name, "Bug");
+    }
+
+    #[tokio::test]
+    async fn test_get_category_list_empty() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_key = "TEST_PROJECT";
+
+        let expected_categories: Vec<Category> = Vec::new();
+
+        Mock::given(method("GET"))
+            .and(path(format!("/api/v2/projects/{}/categories", project_key)))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_categories))
+            .mount(&server)
+            .await;
+
+        let result = project_api
+            .get_category_list(ProjectIdOrKey::from_str(project_key).unwrap())
+            .await;
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_get_category_list_project_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = 999;
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such project.",
+                    "code": 6,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("GET"))
+            .and(path(format!("/api/v2/projects/{}/categories", project_id)))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let result = project_api
+            .get_category_list(ProjectId::new(project_id))
             .await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {

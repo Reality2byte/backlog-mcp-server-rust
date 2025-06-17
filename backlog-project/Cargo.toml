@@ -7,7 +7,7 @@ license.workspace = true
 [features]
 default = []
 writable = []
-schemars = ["dep:schemars"]
+schemars = ["dep:schemars", "backlog-core/schemars"]
 
 [dependencies]
 client = { path = "../client" }
