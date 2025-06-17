@@ -24,6 +24,8 @@ enum Commands {
     Pr(PrArgs),
     /// Manage issues
     Issue(IssueArgs),
+    /// Manage space
+    Space(SpaceArgs),
 }
 
 #[derive(Parser)]
@@ -160,6 +162,22 @@ struct AddCommentArgs {
     /// Attachment IDs to include (comma-separated, e.g., "789,101112")
     #[arg(short, long)]
     attachments: Option<String>,
+}
+
+#[derive(Parser)]
+struct SpaceArgs {
+    #[clap(subcommand)]
+    command: SpaceCommands,
+}
+
+#[derive(Parser)]
+enum SpaceCommands {
+    /// Download space logo
+    Logo {
+        /// Output file path to save the logo
+        #[clap(short, long, value_name = "FILE_PATH")]
+        output: PathBuf,
+    },
 }
 
 #[derive(Parser, Debug, Default)]
@@ -453,6 +471,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error adding comment: {}", e);
+                    }
+                }
+            }
+        },
+        Commands::Space(space_args) => match space_args.command {
+            SpaceCommands::Logo { output } => {
+                println!("Downloading space logo to {}", output.display());
+
+                match client.space().get_space_logo().await {
+                    Ok(logo_bytes) => {
+                        if let Err(e) = fs::write(&output, &logo_bytes).await {
+                            eprintln!("Error writing logo to {}: {}", output.display(), e);
+                        } else {
+                            println!(
+                                "Space logo downloaded successfully to: {}",
+                                output.display()
+                            );
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error downloading space logo: {}", e);
                     }
                 }
             }
