@@ -2,21 +2,34 @@
 
 This project provides a comprehensive Rust client library, command-line interface (CLI), and Model Context Protocol (MCP) server for interacting with the Backlog API.
 
+## Key Features
+
+- **Type Safety**: Strongly-typed identifiers and domain-specific enums throughout
+- **Unified File Downloads**: Intelligent format detection for attachments and shared files
+- **MCP Integration**: AI-friendly tools via Model Context Protocol server
+- **CLI Tool**: Command-line interface for common Backlog operations
+
 ## Project Structure
 
 Below is an overview of the main directories within this workspace:
 
+### Core Libraries
 -   `backlog-api-client/`: Contains the primary library crate that aggregates all API modules and the source code for the `blg` CLI tool.
 -   `backlog-api-core/`: Provides core utilities shared across API client modules, such as common error types and result aliases.
--   `backlog-core/`: Defines fundamental data structures, newtype identifiers (e.g., `ProjectId`, `IssueKey`, `PullRequestNumber`), and shared enums used throughout the Backlog API client ecosystem.
--   `backlog-document/`: Implements the client module for interacting with Backlog's Document API endpoints.
--   `backlog-git/`: Implements the client module for interacting with Backlog's Git repository and Pull Request API endpoints.
--   `backlog-issue/`: Implements the client module for interacting with Backlog's Issue API endpoints (including comments and attachments).
--   `backlog-project/`: Implements the client module for interacting with Backlog's Project API endpoints (including statuses, categories, etc.).
--   `backlog-space/`: Implements the client module for interacting with Backlog's Space API endpoints.
--   `backlog-user/`: Implements the client module for interacting with Backlog's User API endpoints.
+-   `backlog-core/`: Defines fundamental data structures, newtype identifiers (e.g., `ProjectId`, `IssueKey`, `SharedFileId`), and shared enums (`FileType`, etc.) used throughout the ecosystem.
 -   `client/`: A foundational crate providing a generic HTTP client wrapper (around `reqwest`) and shared test utilities.
--   `mcp-backlog-server/`: Implements an MCP server that exposes various Backlog API functionalities as tools for MCP-compatible clients.
+
+### API Domain Modules
+-   `backlog-document/`: Client module for Backlog's Document API endpoints.
+-   `backlog-file/`: Client module for Backlog's Shared File API endpoints (listing and downloading shared files).
+-   `backlog-git/`: Client module for Backlog's Git repository and Pull Request API endpoints.
+-   `backlog-issue/`: Client module for Backlog's Issue API endpoints (including comments and attachments).
+-   `backlog-project/`: Client module for Backlog's Project API endpoints (including statuses, categories, etc.).
+-   `backlog-space/`: Client module for Backlog's Space API endpoints.
+-   `backlog-user/`: Client module for Backlog's User API endpoints.
+
+### Applications
+-   `mcp-backlog-server/`: MCP server that exposes Backlog API functionalities as AI-friendly tools with unified file download capabilities.
 -   `memory-bank/`: Contains Markdown documents used by Cline (the AI assistant) to maintain context and knowledge about this project.
 
 ## Building and Testing
