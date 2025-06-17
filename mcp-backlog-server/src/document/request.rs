@@ -15,6 +15,11 @@ pub(crate) struct DownloadDocumentAttachmentRequest {
     pub document_id: String,
     #[schemars(description = "The numeric ID of the attachment to download.")]
     pub attachment_id: u32,
+    #[schemars(
+        description = "Optional format specification: 'image', 'text', or 'raw'. If not specified, format will be auto-detected."
+    )]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub format: Option<String>,
 }
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]

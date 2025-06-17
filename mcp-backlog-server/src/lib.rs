@@ -1,4 +1,3 @@
-mod attachment;
 pub mod document;
 mod error;
 pub mod file;
@@ -9,5 +8,6 @@ mod server;
 pub mod user;
 mod util;
 
-pub use attachment::{SerializableRawAttachment, SerializableRawAttachmentContent};
+mod file_utils;
+pub use file_utils::{FileFormat, SerializableFile};
 pub use server::Server;

@@ -1,26 +1,20 @@
 use rmcp::schemars;
-use serde::Deserialize;
 
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct GetSharedFilesListRequest {
-    /// The project ID or project key to retrieve shared files for.
-    /// Examples: "MYPROJECTKEY", "123".
-    /// Ensure there are no leading or trailing spaces.
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct GetSharedFilesListRequest {
+    #[schemars(
+        description = "The project ID or project key to retrieve shared files for. Examples: 'MYPROJECTKEY', '123'."
+    )]
     pub project_id_or_key: String,
-    /// The directory path to list files from.
-    /// Examples: "documents", "images", "".
-    /// Use empty string for root directory.
+    #[schemars(description = "The path to retrieve shared files from.")]
     pub path: String,
-    /// Sort order for the files (optional).
-    /// Valid values: "asc", "desc". Default: "desc".
+    #[schemars(description = "Sort order: 'asc' or 'desc'.")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub order: Option<String>,
-    /// Offset for pagination (optional).
-    /// Default: 0.
+    #[schemars(description = "Offset for pagination.")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub offset: Option<u32>,
-    /// Number of files to retrieve (optional).
-    /// Valid range: 1-100. Default: 20.
+    #[schemars(description = "Number of items to retrieve.")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub count: Option<u32>,
 }

@@ -35,6 +35,9 @@ pub struct DownloadPullRequestAttachmentRequest {
     pub pr_number: u64,
     /// The numeric ID of the attachment to download.
     pub attachment_id: u32,
+    /// Optional format specification: 'image', 'text', or 'raw'. If not specified, format will be auto-detected.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub format: Option<String>,
 }
 
 #[derive(Deserialize, JsonSchema, Debug)]

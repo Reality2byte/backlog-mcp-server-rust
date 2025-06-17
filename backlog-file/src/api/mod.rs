@@ -1,6 +1,9 @@
 use backlog_api_core::Result;
-use backlog_core::ProjectIdOrKey;
-use client::Client;
+use backlog_core::{
+    ProjectIdOrKey,
+    identifier::{Identifier, SharedFileId},
+};
+use client::{Client, DownloadedFile};
 
 use crate::requests::{GetSharedFilesListParams, GetSharedFilesListResponse};
 
@@ -27,6 +30,23 @@ impl FileApi {
             project_id_or_key_val, path_str
         );
         self.0.get_with_params(&url, &params).await
+    }
+
+    /// Downloads a shared file by its ID.
+    ///
+    /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/files/:sharedFileId`.
+    pub async fn get_file(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        shared_file_id: SharedFileId,
+    ) -> Result<DownloadedFile> {
+        let project_id_or_key_val = project_id_or_key.into();
+        let shared_file_id_val = shared_file_id.value();
+        let url = format!(
+            "/api/v2/projects/{}/files/{}",
+            project_id_or_key_val, shared_file_id_val
+        );
+        self.0.download_file_raw(&url).await
     }
 }
 
@@ -208,5 +228,75 @@ mod tests {
             .await;
         assert!(result.is_ok());
         assert!(result.unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_get_file_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let file_api = FileApi::new(client);
+        let project_id = ProjectId::new(123);
+        let shared_file_id = SharedFileId::new(456);
+
+        let file_content = b"Hello, World!";
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/projects/{}/files/{}",
+                project_id,
+                shared_file_id.value()
+            )))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_bytes(file_content.as_slice())
+                    .insert_header("content-type", "text/plain")
+                    .insert_header("content-disposition", "attachment; filename=\"test.txt\""),
+            )
+            .mount(&server)
+            .await;
+
+        let result = file_api.get_file(project_id, shared_file_id).await;
+        assert!(result.is_ok());
+        let downloaded_file = result.unwrap();
+        assert_eq!(downloaded_file.filename, "test.txt");
+        assert_eq!(downloaded_file.content_type, "text/plain");
+        assert_eq!(downloaded_file.bytes.as_ref(), file_content);
+    }
+
+    #[tokio::test]
+    async fn test_get_file_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let file_api = FileApi::new(client);
+        let project_id = ProjectId::new(123);
+        let shared_file_id = SharedFileId::new(999);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such file.",
+                    "code": 11,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/projects/{}/files/{}",
+                project_id,
+                shared_file_id.value()
+            )))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let result = file_api.get_file(project_id, shared_file_id).await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such file.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
     }
 }

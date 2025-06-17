@@ -1,4 +1,4 @@
-use crate::SerializableRawAttachment;
+use crate::file_utils::{FileFormat, SerializableFile};
 use crate::issue::request::{GetIssueCommentsRequest, UpdateIssueRequest};
 use crate::{
     document::{
@@ -109,16 +109,33 @@ impl Server {
     }
 
     #[tool(
-        description = "Download a document attachment if it is an image. Returns image content."
+        description = "Download a document attachment. Automatically detects format (image, text, or raw bytes) or you can specify the format parameter. Returns the file content in the appropriate format."
     )]
-    async fn download_document_attachment_image(
+    async fn download_document_attachment(
         &self,
         #[tool(aggr)] request: DownloadDocumentAttachmentRequest,
     ) -> McpResult {
+        let explicit_format = match request.format.as_deref() {
+            Some("image") => Some(FileFormat::Image),
+            Some("text") => Some(FileFormat::Text),
+            Some("raw") => Some(FileFormat::Raw),
+            Some(other) => {
+                return Err(McpError::invalid_request(
+                    format!(
+                        "Invalid format '{}'. Valid options: 'image', 'text', 'raw'",
+                        other
+                    ),
+                    None,
+                ));
+            }
+            None => None,
+        };
+
         let file =
             document::bridge::download_document_attachment_bridge(self.client.clone(), request)
                 .await?;
-        let response_data = SerializableRawAttachment::image(file)?;
+
+        let response_data = SerializableFile::new(file, explicit_format)?;
         Ok(CallToolResult::success(vec![response_data.try_into()?]))
     }
 
@@ -197,39 +214,32 @@ impl Server {
     }
 
     #[tool(
-        description = "Download an issue attachment as raw bytes. Returns a JSON object with filename, MIME type, and base64-encoded content."
+        description = "Download an issue attachment. Automatically detects format (image, text, or raw bytes) or you can specify the format parameter. Returns the file content in the appropriate format."
     )]
-    async fn download_issue_attachment_raw(
+    async fn download_issue_attachment(
         &self,
         #[tool(aggr)] request: DownloadAttachmentRequest,
     ) -> McpResult {
-        let file =
-            issue::bridge::download_issue_attachment_file(self.client.clone(), request).await?;
-        let response_data = SerializableRawAttachment::raw(file);
-        Ok(CallToolResult::success(vec![response_data.try_into()?]))
-    }
+        let explicit_format = match request.format.as_deref() {
+            Some("image") => Some(FileFormat::Image),
+            Some("text") => Some(FileFormat::Text),
+            Some("raw") => Some(FileFormat::Raw),
+            Some(other) => {
+                return Err(McpError::invalid_request(
+                    format!(
+                        "Invalid format '{}'. Valid options: 'image', 'text', 'raw'",
+                        other
+                    ),
+                    None,
+                ));
+            }
+            None => None,
+        };
 
-    #[tool(description = "Download an issue attachment image. Returns filename and image content.")]
-    async fn download_issue_attachment_image(
-        &self,
-        #[tool(aggr)] request: DownloadAttachmentRequest,
-    ) -> McpResult {
         let file =
             issue::bridge::download_issue_attachment_file(self.client.clone(), request).await?;
-        let response_data = SerializableRawAttachment::image(file)?;
-        Ok(CallToolResult::success(vec![response_data.try_into()?]))
-    }
 
-    #[tool(
-        description = "Download an issue attachment if it is a valid UTF-8 text file. Returns the text content."
-    )]
-    async fn download_issue_attachment_text(
-        &self,
-        #[tool(aggr)] request: DownloadAttachmentRequest,
-    ) -> McpResult {
-        let file =
-            issue::bridge::download_issue_attachment_file(self.client.clone(), request).await?;
-        let response_data = SerializableRawAttachment::text(file)?;
+        let response_data = SerializableFile::new(file, explicit_format)?;
         Ok(CallToolResult::success(vec![response_data.try_into()?]))
     }
 
@@ -264,38 +274,31 @@ impl Server {
     }
 
     #[tool(
-        description = "Download a pull request attachment as raw bytes. Returns filename and raw byte content."
+        description = "Download a pull request attachment. Automatically detects format (image, text, or raw bytes) or you can specify the format parameter. Returns the file content in the appropriate format."
     )]
-    async fn download_pull_request_attachment_raw(
+    async fn download_pull_request_attachment(
         &self,
         #[tool(aggr)] request: DownloadPullRequestAttachmentRequest,
     ) -> McpResult {
-        let file = git::bridge::download_pr_attachment_bridge(self.client.clone(), request).await?;
-        let response_data = SerializableRawAttachment::raw(file);
-        Ok(CallToolResult::success(vec![response_data.try_into()?]))
-    }
+        let explicit_format = match request.format.as_deref() {
+            Some("image") => Some(FileFormat::Image),
+            Some("text") => Some(FileFormat::Text),
+            Some("raw") => Some(FileFormat::Raw),
+            Some(other) => {
+                return Err(McpError::invalid_request(
+                    format!(
+                        "Invalid format '{}'. Valid options: 'image', 'text', 'raw'",
+                        other
+                    ),
+                    None,
+                ));
+            }
+            None => None,
+        };
 
-    #[tool(
-        description = "Download a pull request attachment image. Returns filename and image content as base64."
-    )]
-    async fn download_pull_request_attachment_image(
-        &self,
-        #[tool(aggr)] request: DownloadPullRequestAttachmentRequest,
-    ) -> McpResult {
         let file = git::bridge::download_pr_attachment_bridge(self.client.clone(), request).await?;
-        let response_data = SerializableRawAttachment::image(file)?;
-        Ok(CallToolResult::success(vec![response_data.try_into()?]))
-    }
 
-    #[tool(
-        description = "Download a pull request attachment if it is a valid UTF-8 text file. Returns the text content."
-    )]
-    async fn download_pull_request_attachment_text(
-        &self,
-        #[tool(aggr)] request: DownloadPullRequestAttachmentRequest,
-    ) -> McpResult {
-        let file = git::bridge::download_pr_attachment_bridge(self.client.clone(), request).await?;
-        let response_data = SerializableRawAttachment::text(file)?;
+        let response_data = SerializableFile::new(file, explicit_format)?;
         Ok(CallToolResult::success(vec![response_data.try_into()?]))
     }
 
