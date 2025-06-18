@@ -3,6 +3,13 @@ use backlog_api_client::{
     ProjectIdOrKey, PullRequestAttachmentId, PullRequestNumber, RepositoryIdOrName, StatusId,
     UserId, client::BacklogApiClient,
 };
+#[cfg(feature = "issue_writable")]
+use backlog_core::{
+    IssueKey,
+    identifier::{CategoryId, IssueTypeId, MilestoneId, PriorityId, ResolutionId},
+};
+#[cfg(feature = "issue_writable")]
+use backlog_issue::requests::{AddIssueParamsBuilder, UpdateIssueParamsBuilder};
 use backlog_project::requests::GetProjectParams;
 use clap::{Args, Parser};
 use std::env;
@@ -134,6 +141,15 @@ enum IssueCommands {
     /// Add a comment to an issue
     #[command(about = "Add a comment to an issue")]
     AddComment(AddCommentArgs),
+    /// Create a new issue
+    #[command(about = "Create a new issue")]
+    Create(CreateIssueArgs),
+    /// Update an existing issue
+    #[command(about = "Update an existing issue")]
+    Update(UpdateIssueArgs),
+    /// Delete an issue
+    #[command(about = "Delete an issue")]
+    Delete(DeleteIssueArgs),
 }
 
 #[derive(Args, Debug)]
@@ -165,6 +181,93 @@ struct AddCommentArgs {
     /// Attachment IDs to include (comma-separated, e.g., "789,101112")
     #[arg(short, long)]
     attachments: Option<String>,
+}
+
+#[derive(Args, Debug)]
+struct CreateIssueArgs {
+    /// Project ID or Key
+    #[arg(short, long)]
+    project_id: String,
+
+    /// Issue summary (title)
+    #[arg(short, long)]
+    summary: String,
+
+    /// Issue type ID
+    #[arg(short = 't', long)]
+    issue_type_id: u32,
+
+    /// Priority ID
+    #[arg(long)]
+    priority_id: u32,
+
+    /// Issue description
+    #[arg(short, long)]
+    description: Option<String>,
+
+    /// Assignee user ID
+    #[arg(short, long)]
+    assignee_id: Option<u32>,
+
+    /// Due date (YYYY-MM-DD format)
+    #[arg(long)]
+    due_date: Option<String>,
+
+    /// Category IDs (comma-separated)
+    #[arg(short, long)]
+    category_ids: Option<String>,
+
+    /// Milestone IDs (comma-separated)
+    #[arg(short, long)]
+    milestone_ids: Option<String>,
+}
+
+#[derive(Args, Debug)]
+struct UpdateIssueArgs {
+    /// Issue ID or Key
+    issue_id_or_key: String,
+
+    /// Issue summary (title)
+    #[arg(short, long)]
+    summary: Option<String>,
+
+    /// Issue description
+    #[arg(short, long)]
+    description: Option<String>,
+
+    /// Issue type ID
+    #[arg(short = 't', long)]
+    issue_type_id: Option<u32>,
+
+    /// Priority ID
+    #[arg(long)]
+    priority_id: Option<u32>,
+
+    /// Status ID
+    #[arg(long)]
+    status_id: Option<String>,
+
+    /// Assignee user ID
+    #[arg(short, long)]
+    assignee_id: Option<u32>,
+
+    /// Resolution ID
+    #[arg(short, long)]
+    resolution_id: Option<u32>,
+
+    /// Due date (YYYY-MM-DD format)
+    #[arg(long)]
+    due_date: Option<String>,
+
+    /// Comment to add with the update
+    #[arg(short, long)]
+    comment: Option<String>,
+}
+
+#[derive(Args, Debug)]
+struct DeleteIssueArgs {
+    /// Issue Key (e.g., "PROJECT-123")
+    issue_key: String,
 }
 
 #[derive(Parser)]
@@ -205,6 +308,28 @@ enum ProjectCommands {
         #[clap(name = "PROJECT_ID_OR_KEY")]
         project_id_or_key: String,
     },
+    /// List milestones for a project
+    MilestoneList {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+    },
+    /// List issue types for a project
+    IssueTypeList {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+    },
+    /// List categories for a project
+    CategoryList {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+    },
+    /// List priorities (space-wide)
+    PriorityList,
+    /// List resolutions (space-wide)
+    ResolutionList,
 }
 
 #[derive(Parser, Debug, Default)]
@@ -501,6 +626,148 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+            #[cfg(feature = "issue_writable")]
+            IssueCommands::Create(create_args) => {
+                println!("Creating new issue...");
+
+                let project_id_or_key = create_args.project_id.parse::<ProjectIdOrKey>()?;
+                let project_id = match project_id_or_key {
+                    ProjectIdOrKey::Id(id) => id,
+                    ProjectIdOrKey::Key(_) => {
+                        eprintln!(
+                            "Error: Project key not supported for issue creation. Please use project ID."
+                        );
+                        return Ok(());
+                    }
+                    ProjectIdOrKey::EitherIdOrKey(id, _) => id,
+                };
+
+                let mut builder = AddIssueParamsBuilder::default();
+                builder
+                    .project_id(project_id)
+                    .summary(&create_args.summary)
+                    .issue_type_id(IssueTypeId::new(create_args.issue_type_id))
+                    .priority_id(PriorityId::new(create_args.priority_id));
+
+                if let Some(description) = &create_args.description {
+                    builder.description(description);
+                }
+
+                if let Some(assignee_id) = create_args.assignee_id {
+                    builder.assignee_id(UserId::new(assignee_id));
+                }
+
+                if let Some(_due_date) = &create_args.due_date {
+                    // Due date parsing would need proper DateTime conversion
+                    // For now, skip this implementation detail
+                }
+
+                if let Some(category_str) = &create_args.category_ids {
+                    let category_ids: Result<Vec<CategoryId>, _> = category_str
+                        .split(',')
+                        .map(|s| s.trim().parse::<u32>().map(CategoryId::new))
+                        .collect();
+                    if let Ok(ids) = category_ids {
+                        builder.category_id(ids);
+                    }
+                }
+
+                if let Some(milestone_str) = &create_args.milestone_ids {
+                    let milestone_ids: Result<Vec<MilestoneId>, _> = milestone_str
+                        .split(',')
+                        .map(|s| s.trim().parse::<u32>().map(MilestoneId::new))
+                        .collect();
+                    if let Ok(ids) = milestone_ids {
+                        builder.milestone_id(ids);
+                    }
+                }
+
+                let params = builder.build()?;
+
+                match client.issue().add_issue(params).await {
+                    Ok(issue) => {
+                        println!("Issue created successfully!");
+                        println!("Issue Key: {}", issue.issue_key);
+                        println!("Issue ID: {}", issue.id);
+                        println!("Summary: {}", issue.summary);
+                        println!("Status: {}", issue.status.name);
+                    }
+                    Err(e) => {
+                        eprintln!("Error creating issue: {}", e);
+                    }
+                }
+            }
+            #[cfg(feature = "issue_writable")]
+            IssueCommands::Update(update_args) => {
+                println!("Updating issue: {}", update_args.issue_id_or_key);
+
+                let issue_id_or_key = update_args.issue_id_or_key.parse::<IssueIdOrKey>()?;
+
+                let mut builder = UpdateIssueParamsBuilder::default();
+
+                if let Some(summary) = &update_args.summary {
+                    builder.summary(summary);
+                }
+
+                if let Some(description) = &update_args.description {
+                    builder.description(description);
+                }
+
+                if let Some(issue_type_id) = update_args.issue_type_id {
+                    builder.issue_type_id(IssueTypeId::new(issue_type_id));
+                }
+
+                if let Some(priority_id) = update_args.priority_id {
+                    builder.priority_id(PriorityId::new(priority_id));
+                }
+
+                if let Some(status_id) = &update_args.status_id {
+                    builder.status_id(status_id);
+                }
+
+                if let Some(assignee_id) = update_args.assignee_id {
+                    builder.assignee_id(UserId::new(assignee_id));
+                }
+
+                if let Some(resolution_id) = update_args.resolution_id {
+                    builder.resolution_id(ResolutionId::new(resolution_id));
+                }
+
+                if let Some(comment) = &update_args.comment {
+                    builder.comment(comment);
+                }
+
+                let params = builder.build()?;
+
+                match client.issue().update_issue(issue_id_or_key, &params).await {
+                    Ok(issue) => {
+                        println!("Issue updated successfully!");
+                        println!("Issue Key: {}", issue.issue_key);
+                        println!("Summary: {}", issue.summary);
+                        println!("Status: {}", issue.status.name);
+                    }
+                    Err(e) => {
+                        eprintln!("Error updating issue: {}", e);
+                    }
+                }
+            }
+            #[cfg(feature = "issue_writable")]
+            IssueCommands::Delete(delete_args) => {
+                println!("Deleting issue: {}", delete_args.issue_key);
+
+                let issue_key = delete_args.issue_key.parse::<IssueKey>()?;
+
+                match client.issue().delete_issue(issue_key).await {
+                    Ok(issue) => {
+                        println!("Issue deleted successfully!");
+                        println!("Deleted Issue Key: {}", issue.issue_key);
+                        println!("Summary: {}", issue.summary);
+                    }
+                    Err(e) => {
+                        eprintln!("Error deleting issue: {}", e);
+                    }
+                }
+            }
         },
         Commands::Space(space_args) => match space_args.command {
             SpaceCommands::Logo { output } => {
@@ -605,6 +872,124 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error listing statuses: {}", e);
+                    }
+                }
+            }
+            ProjectCommands::MilestoneList { project_id_or_key } => {
+                println!("Listing milestones for project: {}", project_id_or_key);
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                match client
+                    .project()
+                    .get_version_milestone_list(proj_id_or_key)
+                    .await
+                {
+                    Ok(milestones) => {
+                        if milestones.is_empty() {
+                            println!("No milestones found");
+                        } else {
+                            for milestone in milestones {
+                                print!("[{}] {}", milestone.id, milestone.name);
+                                if let Some(description) = &milestone.description {
+                                    print!(" - {}", description);
+                                }
+                                println!();
+
+                                if let Some(start_date) = milestone.start_date {
+                                    println!("  Start Date: {}", start_date.format("%Y-%m-%d"));
+                                }
+                                if let Some(release_date) = milestone.release_due_date {
+                                    println!("  Release Due: {}", release_date.format("%Y-%m-%d"));
+                                }
+                                if milestone.archived {
+                                    println!("  Status: Archived");
+                                }
+                                println!();
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error listing milestones: {}", e);
+                    }
+                }
+            }
+            ProjectCommands::IssueTypeList { project_id_or_key } => {
+                println!("Listing issue types for project: {}", project_id_or_key);
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                match client.project().get_issue_type_list(proj_id_or_key).await {
+                    Ok(issue_types) => {
+                        if issue_types.is_empty() {
+                            println!("No issue types found");
+                        } else {
+                            for issue_type in issue_types {
+                                println!(
+                                    "[{}] {} (Color: {})",
+                                    issue_type.id, issue_type.name, issue_type.color
+                                );
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error listing issue types: {}", e);
+                    }
+                }
+            }
+            ProjectCommands::CategoryList { project_id_or_key } => {
+                println!("Listing categories for project: {}", project_id_or_key);
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                match client.project().get_category_list(proj_id_or_key).await {
+                    Ok(categories) => {
+                        if categories.is_empty() {
+                            println!("No categories found");
+                        } else {
+                            for category in categories {
+                                println!(
+                                    "[{}] {} (Display Order: {})",
+                                    category.id, category.name, category.display_order
+                                );
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error listing categories: {}", e);
+                    }
+                }
+            }
+            ProjectCommands::PriorityList => {
+                println!("Listing priorities (space-wide):");
+
+                match client.project().get_priority_list().await {
+                    Ok(priorities) => {
+                        if priorities.is_empty() {
+                            println!("No priorities found");
+                        } else {
+                            for priority in priorities {
+                                println!("[{}] {}", priority.id, priority.name);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error listing priorities: {}", e);
+                    }
+                }
+            }
+            ProjectCommands::ResolutionList => {
+                println!("Listing resolutions (space-wide):");
+
+                match client.project().get_resolution_list().await {
+                    Ok(resolutions) => {
+                        if resolutions.is_empty() {
+                            println!("No resolutions found");
+                        } else {
+                            for resolution in resolutions {
+                                println!("[{}] {}", resolution.id, resolution.name);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error listing resolutions: {}", e);
                     }
                 }
             }
