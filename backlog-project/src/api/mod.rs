@@ -94,6 +94,18 @@ impl ProjectApi {
     pub async fn get_resolution_list(&self) -> Result<Vec<Resolution>> {
         self.0.get("/api/v2/resolutions").await
     }
+
+    /// Gets the project icon image data.
+    ///
+    /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/image`.
+    pub async fn get_project_icon(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+    ) -> Result<Vec<u8>> {
+        let path = format!("/api/v2/projects/{}/image", project_id_or_key.into());
+        let downloaded_file = self.0.download_file_raw(&path).await?;
+        Ok(downloaded_file.bytes.to_vec())
+    }
 }
 
 type GetVersionMilestoneListResponse = Vec<Milestone>;

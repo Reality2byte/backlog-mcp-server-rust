@@ -36,6 +36,8 @@ enum Commands {
     Space(SpaceArgs),
     /// Manage projects
     Project(ProjectArgs),
+    /// Manage users
+    User(UserArgs),
 }
 
 #[derive(Parser)]
@@ -330,6 +332,38 @@ enum ProjectCommands {
     PriorityList,
     /// List resolutions (space-wide)
     ResolutionList,
+    /// Download project icon
+    Icon {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Output file path to save the icon
+        #[clap(short, long, value_name = "FILE_PATH")]
+        output: PathBuf,
+    },
+}
+
+#[derive(Parser)]
+struct UserArgs {
+    #[clap(subcommand)]
+    command: UserCommands,
+}
+
+#[derive(Parser)]
+enum UserCommands {
+    /// List all users
+    List,
+    /// Get current user info
+    Me,
+    /// Download user icon
+    Icon {
+        /// User ID
+        #[clap(name = "USER_ID")]
+        user_id: u32,
+        /// Output file path to save the icon
+        #[clap(short, long, value_name = "FILE_PATH")]
+        output: PathBuf,
+    },
 }
 
 #[derive(Parser, Debug, Default)]
@@ -990,6 +1024,94 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error listing resolutions: {}", e);
+                    }
+                }
+            }
+            ProjectCommands::Icon {
+                project_id_or_key,
+                output,
+            } => {
+                println!("Downloading project icon to {}", output.display());
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                match client.project().get_project_icon(proj_id_or_key).await {
+                    Ok(icon_bytes) => {
+                        if let Err(e) = fs::write(&output, &icon_bytes).await {
+                            eprintln!("Error writing icon to {}: {}", output.display(), e);
+                        } else {
+                            println!(
+                                "Project icon downloaded successfully to: {}",
+                                output.display()
+                            );
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error downloading project icon: {}", e);
+                    }
+                }
+            }
+        },
+        Commands::User(user_args) => match user_args.command {
+            UserCommands::List => {
+                println!("Listing all users:");
+
+                match client.user().get_user_list().await {
+                    Ok(users) => {
+                        if users.is_empty() {
+                            println!("No users found");
+                        } else {
+                            for user in users {
+                                let user_id_str = user.user_id.as_deref().unwrap_or("N/A");
+                                println!("[{}] {} ({})", user.id, user.name, user_id_str);
+                                if !user.mail_address.is_empty() {
+                                    println!("  Email: {}", user.mail_address);
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error listing users: {}", e);
+                    }
+                }
+            }
+            UserCommands::Me => {
+                println!("Getting current user info:");
+
+                match client.user().get_own_user().await {
+                    Ok(user) => {
+                        println!("User ID: {}", user.id);
+                        if let Some(login_id) = &user.user_id {
+                            println!("Login ID: {}", login_id);
+                        }
+                        println!("Name: {}", user.name);
+                        if !user.mail_address.is_empty() {
+                            println!("Email: {}", user.mail_address);
+                        }
+                        if let Some(lang) = &user.lang {
+                            println!("Language: {}", lang);
+                        }
+                        if let Some(last_login) = &user.last_login_time {
+                            println!("Last Login: {}", last_login);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error getting user info: {}", e);
+                    }
+                }
+            }
+            UserCommands::Icon { user_id, output } => {
+                println!("Downloading user icon to {}", output.display());
+
+                match client.user().get_user_icon(user_id).await {
+                    Ok(icon_bytes) => {
+                        if let Err(e) = fs::write(&output, &icon_bytes).await {
+                            eprintln!("Error writing icon to {}: {}", output.display(), e);
+                        } else {
+                            println!("User icon downloaded successfully to: {}", output.display());
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error downloading user icon: {}", e);
                     }
                 }
             }
