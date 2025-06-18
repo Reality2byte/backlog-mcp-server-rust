@@ -106,6 +106,20 @@ impl ProjectApi {
         let downloaded_file = self.0.download_file_raw(&path).await?;
         Ok(downloaded_file.bytes.to_vec())
     }
+
+    /// Adds a category to a project.
+    ///
+    /// Corresponds to `POST /api/v2/projects/:projectIdOrKey/categories`.
+    #[cfg(feature = "writable")]
+    pub async fn add_category(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        params: &crate::requests::AddCategoryParams,
+    ) -> Result<Category> {
+        let path = format!("/api/v2/projects/{}/categories", project_id_or_key.into());
+        let params_vec: Vec<(String, String)> = params.into();
+        self.0.post(&path, &params_vec).await
+    }
 }
 
 type GetVersionMilestoneListResponse = Vec<Milestone>;
@@ -603,5 +617,75 @@ mod tests {
         let result = project_api.get_resolution_list().await;
         assert!(result.is_ok());
         assert!(result.unwrap().is_empty());
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_category_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+
+        let expected_category = Category {
+            id: CategoryId::new(1),
+            project_id,
+            name: "Development".to_string(),
+            display_order: 0,
+        };
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/projects/123/categories"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_category))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::AddCategoryParams {
+            name: "Development".to_string(),
+        };
+        let result = project_api.add_category(project_id, &params).await;
+        assert!(result.is_ok());
+        let category = result.unwrap();
+        assert_eq!(category.name, "Development");
+        assert_eq!(category.id, CategoryId::new(1));
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_category_duplicate_name_error() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_key = "TEST_PROJECT";
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "Category name already exists.",
+                    "code": 12,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("POST"))
+            .and(path(format!("/api/v2/projects/{}/categories", project_key)))
+            .respond_with(ResponseTemplate::new(400).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::AddCategoryParams {
+            name: "Existing Category".to_string(),
+        };
+        let result = project_api
+            .add_category(ProjectIdOrKey::from_str(project_key).unwrap(), &params)
+            .await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 400);
+            assert_eq!(errors[0].message, "Category name already exists.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
     }
 }
