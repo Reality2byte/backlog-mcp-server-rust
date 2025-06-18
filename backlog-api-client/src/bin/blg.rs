@@ -14,7 +14,9 @@ use backlog_domain_models::IssueTypeColor;
 use backlog_issue::requests::{AddIssueParamsBuilder, UpdateIssueParamsBuilder};
 use backlog_project::requests::GetProjectParams;
 #[cfg(feature = "project_writable")]
-use backlog_project::{AddCategoryParams, AddIssueTypeParams, UpdateCategoryParams};
+use backlog_project::{
+    AddCategoryParams, AddIssueTypeParams, DeleteIssueTypeParams, UpdateCategoryParams,
+};
 use clap::{Args, Parser};
 use std::env;
 use std::path::PathBuf;
@@ -379,6 +381,18 @@ enum ProjectCommands {
         /// Template description (optional)
         #[clap(short = 'd', long)]
         template_description: Option<String>,
+    },
+    /// Delete an issue type from a project
+    IssueTypeDelete {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Issue type ID to delete
+        #[clap(long)]
+        issue_type_id: u32,
+        /// Substitute issue type ID for existing issues
+        #[clap(long)]
+        substitute_issue_type_id: u32,
     },
     /// List priorities (space-wide)
     PriorityList,
@@ -1187,11 +1201,55 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::IssueTypeDelete {
+                project_id_or_key,
+                issue_type_id,
+                substitute_issue_type_id,
+            } => {
+                println!(
+                    "Deleting issue type {} from project: {} (substitute: {})",
+                    issue_type_id, project_id_or_key, substitute_issue_type_id
+                );
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let issue_type_id_val = IssueTypeId::new(issue_type_id);
+                let substitute_id = IssueTypeId::new(substitute_issue_type_id);
+
+                let params = DeleteIssueTypeParams {
+                    substitute_issue_type_id: substitute_id,
+                };
+
+                match client
+                    .project()
+                    .delete_issue_type(proj_id_or_key, issue_type_id_val, &params)
+                    .await
+                {
+                    Ok(issue_type) => {
+                        println!("Issue type deleted successfully:");
+                        println!(
+                            "[{}] {} (Color: {})",
+                            issue_type.id, issue_type.name, issue_type.color
+                        );
+                        if let Some(template_summary) = &issue_type.template_summary {
+                            println!("  Template Summary: {}", template_summary);
+                        }
+                        if let Some(template_description) = &issue_type.template_description {
+                            println!("  Template Description: {}", template_description);
+                        }
+                        println!("  Display Order: {}", issue_type.display_order);
+                    }
+                    Err(e) => {
+                        eprintln!("Error deleting issue type: {}", e);
+                    }
+                }
+            }
             #[cfg(not(feature = "project_writable"))]
             ProjectCommands::CategoryAdd { .. }
             | ProjectCommands::CategoryUpdate { .. }
             | ProjectCommands::CategoryDelete { .. }
-            | ProjectCommands::IssueTypeAdd { .. } => {
+            | ProjectCommands::IssueTypeAdd { .. }
+            | ProjectCommands::IssueTypeDelete { .. } => {
                 eprintln!(
                     "Category and issue type management is not available. Please build with 'project_writable' feature."
                 );

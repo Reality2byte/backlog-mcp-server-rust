@@ -8,4 +8,6 @@ pub use models::Project;
 
 // Re-export request structs for writable features
 #[cfg(feature = "writable")]
-pub use requests::{AddCategoryParams, AddIssueTypeParams, UpdateCategoryParams};
+pub use requests::{
+    AddCategoryParams, AddIssueTypeParams, DeleteIssueTypeParams, UpdateCategoryParams,
+};

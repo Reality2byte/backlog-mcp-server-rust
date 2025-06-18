@@ -78,6 +78,17 @@ impl Client {
         self.execute_request(request).await
     }
 
+    /// Makes a DELETE request to the specified path with form parameters
+    #[cfg(feature = "writable")]
+    pub async fn delete_with_params<T, P>(&self, path: &str, params: P) -> Result<T>
+    where
+        T: serde::de::DeserializeOwned,
+        P: serde::Serialize,
+    {
+        let request = self.prepare_request(reqwest::Method::DELETE, path, &params)?;
+        self.execute_request(request).await
+    }
+
     /// Makes a PATCH request to the specified path with form parameters
     #[cfg(feature = "writable")]
     pub async fn patch<T, P>(&self, path: &str, params: &P) -> Result<T>
@@ -102,7 +113,9 @@ impl Client {
         builder = builder.header("Accept", "application/json");
         builder = match method {
             reqwest::Method::GET => builder.query(params),
-            reqwest::Method::POST | reqwest::Method::PATCH => builder.form(params),
+            reqwest::Method::POST | reqwest::Method::PATCH | reqwest::Method::DELETE => {
+                builder.form(params)
+            }
             _ => builder,
         };
 

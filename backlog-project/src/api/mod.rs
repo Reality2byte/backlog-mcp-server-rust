@@ -170,6 +170,25 @@ impl ProjectApi {
         let params_vec: Vec<(String, String)> = params.into();
         self.0.post(&path, &params_vec).await
     }
+
+    /// Deletes an issue type from a project.
+    ///
+    /// Corresponds to `DELETE /api/v2/projects/:projectIdOrKey/issueTypes/:id`.
+    #[cfg(feature = "writable")]
+    pub async fn delete_issue_type(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        issue_type_id: impl Into<backlog_core::identifier::IssueTypeId>,
+        params: &crate::requests::DeleteIssueTypeParams,
+    ) -> Result<IssueType> {
+        let path = format!(
+            "/api/v2/projects/{}/issueTypes/{}",
+            project_id_or_key.into(),
+            issue_type_id.into()
+        );
+        let params_vec: Vec<(String, String)> = params.into();
+        self.0.delete_with_params(&path, &params_vec).await
+    }
 }
 
 type GetVersionMilestoneListResponse = Vec<Milestone>;
@@ -1188,6 +1207,173 @@ mod tests {
             template_description: None,
         };
         let result = project_api.add_issue_type(project_id, &params).await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such project.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_delete_issue_type_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+        let issue_type_id = backlog_core::identifier::IssueTypeId::new(456);
+        let substitute_issue_type_id = backlog_core::identifier::IssueTypeId::new(789);
+
+        let expected_issue_type = IssueType {
+            id: issue_type_id,
+            project_id,
+            name: "Deleted Issue Type".to_string(),
+            color: "#ff0000".to_string(),
+            display_order: 2,
+            template_summary: None,
+            template_description: None,
+        };
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/projects/123/issueTypes/456"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_issue_type))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::DeleteIssueTypeParams {
+            substitute_issue_type_id,
+        };
+        let result = project_api
+            .delete_issue_type(project_id, issue_type_id, &params)
+            .await;
+        assert!(result.is_ok());
+        let issue_type = result.unwrap();
+        assert_eq!(issue_type.name, "Deleted Issue Type");
+        assert_eq!(issue_type.id, issue_type_id);
+        assert_eq!(issue_type.project_id, project_id);
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_delete_issue_type_with_project_key() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_key = "TEST_PROJECT";
+        let issue_type_id = backlog_core::identifier::IssueTypeId::new(100);
+        let substitute_issue_type_id = backlog_core::identifier::IssueTypeId::new(200);
+
+        let expected_issue_type = IssueType {
+            id: issue_type_id,
+            project_id: ProjectId::new(456),
+            name: "Task Type".to_string(),
+            color: "#00ff00".to_string(),
+            display_order: 1,
+            template_summary: Some("Task Template".to_string()),
+            template_description: Some("Task Description".to_string()),
+        };
+
+        Mock::given(method("DELETE"))
+            .and(path(format!(
+                "/api/v2/projects/{}/issueTypes/100",
+                project_key
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_issue_type))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::DeleteIssueTypeParams {
+            substitute_issue_type_id,
+        };
+        let result = project_api
+            .delete_issue_type(
+                ProjectIdOrKey::from_str(project_key).unwrap(),
+                issue_type_id,
+                &params,
+            )
+            .await;
+        assert!(result.is_ok());
+        let issue_type = result.unwrap();
+        assert_eq!(issue_type.name, "Task Type");
+        assert_eq!(issue_type.id, issue_type_id);
+        assert_eq!(issue_type.display_order, 1);
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_delete_issue_type_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+        let issue_type_id = backlog_core::identifier::IssueTypeId::new(999);
+        let substitute_issue_type_id = backlog_core::identifier::IssueTypeId::new(1);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such issue type.",
+                    "code": 13,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/projects/123/issueTypes/999"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::DeleteIssueTypeParams {
+            substitute_issue_type_id,
+        };
+        let result = project_api
+            .delete_issue_type(project_id, issue_type_id, &params)
+            .await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such issue type.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_delete_issue_type_project_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(999);
+        let issue_type_id = backlog_core::identifier::IssueTypeId::new(1);
+        let substitute_issue_type_id = backlog_core::identifier::IssueTypeId::new(2);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such project.",
+                    "code": 6,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/projects/999/issueTypes/1"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::DeleteIssueTypeParams {
+            substitute_issue_type_id,
+        };
+        let result = project_api
+            .delete_issue_type(project_id, issue_type_id, &params)
+            .await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);

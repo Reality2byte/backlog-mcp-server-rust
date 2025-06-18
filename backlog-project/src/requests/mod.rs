@@ -65,3 +65,19 @@ impl From<&AddIssueTypeParams> for Vec<(String, String)> {
         seq
     }
 }
+
+#[cfg(feature = "writable")]
+#[derive(Debug, Clone)]
+pub struct DeleteIssueTypeParams {
+    pub substitute_issue_type_id: backlog_core::identifier::IssueTypeId,
+}
+
+#[cfg(feature = "writable")]
+impl From<&DeleteIssueTypeParams> for Vec<(String, String)> {
+    fn from(params: &DeleteIssueTypeParams) -> Self {
+        vec![(
+            "substituteIssueTypeId".to_string(),
+            params.substitute_issue_type_id.to_string(),
+        )]
+    }
+}
