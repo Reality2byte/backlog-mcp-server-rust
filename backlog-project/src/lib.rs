@@ -10,4 +10,5 @@ pub use models::Project;
 #[cfg(feature = "writable")]
 pub use requests::{
     AddCategoryParams, AddIssueTypeParams, DeleteIssueTypeParams, UpdateCategoryParams,
+    UpdateIssueTypeParams,
 };

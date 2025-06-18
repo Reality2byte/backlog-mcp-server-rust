@@ -9,9 +9,9 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Read operations**: get_space(), get_space_logo()
 
 ### backlog-project (ProjectApi)
-- **Implemented**: 12/36 endpoints (33%)
+- **Implemented**: 14/36 endpoints (39%)
 - **Read operations**: get_project_list(), get_project(), get_project_icon(), get_status_list(), get_issue_type_list(), get_version_milestone_list(), get_category_list(), get_priority_list(), get_resolution_list()
-- **Write operations** (requires `writable` feature): add_category(), update_category(), delete_category(), add_issue_type()
+- **Write operations** (requires `writable` feature): add_category(), update_category(), delete_category(), add_issue_type(), delete_issue_type(), update_issue_type()
 
 ### backlog-issue (IssueApi)
 - **Implemented**: 10/26 endpoints (38%)
@@ -136,10 +136,10 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ❌ UpdateListItemForListTypeCustomField: Updates list item for list type custom field. Calling API fails if specified custom field’s type is not a list: PATCH /api/v2/projects/:projectIdOrKey/customFields/:id/items/:itemId
 
 ### Issue Type
-- ❌ UpdateIssueType: Updates information about Issue Type: PATCH /api/v2/projects/:projectIdOrKey/issueTypes/:id
+- ✅ UpdateIssueType: Updates information about Issue Type: PATCH /api/v2/projects/:projectIdOrKey/issueTypes/:id
 - ✅ GetIssueTypeList: Returns list of Issue Types in the project: GET /api/v2/projects/:projectIdOrKey/issueTypes
 - ✅ AddIssueType: Adds new Issue Type to the project: POST /api/v2/projects/:projectIdOrKey/issueTypes
-- ❌ DeleteIssueType: Deletes Issue Type: DELETE /api/v2/projects/:projectIdOrKey/issueTypes/:id
+- ✅ DeleteIssueType: Deletes Issue Type: DELETE /api/v2/projects/:projectIdOrKey/issueTypes/:id
 
 ### Status
 - ✅ GetStatusListOfProject: Returns list of status in the project: GET /api/v2/projects/:projectIdOrKey/statuses

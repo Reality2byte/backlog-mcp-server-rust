@@ -16,6 +16,7 @@ use backlog_project::requests::GetProjectParams;
 #[cfg(feature = "project_writable")]
 use backlog_project::{
     AddCategoryParams, AddIssueTypeParams, DeleteIssueTypeParams, UpdateCategoryParams,
+    UpdateIssueTypeParams,
 };
 use clap::{Args, Parser};
 use std::env;
@@ -393,6 +394,27 @@ enum ProjectCommands {
         /// Substitute issue type ID for existing issues
         #[clap(long)]
         substitute_issue_type_id: u32,
+    },
+    /// Update an issue type in a project
+    IssueTypeUpdate {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Issue type ID to update
+        #[clap(long)]
+        issue_type_id: u32,
+        /// New issue type name (optional)
+        #[clap(short, long)]
+        name: Option<String>,
+        /// New issue type color (optional: red, dark-red, purple, violet, blue, teal, green, orange, pink, gray)
+        #[clap(short, long)]
+        color: Option<String>,
+        /// New template summary (optional)
+        #[clap(short = 's', long)]
+        template_summary: Option<String>,
+        /// New template description (optional)
+        #[clap(short = 'd', long)]
+        template_description: Option<String>,
     },
     /// List priorities (space-wide)
     PriorityList,
@@ -1244,12 +1266,75 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::IssueTypeUpdate {
+                project_id_or_key,
+                issue_type_id,
+                name,
+                color,
+                template_summary,
+                template_description,
+            } => {
+                println!(
+                    "Updating issue type {} in project: {}",
+                    issue_type_id, project_id_or_key
+                );
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let issue_type_id_val = IssueTypeId::new(issue_type_id);
+
+                // Parse color if provided
+                let parsed_color = if let Some(color_str) = color {
+                    Some(color_str.parse::<IssueTypeColor>().map_err(|e| {
+                        format!(
+                            "Invalid color '{}': {}\nAvailable colors: {}",
+                            color_str,
+                            e,
+                            IssueTypeColor::all_names().join(", ")
+                        )
+                    })?)
+                } else {
+                    None
+                };
+
+                let params = UpdateIssueTypeParams {
+                    name: name.clone(),
+                    color: parsed_color,
+                    template_summary: template_summary.clone(),
+                    template_description: template_description.clone(),
+                };
+
+                match client
+                    .project()
+                    .update_issue_type(proj_id_or_key, issue_type_id_val, &params)
+                    .await
+                {
+                    Ok(issue_type) => {
+                        println!("Issue type updated successfully:");
+                        println!(
+                            "[{}] {} (Color: {})",
+                            issue_type.id, issue_type.name, issue_type.color
+                        );
+                        if let Some(template_summary) = &issue_type.template_summary {
+                            println!("  Template Summary: {}", template_summary);
+                        }
+                        if let Some(template_description) = &issue_type.template_description {
+                            println!("  Template Description: {}", template_description);
+                        }
+                        println!("  Display Order: {}", issue_type.display_order);
+                    }
+                    Err(e) => {
+                        eprintln!("Error updating issue type: {}", e);
+                    }
+                }
+            }
             #[cfg(not(feature = "project_writable"))]
             ProjectCommands::CategoryAdd { .. }
             | ProjectCommands::CategoryUpdate { .. }
             | ProjectCommands::CategoryDelete { .. }
             | ProjectCommands::IssueTypeAdd { .. }
-            | ProjectCommands::IssueTypeDelete { .. } => {
+            | ProjectCommands::IssueTypeDelete { .. }
+            | ProjectCommands::IssueTypeUpdate { .. } => {
                 eprintln!(
                     "Category and issue type management is not available. Please build with 'project_writable' feature."
                 );

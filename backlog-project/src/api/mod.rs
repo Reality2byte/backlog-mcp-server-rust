@@ -189,6 +189,24 @@ impl ProjectApi {
         let params_vec: Vec<(String, String)> = params.into();
         self.0.delete_with_params(&path, &params_vec).await
     }
+
+    /// Updates an issue type in a project.
+    /// Corresponds to `PATCH /api/v2/projects/:projectIdOrKey/issueTypes/:id`.
+    #[cfg(feature = "writable")]
+    pub async fn update_issue_type(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        issue_type_id: impl Into<backlog_core::identifier::IssueTypeId>,
+        params: &crate::requests::UpdateIssueTypeParams,
+    ) -> Result<IssueType> {
+        let path = format!(
+            "/api/v2/projects/{}/issueTypes/{}",
+            project_id_or_key.into(),
+            issue_type_id.into()
+        );
+        let params_vec: Vec<(String, String)> = params.into();
+        self.0.patch(&path, &params_vec).await
+    }
 }
 
 type GetVersionMilestoneListResponse = Vec<Milestone>;
@@ -1381,5 +1399,225 @@ mod tests {
         } else {
             panic!("Expected ApiError::HttpStatus, got {:?}", result);
         }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_issue_type_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+        let issue_type_id = backlog_core::identifier::IssueTypeId::new(456);
+
+        let expected_issue_type = IssueType {
+            id: issue_type_id,
+            project_id,
+            name: "Updated Bug Type".to_string(),
+            color: "#009900".to_string(),
+            display_order: 1,
+            template_summary: Some("Updated Summary".to_string()),
+            template_description: Some("Updated Description".to_string()),
+        };
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/123/issueTypes/456"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_issue_type))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateIssueTypeParams {
+            name: Some("Updated Bug Type".to_string()),
+            color: Some(backlog_domain_models::IssueTypeColor::Green),
+            template_summary: Some("Updated Summary".to_string()),
+            template_description: Some("Updated Description".to_string()),
+        };
+
+        let result = project_api
+            .update_issue_type(project_id, issue_type_id, &params)
+            .await;
+        assert!(result.is_ok(), "Result was: {:?}", result);
+        let issue_type = result.unwrap();
+        assert_eq!(issue_type.id, issue_type_id);
+        assert_eq!(issue_type.project_id, project_id);
+        assert_eq!(issue_type.name, "Updated Bug Type");
+        assert_eq!(issue_type.color, "#009900");
+        assert_eq!(issue_type.template_summary, Some("Updated Summary".to_string()));
+        assert_eq!(issue_type.template_description, Some("Updated Description".to_string()));
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_issue_type_partial_update() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+        let issue_type_id = backlog_core::identifier::IssueTypeId::new(456);
+
+        let expected_issue_type = IssueType {
+            id: issue_type_id,
+            project_id,
+            name: "Only Name Updated".to_string(),
+            color: "#990000".to_string(),
+            display_order: 1,
+            template_summary: None,
+            template_description: None,
+        };
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/123/issueTypes/456"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_issue_type))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateIssueTypeParams {
+            name: Some("Only Name Updated".to_string()),
+            color: None,
+            template_summary: None,
+            template_description: None,
+        };
+
+        let result = project_api
+            .update_issue_type(project_id, issue_type_id, &params)
+            .await;
+        assert!(result.is_ok());
+        let issue_type = result.unwrap();
+        assert_eq!(issue_type.name, "Only Name Updated");
+        assert_eq!(issue_type.id, issue_type_id);
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_issue_type_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+        let issue_type_id = backlog_core::identifier::IssueTypeId::new(999);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such issue type.",
+                    "code": 13,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/123/issueTypes/999"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateIssueTypeParams {
+            name: Some("Non-existent Issue Type".to_string()),
+            color: None,
+            template_summary: None,
+            template_description: None,
+        };
+
+        let result = project_api
+            .update_issue_type(project_id, issue_type_id, &params)
+            .await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such issue type.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_issue_type_project_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(999);
+        let issue_type_id = backlog_core::identifier::IssueTypeId::new(456);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such project.",
+                    "code": 6,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/999/issueTypes/456"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateIssueTypeParams {
+            name: Some("Issue Type".to_string()),
+            color: None,
+            template_summary: None,
+            template_description: None,
+        };
+
+        let result = project_api
+            .update_issue_type(project_id, issue_type_id, &params)
+            .await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such project.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_issue_type_with_project_key() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_key = "TESTPROJ";
+        let issue_type_id = backlog_core::identifier::IssueTypeId::new(456);
+
+        let expected_issue_type = IssueType {
+            id: issue_type_id,
+            project_id: ProjectId::new(123),
+            name: "Updated with Key".to_string(),
+            color: "#ff3265".to_string(),
+            display_order: 2,
+            template_summary: Some("Key-based update".to_string()),
+            template_description: None,
+        };
+
+        Mock::given(method("PATCH"))
+            .and(path(format!("/api/v2/projects/{}/issueTypes/456", project_key)))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_issue_type))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateIssueTypeParams {
+            name: Some("Updated with Key".to_string()),
+            color: Some(backlog_domain_models::IssueTypeColor::Pink),
+            template_summary: Some("Key-based update".to_string()),
+            template_description: None,
+        };
+
+        let result = project_api
+            .update_issue_type(
+                ProjectIdOrKey::from_str(project_key).unwrap(),
+                issue_type_id,
+                &params,
+            )
+            .await;
+        assert!(result.is_ok());
+        let issue_type = result.unwrap();
+        assert_eq!(issue_type.name, "Updated with Key");
+        assert_eq!(issue_type.color, "#ff3265");
+        assert_eq!(issue_type.id, issue_type_id);
     }
 }

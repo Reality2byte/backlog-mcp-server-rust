@@ -81,3 +81,40 @@ impl From<&DeleteIssueTypeParams> for Vec<(String, String)> {
         )]
     }
 }
+
+#[cfg(feature = "writable")]
+#[derive(Debug, Clone)]
+pub struct UpdateIssueTypeParams {
+    pub name: Option<String>,
+    pub color: Option<backlog_domain_models::IssueTypeColor>,
+    pub template_summary: Option<String>,
+    pub template_description: Option<String>,
+}
+
+#[cfg(feature = "writable")]
+impl From<&UpdateIssueTypeParams> for Vec<(String, String)> {
+    fn from(params: &UpdateIssueTypeParams) -> Self {
+        let mut seq = Vec::new();
+
+        if let Some(name) = &params.name {
+            seq.push(("name".to_string(), name.clone()));
+        }
+
+        if let Some(color) = &params.color {
+            seq.push(("color".to_string(), color.as_hex().to_string()));
+        }
+
+        if let Some(template_summary) = &params.template_summary {
+            seq.push(("templateSummary".to_string(), template_summary.clone()));
+        }
+
+        if let Some(template_description) = &params.template_description {
+            seq.push((
+                "templateDescription".to_string(),
+                template_description.clone(),
+            ));
+        }
+
+        seq
+    }
+}

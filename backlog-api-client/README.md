@@ -84,6 +84,12 @@ blg project category-delete MFP --category-id 12345
 # Add an issue type to a project (requires project_writable feature)
 blg project issue-type-add MFP --name "Bug Report" --color "dark-red" --template-summary "Bug: [Title]" --template-description "## Description\n\n## Steps to reproduce"
 
+# Update an issue type in a project (requires project_writable feature)
+blg project issue-type-update MFP --issue-type-id 12345 --name "Updated Bug Report" --color "red" --template-summary "Bug: [Updated Title]"
+
+# Delete an issue type from a project (requires project_writable feature)
+blg project issue-type-delete MFP --issue-type-id 12345 --substitute-issue-type-id 67890
+
 # Available colors: red, dark-red, purple, violet, blue, teal, green, orange, pink, gray
 # You can also use hex codes: #e30000, #990000, #934981, #814fbc, #2779ca, #007e9a, #7ea800, #ff9200, #ff3265, #666665
 ```
@@ -163,6 +169,8 @@ The `blg` CLI currently supports the following commands:
 - `project category-update <PROJECT_ID_OR_KEY> --category-id <CATEGORY_ID> --name <NEW_NAME>` - Update a category in a project (requires `project_writable` feature)
 - `project category-delete <PROJECT_ID_OR_KEY> --category-id <CATEGORY_ID>` - Delete a category from a project (requires `project_writable` feature)
 - `project issue-type-add <PROJECT_ID_OR_KEY> --name <ISSUE_TYPE_NAME> --color <COLOR> [--template-summary <SUMMARY>] [--template-description <DESCRIPTION>]` - Add an issue type to a project (requires `project_writable` feature). COLOR can be a name (red, dark-red, purple, violet, blue, teal, green, orange, pink, gray) or hex code.
+- `project issue-type-update <PROJECT_ID_OR_KEY> --issue-type-id <ISSUE_TYPE_ID> [--name <NEW_NAME>] [--color <NEW_COLOR>] [--template-summary <NEW_SUMMARY>] [--template-description <NEW_DESCRIPTION>]` - Update an issue type in a project (requires `project_writable` feature). All parameters except issue-type-id are optional.
+- `project issue-type-delete <PROJECT_ID_OR_KEY> --issue-type-id <ISSUE_TYPE_ID> --substitute-issue-type-id <SUBSTITUTE_ID>` - Delete an issue type from a project (requires `project_writable` feature). Existing issues will be moved to the substitute issue type.
 
 ### Space Commands
 - `space logo --output <FILE_PATH>` - Download the space logo
