@@ -5,13 +5,13 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 ## Implementation Summary by Domain
 
 ### backlog-space (SpaceApi)
-- **Implemented**: 1/9 endpoints (11%)
-- **Read operations**: get_space()
+- **Implemented**: 2/9 endpoints (22%)
+- **Read operations**: get_space(), get_space_logo()
 
 ### backlog-project (ProjectApi)
-- **Implemented**: 8/36 endpoints (22%)
-- **Read operations**: get_project_list(), get_project(), get_status_list(), get_issue_type_list(), get_version_milestone_list(), get_category_list(), get_priority_list(), get_resolution_list()
-- **Write operations**: None
+- **Implemented**: 10/36 endpoints (28%)
+- **Read operations**: get_project_list(), get_project(), get_project_icon(), get_status_list(), get_issue_type_list(), get_version_milestone_list(), get_category_list(), get_priority_list(), get_resolution_list()
+- **Write operations** (requires `writable` feature): add_category()
 
 ### backlog-issue (IssueApi)
 - **Implemented**: 10/26 endpoints (38%)
@@ -23,12 +23,13 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Read operations**: get_shared_files_list(), get_file()
 
 ### backlog-git (GitApi)
-- **Implemented**: 7/15 endpoints (47%)
+- **Implemented**: 8/15 endpoints (53%)
 - **Read operations**: get_repository_list(), get_repository(), get_pull_request_list(), get_pull_request(), get_pull_request_attachment_list(), download_pull_request_attachment(), get_pull_request_comment_list()
+- **Write operations** (requires `writable` feature): add_pull_request_comment()
 
 ### backlog-user (UserApi)
-- **Implemented**: 2/7 endpoints (29%)
-- **Read operations**: get_own_user(), get_user_list()
+- **Implemented**: 3/7 endpoints (43%)
+- **Read operations**: get_own_user(), get_user_list(), get_user_icon()
 
 ### backlog-document (DocumentApi)
 - **Implemented**: 4/? endpoints (Document-specific API is not fully documented in the official API)
@@ -52,7 +53,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 
 ### Spaces
 - ✅ GetSpace: Returns information about your space: GET /api/v2/space
-- ❌ GetSpaceLogo: Returns logo image of your space: GET /api/v2/space/image
+- ✅ GetSpaceLogo: Returns logo image of your space: GET /api/v2/space/image
 - ❌ GetSpaceNotification: Returns space notification: GET /api/v2/space/notification
 - ❌ UpdateSpaceNotification: Updates space notification: PUT /api/v2/space/notification
 - ❌ GetLicence: Returns licence: GET /api/v2/space/licence
@@ -62,7 +63,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 ### Projects
 - ✅ GetProject: Returns information about project: GET /api/v2/projects/:projectIdOrKey
 - ✅ GetProjectList: Returns list of projects: GET /api/v2/projects
-- ❌ GetProjectIcon: Downloads project icon: GET /api/v2/projects/:projectIdOrKey/image
+- ✅ GetProjectIcon: Downloads project icon: GET /api/v2/projects/:projectIdOrKey/image
 - ❌ AddProject: Adds new project: POST /api/v2/projects
 - ❌ DeleteProject: Deletes project: DELETE /api/v2/projects/:projectIdOrKey
 - ❌ GetProjectDiskUsage: Returns information about project disk usage: GET /api/v2/projects/:projectIdOrKey/diskUsage
@@ -120,7 +121,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ✅ GetResolutionList: Returns list of resolutions: GET /api/v2/resolutions
 
 ### Category
-- ❌ AddCategory: Adds new Category to the project: POST /api/v2/projects/:projectIdOrKey/categories
+- ✅ AddCategory: Adds new Category to the project: POST /api/v2/projects/:projectIdOrKey/categories
 - ❌ DeleteCategory: Deletes Category: DELETE /api/v2/projects/:projectIdOrKey/categories/:id
 - ✅ GetCategoryList: Returns list of Categories in the project: GET /api/v2/projects/:projectIdOrKey/categories
 - ❌ UpdateCategory: Updates information about Category: PATCH /api/v2/projects/:projectIdOrKey/categories/:id
@@ -197,7 +198,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ✅ GetPullRequest: Returns pull reuqest: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number
 - ✅ DownloadPullRequestAttachment: Downloads attached files on pull requests: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/attachments/:attachmentId
 - ❌ DeletePullRequestAttachments: Deletes attached files on pull requests: DELETE /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/attachments/:attachmentId
-- ❌ AddPullRequestComment: Adds comments on pull requests: POST /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/comments
+- ✅ AddPullRequestComment: Adds comments on pull requests: POST /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/comments
 - ❌ AddPullRequest: Adds pull requests: POST /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests
 
 
@@ -232,7 +233,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ✅ GetOwnUser: Returns own information about user: GET /api/v2/users/myself
 - ✅ GetUserList: Returns list of users in your space: GET /api/v2/users
 - ❌ GetUser: Returns information about user: GET /api/v2/users/:userId
-- ❌ GetUserIcon: Downloads user icon: GET /api/v2/users/:userId/icon
+- ✅ GetUserIcon: Downloads user icon: GET /api/v2/users/:userId/icon
 - ❌ (Classic) AddUser: Adds new user to the space. “Project Administrator” cannot add “Admin” user. You can’t use this API at new plan space: POST /api/v2/users
 - ❌ (Classic) UpdateUser: Updates information about user. You can’t use this API at new plan space: PATCH /api/v2/users/:userId
 - ❌ (Classic) DeleteUser: Deletes user from the space. You can’t use this API at new plan space: DELETE /api/v2/users/:userId
