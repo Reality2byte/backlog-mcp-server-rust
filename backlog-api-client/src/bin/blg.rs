@@ -8,9 +8,13 @@ use backlog_core::{
     IssueKey,
     identifier::{CategoryId, IssueTypeId, MilestoneId, PriorityId, ResolutionId},
 };
+#[cfg(feature = "project_writable")]
+use backlog_domain_models::IssueTypeColor;
 #[cfg(feature = "issue_writable")]
 use backlog_issue::requests::{AddIssueParamsBuilder, UpdateIssueParamsBuilder};
 use backlog_project::requests::GetProjectParams;
+#[cfg(feature = "project_writable")]
+use backlog_project::{AddCategoryParams, AddIssueTypeParams, UpdateCategoryParams};
 use clap::{Args, Parser};
 use std::env;
 use std::path::PathBuf;
@@ -357,6 +361,24 @@ enum ProjectCommands {
         /// Category ID
         #[clap(short, long)]
         category_id: u32,
+    },
+    /// Add an issue type to a project
+    IssueTypeAdd {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Issue type name
+        #[clap(short, long)]
+        name: String,
+        /// Issue type color (available: red, dark-red, purple, violet, blue, teal, green, orange, pink, gray)
+        #[clap(short, long)]
+        color: String,
+        /// Template summary (optional)
+        #[clap(short = 's', long)]
+        template_summary: Option<String>,
+        /// Template description (optional)
+        #[clap(short = 'd', long)]
+        template_description: Option<String>,
     },
     /// List priorities (space-wide)
     PriorityList,
@@ -1032,7 +1054,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
-                let params = backlog_project::requests::AddCategoryParams { name: name.clone() };
+                let params = AddCategoryParams { name: name.clone() };
 
                 match client.project().add_category(proj_id_or_key, &params).await {
                     Ok(category) => {
@@ -1060,7 +1082,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let cat_id = CategoryId::new(category_id);
-                let params = backlog_project::requests::UpdateCategoryParams { name: name.clone() };
+                let params = UpdateCategoryParams { name: name.clone() };
 
                 match client
                     .project()
@@ -1109,12 +1131,69 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::IssueTypeAdd {
+                project_id_or_key,
+                name,
+                color,
+                template_summary,
+                template_description,
+            } => {
+                println!(
+                    "Adding issue type '{}' to project: {}",
+                    name, project_id_or_key
+                );
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+
+                // Parse and validate the color
+                let parsed_color = color.parse::<IssueTypeColor>().map_err(|e| {
+                    format!(
+                        "Invalid color '{}': {}\nAvailable colors: {}",
+                        color,
+                        e,
+                        IssueTypeColor::all_names().join(", ")
+                    )
+                })?;
+
+                let params = AddIssueTypeParams {
+                    name: name.clone(),
+                    color: parsed_color,
+                    template_summary: template_summary.clone(),
+                    template_description: template_description.clone(),
+                };
+
+                match client
+                    .project()
+                    .add_issue_type(proj_id_or_key, &params)
+                    .await
+                {
+                    Ok(issue_type) => {
+                        println!("Issue type added successfully:");
+                        println!(
+                            "[{}] {} (Color: {})",
+                            issue_type.id, issue_type.name, issue_type.color
+                        );
+                        if let Some(template_summary) = &issue_type.template_summary {
+                            println!("  Template Summary: {}", template_summary);
+                        }
+                        if let Some(template_description) = &issue_type.template_description {
+                            println!("  Template Description: {}", template_description);
+                        }
+                        println!("  Display Order: {}", issue_type.display_order);
+                    }
+                    Err(e) => {
+                        eprintln!("Error adding issue type: {}", e);
+                    }
+                }
+            }
             #[cfg(not(feature = "project_writable"))]
             ProjectCommands::CategoryAdd { .. }
             | ProjectCommands::CategoryUpdate { .. }
-            | ProjectCommands::CategoryDelete { .. } => {
+            | ProjectCommands::CategoryDelete { .. }
+            | ProjectCommands::IssueTypeAdd { .. } => {
                 eprintln!(
-                    "Category management is not available. Please build with 'project_writable' feature."
+                    "Category and issue type management is not available. Please build with 'project_writable' feature."
                 );
             }
             ProjectCommands::PriorityList => {

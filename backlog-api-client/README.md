@@ -80,6 +80,12 @@ blg project category-update MFP --category-id 12345 --name "Updated Category"
 
 # Delete a category from a project (requires project_writable feature)
 blg project category-delete MFP --category-id 12345
+
+# Add an issue type to a project (requires project_writable feature)
+blg project issue-type-add MFP --name "Bug Report" --color "dark-red" --template-summary "Bug: [Title]" --template-description "## Description\n\n## Steps to reproduce"
+
+# Available colors: red, dark-red, purple, violet, blue, teal, green, orange, pink, gray
+# You can also use hex codes: #e30000, #990000, #934981, #814fbc, #2779ca, #007e9a, #7ea800, #ff9200, #ff3265, #666665
 ```
 
 **Space Management:**
@@ -156,6 +162,7 @@ The `blg` CLI currently supports the following commands:
 - `project category-add <PROJECT_ID_OR_KEY> --name <CATEGORY_NAME>` - Add a category to a project (requires `project_writable` feature)
 - `project category-update <PROJECT_ID_OR_KEY> --category-id <CATEGORY_ID> --name <NEW_NAME>` - Update a category in a project (requires `project_writable` feature)
 - `project category-delete <PROJECT_ID_OR_KEY> --category-id <CATEGORY_ID>` - Delete a category from a project (requires `project_writable` feature)
+- `project issue-type-add <PROJECT_ID_OR_KEY> --name <ISSUE_TYPE_NAME> --color <COLOR> [--template-summary <SUMMARY>] [--template-description <DESCRIPTION>]` - Add an issue type to a project (requires `project_writable` feature). COLOR can be a name (red, dark-red, purple, violet, blue, teal, green, orange, pink, gray) or hex code.
 
 ### Space Commands
 - `space logo --output <FILE_PATH>` - Download the space logo

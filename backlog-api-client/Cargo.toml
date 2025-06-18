@@ -7,7 +7,7 @@ license.workspace = true
 [features]
 default = ["issue", "project", "space", "user", "document", "git", "file", "all_writable"] # Added "file"
 issue = ["backlog-issue"]
-project = ["backlog-project"]
+project = ["backlog-project", "backlog-domain-models"]
 space = ["backlog-space"]
 user = ["backlog-user"]
 document = ["backlog-document"] # Added document feature

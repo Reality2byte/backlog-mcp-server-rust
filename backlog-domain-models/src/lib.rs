@@ -7,7 +7,7 @@ pub mod resolution;
 pub mod status;
 
 pub use category::Category;
-pub use issue_type::IssueType;
+pub use issue_type::{IssueType, IssueTypeColor};
 pub use milestone::Milestone;
 pub use priority::Priority;
 pub use project::Project;

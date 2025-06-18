@@ -156,6 +156,20 @@ impl ProjectApi {
         );
         self.0.delete(&path).await
     }
+
+    /// Adds an issue type to a project.
+    ///
+    /// Corresponds to `POST /api/v2/projects/:projectIdOrKey/issueTypes`.
+    #[cfg(feature = "writable")]
+    pub async fn add_issue_type(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        params: &crate::requests::AddIssueTypeParams,
+    ) -> Result<IssueType> {
+        let path = format!("/api/v2/projects/{}/issueTypes", project_id_or_key.into());
+        let params_vec: Vec<(String, String)> = params.into();
+        self.0.post(&path, &params_vec).await
+    }
 }
 
 type GetVersionMilestoneListResponse = Vec<Milestone>;
@@ -1008,6 +1022,172 @@ mod tests {
         let result = project_api
             .update_category(project_id, category_id, &params)
             .await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such project.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_issue_type_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+
+        let expected_issue_type = IssueType {
+            id: backlog_core::identifier::IssueTypeId::new(1),
+            project_id,
+            name: "Bug".to_string(),
+            color: "#990000".to_string(),
+            display_order: 0,
+            template_summary: Some("Subject".to_string()),
+            template_description: Some("Description".to_string()),
+        };
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/projects/123/issueTypes"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_issue_type))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::AddIssueTypeParams {
+            name: "Bug".to_string(),
+            color: backlog_domain_models::IssueTypeColor::DarkRed,
+            template_summary: Some("Subject".to_string()),
+            template_description: Some("Description".to_string()),
+        };
+        let result = project_api.add_issue_type(project_id, &params).await;
+        assert!(result.is_ok());
+        let issue_type = result.unwrap();
+        assert_eq!(issue_type.name, "Bug");
+        assert_eq!(issue_type.color, "#990000");
+        assert_eq!(issue_type.id, IssueTypeId::new(1));
+        assert_eq!(issue_type.template_summary, Some("Subject".to_string()));
+        assert_eq!(
+            issue_type.template_description,
+            Some("Description".to_string())
+        );
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_issue_type_minimal_params() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_key = "TEST_PROJECT";
+
+        let expected_issue_type = IssueType {
+            id: backlog_core::identifier::IssueTypeId::new(2),
+            project_id: ProjectId::new(456),
+            name: "Task".to_string(),
+            color: "#009900".to_string(),
+            display_order: 1,
+            template_summary: None,
+            template_description: None,
+        };
+
+        Mock::given(method("POST"))
+            .and(path(format!("/api/v2/projects/{}/issueTypes", project_key)))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_issue_type))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::AddIssueTypeParams {
+            name: "Task".to_string(),
+            color: backlog_domain_models::IssueTypeColor::Green,
+            template_summary: None,
+            template_description: None,
+        };
+        let result = project_api
+            .add_issue_type(ProjectIdOrKey::from_str(project_key).unwrap(), &params)
+            .await;
+        assert!(result.is_ok());
+        let issue_type = result.unwrap();
+        assert_eq!(issue_type.name, "Task");
+        assert_eq!(issue_type.color, "#009900");
+        assert_eq!(issue_type.template_summary, None);
+        assert_eq!(issue_type.template_description, None);
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_issue_type_duplicate_name_error() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_key = "TEST_PROJECT";
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "Issue type name already exists.",
+                    "code": 14,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("POST"))
+            .and(path(format!("/api/v2/projects/{}/issueTypes", project_key)))
+            .respond_with(ResponseTemplate::new(400).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::AddIssueTypeParams {
+            name: "Existing Issue Type".to_string(),
+            color: backlog_domain_models::IssueTypeColor::Red,
+            template_summary: None,
+            template_description: None,
+        };
+        let result = project_api
+            .add_issue_type(ProjectIdOrKey::from_str(project_key).unwrap(), &params)
+            .await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 400);
+            assert_eq!(errors[0].message, "Issue type name already exists.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_issue_type_project_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(999);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such project.",
+                    "code": 6,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/projects/999/issueTypes"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::AddIssueTypeParams {
+            name: "New Issue Type".to_string(),
+            color: backlog_domain_models::IssueTypeColor::Blue,
+            template_summary: None,
+            template_description: None,
+        };
+        let result = project_api.add_issue_type(project_id, &params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
