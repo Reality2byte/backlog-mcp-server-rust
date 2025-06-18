@@ -3,7 +3,7 @@ use backlog_api_client::{
     ProjectIdOrKey, PullRequestAttachmentId, PullRequestNumber, RepositoryIdOrName, StatusId,
     UserId, client::BacklogApiClient,
 };
-#[cfg(feature = "issue_writable")]
+#[cfg(any(feature = "issue_writable", feature = "project_writable"))]
 use backlog_core::{
     IssueKey,
     identifier::{CategoryId, IssueTypeId, MilestoneId, PriorityId, ResolutionId},
@@ -327,6 +327,24 @@ enum ProjectCommands {
         /// Project ID or Key
         #[clap(name = "PROJECT_ID_OR_KEY")]
         project_id_or_key: String,
+    },
+    /// Add a category to a project
+    CategoryAdd {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Category name
+        #[clap(short, long)]
+        name: String,
+    },
+    /// Delete a category from a project
+    CategoryDelete {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Category ID
+        #[clap(short, long)]
+        category_id: u32,
     },
     /// List priorities (space-wide)
     PriorityList,
@@ -990,6 +1008,68 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         eprintln!("Error listing categories: {}", e);
                     }
                 }
+            }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::CategoryAdd {
+                project_id_or_key,
+                name,
+            } => {
+                println!(
+                    "Adding category '{}' to project: {}",
+                    name, project_id_or_key
+                );
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let params = backlog_project::requests::AddCategoryParams { name: name.clone() };
+
+                match client.project().add_category(proj_id_or_key, &params).await {
+                    Ok(category) => {
+                        println!("Category added successfully:");
+                        println!(
+                            "[{}] {} (Display Order: {})",
+                            category.id, category.name, category.display_order
+                        );
+                    }
+                    Err(e) => {
+                        eprintln!("Error adding category: {}", e);
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::CategoryDelete {
+                project_id_or_key,
+                category_id,
+            } => {
+                println!(
+                    "Deleting category {} from project: {}",
+                    category_id, project_id_or_key
+                );
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let cat_id = CategoryId::new(category_id);
+
+                match client
+                    .project()
+                    .delete_category(proj_id_or_key, cat_id)
+                    .await
+                {
+                    Ok(category) => {
+                        println!("Category deleted successfully:");
+                        println!(
+                            "[{}] {} (Display Order: {})",
+                            category.id, category.name, category.display_order
+                        );
+                    }
+                    Err(e) => {
+                        eprintln!("Error deleting category: {}", e);
+                    }
+                }
+            }
+            #[cfg(not(feature = "project_writable"))]
+            ProjectCommands::CategoryAdd { .. } | ProjectCommands::CategoryDelete { .. } => {
+                eprintln!(
+                    "Category management is not available. Please build with 'project_writable' feature."
+                );
             }
             ProjectCommands::PriorityList => {
                 println!("Listing priorities (space-wide):");

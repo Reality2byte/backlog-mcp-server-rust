@@ -16,13 +16,21 @@ To build the `blg` executable, navigate to the workspace root (`/Users/mac/src/_
 cargo build --package backlog-api-client --features "cli git issue project space" --bin blg
 ```
 
+For write operations (creating/updating/deleting resources), add the corresponding writable features:
+
+```bash
+cargo build --package backlog-api-client --features "cli git issue project project_writable space" --bin blg
+```
+
 Alternatively, if you are in the `backlog-api-client` directory:
 
 ```bash
 cargo build --features "cli git issue project space" 
+# Or with writable features:
+cargo build --features "cli git issue project project_writable space" 
 ```
 
-The `cli`, `git`, `issue`, `project`, and `space` features are required to build the `blg` binary with full functionality. The executable will be located at `target/debug/blg` (or `target/release/blg` if you add `--release`).
+The `cli`, `git`, `issue`, `project`, and `space` features are required to build the `blg` binary with full functionality. Add `project_writable` for project management operations like category creation/deletion. The executable will be located at `target/debug/blg` (or `target/release/blg` if you add `--release`).
 
 ## Configuration
 
@@ -60,6 +68,15 @@ blg project show MFP
 
 # List statuses for a project
 blg project status-list MFP
+
+# List categories for a project
+blg project category-list MFP
+
+# Add a category to a project (requires project_writable feature)
+blg project category-add MFP --name "New Category"
+
+# Delete a category from a project (requires project_writable feature)
+blg project category-delete MFP --category-id 12345
 ```
 
 **Space Management:**
@@ -127,6 +144,14 @@ The `blg` CLI currently supports the following commands:
 - `project list` - List all projects in the Backlog space
 - `project show <PROJECT_ID_OR_KEY>` - Show detailed information about a specific project
 - `project status-list <PROJECT_ID_OR_KEY>` - List all statuses for a specific project
+- `project milestone-list <PROJECT_ID_OR_KEY>` - List milestones for a specific project
+- `project issue-type-list <PROJECT_ID_OR_KEY>` - List issue types for a specific project
+- `project category-list <PROJECT_ID_OR_KEY>` - List categories for a specific project
+- `project priority-list` - List priorities (space-wide)
+- `project resolution-list` - List resolutions (space-wide)
+- `project icon <PROJECT_ID_OR_KEY> --output <FILE_PATH>` - Download project icon
+- `project category-add <PROJECT_ID_OR_KEY> --name <CATEGORY_NAME>` - Add a category to a project (requires `project_writable` feature)
+- `project category-delete <PROJECT_ID_OR_KEY> --category-id <CATEGORY_ID>` - Delete a category from a project (requires `project_writable` feature)
 
 ### Space Commands
 - `space logo --output <FILE_PATH>` - Download the space logo
