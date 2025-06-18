@@ -75,6 +75,9 @@ blg project category-list MFP
 # Add a category to a project (requires project_writable feature)
 blg project category-add MFP --name "New Category"
 
+# Update a category in a project (requires project_writable feature)
+blg project category-update MFP --category-id 12345 --name "Updated Category"
+
 # Delete a category from a project (requires project_writable feature)
 blg project category-delete MFP --category-id 12345
 ```
@@ -151,6 +154,7 @@ The `blg` CLI currently supports the following commands:
 - `project resolution-list` - List resolutions (space-wide)
 - `project icon <PROJECT_ID_OR_KEY> --output <FILE_PATH>` - Download project icon
 - `project category-add <PROJECT_ID_OR_KEY> --name <CATEGORY_NAME>` - Add a category to a project (requires `project_writable` feature)
+- `project category-update <PROJECT_ID_OR_KEY> --category-id <CATEGORY_ID> --name <NEW_NAME>` - Update a category in a project (requires `project_writable` feature)
 - `project category-delete <PROJECT_ID_OR_KEY> --category-id <CATEGORY_ID>` - Delete a category from a project (requires `project_writable` feature)
 
 ### Space Commands

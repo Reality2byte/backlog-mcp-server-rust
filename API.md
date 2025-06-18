@@ -9,9 +9,9 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Read operations**: get_space(), get_space_logo()
 
 ### backlog-project (ProjectApi)
-- **Implemented**: 10/36 endpoints (28%)
+- **Implemented**: 11/36 endpoints (31%)
 - **Read operations**: get_project_list(), get_project(), get_project_icon(), get_status_list(), get_issue_type_list(), get_version_milestone_list(), get_category_list(), get_priority_list(), get_resolution_list()
-- **Write operations** (requires `writable` feature): add_category()
+- **Write operations** (requires `writable` feature): add_category(), update_category(), delete_category()
 
 ### backlog-issue (IssueApi)
 - **Implemented**: 10/26 endpoints (38%)
@@ -122,9 +122,9 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 
 ### Category
 - ✅ AddCategory: Adds new Category to the project: POST /api/v2/projects/:projectIdOrKey/categories
+- ✅ UpdateCategory: Updates information about Category: PATCH /api/v2/projects/:projectIdOrKey/categories/:id
 - ✅ DeleteCategory: Deletes Category: DELETE /api/v2/projects/:projectIdOrKey/categories/:id
 - ✅ GetCategoryList: Returns list of Categories in the project: GET /api/v2/projects/:projectIdOrKey/categories
-- ❌ UpdateCategory: Updates information about Category: PATCH /api/v2/projects/:projectIdOrKey/categories/:id
 
 ### Custom Fields
 - ❌ UpdateCustomField: Updates Custom Field: PATCH /api/v2/projects/:projectIdOrKey/customFields/:id

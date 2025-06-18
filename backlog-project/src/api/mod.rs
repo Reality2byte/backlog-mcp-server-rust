@@ -121,6 +121,25 @@ impl ProjectApi {
         self.0.post(&path, &params_vec).await
     }
 
+    /// Updates a category in a project.
+    ///
+    /// Corresponds to `PATCH /api/v2/projects/:projectIdOrKey/categories/:id`.
+    #[cfg(feature = "writable")]
+    pub async fn update_category(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        category_id: impl Into<CategoryId>,
+        params: &crate::requests::UpdateCategoryParams,
+    ) -> Result<Category> {
+        let path = format!(
+            "/api/v2/projects/{}/categories/{}",
+            project_id_or_key.into(),
+            category_id.into()
+        );
+        let params_vec: Vec<(String, String)> = params.into();
+        self.0.patch(&path, &params_vec).await
+    }
+
     /// Deletes a category from a project.
     ///
     /// Corresponds to `DELETE /api/v2/projects/:projectIdOrKey/categories/:id`.
@@ -832,6 +851,163 @@ mod tests {
             .await;
 
         let result = project_api.delete_category(project_id, category_id).await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such project.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_category_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+        let category_id = CategoryId::new(456);
+
+        let expected_category = Category {
+            id: category_id,
+            project_id,
+            name: "Updated Category".to_string(),
+            display_order: 1,
+        };
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/123/categories/456"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_category))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateCategoryParams {
+            name: "Updated Category".to_string(),
+        };
+
+        let result = project_api
+            .update_category(project_id, category_id, &params)
+            .await;
+        assert!(result.is_ok(), "Result was: {:?}", result);
+        let category = result.unwrap();
+        assert_eq!(category.id, category_id);
+        assert_eq!(category.project_id, project_id);
+        assert_eq!(category.name, "Updated Category");
+        assert_eq!(category.display_order, 1);
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_category_with_project_key_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_key = "TEST_PROJECT";
+        let category_id = CategoryId::new(789);
+
+        let expected_category = Category {
+            id: category_id,
+            project_id: ProjectId::new(123),
+            name: "Category with Key".to_string(),
+            display_order: 2,
+        };
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/TEST_PROJECT/categories/789"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_category))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateCategoryParams {
+            name: "Category with Key".to_string(),
+        };
+
+        let result = project_api
+            .update_category(
+                ProjectIdOrKey::from_str(project_key).unwrap(),
+                category_id,
+                &params,
+            )
+            .await;
+        assert!(result.is_ok());
+        let category = result.unwrap();
+        assert_eq!(category.name, "Category with Key");
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_category_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+        let category_id = CategoryId::new(999);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such category.",
+                    "code": 8,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/123/categories/999"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateCategoryParams {
+            name: "Non-existent Category".to_string(),
+        };
+
+        let result = project_api
+            .update_category(project_id, category_id, &params)
+            .await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such category.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_category_project_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(999);
+        let category_id = CategoryId::new(1);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such project.",
+                    "code": 6,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/999/categories/1"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateCategoryParams {
+            name: "Test Category".to_string(),
+        };
+
+        let result = project_api
+            .update_category(project_id, category_id, &params)
+            .await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);

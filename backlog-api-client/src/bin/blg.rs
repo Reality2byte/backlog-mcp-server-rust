@@ -337,6 +337,18 @@ enum ProjectCommands {
         #[clap(short, long)]
         name: String,
     },
+    /// Update a category in a project
+    CategoryUpdate {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Category ID
+        #[clap(short, long)]
+        category_id: u32,
+        /// New category name
+        #[clap(short, long)]
+        name: String,
+    },
     /// Delete a category from a project
     CategoryDelete {
         /// Project ID or Key
@@ -1036,6 +1048,38 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             #[cfg(feature = "project_writable")]
+            ProjectCommands::CategoryUpdate {
+                project_id_or_key,
+                category_id,
+                name,
+            } => {
+                println!(
+                    "Updating category {} in project {} to name '{}'",
+                    category_id, project_id_or_key, name
+                );
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let cat_id = CategoryId::new(category_id);
+                let params = backlog_project::requests::UpdateCategoryParams { name: name.clone() };
+
+                match client
+                    .project()
+                    .update_category(proj_id_or_key, cat_id, &params)
+                    .await
+                {
+                    Ok(category) => {
+                        println!("Category updated successfully:");
+                        println!(
+                            "[{}] {} (Display Order: {})",
+                            category.id, category.name, category.display_order
+                        );
+                    }
+                    Err(e) => {
+                        eprintln!("Error updating category: {}", e);
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
             ProjectCommands::CategoryDelete {
                 project_id_or_key,
                 category_id,
@@ -1066,7 +1110,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             #[cfg(not(feature = "project_writable"))]
-            ProjectCommands::CategoryAdd { .. } | ProjectCommands::CategoryDelete { .. } => {
+            ProjectCommands::CategoryAdd { .. }
+            | ProjectCommands::CategoryUpdate { .. }
+            | ProjectCommands::CategoryDelete { .. } => {
                 eprintln!(
                     "Category management is not available. Please build with 'project_writable' feature."
                 );

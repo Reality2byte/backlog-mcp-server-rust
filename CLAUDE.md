@@ -33,8 +33,11 @@ cargo test --all-features --all-targets
 cargo clippy --all-features --all-targets -- -D warnings
 cargo fmt --all
 
-# Build CLI tool
-cargo build --package backlog-api-client --features "cli git issue" --bin blg
+# Build CLI tool (read-only operations)
+cargo build --package backlog-api-client --features "cli git issue project space" --bin blg
+
+# Build CLI tool with write operations
+cargo build --package backlog-api-client --features "cli git issue project project_writable space" --bin blg
 
 # Build MCP server
 cargo build --package mcp-backlog-server
@@ -174,14 +177,43 @@ The system now includes comprehensive shared file support:
 - Use `setup_client()` for consistent test client initialization
 
 ### Feature Flags
-- CLI requires `"cli git issue"` features  
-- MCP server has `issue_writable` feature (enabled by default)
-- Shared file support is available by default in all builds
+- **CLI Base Features**: `"cli git issue project space"` required for basic functionality
+- **Writable Features**: Add `project_writable`, `issue_writable` for write operations (create/update/delete)
+- **MCP Server**: Has `issue_writable` feature (enabled by default)
+- **Shared File Support**: Available by default in all builds
 - Use `--no-default-features` to disable optional functionality
 
+#### Common Feature Combinations
+```bash
+# Read-only CLI
+--features "cli git issue project space"
+
+# Full CLI with write capabilities
+--features "cli git issue project project_writable space"
+
+# Development/testing with all features
+--all-features
+```
+
 ### Recent Major Updates
+- **Category Management (Latest)**: Complete CRUD operations for project categories with TDD implementation
+  - Added `update_category()` API method with comprehensive test coverage
+  - Extended CLI with `category-add`, `category-update`, `category-delete` commands
+  - Proper feature flag separation (`project_writable`) for write operations
 - **Domain Model Refactoring**: Extracted shared domain models into `backlog-domain-models` crate to eliminate circular dependencies and reduce code duplication
 - **Unified File Downloads**: Consolidated 12 format-specific download tools into 4 intelligent tools
 - **Shared File API**: Added complete support for browsing and downloading shared files
 - **Type Safety Improvements**: Added `FileType` enum and `SharedFileId` for better type safety
 - **Format Detection**: Intelligent content-type and UTF-8 analysis for automatic format handling
+
+### TDD Development Process
+When implementing new API features, follow Test-Driven Development:
+
+1. **API Documentation Research**: Read official Backlog API docs carefully
+2. **Write Tests First**: Create comprehensive unit tests covering success and error cases
+3. **Implement API Method**: Write the minimal implementation to pass tests
+4. **Add CLI Commands**: Extend CLI with new subcommands when applicable
+5. **Integration Testing**: Test with real Backlog instance
+6. **Documentation Update**: Update API.md, README.md, and CLAUDE.md
+
+**Important**: Never modify tests during implementation phase - tests define the contract.

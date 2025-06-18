@@ -21,3 +21,16 @@ impl From<&AddCategoryParams> for Vec<(String, String)> {
         vec![("name".to_string(), params.name.clone())]
     }
 }
+
+#[cfg(feature = "writable")]
+#[derive(Debug, Clone)]
+pub struct UpdateCategoryParams {
+    pub name: String,
+}
+
+#[cfg(feature = "writable")]
+impl From<&UpdateCategoryParams> for Vec<(String, String)> {
+    fn from(params: &UpdateCategoryParams) -> Self {
+        vec![("name".to_string(), params.name.clone())]
+    }
+}
