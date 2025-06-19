@@ -9,9 +9,9 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Read operations**: get_space(), get_space_logo()
 
 ### backlog-project (ProjectApi)
-- **Implemented**: 15/36 endpoints (42%)
+- **Implemented**: 16/36 endpoints (44%)
 - **Read operations**: get_project_list(), get_project(), get_project_icon(), get_status_list(), get_issue_type_list(), get_version_milestone_list(), get_category_list(), get_priority_list(), get_resolution_list()
-- **Write operations** (requires `writable` feature): add_category(), update_category(), delete_category(), add_issue_type(), delete_issue_type(), update_issue_type(), add_version()
+- **Write operations** (requires `writable` feature): add_category(), update_category(), delete_category(), add_issue_type(), delete_issue_type(), update_issue_type(), add_version(), update_version()
 
 ### backlog-issue (IssueApi)
 - **Implemented**: 12/26 endpoints (46%)
@@ -152,7 +152,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ✅ GetVersionMilestoneList: Returns list of Versions/Milestones in the project: GET /api/v2/projects/:projectIdOrKey/versions
 - ✅ AddVersionMilestone: Adds new Version/Milestone to the project: POST /api/v2/projects/:projectIdOrKey/versions
 - ❌ DeleteVersion: Deletes Version: DELETE /api/v2/projects/:projectIdOrKey/versions/:id
-- ❌ UpdateVersionMilestone: Updates information about Version/Milestone: PATCH /api/v2/projects/:projectIdOrKey/versions/:id
+- ✅ UpdateVersionMilestone: Updates information about Version/Milestone: PATCH /api/v2/projects/:projectIdOrKey/versions/:id
 
 ### Webhook
 - ❌ GetListOfWebhooks: Returns list of webhooks: GET /api/v2/projects/:projectIdOrKey/webhooks

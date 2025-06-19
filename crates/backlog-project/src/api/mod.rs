@@ -221,6 +221,25 @@ impl ProjectApi {
         let params_vec: Vec<(String, String)> = params.into();
         self.0.post(&path, &params_vec).await
     }
+
+    /// Updates a version/milestone in a project.
+    ///
+    /// Corresponds to `PATCH /api/v2/projects/:projectIdOrKey/versions/:id`.
+    #[cfg(feature = "writable")]
+    pub async fn update_version(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        version_id: impl Into<backlog_core::identifier::MilestoneId>,
+        params: &crate::requests::UpdateVersionParams,
+    ) -> Result<Milestone> {
+        let path = format!(
+            "/api/v2/projects/{}/versions/{}",
+            project_id_or_key.into(),
+            version_id.into()
+        );
+        let params_vec: Vec<(String, String)> = params.into();
+        self.0.patch(&path, &params_vec).await
+    }
 }
 
 type GetVersionMilestoneListResponse = Vec<Milestone>;
@@ -1798,6 +1817,239 @@ mod tests {
             release_due_date: None,
         };
         let result = project_api.add_version(project_id, &params).await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such project.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_version_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+        let version_id = MilestoneId::new(456);
+
+        let expected_milestone = Milestone {
+            id: version_id,
+            project_id,
+            name: "Updated Version".to_string(),
+            description: Some("Updated description".to_string()),
+            start_date: Some(chrono::Utc.with_ymd_and_hms(2025, 1, 1, 0, 0, 0).unwrap()),
+            release_due_date: Some(chrono::Utc.with_ymd_and_hms(2025, 1, 31, 0, 0, 0).unwrap()),
+            archived: true,
+            display_order: Some(1),
+        };
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/123/versions/456"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_milestone))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateVersionParams {
+            name: "Updated Version".to_string(),
+            description: Some("Updated description".to_string()),
+            start_date: Some("2025-01-01".to_string()),
+            release_due_date: Some("2025-01-31".to_string()),
+            archived: Some(true),
+        };
+
+        let result = project_api
+            .update_version(project_id, version_id, &params)
+            .await;
+        assert!(result.is_ok(), "Result was: {:?}", result);
+        let milestone = result.unwrap();
+        assert_eq!(milestone.id, version_id);
+        assert_eq!(milestone.project_id, project_id);
+        assert_eq!(milestone.name, "Updated Version");
+        assert_eq!(
+            milestone.description,
+            Some("Updated description".to_string())
+        );
+        assert!(milestone.archived);
+        assert_eq!(milestone.display_order, Some(1));
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_version_minimal_params() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_key = "TEST_PROJECT";
+        let version_id = MilestoneId::new(789);
+
+        let expected_milestone = Milestone {
+            id: version_id,
+            project_id: ProjectId::new(456),
+            name: "Name Only Update".to_string(),
+            description: None,
+            start_date: None,
+            release_due_date: None,
+            archived: false,
+            display_order: Some(2),
+        };
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/TEST_PROJECT/versions/789"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_milestone))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateVersionParams {
+            name: "Name Only Update".to_string(),
+            description: None,
+            start_date: None,
+            release_due_date: None,
+            archived: None,
+        };
+
+        let result = project_api
+            .update_version(
+                ProjectIdOrKey::from_str(project_key).unwrap(),
+                version_id,
+                &params,
+            )
+            .await;
+        assert!(result.is_ok());
+        let milestone = result.unwrap();
+        assert_eq!(milestone.name, "Name Only Update");
+        assert_eq!(milestone.description, None);
+        assert_eq!(milestone.start_date, None);
+        assert_eq!(milestone.release_due_date, None);
+        assert!(!milestone.archived);
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_version_archive_only() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+        let version_id = MilestoneId::new(456);
+
+        let expected_milestone = Milestone {
+            id: version_id,
+            project_id,
+            name: "Archived Version".to_string(),
+            description: Some("This version is now archived".to_string()),
+            start_date: None,
+            release_due_date: None,
+            archived: true,
+            display_order: Some(3),
+        };
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/123/versions/456"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_milestone))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateVersionParams {
+            name: "Archived Version".to_string(),
+            description: Some("This version is now archived".to_string()),
+            start_date: None,
+            release_due_date: None,
+            archived: Some(true),
+        };
+
+        let result = project_api
+            .update_version(project_id, version_id, &params)
+            .await;
+        assert!(result.is_ok());
+        let milestone = result.unwrap();
+        assert_eq!(milestone.name, "Archived Version");
+        assert!(milestone.archived);
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_version_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+        let version_id = MilestoneId::new(999);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such version.",
+                    "code": 16,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/123/versions/999"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateVersionParams {
+            name: "Non-existent Version".to_string(),
+            description: None,
+            start_date: None,
+            release_due_date: None,
+            archived: None,
+        };
+
+        let result = project_api
+            .update_version(project_id, version_id, &params)
+            .await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such version.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_version_project_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(999);
+        let version_id = MilestoneId::new(1);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such project.",
+                    "code": 6,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/999/versions/1"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateVersionParams {
+            name: "Test Version".to_string(),
+            description: None,
+            start_date: None,
+            release_due_date: None,
+            archived: None,
+        };
+
+        let result = project_api
+            .update_version(project_id, version_id, &params)
+            .await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);

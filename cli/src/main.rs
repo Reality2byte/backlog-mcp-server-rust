@@ -17,7 +17,7 @@ use backlog_project::requests::GetProjectParams;
 #[cfg(feature = "project_writable")]
 use backlog_project::requests::{
     AddCategoryParams, AddIssueTypeParams, AddVersionParams, DeleteIssueTypeParams,
-    UpdateCategoryParams, UpdateIssueTypeParams,
+    UpdateCategoryParams, UpdateIssueTypeParams, UpdateVersionParams,
 };
 use clap::{Args, Parser};
 use std::env;
@@ -459,6 +459,31 @@ enum ProjectCommands {
         /// Release due date (YYYY-MM-DD)
         #[clap(long)]
         release_due_date: Option<String>,
+    },
+    /// Update a version/milestone in a project
+    #[cfg(feature = "project_writable")]
+    VersionUpdate {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Version ID to update
+        #[clap(long)]
+        version_id: u32,
+        /// New version name
+        #[clap(short, long)]
+        name: String,
+        /// New version description
+        #[clap(short, long)]
+        description: Option<String>,
+        /// New start date (YYYY-MM-DD)
+        #[clap(long)]
+        start_date: Option<String>,
+        /// New release due date (YYYY-MM-DD)
+        #[clap(long)]
+        release_due_date: Option<String>,
+        /// Archive the version
+        #[clap(long)]
+        archived: Option<bool>,
     },
     /// Download project icon
     Icon {
@@ -1493,6 +1518,61 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::VersionUpdate {
+                project_id_or_key,
+                version_id,
+                name,
+                description,
+                start_date,
+                release_due_date,
+                archived,
+            } => {
+                println!(
+                    "Updating version/milestone {} in project: {}",
+                    version_id, project_id_or_key
+                );
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let version_id_val = MilestoneId::new(version_id);
+                let params = UpdateVersionParams {
+                    name: name.clone(),
+                    description: description.clone(),
+                    start_date: start_date.clone(),
+                    release_due_date: release_due_date.clone(),
+                    archived,
+                };
+
+                match client
+                    .project()
+                    .update_version(proj_id_or_key, version_id_val, &params)
+                    .await
+                {
+                    Ok(milestone) => {
+                        println!("Version/milestone updated successfully:");
+                        println!("[{}] {}", milestone.id, milestone.name);
+                        if let Some(desc) = &milestone.description {
+                            println!("  Description: {}", desc);
+                        }
+                        if let Some(start_date) = &milestone.start_date {
+                            println!("  Start Date: {}", start_date.format("%Y-%m-%d"));
+                        }
+                        if let Some(release_due_date) = &milestone.release_due_date {
+                            println!(
+                                "  Release Due Date: {}",
+                                release_due_date.format("%Y-%m-%d")
+                            );
+                        }
+                        println!("  Archived: {}", milestone.archived);
+                        if let Some(display_order) = milestone.display_order {
+                            println!("  Display Order: {}", display_order);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error updating version/milestone: {}", e);
+                    }
+                }
+            }
             #[cfg(not(feature = "project_writable"))]
             ProjectCommands::CategoryAdd { .. }
             | ProjectCommands::CategoryUpdate { .. }
@@ -1500,7 +1580,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             | ProjectCommands::IssueTypeAdd { .. }
             | ProjectCommands::IssueTypeDelete { .. }
             | ProjectCommands::IssueTypeUpdate { .. }
-            | ProjectCommands::VersionAdd { .. } => {
+            | ProjectCommands::VersionAdd { .. }
+            | ProjectCommands::VersionUpdate { .. } => {
                 eprintln!(
                     "Category, issue type, and version management is not available. Please build with 'project_writable' feature."
                 );

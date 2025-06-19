@@ -149,3 +149,39 @@ impl From<&AddVersionParams> for Vec<(String, String)> {
         seq
     }
 }
+
+#[cfg(feature = "writable")]
+#[derive(Debug, Clone)]
+pub struct UpdateVersionParams {
+    pub name: String,
+    pub description: Option<String>,
+    pub start_date: Option<String>,
+    pub release_due_date: Option<String>,
+    pub archived: Option<bool>,
+}
+
+#[cfg(feature = "writable")]
+impl From<&UpdateVersionParams> for Vec<(String, String)> {
+    fn from(params: &UpdateVersionParams) -> Self {
+        let mut seq = Vec::new();
+        seq.push(("name".to_string(), params.name.clone()));
+
+        if let Some(description) = &params.description {
+            seq.push(("description".to_string(), description.clone()));
+        }
+
+        if let Some(start_date) = &params.start_date {
+            seq.push(("startDate".to_string(), start_date.clone()));
+        }
+
+        if let Some(release_due_date) = &params.release_due_date {
+            seq.push(("releaseDueDate".to_string(), release_due_date.clone()));
+        }
+
+        if let Some(archived) = params.archived {
+            seq.push(("archived".to_string(), archived.to_string()));
+        }
+
+        seq
+    }
+}
