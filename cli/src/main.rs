@@ -3,6 +3,7 @@ use backlog_api_client::{
     ProjectIdOrKey, PullRequestAttachmentId, PullRequestNumber, RepositoryIdOrName, StatusId,
     UserId, client::BacklogApiClient,
 };
+use backlog_core::identifier::CommentId;
 #[cfg(any(feature = "issue_writable", feature = "project_writable"))]
 use backlog_core::{
     IssueKey,
@@ -162,6 +163,9 @@ enum IssueCommands {
     /// Count comments for an issue
     #[command(about = "Count comments for an issue")]
     CountComment(CountCommentArgs),
+    /// Get a specific comment for an issue
+    #[command(about = "Get a specific comment for an issue")]
+    GetComment(GetCommentArgs),
 }
 
 #[derive(Args, Debug)]
@@ -286,6 +290,14 @@ struct DeleteIssueArgs {
 struct CountCommentArgs {
     /// The ID or key of the issue (e.g., "PROJECT-123" or "12345")
     issue_id_or_key: String,
+}
+
+#[derive(Args, Debug)]
+struct GetCommentArgs {
+    /// The ID or key of the issue (e.g., "PROJECT-123" or "12345")
+    issue_id_or_key: String,
+    /// The ID of the comment
+    comment_id: u32,
 }
 
 #[derive(Parser)]
@@ -922,6 +934,52 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error counting comments: {}", e);
+                    }
+                }
+            }
+            IssueCommands::GetComment(get_args) => {
+                println!(
+                    "Getting comment {} for issue: {}",
+                    get_args.comment_id, get_args.issue_id_or_key
+                );
+
+                let parsed_issue_id_or_key = IssueIdOrKey::from_str(&get_args.issue_id_or_key)
+                    .map_err(|e| {
+                        format!(
+                            "Failed to parse issue_id_or_key '{}': {}",
+                            get_args.issue_id_or_key, e
+                        )
+                    })?;
+
+                let comment_id = CommentId::new(get_args.comment_id);
+
+                match client
+                    .issue()
+                    .get_comment(parsed_issue_id_or_key, comment_id)
+                    .await
+                {
+                    Ok(comment) => {
+                        println!("Comment ID: {}", comment.id);
+                        println!("Created by: {}", comment.created_user.name);
+                        println!("Created at: {}", comment.created);
+                        println!("Updated at: {}", comment.updated);
+                        if let Some(content) = &comment.content {
+                            println!("Content: {}", content);
+                        } else {
+                            println!("Content: (empty)");
+                        }
+                        if !comment.change_log.is_empty() {
+                            println!("Change log entries: {}", comment.change_log.len());
+                        }
+                        if !comment.notifications.is_empty() {
+                            println!("Notifications: {}", comment.notifications.len());
+                        }
+                        if !comment.stars.is_empty() {
+                            println!("Stars: {}", comment.stars.len());
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error getting comment: {}", e);
                     }
                 }
             }

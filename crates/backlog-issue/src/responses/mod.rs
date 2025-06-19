@@ -17,5 +17,6 @@ pub type DeleteIssueResponse = Issue;
 pub type UpdateIssueResponse = Issue;
 pub type GetIssueListResponse = Vec<Issue>;
 pub type GetCommentListResponse = Vec<Comment>;
+pub type GetCommentResponse = Comment;
 pub type GetAttachmentListResponse = Vec<Attachment>;
 pub type AddCommentResponse = Comment;

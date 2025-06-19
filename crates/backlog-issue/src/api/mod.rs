@@ -12,7 +12,7 @@ use crate::{
     requests::{CountIssueParams, GetCommentListParams, GetIssueListParams},
     responses::{
         CountCommentResponse, CountIssueResponse, GetAttachmentListResponse,
-        GetCommentListResponse, GetIssueListResponse, GetIssueResponse,
+        GetCommentListResponse, GetCommentResponse, GetIssueListResponse, GetIssueResponse,
     },
 };
 
@@ -117,6 +117,22 @@ impl IssueApi {
             .get(&format!(
                 "/api/v2/issues/{}/comments/count",
                 issue_id_or_key_str
+            ))
+            .await
+    }
+
+    /// Get a specific comment for an issue by its ID or key and comment ID.
+    pub async fn get_comment(
+        &self,
+        issue_id_or_key: impl Into<IssueIdOrKey>,
+        comment_id: backlog_core::identifier::CommentId,
+    ) -> Result<GetCommentResponse> {
+        let issue_id_or_key_str: String = issue_id_or_key.into().into();
+        let comment_id_val = comment_id.value();
+        self.0
+            .get(&format!(
+                "/api/v2/issues/{}/comments/{}",
+                issue_id_or_key_str, comment_id_val
             ))
             .await
     }
@@ -760,6 +776,112 @@ mod tests {
 
         let result = issue_api
             .count_comment(IssueIdOrKey::Key(issue_key.parse().unwrap()))
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_get_comment_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_key = "TESTKEY-1";
+        let comment_id = CommentId::new(123);
+
+        let expected_comment = create_mock_comment(123, "This is a test comment", 101, "alice");
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/issues/{}/comments/{}",
+                issue_key, comment_id
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_comment))
+            .mount(&mock_server)
+            .await;
+
+        let result = issue_api
+            .get_comment(IssueIdOrKey::Key(issue_key.parse().unwrap()), comment_id)
+            .await;
+
+        assert!(result.is_ok());
+        let comment = result.unwrap();
+        assert_eq!(comment.id, CommentId::new(123));
+        assert_eq!(comment.content, Some("This is a test comment".to_string()));
+    }
+
+    #[tokio::test]
+    async fn test_get_comment_with_issue_id() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_id = 456;
+        let comment_id = CommentId::new(789);
+
+        let expected_comment = create_mock_comment(789, "Comment with issue ID", 102, "bob");
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/issues/{}/comments/{}",
+                issue_id, comment_id
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_comment))
+            .mount(&mock_server)
+            .await;
+
+        let result = issue_api
+            .get_comment(IssueIdOrKey::Id(IssueId::new(issue_id as u32)), comment_id)
+            .await;
+
+        assert!(result.is_ok());
+        let comment = result.unwrap();
+        assert_eq!(comment.id, CommentId::new(789));
+        assert_eq!(comment.content, Some("Comment with issue ID".to_string()));
+    }
+
+    #[tokio::test]
+    async fn test_get_comment_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_key = "TESTKEY-404";
+        let comment_id = CommentId::new(999);
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/issues/{}/comments/{}",
+                issue_key, comment_id
+            )))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&mock_server)
+            .await;
+
+        let result = issue_api
+            .get_comment(IssueIdOrKey::Key(issue_key.parse().unwrap()), comment_id)
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_get_comment_issue_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_key = "MISSING-1";
+        let comment_id = CommentId::new(123);
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/issues/{}/comments/{}",
+                issue_key, comment_id
+            )))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&mock_server)
+            .await;
+
+        let result = issue_api
+            .get_comment(IssueIdOrKey::Key(issue_key.parse().unwrap()), comment_id)
             .await;
 
         assert!(result.is_err());
