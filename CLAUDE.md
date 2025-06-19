@@ -228,3 +228,228 @@ When implementing new API features, follow Test-Driven Development:
 6. **Documentation Update**: Update API.md, README.md, and CLAUDE.md
 
 **Important**: Never modify tests during implementation phase - tests define the contract.
+
+### Todo Management Guidelines
+When working on complex tasks (3+ steps or multi-file changes):
+
+1. **Create Todo List**: Use TodoWrite to plan implementation steps
+2. **Mark In-Progress**: Update ONE task to in_progress before beginning work
+3. **Complete Immediately**: Mark tasks as completed as soon as finished (don't batch completions)
+4. **Sequential Work**: Only have one task in_progress at any time
+5. **Remove Obsolete**: Remove tasks that become irrelevant during implementation
+6. **Never Mark Incomplete**: Only mark completed when fully done - if blocked, keep as in_progress and create new tasks for blockers
+
+**Todo Requirements**:
+- Mark completed ONLY when tests pass, code compiles, and functionality works
+- Create new tasks for discovered work during implementation
+- Use specific, actionable task descriptions
+- Don't use todo system for trivial single-step tasks
+
+### Error Handling and Debugging Process
+When encountering failures (compilation, tests, linting):
+
+1. **Identify Root Cause**: Use git bisect for CI failures, read error messages carefully
+2. **Fix Systematically**: Address one error type at a time
+3. **Verify Fixes**: Run affected commands after each fix
+4. **Follow Patterns**: Use existing error handling patterns in the codebase
+5. **Test Edge Cases**: Ensure fixes handle both success and error scenarios
+
+**Common Issues**:
+- Clippy warnings: Follow lint suggestions exactly (bool_assert_comparison, clone_on_copy, redundant_field_names)
+- Missing imports: Check existing modules for import patterns
+- Feature flag issues: Ensure conditional compilation is correctly applied
+
+### Code Quality Standards
+Maintain consistent code quality across the codebase:
+
+**Testing Requirements**:
+- Comprehensive test coverage for all API methods (success, error, edge cases)
+- Mock different HTTP status codes and API responses
+- Test both minimal and maximal parameter sets
+- Include integration tests with real API when possible
+
+**Documentation Standards**:
+- API methods must have docstring describing endpoint mapping
+- Example: `/// Corresponds to \`GET /api/v2/projects/:projectIdOrKey\`.`
+- Parameter structs should document field purposes and constraints
+- Update API.md implementation counts after adding new endpoints
+
+**Code Organization**:
+- Follow existing import patterns and module structure
+- Use consistent naming conventions (snake_case for Rust, camelCase for API parameters)
+- Implement proper error handling with specific error types
+- Apply feature flags correctly for conditional compilation
+
+### Git Workflow Guidelines
+Follow these practices for repository management:
+
+**Branch Management**:
+- Work on feature branches for new API implementations
+- Use descriptive branch names (e.g., `feature/version-milestone-api`)
+- Keep commits focused and atomic
+
+**Commit Standards**:
+- Write clear commit messages describing the change purpose
+- Include API endpoint information in commit messages
+- Reference issue numbers or documentation when applicable
+- Example: `feat: Add Version/Milestone update API - PATCH /api/v2/projects/:projectIdOrKey/versions/:id`
+
+**CI/CD Compliance**:
+- Ensure all CI checks pass before merging (check, test, clippy, fmt)
+- Use git bisect to identify CI-breaking commits
+- Fix linting and formatting issues immediately
+- Never ignore clippy warnings in production code
+
+**Pre-commit Verification**:
+```bash
+# Always run before committing
+cargo check --all-targets --all-features
+cargo test --all-features --all-targets
+cargo clippy --all-features --all-targets -- -D warnings
+cargo fmt --all
+```
+
+### API Implementation Patterns
+Follow these established patterns when implementing new API endpoints:
+
+**Parameter Struct Pattern**:
+```rust
+#[cfg(feature = "writable")]
+#[derive(Debug, Clone)]
+pub struct UpdateEntityParams {
+    pub required_field: String,
+    pub optional_field: Option<String>,
+    pub optional_bool: Option<bool>,
+}
+
+#[cfg(feature = "writable")]
+impl From<&UpdateEntityParams> for Vec<(String, String)> {
+    fn from(params: &UpdateEntityParams) -> Self {
+        let mut seq = Vec::new();
+        seq.push(("requiredField".to_string(), params.required_field.clone()));
+        
+        if let Some(value) = &params.optional_field {
+            seq.push(("optionalField".to_string(), value.clone()));
+        }
+        
+        if let Some(flag) = params.optional_bool {
+            seq.push(("optionalBool".to_string(), flag.to_string()));
+        }
+        
+        seq
+    }
+}
+```
+
+**API Method Pattern**:
+```rust
+#[cfg(feature = "writable")]
+pub async fn update_entity(
+    &self,
+    project_id_or_key: impl Into<ProjectIdOrKey>,
+    entity_id: impl Into<EntityId>,
+    params: &UpdateEntityParams,
+) -> Result<Entity> {
+    let params_vec: Vec<(String, String)> = params.into();
+    let path = format!(
+        "/api/v2/projects/{}/entities/{}", 
+        project_id_or_key.into(), 
+        entity_id.into()
+    );
+    self.client.patch(&path, &params_vec).await
+}
+```
+
+**Test Pattern**:
+```rust
+#[cfg(all(test, feature = "writable"))]
+mod tests {
+    use super::*;
+    use client::test_utils::setup_client;
+
+    #[tokio::test]
+    async fn test_update_entity_success() {
+        let client = setup_client(200, r#"{"id": 1, "name": "Updated"}"#);
+        let api = EntityApi::new(client);
+        
+        let params = UpdateEntityParams {
+            required_field: "test".to_string(),
+            optional_field: Some("optional".to_string()),
+            optional_bool: Some(true),
+        };
+        
+        let result = api.update_entity("PROJECT", 1, &params).await;
+        assert!(result.is_ok());
+        let entity = result.unwrap();
+        assert_eq!(entity.name, "Updated");
+    }
+
+    #[tokio::test]
+    async fn test_update_entity_not_found() {
+        let client = setup_client(404, r#"{"errors": [{"message": "Entity not found"}]}"#);
+        let api = EntityApi::new(client);
+        
+        let params = UpdateEntityParams {
+            required_field: "test".to_string(),
+            optional_field: None,
+            optional_bool: None,
+        };
+        
+        let result = api.update_entity("PROJECT", 999, &params).await;
+        assert!(result.is_err());
+    }
+}
+```
+
+**CLI Integration Pattern**:
+```rust
+#[cfg(feature = "writable")]
+EntityUpdate {
+    #[clap(short, long)]
+    project_id: String,
+    #[clap(short, long)]
+    entity_id: u32,
+    #[clap(short, long)]
+    name: String,
+    #[clap(long)]
+    description: Option<String>,
+    #[clap(long)]
+    archived: Option<bool>,
+}
+
+// In command handler
+#[cfg(feature = "writable")]
+ProjectCommands::EntityUpdate(args) => {
+    let params = UpdateEntityParams {
+        required_field: args.name,
+        optional_field: args.description,
+        optional_bool: args.archived,
+    };
+    
+    match client.project().update_entity(&args.project_id, args.entity_id, &params).await {
+        Ok(entity) => {
+            println!("✅ Entity updated successfully");
+            println!("ID: {}", entity.id);
+            println!("Name: {}", entity.name);
+        }
+        Err(e) => {
+            eprintln!("❌ Failed to update entity: {}", e);
+            std::process::exit(1);
+        }
+    }
+}
+```
+
+**Key Points**:
+- Always use feature flags for write operations
+- Form-encode parameters manually for precise control
+- Follow consistent naming (camelCase for API, snake_case for Rust)
+- Include comprehensive error handling in tests
+- Provide clear success/failure messages in CLI
+- Use strongly-typed identifiers from `backlog-core`
+
+# important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
