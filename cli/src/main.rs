@@ -159,6 +159,9 @@ enum IssueCommands {
     /// Delete an issue
     #[command(about = "Delete an issue")]
     Delete(DeleteIssueArgs),
+    /// Count comments for an issue
+    #[command(about = "Count comments for an issue")]
+    CountComment(CountCommentArgs),
 }
 
 #[derive(Args, Debug)]
@@ -277,6 +280,12 @@ struct UpdateIssueArgs {
 struct DeleteIssueArgs {
     /// Issue Key (e.g., "PROJECT-123")
     issue_key: String,
+}
+
+#[derive(Args, Debug)]
+struct CountCommentArgs {
+    /// The ID or key of the issue (e.g., "PROJECT-123" or "12345")
+    issue_id_or_key: String,
 }
 
 #[derive(Parser)]
@@ -889,6 +898,38 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         eprintln!("Error deleting issue: {}", e);
                     }
                 }
+            }
+            IssueCommands::CountComment(count_args) => {
+                println!(
+                    "Counting comments for issue: {}",
+                    count_args.issue_id_or_key
+                );
+
+                let parsed_issue_id_or_key = IssueIdOrKey::from_str(&count_args.issue_id_or_key)
+                    .map_err(|e| {
+                        format!(
+                            "Failed to parse issue_id_or_key '{}': {}",
+                            count_args.issue_id_or_key, e
+                        )
+                    })?;
+
+                match client.issue().count_comment(parsed_issue_id_or_key).await {
+                    Ok(response) => {
+                        println!(
+                            "Comment count for issue {}: {}",
+                            count_args.issue_id_or_key, response.count
+                        );
+                    }
+                    Err(e) => {
+                        eprintln!("Error counting comments: {}", e);
+                    }
+                }
+            }
+            #[cfg(not(feature = "issue_writable"))]
+            IssueCommands::Create(_) | IssueCommands::Update(_) | IssueCommands::Delete(_) => {
+                eprintln!(
+                    "Issue creation, update, and deletion are not available. Please build with 'issue_writable' feature."
+                );
             }
         },
         Commands::Space(space_args) => match space_args.command {

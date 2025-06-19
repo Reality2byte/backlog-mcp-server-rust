@@ -11,8 +11,8 @@ use crate::responses::{
 use crate::{
     requests::{CountIssueParams, GetCommentListParams, GetIssueListParams},
     responses::{
-        CountIssueResponse, GetAttachmentListResponse, GetCommentListResponse,
-        GetIssueListResponse, GetIssueResponse,
+        CountCommentResponse, CountIssueResponse, GetAttachmentListResponse,
+        GetCommentListResponse, GetIssueListResponse, GetIssueResponse,
     },
 };
 
@@ -105,6 +105,20 @@ impl IssueApi {
         let path = format!("/api/v2/issues/{}/comments", issue_key_str);
         let query_params = params.map_or_else(Vec::new, |p| p.to_query_params());
         self.0.get_with_params(&path, &query_params).await
+    }
+
+    /// Count comments for an issue by its ID or key.
+    pub async fn count_comment(
+        &self,
+        issue_id_or_key: impl Into<IssueIdOrKey>,
+    ) -> Result<CountCommentResponse> {
+        let issue_id_or_key_str: String = issue_id_or_key.into().into();
+        self.0
+            .get(&format!(
+                "/api/v2/issues/{}/comments/count",
+                issue_id_or_key_str
+            ))
+            .await
     }
 
     /// Get a list of attachments for an issue by its ID or key.
@@ -678,6 +692,74 @@ mod tests {
 
         let result = issue_api
             .add_comment(IssueIdOrKey::Key(issue_key.parse().unwrap()), &params)
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_count_comment_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_key = "TESTKEY-1";
+
+        Mock::given(method("GET"))
+            .and(path(format!("/api/v2/issues/{}/comments/count", issue_key)))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "count": 5
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let result = issue_api
+            .count_comment(IssueIdOrKey::Key(issue_key.parse().unwrap()))
+            .await;
+
+        assert!(result.is_ok());
+        let response = result.unwrap();
+        assert_eq!(response.count, 5);
+    }
+
+    #[tokio::test]
+    async fn test_count_comment_with_issue_id() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_id = 123;
+
+        Mock::given(method("GET"))
+            .and(path(format!("/api/v2/issues/{}/comments/count", issue_id)))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "count": 0
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let result = issue_api
+            .count_comment(IssueIdOrKey::Id(IssueId::new(issue_id as u32)))
+            .await;
+
+        assert!(result.is_ok());
+        let response = result.unwrap();
+        assert_eq!(response.count, 0);
+    }
+
+    #[tokio::test]
+    async fn test_count_comment_issue_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_key = "TESTKEY-404";
+
+        Mock::given(method("GET"))
+            .and(path(format!("/api/v2/issues/{}/comments/count", issue_key)))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&mock_server)
+            .await;
+
+        let result = issue_api
+            .count_comment(IssueIdOrKey::Key(issue_key.parse().unwrap()))
             .await;
 
         assert!(result.is_err());

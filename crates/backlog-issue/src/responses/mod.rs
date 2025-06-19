@@ -6,6 +6,11 @@ pub struct CountIssueResponse {
     pub count: u32,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct CountCommentResponse {
+    pub count: u32,
+}
+
 pub type GetIssueResponse = Issue;
 pub type AddIssueResponse = Issue;
 pub type DeleteIssueResponse = Issue;
