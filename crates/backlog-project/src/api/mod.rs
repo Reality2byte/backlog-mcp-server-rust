@@ -207,6 +207,20 @@ impl ProjectApi {
         let params_vec: Vec<(String, String)> = params.into();
         self.0.patch(&path, &params_vec).await
     }
+
+    /// Adds a version/milestone to a project.
+    ///
+    /// Corresponds to `POST /api/v2/projects/:projectIdOrKey/versions`.
+    #[cfg(feature = "writable")]
+    pub async fn add_version(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        params: &crate::requests::AddVersionParams,
+    ) -> Result<Milestone> {
+        let path = format!("/api/v2/projects/{}/versions", project_id_or_key.into());
+        let params_vec: Vec<(String, String)> = params.into();
+        self.0.post(&path, &params_vec).await
+    }
 }
 
 type GetVersionMilestoneListResponse = Vec<Milestone>;
@@ -1628,5 +1642,168 @@ mod tests {
         assert_eq!(issue_type.name, "Updated with Key");
         assert_eq!(issue_type.color, "#ff3265");
         assert_eq!(issue_type.id, issue_type_id);
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_version_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+
+        let expected_milestone = Milestone {
+            id: MilestoneId::new(1),
+            project_id,
+            name: "Version 1.0".to_string(),
+            description: Some("Initial release".to_string()),
+            start_date: Some(chrono::Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap()),
+            release_due_date: Some(chrono::Utc.with_ymd_and_hms(2023, 1, 31, 0, 0, 0).unwrap()),
+            archived: false,
+            display_order: Some(1),
+        };
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/projects/123/versions"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_milestone))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::AddVersionParams {
+            name: "Version 1.0".to_string(),
+            description: Some("Initial release".to_string()),
+            start_date: Some("2023-01-01".to_string()),
+            release_due_date: Some("2023-01-31".to_string()),
+        };
+        let result = project_api.add_version(project_id, &params).await;
+        assert!(result.is_ok());
+        let milestone = result.unwrap();
+        assert_eq!(milestone.name, "Version 1.0");
+        assert_eq!(milestone.id, MilestoneId::new(1));
+        assert_eq!(milestone.description, Some("Initial release".to_string()));
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_version_minimal_params() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_key = "TEST_PROJECT";
+
+        let expected_milestone = Milestone {
+            id: MilestoneId::new(2),
+            project_id: ProjectId::new(456),
+            name: "Simple Version".to_string(),
+            description: None,
+            start_date: None,
+            release_due_date: None,
+            archived: false,
+            display_order: Some(2),
+        };
+
+        Mock::given(method("POST"))
+            .and(path(format!("/api/v2/projects/{}/versions", project_key)))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_milestone))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::AddVersionParams {
+            name: "Simple Version".to_string(),
+            description: None,
+            start_date: None,
+            release_due_date: None,
+        };
+        let result = project_api
+            .add_version(ProjectIdOrKey::from_str(project_key).unwrap(), &params)
+            .await;
+        assert!(result.is_ok());
+        let milestone = result.unwrap();
+        assert_eq!(milestone.name, "Simple Version");
+        assert_eq!(milestone.description, None);
+        assert_eq!(milestone.start_date, None);
+        assert_eq!(milestone.release_due_date, None);
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_version_duplicate_name_error() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_key = "TEST_PROJECT";
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "Version name already exists.",
+                    "code": 15,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("POST"))
+            .and(path(format!("/api/v2/projects/{}/versions", project_key)))
+            .respond_with(ResponseTemplate::new(400).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::AddVersionParams {
+            name: "Existing Version".to_string(),
+            description: None,
+            start_date: None,
+            release_due_date: None,
+        };
+        let result = project_api
+            .add_version(ProjectIdOrKey::from_str(project_key).unwrap(), &params)
+            .await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 400);
+            assert_eq!(errors[0].message, "Version name already exists.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_version_project_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(999);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such project.",
+                    "code": 6,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/projects/999/versions"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::AddVersionParams {
+            name: "New Version".to_string(),
+            description: Some("Description".to_string()),
+            start_date: None,
+            release_due_date: None,
+        };
+        let result = project_api.add_version(project_id, &params).await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such project.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
     }
 }

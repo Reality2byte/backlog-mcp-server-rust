@@ -15,9 +15,9 @@ use backlog_domain_models::IssueTypeColor;
 use backlog_issue::requests::{AddIssueParamsBuilder, UpdateIssueParamsBuilder};
 use backlog_project::requests::GetProjectParams;
 #[cfg(feature = "project_writable")]
-use backlog_project::{
-    AddCategoryParams, AddIssueTypeParams, DeleteIssueTypeParams, UpdateCategoryParams,
-    UpdateIssueTypeParams,
+use backlog_project::requests::{
+    AddCategoryParams, AddIssueTypeParams, AddVersionParams, DeleteIssueTypeParams,
+    UpdateCategoryParams, UpdateIssueTypeParams,
 };
 use clap::{Args, Parser};
 use std::env;
@@ -441,6 +441,25 @@ enum ProjectCommands {
     PriorityList,
     /// List resolutions (space-wide)
     ResolutionList,
+    /// Add a version/milestone to a project
+    #[cfg(feature = "project_writable")]
+    VersionAdd {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Version name
+        #[clap(short, long)]
+        name: String,
+        /// Version description
+        #[clap(short, long)]
+        description: Option<String>,
+        /// Start date (YYYY-MM-DD)
+        #[clap(long)]
+        start_date: Option<String>,
+        /// Release due date (YYYY-MM-DD)
+        #[clap(long)]
+        release_due_date: Option<String>,
+    },
     /// Download project icon
     Icon {
         /// Project ID or Key
@@ -1427,15 +1446,63 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::VersionAdd {
+                project_id_or_key,
+                name,
+                description,
+                start_date,
+                release_due_date,
+            } => {
+                println!(
+                    "Adding version/milestone '{}' to project: {}",
+                    name, project_id_or_key
+                );
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let params = AddVersionParams {
+                    name: name.clone(),
+                    description: description.clone(),
+                    start_date: start_date.clone(),
+                    release_due_date: release_due_date.clone(),
+                };
+
+                match client.project().add_version(proj_id_or_key, &params).await {
+                    Ok(milestone) => {
+                        println!("Version/milestone added successfully:");
+                        println!("[{}] {}", milestone.id, milestone.name);
+                        if let Some(desc) = &milestone.description {
+                            println!("  Description: {}", desc);
+                        }
+                        if let Some(start_date) = &milestone.start_date {
+                            println!("  Start Date: {}", start_date.format("%Y-%m-%d"));
+                        }
+                        if let Some(release_due_date) = &milestone.release_due_date {
+                            println!(
+                                "  Release Due Date: {}",
+                                release_due_date.format("%Y-%m-%d")
+                            );
+                        }
+                        println!("  Archived: {}", milestone.archived);
+                        if let Some(display_order) = milestone.display_order {
+                            println!("  Display Order: {}", display_order);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error adding version/milestone: {}", e);
+                    }
+                }
+            }
             #[cfg(not(feature = "project_writable"))]
             ProjectCommands::CategoryAdd { .. }
             | ProjectCommands::CategoryUpdate { .. }
             | ProjectCommands::CategoryDelete { .. }
             | ProjectCommands::IssueTypeAdd { .. }
             | ProjectCommands::IssueTypeDelete { .. }
-            | ProjectCommands::IssueTypeUpdate { .. } => {
+            | ProjectCommands::IssueTypeUpdate { .. }
+            | ProjectCommands::VersionAdd { .. } => {
                 eprintln!(
-                    "Category and issue type management is not available. Please build with 'project_writable' feature."
+                    "Category, issue type, and version management is not available. Please build with 'project_writable' feature."
                 );
             }
             ProjectCommands::PriorityList => {
