@@ -1,19 +1,20 @@
 [workspace]
 resolver = "2"
 members = [
-    "client",
-    "backlog-core",
-    "backlog-api-core",
-    "backlog-domain-models",
-    "backlog-issue",
-    "backlog-project",
-    "backlog-space",
-    "backlog-user",
-    "backlog-api-client",
-    "mcp-backlog-server",
-    "backlog-document",
-    "backlog-git",
-    "backlog-file"]
+    "cli",
+    "backlog-mcp-server",
+    "crates/backlog-api-client",
+    "crates/client",
+    "crates/backlog-core",
+    "crates/backlog-api-core",
+    "crates/backlog-domain-models",
+    "crates/backlog-issue",
+    "crates/backlog-project",
+    "crates/backlog-space",
+    "crates/backlog-user",
+    "crates/backlog-document",
+    "crates/backlog-git",
+    "crates/backlog-file"]
 
 [workspace.package]
 version = "0.1.0"

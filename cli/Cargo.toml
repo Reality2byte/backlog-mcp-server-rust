@@ -1,0 +1,33 @@
+[package]
+name = "blg"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "blg"
+path = "src/main.rs"
+
+[dependencies]
+backlog-api-client = { path = "../crates/backlog-api-client" }
+backlog-core = { path = "../crates/backlog-core" }
+backlog-domain-models = { path = "../crates/backlog-domain-models" }
+backlog-project = { path = "../crates/backlog-project" }
+backlog-issue = { path = "../crates/backlog-issue" }
+clap = { version = "4.5", features = ["derive"] }
+tokio = { workspace = true, features = ["full", "macros", "rt-multi-thread"] }
+
+[features]
+default = ["git", "issue", "project", "space"]
+git = ["backlog-api-client/git"]
+issue = ["backlog-api-client/issue"]
+project = ["backlog-api-client/project"]
+space = ["backlog-api-client/space"]
+user = ["backlog-api-client/user"]
+document = ["backlog-api-client/document"]
+file = ["backlog-api-client/file"]
+all = ["git", "issue", "project", "space", "user", "document", "file"]
+issue_writable = ["backlog-api-client/issue_writable"]
+project_writable = ["backlog-api-client/project_writable"]
+git_writable = ["backlog-api-client/git_writable"]
+all_writable = ["backlog-api-client/all_writable"]

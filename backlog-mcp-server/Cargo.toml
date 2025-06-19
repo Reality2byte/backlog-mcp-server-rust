@@ -19,10 +19,10 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 
 # Dependencies on other workspace crates
-backlog-api-client = { path = "../backlog-api-client", features = ["issue", "document", "git", "project", "user", "file", "schemars"] } # Added "file" feature
-backlog-project = { path = "../backlog-project" }
-backlog-file = { path = "../backlog-file" }
-backlog-core = { path = "../backlog-core" } # For ProjectIdOrKey parsing and other core types
+backlog-api-client = { path = "../crates/backlog-api-client", features = ["issue", "document", "git", "project", "user", "file", "schemars"] } # Added "file" feature
+backlog-project = { path = "../crates/backlog-project" }
+backlog-file = { path = "../crates/backlog-file" }
+backlog-core = { path = "../crates/backlog-core" } # For ProjectIdOrKey parsing and other core types
 schemars = { workspace = true, features = ["derive"] } # For JsonSchema derive
 strsim = "0.11.1"
 base64 = { workspace = true } # Added for base64 encoding

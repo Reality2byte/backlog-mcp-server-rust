@@ -5,32 +5,31 @@ edition.workspace = true
 license.workspace = true
 
 [features]
-default = ["issue", "project", "space", "user", "document", "git", "file", "all_writable"] # Added "file"
+default = ["issue", "project", "space", "user", "document", "git", "file"] # Library defaults without writable features
 issue = ["backlog-issue"]
 project = ["backlog-project", "backlog-domain-models"]
 space = ["backlog-space"]
 user = ["backlog-user"]
-document = ["backlog-document"] # Added document feature
-git = ["backlog-git"] # Added git feature
-file = ["backlog-file"] # Added file feature
+document = ["backlog-document"]
+git = ["backlog-git"]
+file = ["backlog-file"]
 schemars = [ # Added schemars feature to propagate to sub-crates
     "backlog-core/schemars",
-    "backlog-domain-models/schemars",
-    "backlog-issue/schemars",
-    "backlog-project/schemars",
+    "backlog-domain-models?/schemars",
+    "backlog-issue?/schemars",
+    "backlog-project?/schemars",
     # "backlog-space/schemars", # Add if/when space has schemars
     # "backlog-user/schemars", # Removed as backlog-user doesn't have this feature
-    "backlog-document/schemars",
-    "backlog-git/schemars",
-    "backlog-file/schemars",
+    "backlog-document?/schemars",
+    "backlog-git?/schemars",
+    "backlog-file?/schemars",
 ]
-cli = ["clap"] # Added cli feature for clap dependency
 all_writable = ["issue_writable", "project_writable", "space_writable", "user_writable", "git_writable"]
-issue_writable = ["backlog-issue/writable", "client/writable"]
-project_writable = ["backlog-project/writable", "client/writable"]
-space_writable = ["backlog-space/writable"]
-user_writable = ["backlog-user/writable"]
-git_writable = ["backlog-git/writable", "client/writable"]
+issue_writable = ["backlog-issue?/writable", "client/writable"]
+project_writable = ["backlog-project?/writable", "client/writable"]
+space_writable = ["backlog-space?/writable"]
+user_writable = ["backlog-user?/writable"]
+git_writable = ["backlog-git?/writable", "client/writable"]
 
 [dependencies]
 client = { path = "../client" }
@@ -44,11 +43,5 @@ backlog-user = { path = "../backlog-user", optional = true }
 backlog-document = { path = "../backlog-document", optional = true }
 backlog-git = { path = "../backlog-git", optional = true }
 backlog-file = { path = "../backlog-file", optional = true }
-clap = { version = "4.5", features = ["derive"], optional = true } # For CLI arg parsing
 tokio = { workspace = true }
 url = { workspace = true }
-
-[[bin]]
-name = "blg"
-path = "src/bin/blg.rs"
-required-features = ["cli", "git", "issue"]

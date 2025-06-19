@@ -1442,8 +1442,14 @@ mod tests {
         assert_eq!(issue_type.project_id, project_id);
         assert_eq!(issue_type.name, "Updated Bug Type");
         assert_eq!(issue_type.color, "#009900");
-        assert_eq!(issue_type.template_summary, Some("Updated Summary".to_string()));
-        assert_eq!(issue_type.template_description, Some("Updated Description".to_string()));
+        assert_eq!(
+            issue_type.template_summary,
+            Some("Updated Summary".to_string())
+        );
+        assert_eq!(
+            issue_type.template_description,
+            Some("Updated Description".to_string())
+        );
     }
 
     #[cfg(feature = "writable")]
@@ -1595,7 +1601,10 @@ mod tests {
         };
 
         Mock::given(method("PATCH"))
-            .and(path(format!("/api/v2/projects/{}/issueTypes/456", project_key)))
+            .and(path(format!(
+                "/api/v2/projects/{}/issueTypes/456",
+                project_key
+            )))
             .respond_with(ResponseTemplate::new(200).set_body_json(&expected_issue_type))
             .mount(&server)
             .await;

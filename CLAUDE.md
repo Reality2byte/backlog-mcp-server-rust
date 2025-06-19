@@ -5,20 +5,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Architecture Overview
 
 This is a Rust workspace providing a comprehensive Backlog API client ecosystem with three main components:
-- **Library** (`backlog-api-client`): Core client library with modular API wrappers
-- **CLI** (`blg`): Command-line tool for Backlog API interactions
-- **MCP Server** (`mcp-backlog-server`): Model Context Protocol server for AI integration
+- **Library** (`crates/backlog-api-client/`): Core client library with modular API wrappers
+- **CLI** (`cli/`): Command-line interface built on top of the library
+- **MCP Server** (`backlog-mcp-server/`): Model Context Protocol server for AI integration
 
 ### Workspace Structure
 
 ```
-backlog-core/                 # Core types and identifiers shared across all modules
-backlog-api-core/            # Common API utilities and error types
-backlog-domain-models/       # Shared domain models (Priority, Status, Category, etc.)
-backlog-{issue,project,space,user,document,git,file}/ # Domain-specific API modules
-client/                      # Generic HTTP client wrapper
-backlog-api-client/          # Main library facade + CLI binary
-mcp-backlog-server/         # MCP server implementation
+cli/                        # CLI binary application
+backlog-mcp-server/         # MCP server implementation
+crates/                     # Internal library crates
+├── backlog-api-client/     # Main library facade (aggregates all API modules)
+├── backlog-core/           # Core types and identifiers shared across all modules
+├── backlog-api-core/       # Common API utilities and error types
+├── backlog-domain-models/  # Shared domain models (Priority, Status, Category, etc.)
+├── backlog-issue/          # Issue management API
+├── backlog-project/        # Project management API
+├── backlog-space/          # Space management API
+├── backlog-user/           # User management API
+├── backlog-document/       # Document/Wiki API
+├── backlog-git/            # Git repository API
+├── backlog-file/           # Shared file API
+└── client/                 # Generic HTTP client wrapper
 ```
 
 ## Development Commands
@@ -34,10 +42,10 @@ cargo clippy --all-features --all-targets -- -D warnings
 cargo fmt --all
 
 # Build CLI tool (read-only operations)
-cargo build --package backlog-api-client --features "cli git issue project space" --bin blg
+cargo build --package blg
 
 # Build CLI tool with write operations
-cargo build --package backlog-api-client --features "cli git issue project project_writable space" --bin blg
+cargo build --package blg --features "all_writable"
 
 # Build MCP server
 cargo build --package mcp-backlog-server
@@ -196,7 +204,10 @@ The system now includes comprehensive shared file support:
 ```
 
 ### Recent Major Updates
-- **Category Management (Latest)**: Complete CRUD operations for project categories with TDD implementation
+- **Import Organization Fix**: Fixed missing imports in `backlog-issue` and `backlog-project` crates
+  - Added `CategoryId` import to `backlog-project/src/api/mod.rs`
+  - Added `IssueKey`, `AddIssueParams`, and `UpdateIssueParams` imports to `backlog-issue/src/api/mod.rs`
+- **Category Management**: Complete CRUD operations for project categories with TDD implementation
   - Added `update_category()` API method with comprehensive test coverage
   - Extended CLI with `category-add`, `category-update`, `category-delete` commands
   - Proper feature flag separation (`project_writable`) for write operations

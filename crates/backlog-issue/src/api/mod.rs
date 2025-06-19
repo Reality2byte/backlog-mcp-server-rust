@@ -3,16 +3,13 @@ use backlog_core::{IssueIdOrKey, IssueKey, identifier::Identifier};
 use client::{Client, DownloadedFile};
 
 #[cfg(feature = "writable")]
-use crate::requests::AddCommentParams;
+use crate::requests::{AddCommentParams, AddIssueParams, UpdateIssueParams};
 #[cfg(feature = "writable")]
 use crate::responses::{
     AddCommentResponse, AddIssueResponse, DeleteIssueResponse, UpdateIssueResponse,
 };
 use crate::{
-    requests::{
-        AddIssueParams, CountIssueParams, GetCommentListParams, GetIssueListParams,
-        UpdateIssueParams,
-    },
+    requests::{CountIssueParams, GetCommentListParams, GetIssueListParams},
     responses::{
         CountIssueResponse, GetAttachmentListResponse, GetCommentListResponse,
         GetIssueListResponse, GetIssueResponse,
