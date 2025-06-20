@@ -229,6 +229,12 @@ When implementing new API features, follow Test-Driven Development:
 
 **Important**: Never modify tests during implementation phase - tests define the contract.
 
+**Testing Requirements**:
+- Comprehensive test coverage for all API methods (success, error, edge cases)
+- Mock different HTTP status codes and API responses
+- Test both minimal and maximal parameter sets
+- Include integration tests with real API when possible
+
 ### Todo Management Guidelines
 When working on complex tasks (3+ steps or multi-file changes):
 
@@ -245,6 +251,12 @@ When working on complex tasks (3+ steps or multi-file changes):
 - Use specific, actionable task descriptions
 - Don't use todo system for trivial single-step tasks
 
+**When to Use Todo System**:
+- Complex multi-step tasks requiring 3+ distinct steps
+- Non-trivial implementations requiring careful planning
+- When user explicitly requests todo list
+- When user provides multiple tasks to complete
+
 ### Error Handling and Debugging Process
 When encountering failures (compilation, tests, linting):
 
@@ -258,6 +270,21 @@ When encountering failures (compilation, tests, linting):
 - Clippy warnings: Follow lint suggestions exactly (bool_assert_comparison, clone_on_copy, redundant_field_names)
 - Missing imports: Check existing modules for import patterns
 - Feature flag issues: Ensure conditional compilation is correctly applied
+
+**Debugging Commands**:
+```bash
+# For compilation issues
+cargo check --all-targets --all-features
+
+# For test failures
+cargo test --all-features --all-targets
+
+# For linting issues
+cargo clippy --all-features --all-targets -- -D warnings
+
+# For formatting
+cargo fmt --all
+```
 
 ### Code Quality Standards
 Maintain consistent code quality across the codebase:
@@ -448,8 +475,33 @@ ProjectCommands::EntityUpdate(args) => {
 - Provide clear success/failure messages in CLI
 - Use strongly-typed identifiers from `backlog-core`
 
-# important-instruction-reminders
-Do what has been asked; nothing more, nothing less.
-NEVER create files unless they're absolutely necessary for achieving your goal.
-ALWAYS prefer editing an existing file to creating a new one.
-NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
+### Real API Testing Guidelines
+When testing with actual Backlog API:
+
+**Safety Practices**:
+- Use test projects/repositories when possible
+- Verify endpoints with read operations before write operations
+- Be cautious with delete operations - verify data before deletion
+- Use API key in URL parameters: `?apiKey=${BACKLOG_API_KEY}`
+
+**Testing Workflow**:
+1. **Verify Environment**: Check `BACKLOG_BASE_URL` and `BACKLOG_API_KEY`
+2. **Start with Read Operations**: List existing data before creating/modifying
+3. **Test Error Cases**: Try invalid IDs to verify error handling
+4. **Clean Up**: Remove test data when appropriate
+5. **Document Results**: Note successful operations and any issues
+
+**Example Testing Sequence**:
+```bash
+# 1. List existing data
+cargo run --package blg -- pr list -p PROJECT -r REPO
+
+# 2. Test creation
+cargo run --package blg -- pr create -p PROJECT -r REPO --summary "Test" --description "Test" --base master --branch feature
+
+# 3. Test modification/deletion
+cargo run --package blg -- pr delete-attachment -p PROJECT -r REPO -n PR_NUMBER -a ATTACHMENT_ID
+
+# 4. Verify changes
+curl -s "https://api.url/endpoint?apiKey=${BACKLOG_API_KEY}" | jq .
+```
