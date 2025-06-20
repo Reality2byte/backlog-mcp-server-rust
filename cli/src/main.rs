@@ -10,14 +10,14 @@ use backlog_core::{
     identifier::{CategoryId, IssueTypeId, MilestoneId, PriorityId, ResolutionId},
 };
 #[cfg(feature = "project_writable")]
-use backlog_domain_models::IssueTypeColor;
+use backlog_domain_models::{IssueTypeColor, StatusColor};
 #[cfg(feature = "issue_writable")]
 use backlog_issue::requests::{AddIssueParamsBuilder, UpdateIssueParamsBuilder};
 use backlog_project::requests::GetProjectParams;
 #[cfg(feature = "project_writable")]
 use backlog_project::requests::{
-    AddCategoryParams, AddIssueTypeParams, AddVersionParams, DeleteIssueTypeParams,
-    UpdateCategoryParams, UpdateIssueTypeParams, UpdateVersionParams,
+    AddCategoryParams, AddIssueTypeParams, AddStatusParams, AddVersionParams,
+    DeleteIssueTypeParams, UpdateCategoryParams, UpdateIssueTypeParams, UpdateVersionParams,
 };
 use clap::{Args, Parser};
 use std::env;
@@ -494,6 +494,19 @@ enum ProjectCommands {
         /// Version ID to delete
         #[clap(long)]
         version_id: u32,
+    },
+    /// Add a status to a project
+    #[cfg(feature = "project_writable")]
+    StatusAdd {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Status name
+        #[clap(short, long)]
+        name: String,
+        /// Status color (red, coral, pink, light-purple, blue, green, light-green, orange, magenta, dark-gray)
+        #[clap(short, long)]
+        color: String,
     },
     /// Download project icon
     Icon {
@@ -1626,6 +1639,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::StatusAdd {
+                project_id_or_key,
+                name,
+                color,
+            } => {
+                println!("Adding status '{}' to project: {}", name, project_id_or_key);
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let parsed_color = StatusColor::from_str(&color)?;
+
+                let params = AddStatusParams {
+                    name: name.clone(),
+                    color: parsed_color,
+                };
+
+                match client.project().add_status(proj_id_or_key, &params).await {
+                    Ok(status) => {
+                        println!("✅ Status added successfully:");
+                        println!("ID: {}", status.id);
+                        println!("Name: {}", status.name);
+                        println!("Color: {}", status.color);
+                        println!("Display Order: {}", status.display_order);
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to add status: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
             #[cfg(not(feature = "project_writable"))]
             ProjectCommands::CategoryAdd { .. }
             | ProjectCommands::CategoryUpdate { .. }
@@ -1635,9 +1678,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             | ProjectCommands::IssueTypeUpdate { .. }
             | ProjectCommands::VersionAdd { .. }
             | ProjectCommands::VersionUpdate { .. }
-            | ProjectCommands::VersionDelete { .. } => {
+            | ProjectCommands::VersionDelete { .. }
+            | ProjectCommands::StatusAdd { .. } => {
                 eprintln!(
-                    "Category, issue type, and version management is not available. Please build with 'project_writable' feature."
+                    "Category, issue type, version, and status management is not available. Please build with 'project_writable' feature."
                 );
             }
             ProjectCommands::PriorityList => {

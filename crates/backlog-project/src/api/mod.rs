@@ -257,6 +257,20 @@ impl ProjectApi {
         );
         self.0.delete(&path).await
     }
+
+    /// Adds a status to a project.
+    ///
+    /// Corresponds to `POST /api/v2/projects/:projectIdOrKey/statuses`.
+    #[cfg(feature = "writable")]
+    pub async fn add_status(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        params: &crate::requests::AddStatusParams,
+    ) -> Result<Status> {
+        let path = format!("/api/v2/projects/{}/statuses", project_id_or_key.into());
+        let params_vec: Vec<(String, String)> = params.into();
+        self.0.post(&path, &params_vec).await
+    }
 }
 
 type GetVersionMilestoneListResponse = Vec<Milestone>;
@@ -2211,6 +2225,161 @@ mod tests {
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
             assert_eq!(errors[0].message, "No such project.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_status_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+
+        let expected_status = Status {
+            id: StatusId::new(101),
+            project_id,
+            name: "レビュー待ち".to_string(),
+            color: "#e87758".to_string(),
+            display_order: 3999,
+        };
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/projects/123/statuses"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_status))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::AddStatusParams {
+            name: "レビュー待ち".to_string(),
+            color: backlog_domain_models::StatusColor::Coral,
+        };
+        let result = project_api.add_status(project_id, &params).await;
+        assert!(result.is_ok());
+        let status = result.unwrap();
+        assert_eq!(status.name, "レビュー待ち");
+        assert_eq!(status.id, StatusId::new(101));
+        assert_eq!(status.color, "#e87758");
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_status_duplicate_name_error() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_key = "TEST_PROJECT";
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "Status name already exists.",
+                    "code": 13,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("POST"))
+            .and(path(format!("/api/v2/projects/{}/statuses", project_key)))
+            .respond_with(ResponseTemplate::new(400).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::AddStatusParams {
+            name: "処理中".to_string(),
+            color: backlog_domain_models::StatusColor::Blue,
+        };
+        let result = project_api
+            .add_status(ProjectIdOrKey::from_str(project_key).unwrap(), &params)
+            .await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 400);
+            assert_eq!(errors[0].message, "Status name already exists.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_status_project_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(999);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such project.",
+                    "code": 6,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/projects/999/statuses"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::AddStatusParams {
+            name: "テスト状態".to_string(),
+            color: backlog_domain_models::StatusColor::Green,
+        };
+
+        let result = project_api.add_status(project_id, &params).await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such project.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_status_limit_exceeded() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "Status limit exceeded. Maximum 8 custom statuses allowed.",
+                    "code": 14,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/projects/123/statuses"))
+            .respond_with(ResponseTemplate::new(400).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::AddStatusParams {
+            name: "追加状態".to_string(),
+            color: backlog_domain_models::StatusColor::Orange,
+        };
+
+        let result = project_api.add_status(project_id, &params).await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 400);
+            assert_eq!(
+                errors[0].message,
+                "Status limit exceeded. Maximum 8 custom statuses allowed."
+            );
         } else {
             panic!("Expected ApiError::HttpStatus, got {:?}", result);
         }

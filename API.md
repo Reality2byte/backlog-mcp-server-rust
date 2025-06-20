@@ -9,9 +9,9 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Read operations**: get_space(), get_space_logo()
 
 ### backlog-project (ProjectApi)
-- **Implemented**: 17/36 endpoints (47%)
+- **Implemented**: 18/36 endpoints (50%)
 - **Read operations**: get_project_list(), get_project(), get_project_icon(), get_status_list(), get_issue_type_list(), get_version_milestone_list(), get_category_list(), get_priority_list(), get_resolution_list()
-- **Write operations** (requires `writable` feature): add_category(), update_category(), delete_category(), add_issue_type(), delete_issue_type(), update_issue_type(), add_version(), update_version(), delete_version()
+- **Write operations** (requires `writable` feature): add_category(), update_category(), delete_category(), add_issue_type(), delete_issue_type(), update_issue_type(), add_version(), update_version(), delete_version(), add_status()
 
 ### backlog-issue (IssueApi)
 - **Implemented**: 12/26 endpoints (46%)
@@ -143,7 +143,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 
 ### Status
 - ✅ GetStatusListOfProject: Returns list of status in the project: GET /api/v2/projects/:projectIdOrKey/statuses
-- ❌ AddStatus: Adds new Status to the project. You can create up to 8 custom statuses within a Project aside from the 4 default: POST /api/v2/projects/:projectIdOrKey/statuses
+- ✅ AddStatus: Adds new Status to the project. You can create up to 8 custom statuses within a Project aside from the 4 default: POST /api/v2/projects/:projectIdOrKey/statuses
 - ❌ UpdateOrderOfStatus: Updates order about Status: PATCH /api/v2/projects/:projectIdOrKey/statuses/updateDisplayOrder
 - ❌ UpdateStatus: Updates information about Status: PATCH /api/v2/projects/:projectIdOrKey/statuses/:id
 - ❌ DeleteStatus: Deletes Status: DELETE /api/v2/projects/:projectIdOrKey/statuses/:id
