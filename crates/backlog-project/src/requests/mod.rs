@@ -242,3 +242,20 @@ impl From<&DeleteStatusParams> for Vec<(String, String)> {
         )]
     }
 }
+
+#[cfg(feature = "writable")]
+#[derive(Debug, Clone)]
+pub struct UpdateStatusOrderParams {
+    pub status_ids: Vec<backlog_core::identifier::StatusId>,
+}
+
+#[cfg(feature = "writable")]
+impl From<&UpdateStatusOrderParams> for Vec<(String, String)> {
+    fn from(params: &UpdateStatusOrderParams) -> Self {
+        let mut seq = Vec::new();
+        for status_id in &params.status_ids {
+            seq.push(("statusId[]".to_string(), status_id.to_string()));
+        }
+        seq
+    }
+}

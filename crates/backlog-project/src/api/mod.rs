@@ -309,6 +309,23 @@ impl ProjectApi {
         let params_vec: Vec<(String, String)> = params.into();
         self.0.delete_with_params(&path, &params_vec).await
     }
+
+    /// Updates the display order of statuses in a project.
+    ///
+    /// Corresponds to `PATCH /api/v2/projects/:projectIdOrKey/statuses/updateDisplayOrder`.
+    #[cfg(feature = "writable")]
+    pub async fn update_status_order(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        params: &crate::requests::UpdateStatusOrderParams,
+    ) -> Result<Vec<Status>> {
+        let path = format!(
+            "/api/v2/projects/{}/statuses/updateDisplayOrder",
+            project_id_or_key.into()
+        );
+        let params_vec: Vec<(String, String)> = params.into();
+        self.0.patch(&path, &params_vec).await
+    }
 }
 
 type GetVersionMilestoneListResponse = Vec<Milestone>;
@@ -2778,6 +2795,158 @@ mod tests {
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 400);
             assert_eq!(errors[0].message, "No such substitute status.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_status_order_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+
+        let expected_statuses = vec![
+            Status {
+                id: StatusId::new(1),
+                project_id,
+                name: "未対応".to_string(),
+                color: "#ed8077".to_string(),
+                display_order: 1,
+            },
+            Status {
+                id: StatusId::new(3),
+                project_id,
+                name: "処理済み".to_string(),
+                color: "#5eb5a6".to_string(),
+                display_order: 2,
+            },
+            Status {
+                id: StatusId::new(2),
+                project_id,
+                name: "処理中".to_string(),
+                color: "#4488c5".to_string(),
+                display_order: 3,
+            },
+            Status {
+                id: StatusId::new(4),
+                project_id,
+                name: "完了".to_string(),
+                color: "#b0be3c".to_string(),
+                display_order: 4,
+            },
+        ];
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/123/statuses/updateDisplayOrder"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_statuses))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateStatusOrderParams {
+            status_ids: vec![
+                StatusId::new(1),
+                StatusId::new(3),
+                StatusId::new(2),
+                StatusId::new(4),
+            ],
+        };
+        let result = project_api
+            .update_status_order(project_id, &params)
+            .await;
+        assert!(result.is_ok());
+        let statuses = result.unwrap();
+        assert_eq!(statuses.len(), 4);
+        assert_eq!(statuses[0].id, StatusId::new(1));
+        assert_eq!(statuses[1].id, StatusId::new(3));
+        assert_eq!(statuses[2].id, StatusId::new(2));
+        assert_eq!(statuses[3].id, StatusId::new(4));
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_status_order_incomplete_list() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "Incomplete status list. All statuses must be included.",
+                    "code": 6,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/123/statuses/updateDisplayOrder"))
+            .respond_with(ResponseTemplate::new(400).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateStatusOrderParams {
+            status_ids: vec![
+                StatusId::new(1),
+                StatusId::new(2),
+                // Missing status IDs 3 and 4
+            ],
+        };
+        let result = project_api
+            .update_status_order(project_id, &params)
+            .await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 400);
+            assert_eq!(errors[0].message, "Incomplete status list. All statuses must be included.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_status_order_project_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(999);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such project.",
+                    "code": 6,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/999/statuses/updateDisplayOrder"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateStatusOrderParams {
+            status_ids: vec![
+                StatusId::new(1),
+                StatusId::new(2),
+                StatusId::new(3),
+                StatusId::new(4),
+            ],
+        };
+        let result = project_api
+            .update_status_order(project_id, &params)
+            .await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such project.");
         } else {
             panic!("Expected ApiError::HttpStatus, got {:?}", result);
         }

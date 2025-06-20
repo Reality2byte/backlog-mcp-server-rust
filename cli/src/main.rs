@@ -18,7 +18,7 @@ use backlog_project::requests::GetProjectParams;
 use backlog_project::requests::{
     AddCategoryParams, AddIssueTypeParams, AddStatusParams, AddVersionParams,
     DeleteIssueTypeParams, DeleteStatusParams, UpdateCategoryParams, UpdateIssueTypeParams,
-    UpdateStatusParams, UpdateVersionParams,
+    UpdateStatusParams, UpdateStatusOrderParams, UpdateVersionParams,
 };
 use clap::{Args, Parser};
 use std::env;
@@ -537,6 +537,16 @@ enum ProjectCommands {
         /// Substitute status ID for existing issues
         #[clap(long)]
         substitute_status_id: u32,
+    },
+    /// Update the display order of statuses in a project
+    #[cfg(feature = "project_writable")]
+    StatusOrderUpdate {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Status IDs in desired display order (comma-separated)
+        #[clap(long)]
+        status_ids: String,
     },
     /// Download project icon
     Icon {
@@ -1780,6 +1790,59 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::StatusOrderUpdate {
+                project_id_or_key,
+                status_ids,
+            } => {
+                println!(
+                    "Updating status order in project: {} with IDs: {}",
+                    project_id_or_key, status_ids
+                );
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+
+                // Parse comma-separated status IDs
+                let parsed_status_ids: Result<Vec<StatusId>, _> = status_ids
+                    .split(',')
+                    .map(|s| s.trim().parse::<u32>().map(StatusId::new))
+                    .collect();
+
+                let status_id_vec = match parsed_status_ids {
+                    Ok(ids) => ids,
+                    Err(e) => {
+                        eprintln!("❌ Error parsing status IDs '{}': {}", status_ids, e);
+                        std::process::exit(1);
+                    }
+                };
+
+                let params = UpdateStatusOrderParams {
+                    status_ids: status_id_vec,
+                };
+
+                match client
+                    .project()
+                    .update_status_order(proj_id_or_key, &params)
+                    .await
+                {
+                    Ok(statuses) => {
+                        println!("✅ Status order updated successfully:");
+                        for (index, status) in statuses.iter().enumerate() {
+                            println!(
+                                "{}. [{}] {} (Color: {})",
+                                index + 1,
+                                status.id,
+                                status.name,
+                                status.color
+                            );
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to update status order: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
             #[cfg(not(feature = "project_writable"))]
             ProjectCommands::CategoryAdd { .. }
             | ProjectCommands::CategoryUpdate { .. }
@@ -1792,7 +1855,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             | ProjectCommands::VersionDelete { .. }
             | ProjectCommands::StatusAdd { .. }
             | ProjectCommands::StatusUpdate { .. }
-            | ProjectCommands::StatusDelete { .. } => {
+            | ProjectCommands::StatusDelete { .. }
+            | ProjectCommands::StatusOrderUpdate { .. } => {
                 eprintln!(
                     "Category, issue type, version, and status management is not available. Please build with 'project_writable' feature."
                 );
