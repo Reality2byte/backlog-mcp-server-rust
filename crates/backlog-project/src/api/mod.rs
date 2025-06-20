@@ -290,6 +290,25 @@ impl ProjectApi {
         let params_vec: Vec<(String, String)> = params.into();
         self.0.patch(&path, &params_vec).await
     }
+
+    /// Deletes a status from a project.
+    ///
+    /// Corresponds to `DELETE /api/v2/projects/:projectIdOrKey/statuses/:id`.
+    #[cfg(feature = "writable")]
+    pub async fn delete_status(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        status_id: impl Into<backlog_core::identifier::StatusId>,
+        params: &crate::requests::DeleteStatusParams,
+    ) -> Result<Status> {
+        let path = format!(
+            "/api/v2/projects/{}/statuses/{}",
+            project_id_or_key.into(),
+            status_id.into()
+        );
+        let params_vec: Vec<(String, String)> = params.into();
+        self.0.delete_with_params(&path, &params_vec).await
+    }
 }
 
 type GetVersionMilestoneListResponse = Vec<Milestone>;
@@ -2431,7 +2450,9 @@ mod tests {
             name: Some("更新されたレビュー".to_string()),
             color: Some(backlog_domain_models::StatusColor::Blue),
         };
-        let result = project_api.update_status(project_id, status_id, &params).await;
+        let result = project_api
+            .update_status(project_id, status_id, &params)
+            .await;
         assert!(result.is_ok());
         let status = result.unwrap();
         assert_eq!(status.name, "更新されたレビュー");
@@ -2457,7 +2478,10 @@ mod tests {
         };
 
         Mock::given(method("PATCH"))
-            .and(path(format!("/api/v2/projects/{}/statuses/101", project_key)))
+            .and(path(format!(
+                "/api/v2/projects/{}/statuses/101",
+                project_key
+            )))
             .respond_with(ResponseTemplate::new(200).set_body_json(&expected_status))
             .mount(&server)
             .await;
@@ -2467,7 +2491,11 @@ mod tests {
             color: None,
         };
         let result = project_api
-            .update_status(ProjectIdOrKey::from_str(project_key).unwrap(), status_id, &params)
+            .update_status(
+                ProjectIdOrKey::from_str(project_key).unwrap(),
+                status_id,
+                &params,
+            )
             .await;
         assert!(result.is_ok());
         let status = result.unwrap();
@@ -2502,7 +2530,9 @@ mod tests {
             name: None,
             color: Some(backlog_domain_models::StatusColor::Green),
         };
-        let result = project_api.update_status(project_id, status_id, &params).await;
+        let result = project_api
+            .update_status(project_id, status_id, &params)
+            .await;
         assert!(result.is_ok());
         let status = result.unwrap();
         assert_eq!(status.name, "レビュー待ち");
@@ -2539,7 +2569,9 @@ mod tests {
             color: Some(backlog_domain_models::StatusColor::Red),
         };
 
-        let result = project_api.update_status(project_id, status_id, &params).await;
+        let result = project_api
+            .update_status(project_id, status_id, &params)
+            .await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
@@ -2579,11 +2611,173 @@ mod tests {
             color: None,
         };
 
-        let result = project_api.update_status(project_id, status_id, &params).await;
+        let result = project_api
+            .update_status(project_id, status_id, &params)
+            .await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
             assert_eq!(errors[0].message, "No such project.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_delete_status_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+        let status_id = StatusId::new(101);
+        let substitute_status_id = StatusId::new(1);
+
+        let expected_status = Status {
+            id: status_id,
+            project_id,
+            name: "削除されたステータス".to_string(),
+            color: "#e87758".to_string(),
+            display_order: 3999,
+        };
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/projects/123/statuses/101"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_status))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::DeleteStatusParams {
+            substitute_status_id,
+        };
+        let result = project_api
+            .delete_status(project_id, status_id, &params)
+            .await;
+        assert!(result.is_ok());
+        let status = result.unwrap();
+        assert_eq!(status.name, "削除されたステータス");
+        assert_eq!(status.id, status_id);
+        assert_eq!(status.color, "#e87758");
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_delete_status_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+        let status_id = StatusId::new(999);
+        let substitute_status_id = StatusId::new(1);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such status.",
+                    "code": 6,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/projects/123/statuses/999"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::DeleteStatusParams {
+            substitute_status_id,
+        };
+        let result = project_api
+            .delete_status(project_id, status_id, &params)
+            .await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such status.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_delete_status_project_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(999);
+        let status_id = StatusId::new(1);
+        let substitute_status_id = StatusId::new(2);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such project.",
+                    "code": 6,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/projects/999/statuses/1"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::DeleteStatusParams {
+            substitute_status_id,
+        };
+        let result = project_api
+            .delete_status(project_id, status_id, &params)
+            .await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such project.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_delete_status_substitute_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+        let status_id = StatusId::new(101);
+        let substitute_status_id = StatusId::new(999);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such substitute status.",
+                    "code": 6,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/projects/123/statuses/101"))
+            .respond_with(ResponseTemplate::new(400).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::DeleteStatusParams {
+            substitute_status_id,
+        };
+        let result = project_api
+            .delete_status(project_id, status_id, &params)
+            .await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 400);
+            assert_eq!(errors[0].message, "No such substitute status.");
         } else {
             panic!("Expected ApiError::HttpStatus, got {:?}", result);
         }

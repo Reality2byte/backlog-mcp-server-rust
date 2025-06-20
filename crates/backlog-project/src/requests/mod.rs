@@ -214,15 +214,31 @@ pub struct UpdateStatusParams {
 impl From<&UpdateStatusParams> for Vec<(String, String)> {
     fn from(params: &UpdateStatusParams) -> Self {
         let mut seq = Vec::new();
-        
+
         if let Some(name) = &params.name {
             seq.push(("name".to_string(), name.clone()));
         }
-        
+
         if let Some(color) = &params.color {
             seq.push(("color".to_string(), color.as_hex().to_string()));
         }
-        
+
         seq
+    }
+}
+
+#[cfg(feature = "writable")]
+#[derive(Debug, Clone)]
+pub struct DeleteStatusParams {
+    pub substitute_status_id: backlog_core::identifier::StatusId,
+}
+
+#[cfg(feature = "writable")]
+impl From<&DeleteStatusParams> for Vec<(String, String)> {
+    fn from(params: &DeleteStatusParams) -> Self {
+        vec![(
+            "substituteStatusId".to_string(),
+            params.substitute_status_id.to_string(),
+        )]
     }
 }

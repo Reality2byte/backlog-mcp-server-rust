@@ -17,7 +17,8 @@ use backlog_project::requests::GetProjectParams;
 #[cfg(feature = "project_writable")]
 use backlog_project::requests::{
     AddCategoryParams, AddIssueTypeParams, AddStatusParams, AddVersionParams,
-    DeleteIssueTypeParams, UpdateCategoryParams, UpdateIssueTypeParams, UpdateStatusParams, UpdateVersionParams,
+    DeleteIssueTypeParams, DeleteStatusParams, UpdateCategoryParams, UpdateIssueTypeParams,
+    UpdateStatusParams, UpdateVersionParams,
 };
 use clap::{Args, Parser};
 use std::env;
@@ -523,6 +524,19 @@ enum ProjectCommands {
         /// New status color (optional: red, coral, pink, light-purple, blue, green, light-green, orange, magenta, dark-gray)
         #[clap(short, long)]
         color: Option<String>,
+    },
+    /// Delete a status from a project
+    #[cfg(feature = "project_writable")]
+    StatusDelete {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Status ID to delete
+        #[clap(long)]
+        status_id: u32,
+        /// Substitute status ID for existing issues
+        #[clap(long)]
+        substitute_status_id: u32,
     },
     /// Download project icon
     Icon {
@@ -1699,7 +1713,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let status_id_val = StatusId::new(status_id);
-                
+
                 let parsed_color = if let Some(color_str) = &color {
                     Some(StatusColor::from_str(color_str)?)
                 } else {
@@ -1711,7 +1725,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     color: parsed_color,
                 };
 
-                match client.project().update_status(proj_id_or_key, status_id_val, &params).await {
+                match client
+                    .project()
+                    .update_status(proj_id_or_key, status_id_val, &params)
+                    .await
+                {
                     Ok(status) => {
                         println!("✅ Status updated successfully:");
                         println!("ID: {}", status.id);
@@ -1721,6 +1739,43 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to update status: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::StatusDelete {
+                project_id_or_key,
+                status_id,
+                substitute_status_id,
+            } => {
+                println!(
+                    "Deleting status {} from project: {} (substitute: {})",
+                    status_id, project_id_or_key, substitute_status_id
+                );
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let status_id_val = StatusId::new(status_id);
+                let substitute_id = StatusId::new(substitute_status_id);
+
+                let params = DeleteStatusParams {
+                    substitute_status_id: substitute_id,
+                };
+
+                match client
+                    .project()
+                    .delete_status(proj_id_or_key, status_id_val, &params)
+                    .await
+                {
+                    Ok(status) => {
+                        println!("✅ Status deleted successfully:");
+                        println!("ID: {}", status.id);
+                        println!("Name: {}", status.name);
+                        println!("Color: {}", status.color);
+                        println!("Display Order: {}", status.display_order);
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to delete status: {}", e);
                         std::process::exit(1);
                     }
                 }
@@ -1736,7 +1791,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             | ProjectCommands::VersionUpdate { .. }
             | ProjectCommands::VersionDelete { .. }
             | ProjectCommands::StatusAdd { .. }
-            | ProjectCommands::StatusUpdate { .. } => {
+            | ProjectCommands::StatusUpdate { .. }
+            | ProjectCommands::StatusDelete { .. } => {
                 eprintln!(
                     "Category, issue type, version, and status management is not available. Please build with 'project_writable' feature."
                 );
