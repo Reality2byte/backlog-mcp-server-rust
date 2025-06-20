@@ -202,3 +202,27 @@ impl From<&AddStatusParams> for Vec<(String, String)> {
         ]
     }
 }
+
+#[cfg(feature = "writable")]
+#[derive(Debug, Clone)]
+pub struct UpdateStatusParams {
+    pub name: Option<String>,
+    pub color: Option<backlog_domain_models::StatusColor>,
+}
+
+#[cfg(feature = "writable")]
+impl From<&UpdateStatusParams> for Vec<(String, String)> {
+    fn from(params: &UpdateStatusParams) -> Self {
+        let mut seq = Vec::new();
+        
+        if let Some(name) = &params.name {
+            seq.push(("name".to_string(), name.clone()));
+        }
+        
+        if let Some(color) = &params.color {
+            seq.push(("color".to_string(), color.as_hex().to_string()));
+        }
+        
+        seq
+    }
+}

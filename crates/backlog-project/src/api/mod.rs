@@ -271,6 +271,25 @@ impl ProjectApi {
         let params_vec: Vec<(String, String)> = params.into();
         self.0.post(&path, &params_vec).await
     }
+
+    /// Updates a status in a project.
+    ///
+    /// Corresponds to `PATCH /api/v2/projects/:projectIdOrKey/statuses/:id`.
+    #[cfg(feature = "writable")]
+    pub async fn update_status(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        status_id: impl Into<backlog_core::identifier::StatusId>,
+        params: &crate::requests::UpdateStatusParams,
+    ) -> Result<Status> {
+        let path = format!(
+            "/api/v2/projects/{}/statuses/{}",
+            project_id_or_key.into(),
+            status_id.into()
+        );
+        let params_vec: Vec<(String, String)> = params.into();
+        self.0.patch(&path, &params_vec).await
+    }
 }
 
 type GetVersionMilestoneListResponse = Vec<Milestone>;
@@ -2380,6 +2399,191 @@ mod tests {
                 errors[0].message,
                 "Status limit exceeded. Maximum 8 custom statuses allowed."
             );
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_status_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+        let status_id = StatusId::new(101);
+
+        let expected_status = Status {
+            id: status_id,
+            project_id,
+            name: "更新されたレビュー".to_string(),
+            color: "#3b9dbd".to_string(),
+            display_order: 3999,
+        };
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/123/statuses/101"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_status))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateStatusParams {
+            name: Some("更新されたレビュー".to_string()),
+            color: Some(backlog_domain_models::StatusColor::Blue),
+        };
+        let result = project_api.update_status(project_id, status_id, &params).await;
+        assert!(result.is_ok());
+        let status = result.unwrap();
+        assert_eq!(status.name, "更新されたレビュー");
+        assert_eq!(status.id, status_id);
+        assert_eq!(status.color, "#3b9dbd");
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_status_partial_update_name_only() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_key = "TEST_PROJECT";
+        let status_id = StatusId::new(101);
+
+        let expected_status = Status {
+            id: status_id,
+            project_id: ProjectId::new(456),
+            name: "名前のみ更新".to_string(),
+            color: "#e87758".to_string(), // 色は変更されない
+            display_order: 3999,
+        };
+
+        Mock::given(method("PATCH"))
+            .and(path(format!("/api/v2/projects/{}/statuses/101", project_key)))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_status))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateStatusParams {
+            name: Some("名前のみ更新".to_string()),
+            color: None,
+        };
+        let result = project_api
+            .update_status(ProjectIdOrKey::from_str(project_key).unwrap(), status_id, &params)
+            .await;
+        assert!(result.is_ok());
+        let status = result.unwrap();
+        assert_eq!(status.name, "名前のみ更新");
+        assert_eq!(status.color, "#e87758");
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_status_partial_update_color_only() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+        let status_id = StatusId::new(101);
+
+        let expected_status = Status {
+            id: status_id,
+            project_id,
+            name: "レビュー待ち".to_string(), // 名前は変更されない
+            color: "#4caf93".to_string(),
+            display_order: 3999,
+        };
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/123/statuses/101"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_status))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateStatusParams {
+            name: None,
+            color: Some(backlog_domain_models::StatusColor::Green),
+        };
+        let result = project_api.update_status(project_id, status_id, &params).await;
+        assert!(result.is_ok());
+        let status = result.unwrap();
+        assert_eq!(status.name, "レビュー待ち");
+        assert_eq!(status.color, "#4caf93");
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_status_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+        let status_id = StatusId::new(999);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such status.",
+                    "code": 15,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/123/statuses/999"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateStatusParams {
+            name: Some("存在しないステータス".to_string()),
+            color: Some(backlog_domain_models::StatusColor::Red),
+        };
+
+        let result = project_api.update_status(project_id, status_id, &params).await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such status.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_status_project_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(999);
+        let status_id = StatusId::new(101);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such project.",
+                    "code": 6,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/999/statuses/101"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let params = crate::requests::UpdateStatusParams {
+            name: Some("プロジェクトなし".to_string()),
+            color: None,
+        };
+
+        let result = project_api.update_status(project_id, status_id, &params).await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such project.");
         } else {
             panic!("Expected ApiError::HttpStatus, got {:?}", result);
         }

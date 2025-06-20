@@ -17,7 +17,7 @@ use backlog_project::requests::GetProjectParams;
 #[cfg(feature = "project_writable")]
 use backlog_project::requests::{
     AddCategoryParams, AddIssueTypeParams, AddStatusParams, AddVersionParams,
-    DeleteIssueTypeParams, UpdateCategoryParams, UpdateIssueTypeParams, UpdateVersionParams,
+    DeleteIssueTypeParams, UpdateCategoryParams, UpdateIssueTypeParams, UpdateStatusParams, UpdateVersionParams,
 };
 use clap::{Args, Parser};
 use std::env;
@@ -507,6 +507,22 @@ enum ProjectCommands {
         /// Status color (red, coral, pink, light-purple, blue, green, light-green, orange, magenta, dark-gray)
         #[clap(short, long)]
         color: String,
+    },
+    /// Update a status in a project
+    #[cfg(feature = "project_writable")]
+    StatusUpdate {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Status ID to update
+        #[clap(long)]
+        status_id: u32,
+        /// New status name (optional)
+        #[clap(short, long)]
+        name: Option<String>,
+        /// New status color (optional: red, coral, pink, light-purple, blue, green, light-green, orange, magenta, dark-gray)
+        #[clap(short, long)]
+        color: Option<String>,
     },
     /// Download project icon
     Icon {
@@ -1669,6 +1685,46 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::StatusUpdate {
+                project_id_or_key,
+                status_id,
+                name,
+                color,
+            } => {
+                println!(
+                    "Updating status {} in project: {}",
+                    status_id, project_id_or_key
+                );
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let status_id_val = StatusId::new(status_id);
+                
+                let parsed_color = if let Some(color_str) = &color {
+                    Some(StatusColor::from_str(color_str)?)
+                } else {
+                    None
+                };
+
+                let params = UpdateStatusParams {
+                    name: name.clone(),
+                    color: parsed_color,
+                };
+
+                match client.project().update_status(proj_id_or_key, status_id_val, &params).await {
+                    Ok(status) => {
+                        println!("✅ Status updated successfully:");
+                        println!("ID: {}", status.id);
+                        println!("Name: {}", status.name);
+                        println!("Color: {}", status.color);
+                        println!("Display Order: {}", status.display_order);
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to update status: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
             #[cfg(not(feature = "project_writable"))]
             ProjectCommands::CategoryAdd { .. }
             | ProjectCommands::CategoryUpdate { .. }
@@ -1679,7 +1735,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             | ProjectCommands::VersionAdd { .. }
             | ProjectCommands::VersionUpdate { .. }
             | ProjectCommands::VersionDelete { .. }
-            | ProjectCommands::StatusAdd { .. } => {
+            | ProjectCommands::StatusAdd { .. }
+            | ProjectCommands::StatusUpdate { .. } => {
                 eprintln!(
                     "Category, issue type, version, and status management is not available. Please build with 'project_writable' feature."
                 );
