@@ -485,6 +485,16 @@ enum ProjectCommands {
         #[clap(long)]
         archived: Option<bool>,
     },
+    /// Delete a version/milestone from a project
+    #[cfg(feature = "project_writable")]
+    VersionDelete {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Version ID to delete
+        #[clap(long)]
+        version_id: u32,
+    },
     /// Download project icon
     Icon {
         /// Project ID or Key
@@ -1573,6 +1583,49 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::VersionDelete {
+                project_id_or_key,
+                version_id,
+            } => {
+                println!(
+                    "Deleting version/milestone {} from project: {}",
+                    version_id, project_id_or_key
+                );
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let version_id_val = MilestoneId::new(version_id);
+
+                match client
+                    .project()
+                    .delete_version(proj_id_or_key, version_id_val)
+                    .await
+                {
+                    Ok(milestone) => {
+                        println!("Version/milestone deleted successfully:");
+                        println!("[{}] {}", milestone.id, milestone.name);
+                        if let Some(desc) = &milestone.description {
+                            println!("  Description: {}", desc);
+                        }
+                        if let Some(start_date) = &milestone.start_date {
+                            println!("  Start Date: {}", start_date.format("%Y-%m-%d"));
+                        }
+                        if let Some(release_due_date) = &milestone.release_due_date {
+                            println!(
+                                "  Release Due Date: {}",
+                                release_due_date.format("%Y-%m-%d")
+                            );
+                        }
+                        println!("  Archived: {}", milestone.archived);
+                        if let Some(display_order) = milestone.display_order {
+                            println!("  Display Order: {}", display_order);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error deleting version/milestone: {}", e);
+                    }
+                }
+            }
             #[cfg(not(feature = "project_writable"))]
             ProjectCommands::CategoryAdd { .. }
             | ProjectCommands::CategoryUpdate { .. }
@@ -1581,7 +1634,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             | ProjectCommands::IssueTypeDelete { .. }
             | ProjectCommands::IssueTypeUpdate { .. }
             | ProjectCommands::VersionAdd { .. }
-            | ProjectCommands::VersionUpdate { .. } => {
+            | ProjectCommands::VersionUpdate { .. }
+            | ProjectCommands::VersionDelete { .. } => {
                 eprintln!(
                     "Category, issue type, and version management is not available. Please build with 'project_writable' feature."
                 );

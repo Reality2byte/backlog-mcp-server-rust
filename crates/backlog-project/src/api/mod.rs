@@ -240,6 +240,23 @@ impl ProjectApi {
         let params_vec: Vec<(String, String)> = params.into();
         self.0.patch(&path, &params_vec).await
     }
+
+    /// Deletes a version/milestone from a project.
+    ///
+    /// Corresponds to `DELETE /api/v2/projects/:projectIdOrKey/versions/:id`.
+    #[cfg(feature = "writable")]
+    pub async fn delete_version(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        version_id: impl Into<backlog_core::identifier::MilestoneId>,
+    ) -> Result<Milestone> {
+        let path = format!(
+            "/api/v2/projects/{}/versions/{}",
+            project_id_or_key.into(),
+            version_id.into()
+        );
+        self.0.delete(&path).await
+    }
 }
 
 type GetVersionMilestoneListResponse = Vec<Milestone>;
@@ -2050,6 +2067,146 @@ mod tests {
         let result = project_api
             .update_version(project_id, version_id, &params)
             .await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such project.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_delete_version_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+        let version_id = MilestoneId::new(1);
+
+        let expected_milestone = Milestone {
+            id: version_id,
+            project_id,
+            name: "Version 1.0".to_string(),
+            description: Some("Initial release".to_string()),
+            start_date: Some(chrono::Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap()),
+            release_due_date: Some(chrono::Utc.with_ymd_and_hms(2023, 1, 31, 0, 0, 0).unwrap()),
+            archived: false,
+            display_order: Some(1),
+        };
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/projects/123/versions/1"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_milestone))
+            .mount(&server)
+            .await;
+
+        let result = project_api.delete_version(project_id, version_id).await;
+        assert!(result.is_ok());
+        let milestone = result.unwrap();
+        assert_eq!(milestone.name, "Version 1.0");
+        assert_eq!(milestone.id, version_id);
+        assert_eq!(milestone.project_id, project_id);
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_delete_version_with_project_key() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_key = "TEST_PROJECT";
+        let version_id = MilestoneId::new(5);
+
+        let expected_milestone = Milestone {
+            id: version_id,
+            project_id: ProjectId::new(456),
+            name: "Version 2.0".to_string(),
+            description: Some("Major update".to_string()),
+            start_date: None,
+            release_due_date: Some(chrono::Utc.with_ymd_and_hms(2024, 12, 31, 0, 0, 0).unwrap()),
+            archived: true,
+            display_order: Some(2),
+        };
+
+        Mock::given(method("DELETE"))
+            .and(path(format!("/api/v2/projects/{}/versions/5", project_key)))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_milestone))
+            .mount(&server)
+            .await;
+
+        let result = project_api
+            .delete_version(ProjectIdOrKey::from_str(project_key).unwrap(), version_id)
+            .await;
+        assert!(result.is_ok());
+        let milestone = result.unwrap();
+        assert_eq!(milestone.name, "Version 2.0");
+        assert_eq!(milestone.id, version_id);
+        assert!(milestone.archived);
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_delete_version_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(123);
+        let version_id = MilestoneId::new(999);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such version.",
+                    "code": 8,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/projects/123/versions/999"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let result = project_api.delete_version(project_id, version_id).await;
+        assert!(result.is_err());
+        if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
+            assert_eq!(status, 404);
+            assert_eq!(errors[0].message, "No such version.");
+        } else {
+            panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        }
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_delete_version_project_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let project_api = ProjectApi::new(client);
+        let project_id = ProjectId::new(999);
+        let version_id = MilestoneId::new(1);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No such project.",
+                    "code": 6,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/projects/999/versions/1"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
+            .mount(&server)
+            .await;
+
+        let result = project_api.delete_version(project_id, version_id).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
