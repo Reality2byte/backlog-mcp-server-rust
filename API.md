@@ -28,8 +28,8 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Write operations** (requires `writable` feature): add_pull_request_comment(), update_pull_request()
 
 ### backlog-user (UserApi)
-- **Implemented**: 3/7 endpoints (43%)
-- **Read operations**: get_own_user(), get_user_list(), get_user_icon()
+- **Implemented**: 4/7 endpoints (57%)
+- **Read operations**: get_own_user(), get_user_list(), get_user(), get_user_icon()
 
 ### backlog-document (DocumentApi)
 - **Implemented**: 4/? endpoints (Document-specific API is not fully documented in the official API)
@@ -232,7 +232,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 ### Users
 - ✅ GetOwnUser: Returns own information about user: GET /api/v2/users/myself
 - ✅ GetUserList: Returns list of users in your space: GET /api/v2/users
-- ❌ GetUser: Returns information about user: GET /api/v2/users/:userId
+- ✅ GetUser: Returns information about user: GET /api/v2/users/:userId
 - ✅ GetUserIcon: Downloads user icon: GET /api/v2/users/:userId/icon
 - ❌ (Classic) AddUser: Adds new user to the space. “Project Administrator” cannot add “Admin” user. You can’t use this API at new plan space: POST /api/v2/users
 - ❌ (Classic) UpdateUser: Updates information about user. You can’t use this API at new plan space: PATCH /api/v2/users/:userId

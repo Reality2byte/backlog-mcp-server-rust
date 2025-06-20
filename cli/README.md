@@ -202,3 +202,9 @@ The `blg` CLI currently supports the following commands:
   - `--assignee-id <ID>` - Assign to a user
   - `--notify-user-ids <ID1,ID2>` - Notify users (comma-separated)
   - `--comment <TEXT>` - Add a comment with the update
+
+### User Commands
+- `user list` - List all users in the space
+- `user me` - Get information about the authenticated user
+- `user show <USER_ID>` - Show detailed information about a specific user (requires `user` feature)
+- `user icon <USER_ID> --output <FILE_PATH>` - Download user icon to a file

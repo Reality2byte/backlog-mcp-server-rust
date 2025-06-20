@@ -104,7 +104,7 @@ enum PrCommands {
         #[clap(short, long)]
         repo_id: String,
         /// Pull Request number
-        #[clap(short, long)]
+        #[clap(short = 'n', long)]
         pr_number: u64,
     },
     /// Download a pull request attachment
@@ -606,6 +606,12 @@ enum UserCommands {
     List,
     /// Get current user info
     Me,
+    /// Show user details
+    Show {
+        /// User ID
+        #[clap(name = "USER_ID")]
+        user_id: u32,
+    },
     /// Download user icon
     Icon {
         /// User ID
@@ -2087,6 +2093,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error getting user info: {}", e);
+                    }
+                }
+            }
+            UserCommands::Show { user_id } => {
+                println!("Getting user info for user ID: {}", user_id);
+
+                match client.user().get_user(user_id).await {
+                    Ok(user) => {
+                        println!("✅ User found");
+                        println!("ID: {}", user.id);
+                        if let Some(login_id) = &user.user_id {
+                            println!("Login ID: {}", login_id);
+                        }
+                        println!("Name: {}", user.name);
+                        println!("Role: {}", user.role_type);
+                        if !user.mail_address.is_empty() {
+                            println!("Email: {}", user.mail_address);
+                        }
+                        if let Some(lang) = &user.lang {
+                            println!("Language: {}", lang);
+                        }
+                        if let Some(last_login) = &user.last_login_time {
+                            println!("Last Login: {}", last_login);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to get user: {}", e);
+                        std::process::exit(1);
                     }
                 }
             }

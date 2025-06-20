@@ -16,3 +16,7 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 chrono = { workspace = true }
 tokio = { workspace = true }
+
+[dev-dependencies]
+client = { path = "../client", features = ["test-utils"] }
+wiremock = { workspace = true }
