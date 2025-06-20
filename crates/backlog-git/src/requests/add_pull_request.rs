@@ -3,7 +3,7 @@ use backlog_core::identifier::{AttachmentId, Identifier, IssueId, UserId};
 use derive_builder::Builder;
 
 /// Parameters for creating a new pull request.
-/// 
+///
 /// Corresponds to `POST /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests`.
 #[cfg(feature = "writable")]
 #[derive(Builder, Debug, Clone)]
@@ -11,28 +11,28 @@ use derive_builder::Builder;
 pub struct AddPullRequestParams {
     /// Pull request title (required)
     pub summary: String,
-    
+
     /// Pull request description (required)
     pub description: String,
-    
+
     /// Target merge branch name (required)
     pub base: String,
-    
+
     /// Source branch name to be merged (required)
     pub branch: String,
-    
+
     /// Related issue ID (optional)
     #[builder(default, setter(strip_option))]
     pub issue_id: Option<IssueId>,
-    
+
     /// Pull request assignee user ID (optional)
     #[builder(default, setter(strip_option))]
     pub assignee_id: Option<UserId>,
-    
+
     /// User IDs to be notified about the pull request (optional)
     #[builder(default, setter(strip_option))]
     pub notified_user_ids: Option<Vec<UserId>>,
-    
+
     /// Attachment file IDs (optional)
     #[builder(default, setter(strip_option))]
     pub attachment_ids: Option<Vec<AttachmentId>>,
@@ -66,31 +66,31 @@ impl From<&AddPullRequestParams> for Vec<(String, String)> {
             ("base".to_string(), params.base.clone()),
             ("branch".to_string(), params.branch.clone()),
         ];
-        
+
         // Optional issue ID
         if let Some(issue_id) = &params.issue_id {
             seq.push(("issueId".to_string(), issue_id.value().to_string()));
         }
-        
+
         // Optional assignee ID
         if let Some(assignee_id) = &params.assignee_id {
             seq.push(("assigneeId".to_string(), assignee_id.value().to_string()));
         }
-        
+
         // Handle notified user ID array parameters
         if let Some(user_ids) = &params.notified_user_ids {
             user_ids.iter().for_each(|id| {
                 seq.push(("notifiedUserId[]".to_string(), id.value().to_string()));
             });
         }
-        
+
         // Handle attachment ID array parameters
         if let Some(attachment_ids) = &params.attachment_ids {
             attachment_ids.iter().for_each(|id| {
                 seq.push(("attachmentId[]".to_string(), id.value().to_string()));
             });
         }
-        
+
         seq
     }
 }
@@ -98,18 +98,21 @@ impl From<&AddPullRequestParams> for Vec<(String, String)> {
 #[cfg(all(test, feature = "writable"))]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_add_pull_request_params_new() {
         let params = AddPullRequestParams::new(
             "Fix bug in user authentication",
             "This PR fixes the authentication issue found in issue #123",
             "main",
-            "feature/fix-auth"
+            "feature/fix-auth",
         );
-        
+
         assert_eq!(params.summary, "Fix bug in user authentication");
-        assert_eq!(params.description, "This PR fixes the authentication issue found in issue #123");
+        assert_eq!(
+            params.description,
+            "This PR fixes the authentication issue found in issue #123"
+        );
         assert_eq!(params.base, "main");
         assert_eq!(params.branch, "feature/fix-auth");
         assert!(params.issue_id.is_none());
@@ -117,7 +120,7 @@ mod tests {
         assert!(params.notified_user_ids.is_none());
         assert!(params.attachment_ids.is_none());
     }
-    
+
     #[test]
     fn test_add_pull_request_params_builder_minimal() {
         let params = AddPullRequestParamsBuilder::default()
@@ -127,13 +130,13 @@ mod tests {
             .branch("feature/test".to_string())
             .build()
             .unwrap();
-        
+
         assert_eq!(params.summary, "Test PR");
         assert_eq!(params.description, "Test description");
         assert_eq!(params.base, "main");
         assert_eq!(params.branch, "feature/test");
     }
-    
+
     #[test]
     fn test_add_pull_request_params_builder_full() {
         let params = AddPullRequestParamsBuilder::default()
@@ -147,42 +150,44 @@ mod tests {
             .attachment_ids(vec![AttachmentId::new(111), AttachmentId::new(222)])
             .build()
             .unwrap();
-        
+
         assert_eq!(params.summary, "Feature PR");
         assert_eq!(params.issue_id, Some(IssueId::new(123)));
         assert_eq!(params.assignee_id, Some(UserId::new(456)));
-        assert_eq!(params.notified_user_ids, Some(vec![UserId::new(789), UserId::new(101112)]));
-        assert_eq!(params.attachment_ids, Some(vec![AttachmentId::new(111), AttachmentId::new(222)]));
+        assert_eq!(
+            params.notified_user_ids,
+            Some(vec![UserId::new(789), UserId::new(101112)])
+        );
+        assert_eq!(
+            params.attachment_ids,
+            Some(vec![AttachmentId::new(111), AttachmentId::new(222)])
+        );
     }
-    
+
     #[test]
     fn test_add_pull_request_params_builder_missing_required() {
         let result = AddPullRequestParamsBuilder::default()
             .summary("Test".to_string())
             // Missing description, base, branch
             .build();
-        
+
         assert!(result.is_err());
     }
-    
+
     #[test]
     fn test_add_pull_request_params_to_form_minimal() {
-        let params = AddPullRequestParams::new(
-            "Test PR",
-            "Test description",
-            "main",
-            "feature/test"
-        );
-        
+        let params =
+            AddPullRequestParams::new("Test PR", "Test description", "main", "feature/test");
+
         let form_params: Vec<(String, String)> = (&params).into();
-        
+
         assert_eq!(form_params.len(), 4);
         assert!(form_params.contains(&("summary".to_string(), "Test PR".to_string())));
         assert!(form_params.contains(&("description".to_string(), "Test description".to_string())));
         assert!(form_params.contains(&("base".to_string(), "main".to_string())));
         assert!(form_params.contains(&("branch".to_string(), "feature/test".to_string())));
     }
-    
+
     #[test]
     fn test_add_pull_request_params_to_form_with_optionals() {
         let params = AddPullRequestParamsBuilder::default()
@@ -196,28 +201,31 @@ mod tests {
             .attachment_ids(vec![AttachmentId::new(111)])
             .build()
             .unwrap();
-        
+
         let form_params: Vec<(String, String)> = (&params).into();
-        
+
         // 4 required + 2 single optionals + 2 notified users + 1 attachment = 9 total
         assert_eq!(form_params.len(), 9);
-        
+
         // Check required params
         assert!(form_params.contains(&("summary".to_string(), "Full PR".to_string())));
-        assert!(form_params.contains(&("description".to_string(), "Complete description".to_string())));
+        assert!(form_params.contains(&(
+            "description".to_string(),
+            "Complete description".to_string()
+        )));
         assert!(form_params.contains(&("base".to_string(), "main".to_string())));
         assert!(form_params.contains(&("branch".to_string(), "feature/full".to_string())));
-        
+
         // Check optional single params
         assert!(form_params.contains(&("issueId".to_string(), "123".to_string())));
         assert!(form_params.contains(&("assigneeId".to_string(), "456".to_string())));
-        
+
         // Check array params
         assert!(form_params.contains(&("notifiedUserId[]".to_string(), "789".to_string())));
         assert!(form_params.contains(&("notifiedUserId[]".to_string(), "101112".to_string())));
         assert!(form_params.contains(&("attachmentId[]".to_string(), "111".to_string())));
     }
-    
+
     #[test]
     fn test_add_pull_request_params_to_form_empty_arrays() {
         let params = AddPullRequestParamsBuilder::default()
@@ -229,9 +237,9 @@ mod tests {
             .attachment_ids(vec![])
             .build()
             .unwrap();
-        
+
         let form_params: Vec<(String, String)> = (&params).into();
-        
+
         // Should only have the 4 required parameters (empty arrays should not add anything)
         assert_eq!(form_params.len(), 4);
         assert!(form_params.contains(&("summary".to_string(), "Test PR".to_string())));

@@ -54,9 +54,7 @@ pub use backlog_git::{
         get_pull_request_comment_list::{
             GetPullRequestCommentListParams, GetPullRequestCommentListParamsBuilder,
         },
-        get_pull_request_list::{
-            GetPullRequestListParams, GetPullRequestListParamsBuilder,
-        },
+        get_pull_request_list::{GetPullRequestListParams, GetPullRequestListParamsBuilder},
     },
 };
 

@@ -1,10 +1,11 @@
-use backlog_api_client::{
-    AddCommentParamsBuilder, AttachmentId, GetIssueListParamsBuilder, GetPullRequestListParamsBuilder,
-    IssueIdOrKey, ProjectId, ProjectIdOrKey, PullRequestAttachmentId, PullRequestCommentId, 
-    PullRequestNumber, RepositoryIdOrName, StatusId, UserId, client::BacklogApiClient,
-};
 #[cfg(feature = "git_writable")]
 use backlog_api_client::AddPullRequestParamsBuilder;
+use backlog_api_client::{
+    AddCommentParamsBuilder, AttachmentId, GetIssueListParamsBuilder,
+    GetPullRequestListParamsBuilder, IssueIdOrKey, ProjectId, ProjectIdOrKey,
+    PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber, RepositoryIdOrName, StatusId,
+    UserId, client::BacklogApiClient,
+};
 #[cfg(feature = "git_writable")]
 use backlog_api_client::{UpdatePullRequestCommentParams, UpdatePullRequestParamsBuilder};
 #[cfg(feature = "git_writable")]
@@ -112,6 +113,10 @@ enum PrCommands {
     /// Download a pull request attachment
     #[command(about = "Download a pull request attachment")]
     DownloadAttachment(DownloadPrAttachmentArgs),
+    /// Delete a pull request attachment
+    #[cfg(feature = "git_writable")]
+    #[command(about = "Delete a pull request attachment")]
+    DeleteAttachment(DeletePrAttachmentArgs),
     /// Update a pull request
     #[cfg(feature = "git_writable")]
     Update {
@@ -254,6 +259,23 @@ struct DownloadPrAttachmentArgs {
     /// Output file path to save the attachment
     #[clap(short = 'o', long, value_name = "FILE_PATH")]
     output: PathBuf,
+}
+
+#[cfg(feature = "git_writable")]
+#[derive(Args, Debug)]
+struct DeletePrAttachmentArgs {
+    /// Project ID or Key
+    #[clap(short = 'p', long)]
+    project_id: String,
+    /// Repository ID or Name
+    #[clap(short = 'r', long)]
+    repo_id: String,
+    /// Pull Request number
+    #[clap(short = 'n', long)]
+    pr_number: u64,
+    /// The numeric ID of the attachment to delete
+    #[clap(short = 'a', long)]
+    attachment_id: u32,
 }
 
 #[derive(Parser)]
@@ -858,6 +880,52 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             #[cfg(feature = "git_writable")]
+            PrCommands::DeleteAttachment(del_args) => {
+                println!(
+                    "Deleting attachment {} from PR #{} in repo {} (project {})",
+                    del_args.attachment_id,
+                    del_args.pr_number,
+                    del_args.repo_id,
+                    del_args.project_id
+                );
+
+                let parsed_project_id =
+                    ProjectIdOrKey::from_str(&del_args.project_id).map_err(|e| {
+                        format!(
+                            "Failed to parse project_id '{}': {}",
+                            del_args.project_id, e
+                        )
+                    })?;
+                let parsed_repo_id =
+                    RepositoryIdOrName::from_str(&del_args.repo_id).map_err(|e| {
+                        format!("Failed to parse repo_id '{}': {}", del_args.repo_id, e)
+                    })?;
+                let parsed_attachment_id = PullRequestAttachmentId::new(del_args.attachment_id);
+                let parsed_pr_number = PullRequestNumber::from(del_args.pr_number);
+
+                match client
+                    .git()
+                    .delete_pull_request_attachment(
+                        parsed_project_id,
+                        parsed_repo_id,
+                        parsed_pr_number,
+                        parsed_attachment_id,
+                    )
+                    .await
+                {
+                    Ok(deleted_attachment) => {
+                        println!("✅ Attachment deleted successfully");
+                        println!("Deleted attachment ID: {}", deleted_attachment.id.value());
+                        println!("Name: {}", deleted_attachment.name);
+                        println!("Size: {} bytes", deleted_attachment.size);
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to delete PR attachment: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "git_writable")]
             PrCommands::Update {
                 project_id,
                 repo_id,
@@ -1084,10 +1152,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 // Parse issue IDs
                 if let Some(issue_ids_str) = issue_ids {
-                    let issue_ids: Result<Vec<backlog_core::identifier::IssueId>, _> = issue_ids_str
-                        .split(',')
-                        .map(|s| s.trim().parse::<u32>().map(backlog_core::identifier::IssueId::new))
-                        .collect();
+                    let issue_ids: Result<Vec<backlog_core::identifier::IssueId>, _> =
+                        issue_ids_str
+                            .split(',')
+                            .map(|s| {
+                                s.trim()
+                                    .parse::<u32>()
+                                    .map(backlog_core::identifier::IssueId::new)
+                            })
+                            .collect();
                     match issue_ids {
                         Ok(ids) => params_builder.issue_ids(ids),
                         Err(e) => {
@@ -1120,16 +1193,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     params_builder.count(count);
                 }
 
-                let params = params_builder.build()
+                let params = params_builder
+                    .build()
                     .map_err(|e| format!("Failed to build parameters: {}", e))?;
 
                 match client
                     .git()
-                    .get_pull_request_count_with_params(
-                        parsed_project_id,
-                        parsed_repo_id,
-                        &params,
-                    )
+                    .get_pull_request_count_with_params(parsed_project_id, parsed_repo_id, &params)
                     .await
                 {
                     Ok(count_response) => {
@@ -1213,16 +1283,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     };
                 }
 
-                let params = params_builder.build()
+                let params = params_builder
+                    .build()
                     .map_err(|e| format!("Failed to build parameters: {}", e))?;
 
                 match client
                     .git()
-                    .add_pull_request(
-                        parsed_project_id,
-                        parsed_repo_id,
-                        &params,
-                    )
+                    .add_pull_request(parsed_project_id, parsed_repo_id, &params)
                     .await
                 {
                     Ok(pull_request) => {

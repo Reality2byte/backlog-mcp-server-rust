@@ -3,7 +3,7 @@ use backlog_core::identifier::{Identifier, IssueId, StatusId, UserId};
 use derive_builder::Builder;
 
 /// Parameters for getting pull request list with filtering options.
-/// 
+///
 /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests`.
 #[derive(Builder, Debug, Default, Clone)]
 #[builder(default, build_fn(error = "ApiError"))]
@@ -11,23 +11,23 @@ pub struct GetPullRequestListParams {
     /// Filter by pull request status IDs
     #[builder(setter(strip_option))]
     pub status_ids: Option<Vec<StatusId>>,
-    
+
     /// Filter by assignee user IDs
     #[builder(setter(strip_option))]
     pub assignee_ids: Option<Vec<UserId>>,
-    
+
     /// Filter by related issue IDs
     #[builder(setter(strip_option))]
     pub issue_ids: Option<Vec<IssueId>>,
-    
+
     /// Filter by creator user IDs
     #[builder(setter(strip_option))]
     pub created_user_ids: Option<Vec<UserId>>,
-    
+
     /// Offset for pagination
     #[builder(setter(strip_option))]
     pub offset: Option<u32>,
-    
+
     /// Number of pull requests to retrieve (1-100, default 20)
     #[builder(setter(strip_option))]
     pub count: Option<u8>,
@@ -35,49 +35,49 @@ pub struct GetPullRequestListParams {
 
 impl GetPullRequestListParams {
     /// Convert parameters to query parameter vector for HTTP requests.
-    /// 
+    ///
     /// Handles array parameters with [] notation as required by Backlog API.
     pub fn to_query_params(&self) -> Vec<(String, String)> {
         let mut params = Vec::new();
-        
+
         // Handle status ID array parameters
         if let Some(status_ids) = &self.status_ids {
             status_ids.iter().for_each(|id| {
                 params.push(("statusId[]".to_string(), id.value().to_string()));
             });
         }
-        
+
         // Handle assignee ID array parameters
         if let Some(assignee_ids) = &self.assignee_ids {
             assignee_ids.iter().for_each(|id| {
                 params.push(("assigneeId[]".to_string(), id.value().to_string()));
             });
         }
-        
+
         // Handle issue ID array parameters
         if let Some(issue_ids) = &self.issue_ids {
             issue_ids.iter().for_each(|id| {
                 params.push(("issueId[]".to_string(), id.value().to_string()));
             });
         }
-        
+
         // Handle created user ID array parameters
         if let Some(created_user_ids) = &self.created_user_ids {
             created_user_ids.iter().for_each(|id| {
                 params.push(("createdUserId[]".to_string(), id.value().to_string()));
             });
         }
-        
+
         // Handle offset parameter
         if let Some(offset) = self.offset {
             params.push(("offset".to_string(), offset.to_string()));
         }
-        
+
         // Handle count parameter
         if let Some(count) = self.count {
             params.push(("count".to_string(), count.to_string()));
         }
-        
+
         params
     }
 }
@@ -85,27 +85,27 @@ impl GetPullRequestListParams {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_get_pull_request_list_params_empty() {
         let params = GetPullRequestListParamsBuilder::default().build().unwrap();
         let query_params = params.to_query_params();
         assert!(query_params.is_empty());
     }
-    
+
     #[test]
     fn test_get_pull_request_list_params_with_status_ids() {
         let params = GetPullRequestListParamsBuilder::default()
             .status_ids(vec![StatusId::new(1), StatusId::new(2)])
             .build()
             .unwrap();
-        
+
         let query_params = params.to_query_params();
         assert_eq!(query_params.len(), 2);
         assert!(query_params.contains(&("statusId[]".to_string(), "1".to_string())));
         assert!(query_params.contains(&("statusId[]".to_string(), "2".to_string())));
     }
-    
+
     #[test]
     fn test_get_pull_request_list_params_with_all_params() {
         let params = GetPullRequestListParamsBuilder::default()
@@ -117,7 +117,7 @@ mod tests {
             .count(50)
             .build()
             .unwrap();
-        
+
         let query_params = params.to_query_params();
         assert_eq!(query_params.len(), 6);
         assert!(query_params.contains(&("statusId[]".to_string(), "1".to_string())));
@@ -127,7 +127,7 @@ mod tests {
         assert!(query_params.contains(&("offset".to_string(), "10".to_string())));
         assert!(query_params.contains(&("count".to_string(), "50".to_string())));
     }
-    
+
     #[test]
     fn test_get_pull_request_list_params_with_multiple_arrays() {
         let params = GetPullRequestListParamsBuilder::default()
@@ -135,15 +135,15 @@ mod tests {
             .assignee_ids(vec![UserId::new(100), UserId::new(200)])
             .build()
             .unwrap();
-        
+
         let query_params = params.to_query_params();
         assert_eq!(query_params.len(), 5); // 3 status + 2 assignee
-        
+
         // Check status IDs
         assert!(query_params.contains(&("statusId[]".to_string(), "1".to_string())));
         assert!(query_params.contains(&("statusId[]".to_string(), "2".to_string())));
         assert!(query_params.contains(&("statusId[]".to_string(), "3".to_string())));
-        
+
         // Check assignee IDs
         assert!(query_params.contains(&("assigneeId[]".to_string(), "100".to_string())));
         assert!(query_params.contains(&("assigneeId[]".to_string(), "200".to_string())));

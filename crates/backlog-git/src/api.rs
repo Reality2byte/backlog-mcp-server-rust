@@ -8,7 +8,7 @@ use crate::requests::update_pull_request::UpdatePullRequestParams;
 use crate::requests::update_pull_request_comment::UpdatePullRequestCommentParams;
 use crate::{
     models::{
-        PullRequest, PullRequestAttachment, PullRequestComment, PullRequestCommentCount, 
+        PullRequest, PullRequestAttachment, PullRequestComment, PullRequestCommentCount,
         PullRequestCount, Repository,
     },
     requests::{
@@ -198,6 +198,34 @@ impl GitApi {
             attachment_id.value(),
         );
         self.client.download_file_raw(&path).await
+    }
+
+    /// Deletes an attachment from a pull request.
+    ///
+    /// Corresponds to `DELETE /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/attachments/:attachmentId`.
+    ///
+    /// # Arguments
+    ///
+    /// * `project_id_or_key` - The ID or key of the project.
+    /// * `repo_id_or_name` - The ID or name of the repository.
+    /// * `pr_number` - The pull request number.
+    /// * `attachment_id` - The ID of the attachment to delete.
+    #[cfg(feature = "writable")]
+    pub async fn delete_pull_request_attachment(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        repo_id_or_name: impl Into<RepositoryIdOrName>,
+        pr_number: PullRequestNumber,
+        attachment_id: PullRequestAttachmentId,
+    ) -> Result<PullRequestAttachment> {
+        let path = format!(
+            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",
+            project_id_or_key.into(),
+            repo_id_or_name.into(),
+            pr_number.value(),
+            attachment_id.value(),
+        );
+        self.client.delete(&path).await
     }
 
     /// Fetches the list of comments for a specific pull request.
@@ -417,16 +445,10 @@ mod tests {
     // Let's rely on the top-level `bytes` module being available.
     use crate::models::PrCommentOrder;
     #[cfg(feature = "writable")]
-    use crate::requests::add_pull_request::{
-        AddPullRequestParams, AddPullRequestParamsBuilder,
-    };
+    use crate::requests::add_pull_request::{AddPullRequestParams, AddPullRequestParamsBuilder};
     #[cfg(feature = "writable")]
     use crate::requests::add_pull_request_comment::{
         AddPullRequestCommentParams, AddPullRequestCommentParamsBuilder,
-    };
-    use crate::requests::{
-        get_pull_request_comment_list::GetPullRequestCommentListParamsBuilder,
-        get_pull_request_list::GetPullRequestListParamsBuilder,
     };
     #[cfg(feature = "writable")]
     use crate::requests::update_pull_request::{
@@ -436,10 +458,14 @@ mod tests {
     use crate::requests::update_pull_request_comment::{
         UpdatePullRequestCommentParams, UpdatePullRequestCommentParamsBuilder,
     };
+    use crate::requests::{
+        get_pull_request_comment_list::GetPullRequestCommentListParamsBuilder,
+        get_pull_request_list::GetPullRequestListParamsBuilder,
+    };
     use backlog_api_core::bytes::Bytes;
     use backlog_core::identifier::{
-        AttachmentId, Identifier, IssueId, PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber,
-        StatusId, UserId,
+        AttachmentId, Identifier, IssueId, PullRequestAttachmentId, PullRequestCommentId,
+        PullRequestNumber, StatusId, UserId,
     };
     use client::test_utils::setup_client;
     use serde_json::json;
@@ -1793,7 +1819,7 @@ mod tests {
             "Fix authentication bug",
             "This PR fixes the authentication issue",
             "main",
-            "feature/fix-auth"
+            "feature/fix-auth",
         );
 
         let result = git_api
@@ -1804,7 +1830,10 @@ mod tests {
         let pr = result.unwrap();
         assert_eq!(pr.number.value(), 5);
         assert_eq!(pr.summary, "Fix authentication bug");
-        assert_eq!(pr.description, Some("This PR fixes the authentication issue".to_string()));
+        assert_eq!(
+            pr.description,
+            Some("This PR fixes the authentication issue".to_string())
+        );
         assert_eq!(pr.base, "main");
         assert_eq!(pr.branch, "feature/fix-auth");
     }
@@ -1932,12 +1961,8 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
-        let params = AddPullRequestParams::new(
-            "Test PR",
-            "Test description",
-            "main",
-            "feature/test"
-        );
+        let params =
+            AddPullRequestParams::new("Test PR", "Test description", "main", "feature/test");
 
         let result = git_api
             .add_pull_request(project_id_or_key, repo_id_or_name, &params)
@@ -1968,12 +1993,8 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
-        let params = AddPullRequestParams::new(
-            "Test PR",
-            "Test description",
-            "main",
-            "feature/test"
-        );
+        let params =
+            AddPullRequestParams::new("Test PR", "Test description", "main", "feature/test");
 
         let result = git_api
             .add_pull_request(project_id_or_key, repo_id_or_name, &params)
@@ -2004,12 +2025,8 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
-        let params = AddPullRequestParams::new(
-            "Test PR",
-            "Test description",
-            "main",
-            "feature/test"
-        );
+        let params =
+            AddPullRequestParams::new("Test PR", "Test description", "main", "feature/test");
 
         let result = git_api
             .add_pull_request(project_id_or_key, repo_id_or_name, &params)
@@ -2050,12 +2067,8 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
-        let params = AddPullRequestParams::new(
-            "Test PR",
-            "Test description",
-            "main",
-            "nonexistent-branch"
-        );
+        let params =
+            AddPullRequestParams::new("Test PR", "Test description", "main", "nonexistent-branch");
 
         let result = git_api
             .add_pull_request(project_id_or_key, repo_id_or_name, &params)
@@ -2067,12 +2080,8 @@ mod tests {
     #[cfg(feature = "writable")]
     #[tokio::test]
     async fn test_add_pull_request_parameter_builder() {
-        let params_from_new = AddPullRequestParams::new(
-            "Test title",
-            "Test description",
-            "main",
-            "feature/test"
-        );
+        let params_from_new =
+            AddPullRequestParams::new("Test title", "Test description", "main", "feature/test");
         assert_eq!(params_from_new.summary, "Test title");
         assert_eq!(params_from_new.description, "Test description");
         assert_eq!(params_from_new.base, "main");
@@ -2089,5 +2098,124 @@ mod tests {
             .unwrap();
         assert_eq!(params_from_builder.summary, "Builder title");
         assert_eq!(params_from_builder.issue_id, Some(IssueId::new(456)));
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_delete_pull_request_attachment_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+        let pr_number = 1u64;
+        let attachment_id = 123u32;
+
+        let mock_response = json!({
+            "id": 123,
+            "name": "test-file.txt",
+            "size": 1024
+        });
+
+        Mock::given(method("DELETE"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",
+                project_key, repo_name, pr_number, attachment_id
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&mock_response))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+        let pr_num = PullRequestNumber::from(pr_number);
+        let attach_id = PullRequestAttachmentId::new(attachment_id);
+
+        let result = git_api
+            .delete_pull_request_attachment(project_id_or_key, repo_id_or_name, pr_num, attach_id)
+            .await;
+
+        assert!(result.is_ok());
+        let attachment = result.unwrap();
+        assert_eq!(attachment.id, PullRequestAttachmentId::new(123));
+        assert_eq!(attachment.name, "test-file.txt");
+        assert_eq!(attachment.size, 1024);
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_delete_pull_request_attachment_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+        let pr_number = 1u64;
+        let attachment_id = 999u32;
+
+        let mock_error_response = json!({
+            "errors": [
+                {
+                    "message": "Attachment not found",
+                    "code": 6,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("DELETE"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",
+                project_key, repo_name, pr_number, attachment_id
+            )))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&mock_error_response))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+        let pr_num = PullRequestNumber::from(pr_number);
+        let attach_id = PullRequestAttachmentId::new(attachment_id);
+
+        let result = git_api
+            .delete_pull_request_attachment(project_id_or_key, repo_id_or_name, pr_num, attach_id)
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_delete_pull_request_attachment_permission_denied() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "RESTRICTED";
+        let repo_name = "test-repo";
+        let pr_number = 1u64;
+        let attachment_id = 123u32;
+
+        Mock::given(method("DELETE"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",
+                project_key, repo_name, pr_number, attachment_id
+            )))
+            .respond_with(ResponseTemplate::new(403))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+        let pr_num = PullRequestNumber::from(pr_number);
+        let attach_id = PullRequestAttachmentId::new(attachment_id);
+
+        let result = git_api
+            .delete_pull_request_attachment(project_id_or_key, repo_id_or_name, pr_num, attach_id)
+            .await;
+
+        assert!(result.is_err());
     }
 }

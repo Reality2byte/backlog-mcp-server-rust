@@ -23,9 +23,10 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Read operations**: get_shared_files_list(), get_file()
 
 ### backlog-git (GitApi)
-- **Implemented**: 13/15 endpoints (87%)
+- **Implemented**: 15/15 endpoints (100%) ✨ COMPLETE
 - **Read operations**: get_repository_list(), get_repository(), get_pull_request_list(), get_pull_request_list_with_params(), get_pull_request(), get_pull_request_attachment_list(), download_pull_request_attachment(), get_pull_request_comment_list(), get_pull_request_comment_count(), get_pull_request_count(), get_pull_request_count_with_params()
-- **Write operations** (requires `writable` feature): add_pull_request(), add_pull_request_comment(), update_pull_request(), update_pull_request_comment()
+- **Write operations** (requires `writable` feature): add_pull_request(), add_pull_request_comment(), update_pull_request(), update_pull_request_comment(), delete_pull_request_attachment()
+- **Note**: Includes all official Backlog Git/Pull Request API endpoints plus enhanced parameter variants for improved usability
 
 ### backlog-user (UserApi)
 - **Implemented**: 4/7 endpoints (57%)
@@ -197,7 +198,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ✅ GetPullRequestList: Returns list of pull requests: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests
 - ✅ GetPullRequest: Returns pull reuqest: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number
 - ✅ DownloadPullRequestAttachment: Downloads attached files on pull requests: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/attachments/:attachmentId
-- ❌ DeletePullRequestAttachments: Deletes attached files on pull requests: DELETE /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/attachments/:attachmentId
+- ✅ DeletePullRequestAttachments: Deletes attached files on pull requests: DELETE /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/attachments/:attachmentId
 - ✅ AddPullRequestComment: Adds comments on pull requests: POST /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/comments
 - ✅ AddPullRequest: Adds pull requests: POST /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests
 
