@@ -2,6 +2,8 @@
 use crate::requests::add_pull_request_comment::AddPullRequestCommentParams;
 #[cfg(feature = "writable")]
 use crate::requests::update_pull_request::UpdatePullRequestParams;
+#[cfg(feature = "writable")]
+use crate::requests::update_pull_request_comment::UpdatePullRequestCommentParams;
 use crate::{
     models::{
         PullRequest, PullRequestAttachment, PullRequestComment, PullRequestCommentCount, Repository,
@@ -11,7 +13,7 @@ use crate::{
 use backlog_api_core::Result;
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
-    identifier::{Identifier, PullRequestAttachmentId, PullRequestNumber},
+    identifier::{Identifier, PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber},
 };
 use client::{Client, DownloadedFile};
 
@@ -274,6 +276,37 @@ impl GitApi {
         let params_vec: Vec<(String, String)> = params.into();
         self.client.patch(&path, &params_vec).await
     }
+
+    /// Updates a comment on a specific pull request.
+    ///
+    /// Corresponds to `PATCH /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/comments/:commentId`.
+    ///
+    /// # Arguments
+    ///
+    /// * `project_id_or_key` - The ID or key of the project.
+    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
+    /// * `pr_number` - The pull request number.
+    /// * `comment_id` - The ID of the comment to update.
+    /// * `params` - Parameters for updating the comment.
+    #[cfg(feature = "writable")]
+    pub async fn update_pull_request_comment(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        repo_id_or_name: impl Into<RepositoryIdOrName>,
+        pr_number: PullRequestNumber,
+        comment_id: PullRequestCommentId,
+        params: &UpdatePullRequestCommentParams,
+    ) -> Result<PullRequestComment> {
+        let path = format!(
+            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments/{}",
+            project_id_or_key.into(),
+            repo_id_or_name.into(),
+            pr_number.value(),
+            comment_id.value()
+        );
+        let params_vec: Vec<(String, String)> = params.into();
+        self.client.patch(&path, &params_vec).await
+    }
 }
 
 #[cfg(test)]
@@ -292,6 +325,10 @@ mod tests {
     #[cfg(feature = "writable")]
     use crate::requests::update_pull_request::{
         UpdatePullRequestParams, UpdatePullRequestParamsBuilder,
+    };
+    #[cfg(feature = "writable")]
+    use crate::requests::update_pull_request_comment::{
+        UpdatePullRequestCommentParams, UpdatePullRequestCommentParamsBuilder,
     };
     use backlog_api_core::bytes::Bytes;
     use backlog_core::identifier::{
@@ -1209,5 +1246,160 @@ mod tests {
             .await;
 
         assert!(result.is_err());
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_pull_request_comment_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+        let pr_number_val = 136;
+        let pr_number = PullRequestNumber::new(pr_number_val);
+        let comment_id_val = 501;
+        let comment_id = PullRequestCommentId::new(comment_id_val);
+
+        let mock_response = json!({
+            "id": comment_id_val,
+            "content": "Updated comment content",
+            "changeLog": [],
+            "createdUser": {
+                "id": 1,
+                "userId": "admin",
+                "name": "admin",
+                "roleType": 1,
+                "lang": "ja",
+                "mailAddress": "admin@example.com"
+            },
+            "created": "2024-01-01T12:00:00Z",
+            "updated": "2024-01-01T13:00:00Z",
+            "stars": [],
+            "notifications": []
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments/{}",
+                project_key, repo_name, pr_number_val, comment_id_val
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(mock_response))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+        let params = UpdatePullRequestCommentParams::new("Updated comment content");
+
+        let result = git_api
+            .update_pull_request_comment(
+                project_id_or_key,
+                repo_id_or_name,
+                pr_number,
+                comment_id,
+                &params,
+            )
+            .await;
+
+        assert!(result.is_ok());
+        let comment = result.unwrap();
+        assert_eq!(comment.id, PullRequestCommentId(comment_id_val));
+        assert_eq!(comment.content, "Updated comment content");
+        assert_eq!(comment.created_user.id, UserId(1));
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_pull_request_comment_error_404() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "NONEXISTENT";
+        let repo_name = "norepo";
+        let pr_number_val = 999;
+        let pr_number = PullRequestNumber::new(pr_number_val);
+        let comment_id_val = 999;
+        let comment_id = PullRequestCommentId::new(comment_id_val);
+
+        Mock::given(method("PATCH"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments/{}",
+                project_key, repo_name, pr_number_val, comment_id_val
+            )))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+        let params = UpdatePullRequestCommentParams::new("This should fail");
+
+        let result = git_api
+            .update_pull_request_comment(
+                project_id_or_key,
+                repo_id_or_name,
+                pr_number,
+                comment_id,
+                &params,
+            )
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_pull_request_comment_error_403() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+        let pr_number_val = 137;
+        let pr_number = PullRequestNumber::new(pr_number_val);
+        let comment_id_val = 502;
+        let comment_id = PullRequestCommentId::new(comment_id_val);
+
+        Mock::given(method("PATCH"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments/{}",
+                project_key, repo_name, pr_number_val, comment_id_val
+            )))
+            .respond_with(ResponseTemplate::new(403))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+        let params = UpdatePullRequestCommentParams::new("Unauthorized update");
+
+        let result = git_api
+            .update_pull_request_comment(
+                project_id_or_key,
+                repo_id_or_name,
+                pr_number,
+                comment_id,
+                &params,
+            )
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_pull_request_comment_parameter_builder() {
+        let params_from_new = UpdatePullRequestCommentParams::new("Test content");
+        assert_eq!(params_from_new.content, "Test content");
+
+        let params_from_builder = UpdatePullRequestCommentParamsBuilder::default()
+            .content("Builder content".to_string())
+            .build()
+            .unwrap();
+        assert_eq!(params_from_builder.content, "Builder content");
     }
 }

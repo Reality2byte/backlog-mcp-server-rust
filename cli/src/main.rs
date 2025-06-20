@@ -1,8 +1,8 @@
 #[cfg(feature = "git_writable")]
-use backlog_api_client::UpdatePullRequestParamsBuilder;
+use backlog_api_client::{UpdatePullRequestParamsBuilder, UpdatePullRequestCommentParams};
 use backlog_api_client::{
     AddCommentParamsBuilder, AttachmentId, GetIssueListParamsBuilder, IssueIdOrKey, ProjectId,
-    ProjectIdOrKey, PullRequestAttachmentId, PullRequestNumber, RepositoryIdOrName, StatusId,
+    ProjectIdOrKey, PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber, RepositoryIdOrName, StatusId,
     UserId, client::BacklogApiClient,
 };
 #[cfg(feature = "git_writable")]
@@ -140,6 +140,25 @@ enum PrCommands {
         /// Comment to add with the update
         #[clap(long)]
         comment: Option<String>,
+    },
+    /// Update a pull request comment
+    #[cfg(feature = "git_writable")]
+    CommentUpdate {
+        /// Project ID or Key
+        #[clap(short, long)]
+        project_id: String,
+        /// Repository ID or Name
+        #[clap(short, long)]
+        repo_id: String,
+        /// Pull Request number
+        #[clap(long)]
+        pr_number: u64,
+        /// Comment ID to update
+        #[clap(long)]
+        comment_id: u32,
+        /// New content for the comment
+        #[clap(short, long)]
+        content: String,
     },
 }
 
@@ -845,6 +864,53 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to update pull request: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "git_writable")]
+            PrCommands::CommentUpdate {
+                project_id,
+                repo_id,
+                pr_number,
+                comment_id,
+                content,
+            } => {
+                println!(
+                    "Updating comment {} for PR #{} in repo {} (project {})",
+                    comment_id, pr_number, repo_id, project_id
+                );
+
+                let parsed_project_id = ProjectIdOrKey::from_str(&project_id)
+                    .map_err(|e| format!("Failed to parse project_id '{}': {}", project_id, e))?;
+                let parsed_repo_id = RepositoryIdOrName::from_str(&repo_id)
+                    .map_err(|e| format!("Failed to parse repo_id '{}': {}", repo_id, e))?;
+                let parsed_pr_number = PullRequestNumber::from(pr_number);
+                let parsed_comment_id = PullRequestCommentId::new(comment_id);
+
+                let params = UpdatePullRequestCommentParams::new(&content);
+
+                match client
+                    .git()
+                    .update_pull_request_comment(
+                        parsed_project_id,
+                        parsed_repo_id,
+                        parsed_pr_number,
+                        parsed_comment_id,
+                        &params,
+                    )
+                    .await
+                {
+                    Ok(comment) => {
+                        println!("✅ Pull request comment updated successfully");
+                        println!("Comment ID: {}", comment.id.value());
+                        println!("Content: {}", comment.content);
+                        println!("Created by: {} (ID: {})", comment.created_user.name, comment.created_user.id.value());
+                        println!("Created: {}", comment.created);
+                        println!("Updated: {}", comment.updated);
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to update pull request comment: {}", e);
                         std::process::exit(1);
                     }
                 }
