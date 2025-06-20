@@ -3,7 +3,9 @@ use crate::requests::add_pull_request_comment::AddPullRequestCommentParams;
 #[cfg(feature = "writable")]
 use crate::requests::update_pull_request::UpdatePullRequestParams;
 use crate::{
-    models::{PullRequest, PullRequestAttachment, PullRequestComment, Repository},
+    models::{
+        PullRequest, PullRequestAttachment, PullRequestComment, PullRequestCommentCount, Repository,
+    },
     requests::get_pull_request_comment_list::GetPullRequestCommentListParams,
 };
 use backlog_api_core::Result;
@@ -191,6 +193,30 @@ impl GitApi {
             pr_number.value()
         );
         self.client.get_with_params(&path, &params).await
+    }
+
+    /// Fetches the count of comments for a specific pull request.
+    ///
+    /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/comments/count`.
+    ///
+    /// # Arguments
+    ///
+    /// * `project_id_or_key` - The ID or key of the project.
+    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
+    /// * `pr_number` - The pull request number.
+    pub async fn get_pull_request_comment_count(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        repo_id_or_name: impl Into<RepositoryIdOrName>,
+        pr_number: PullRequestNumber,
+    ) -> Result<PullRequestCommentCount> {
+        let path = format!(
+            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments/count",
+            project_id_or_key.into(),
+            repo_id_or_name.into(),
+            pr_number.value()
+        );
+        self.client.get(&path).await
     }
 
     /// Adds a comment to a specific pull request.
@@ -1081,5 +1107,107 @@ mod tests {
         let params_default = UpdatePullRequestParams::default();
         assert_eq!(params_default.summary, None);
         assert_eq!(params_default.description, None);
+    }
+
+    #[tokio::test]
+    async fn test_get_pull_request_comment_count_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+        let pr_number_val = 134;
+        let pr_number = PullRequestNumber::new(pr_number_val);
+
+        let mock_response = json!({
+            "count": 10
+        });
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments/count",
+                project_key, repo_name, pr_number_val
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(mock_response))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+
+        let result = git_api
+            .get_pull_request_comment_count(project_id_or_key, repo_id_or_name, pr_number)
+            .await;
+
+        assert!(result.is_ok());
+        let comment_count = result.unwrap();
+        assert_eq!(comment_count.count, 10);
+    }
+
+    #[tokio::test]
+    async fn test_get_pull_request_comment_count_zero() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+        let pr_number_val = 135;
+        let pr_number = PullRequestNumber::new(pr_number_val);
+
+        let mock_response = json!({
+            "count": 0
+        });
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments/count",
+                project_key, repo_name, pr_number_val
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(mock_response))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+
+        let result = git_api
+            .get_pull_request_comment_count(project_id_or_key, repo_id_or_name, pr_number)
+            .await;
+
+        assert!(result.is_ok());
+        let comment_count = result.unwrap();
+        assert_eq!(comment_count.count, 0);
+    }
+
+    #[tokio::test]
+    async fn test_get_pull_request_comment_count_error_404() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "NONEXISTENT";
+        let repo_name = "norepo";
+        let pr_number_val = 999;
+        let pr_number = PullRequestNumber::new(pr_number_val);
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments/count",
+                project_key, repo_name, pr_number_val
+            )))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+
+        let result = git_api
+            .get_pull_request_comment_count(project_id_or_key, repo_id_or_name, pr_number)
+            .await;
+
+        assert!(result.is_err());
     }
 }

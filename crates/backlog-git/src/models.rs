@@ -205,3 +205,11 @@ impl FromStr for PrCommentOrder {
         }
     }
 }
+
+/// Represents the count of comments on a pull request.
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+pub struct PullRequestCommentCount {
+    /// The number of comments on the pull request.
+    pub count: u32,
+}

@@ -18,7 +18,7 @@ clap = { version = "4.5", features = ["derive"] }
 tokio = { workspace = true, features = ["full", "macros", "rt-multi-thread"] }
 
 [features]
-default = ["git", "issue", "project", "space"]
+default = ["git", "issue", "project", "space", "all_writable"]
 git = ["backlog-api-client/git"]
 issue = ["backlog-api-client/issue"]
 project = ["backlog-api-client/project"]
@@ -30,4 +30,4 @@ all = ["git", "issue", "project", "space", "user", "document", "file"]
 issue_writable = ["backlog-api-client/issue_writable"]
 project_writable = ["backlog-api-client/project_writable"]
 git_writable = ["backlog-api-client/git_writable"]
-all_writable = ["backlog-api-client/all_writable"]
+all_writable = ["issue_writable", "project_writable", "git_writable"]
