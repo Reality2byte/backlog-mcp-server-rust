@@ -48,10 +48,15 @@ pub use backlog_git::{
     api::GitApi,
     models::{
         ChangeLog, Notification, PrCommentOrder, PullRequest, PullRequestAttachment,
-        PullRequestComment, Repository, Star,
+        PullRequestComment, PullRequestCommentCount, PullRequestCount, Repository, Star,
     },
-    requests::get_pull_request_comment_list::{
-        GetPullRequestCommentListParams, GetPullRequestCommentListParamsBuilder,
+    requests::{
+        get_pull_request_comment_list::{
+            GetPullRequestCommentListParams, GetPullRequestCommentListParamsBuilder,
+        },
+        get_pull_request_list::{
+            GetPullRequestListParams, GetPullRequestListParamsBuilder,
+        },
     },
 };
 

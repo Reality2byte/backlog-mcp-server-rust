@@ -213,3 +213,11 @@ pub struct PullRequestCommentCount {
     /// The number of comments on the pull request.
     pub count: u32,
 }
+
+/// Represents the count of pull requests.
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+pub struct PullRequestCount {
+    /// The number of pull requests.
+    pub count: u32,
+}

@@ -6,9 +6,13 @@ use crate::requests::update_pull_request::UpdatePullRequestParams;
 use crate::requests::update_pull_request_comment::UpdatePullRequestCommentParams;
 use crate::{
     models::{
-        PullRequest, PullRequestAttachment, PullRequestComment, PullRequestCommentCount, Repository,
+        PullRequest, PullRequestAttachment, PullRequestComment, PullRequestCommentCount, 
+        PullRequestCount, Repository,
     },
-    requests::get_pull_request_comment_list::GetPullRequestCommentListParams,
+    requests::{
+        get_pull_request_comment_list::GetPullRequestCommentListParams,
+        get_pull_request_list::GetPullRequestListParams,
+    },
 };
 use backlog_api_core::Result;
 use backlog_core::{
@@ -77,7 +81,6 @@ impl GitApi {
     /// Fetches the list of Pull Requests for a given repository.
     ///
     /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests`.
-    /// TODO: Add support for query parameters (e.g., status, assignee) via a params struct.
     ///
     /// # Arguments
     ///
@@ -94,6 +97,30 @@ impl GitApi {
             repo_id_or_name.into()
         );
         self.client.get(&path).await
+    }
+
+    /// Fetches the list of Pull Requests for a given repository with filtering options.
+    ///
+    /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests`.
+    ///
+    /// # Arguments
+    ///
+    /// * `project_id_or_key` - The ID or key of the project.
+    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
+    /// * `params` - Parameters for filtering the pull request list.
+    pub async fn get_pull_request_list_with_params(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        repo_id_or_name: impl Into<RepositoryIdOrName>,
+        params: &GetPullRequestListParams,
+    ) -> Result<Vec<PullRequest>> {
+        let path = format!(
+            "/api/v2/projects/{}/git/repositories/{}/pullRequests",
+            project_id_or_key.into(),
+            repo_id_or_name.into()
+        );
+        let query_params = params.to_query_params();
+        self.client.get_with_params(&path, &query_params).await
     }
 
     /// Fetches a single Pull Request by its number.
@@ -221,6 +248,51 @@ impl GitApi {
         self.client.get(&path).await
     }
 
+    /// Returns the count of pull requests in a repository.
+    ///
+    /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/count`.
+    ///
+    /// # Arguments
+    ///
+    /// * `project_id_or_key` - The ID or key of the project.
+    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
+    pub async fn get_pull_request_count(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        repo_id_or_name: impl Into<RepositoryIdOrName>,
+    ) -> Result<PullRequestCount> {
+        let path = format!(
+            "/api/v2/projects/{}/git/repositories/{}/pullRequests/count",
+            project_id_or_key.into(),
+            repo_id_or_name.into()
+        );
+        self.client.get(&path).await
+    }
+
+    /// Returns the count of pull requests in a repository with filtering options.
+    ///
+    /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/count`.
+    ///
+    /// # Arguments
+    ///
+    /// * `project_id_or_key` - The ID or key of the project.
+    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
+    /// * `params` - Optional parameters for filtering pull requests.
+    pub async fn get_pull_request_count_with_params(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        repo_id_or_name: impl Into<RepositoryIdOrName>,
+        params: &GetPullRequestListParams,
+    ) -> Result<PullRequestCount> {
+        let path = format!(
+            "/api/v2/projects/{}/git/repositories/{}/pullRequests/count",
+            project_id_or_key.into(),
+            repo_id_or_name.into()
+        );
+        let query_params = params.to_query_params();
+        self.client.get_with_params(&path, &query_params).await
+    }
+
     /// Adds a comment to a specific pull request.
     ///
     /// Corresponds to `POST /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/comments`.
@@ -321,7 +393,10 @@ mod tests {
     use crate::requests::add_pull_request_comment::{
         AddPullRequestCommentParams, AddPullRequestCommentParamsBuilder,
     };
-    use crate::requests::get_pull_request_comment_list::GetPullRequestCommentListParamsBuilder;
+    use crate::requests::{
+        get_pull_request_comment_list::GetPullRequestCommentListParamsBuilder,
+        get_pull_request_list::GetPullRequestListParamsBuilder,
+    };
     #[cfg(feature = "writable")]
     use crate::requests::update_pull_request::{
         UpdatePullRequestParams, UpdatePullRequestParamsBuilder,
@@ -333,11 +408,11 @@ mod tests {
     use backlog_api_core::bytes::Bytes;
     use backlog_core::identifier::{
         Identifier, IssueId, PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber,
-        UserId,
+        StatusId, UserId,
     };
     use client::test_utils::setup_client;
     use serde_json::json;
-    use wiremock::matchers::{method, path};
+    use wiremock::matchers::{method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[tokio::test]
@@ -1401,5 +1476,224 @@ mod tests {
             .build()
             .unwrap();
         assert_eq!(params_from_builder.content, "Builder content");
+    }
+
+    #[tokio::test]
+    async fn test_get_pull_request_count_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+
+        let mock_response = json!({
+            "count": 5
+        });
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/count",
+                project_key, repo_name
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&mock_response))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+
+        let result = git_api
+            .get_pull_request_count(project_id_or_key, repo_id_or_name)
+            .await;
+
+        assert!(result.is_ok());
+        let count_response = result.unwrap();
+        assert_eq!(count_response.count, 5);
+    }
+
+    #[tokio::test]
+    async fn test_get_pull_request_count_error_404() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "INVALID";
+        let repo_name = "norepo";
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/count",
+                project_key, repo_name
+            )))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+
+        let result = git_api
+            .get_pull_request_count(project_id_or_key, repo_id_or_name)
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_get_pull_request_count_with_params_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+
+        let mock_response = json!({
+            "count": 2
+        });
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/count",
+                project_key, repo_name
+            )))
+            .and(query_param("statusId[]", "1"))
+            .and(query_param("assigneeId[]", "100"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&mock_response))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+
+        let params = GetPullRequestListParamsBuilder::default()
+            .status_ids(vec![StatusId::new(1)])
+            .assignee_ids(vec![UserId::new(100)])
+            .build()
+            .unwrap();
+
+        let result = git_api
+            .get_pull_request_count_with_params(project_id_or_key, repo_id_or_name, &params)
+            .await;
+
+        assert!(result.is_ok());
+        let count_response = result.unwrap();
+        assert_eq!(count_response.count, 2);
+    }
+
+    #[tokio::test]
+    async fn test_get_pull_request_count_zero() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "empty-repo";
+
+        let mock_response = json!({
+            "count": 0
+        });
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/count",
+                project_key, repo_name
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&mock_response))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+
+        let result = git_api
+            .get_pull_request_count(project_id_or_key, repo_id_or_name)
+            .await;
+
+        assert!(result.is_ok());
+        let count_response = result.unwrap();
+        assert_eq!(count_response.count, 0);
+    }
+
+    #[tokio::test]
+    async fn test_get_pull_request_list_with_params_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+
+        let mock_response = json!([
+            {
+                "id": 1,
+                "projectId": 1,
+                "repositoryId": 1,
+                "number": 1,
+                "summary": "Test PR",
+                "description": "Test description",
+                "base": "main",
+                "branch": "feature",
+                "status": {
+                    "id": 1,
+                    "name": "Open"
+                },
+                "assignee": null,
+                "issue": null,
+                "baseCommit": null,
+                "branchCommit": null,
+                "closeAt": null,
+                "mergeAt": null,
+                "createdUser": {
+                    "id": 1,
+                    "userId": "admin",
+                    "name": "admin",
+                    "roleType": 1,
+                    "lang": "ja",
+                    "mailAddress": "admin@example.com"
+                },
+                "created": "2024-01-01T12:00:00Z",
+                "updatedUser": {
+                    "id": 1,
+                    "userId": "admin",
+                    "name": "admin",
+                    "roleType": 1,
+                    "lang": "ja",
+                    "mailAddress": "admin@example.com"
+                },
+                "updated": "2024-01-01T12:00:00Z"
+            }
+        ]);
+
+        Mock::given(method("GET"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests",
+                project_key, repo_name
+            )))
+            .and(query_param("statusId[]", "1"))
+            .and(query_param("count", "10"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&mock_response))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+
+        let params = GetPullRequestListParamsBuilder::default()
+            .status_ids(vec![StatusId::new(1)])
+            .count(10)
+            .build()
+            .unwrap();
+
+        let result = git_api
+            .get_pull_request_list_with_params(project_id_or_key, repo_id_or_name, &params)
+            .await;
+
+        assert!(result.is_ok());
+        let prs = result.unwrap();
+        assert_eq!(prs.len(), 1);
+        assert_eq!(prs[0].number.value(), 1);
+        assert_eq!(prs[0].summary, "Test PR");
     }
 }

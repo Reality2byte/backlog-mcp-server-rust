@@ -23,8 +23,8 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Read operations**: get_shared_files_list(), get_file()
 
 ### backlog-git (GitApi)
-- **Implemented**: 11/15 endpoints (73%)
-- **Read operations**: get_repository_list(), get_repository(), get_pull_request_list(), get_pull_request(), get_pull_request_attachment_list(), download_pull_request_attachment(), get_pull_request_comment_list(), get_pull_request_comment_count()
+- **Implemented**: 12/15 endpoints (80%)
+- **Read operations**: get_repository_list(), get_repository(), get_pull_request_list(), get_pull_request_list_with_params(), get_pull_request(), get_pull_request_attachment_list(), download_pull_request_attachment(), get_pull_request_comment_list(), get_pull_request_comment_count(), get_pull_request_count(), get_pull_request_count_with_params()
 - **Write operations** (requires `writable` feature): add_pull_request_comment(), update_pull_request(), update_pull_request_comment()
 
 ### backlog-user (UserApi)
@@ -191,7 +191,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ✅ UpdatePullRequestCommentInformation: Updates pull request comment information: PATCH /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/comments/:commentId
 - ✅ UpdatePullRequest: Updates pull requests: PATCH /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number
 - ✅ GetNumberOfPullRequestComments: Returns number of comments on pull requests: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/comments/count
-- ❌ GetNumberOfPullRequests: Returns number of pull requests: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/count
+- ✅ GetNumberOfPullRequests: Returns number of pull requests: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/count
 - ✅ GetListOfPullRequestAttachment: Returns list of attached files on pull requests: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/attachments
 - ✅ GetPullRequestComment: Returns list of pull request comments: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number/comments
 - ✅ GetPullRequestList: Returns list of pull requests: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests

@@ -1,7 +1,7 @@
 use backlog_api_client::{
-    AddCommentParamsBuilder, AttachmentId, GetIssueListParamsBuilder, IssueIdOrKey, ProjectId,
-    ProjectIdOrKey, PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber,
-    RepositoryIdOrName, StatusId, UserId, client::BacklogApiClient,
+    AddCommentParamsBuilder, AttachmentId, GetIssueListParamsBuilder, GetPullRequestListParamsBuilder,
+    IssueIdOrKey, ProjectId, ProjectIdOrKey, PullRequestAttachmentId, PullRequestCommentId, 
+    PullRequestNumber, RepositoryIdOrName, StatusId, UserId, client::BacklogApiClient,
 };
 #[cfg(feature = "git_writable")]
 use backlog_api_client::{UpdatePullRequestCommentParams, UpdatePullRequestParamsBuilder};
@@ -171,6 +171,33 @@ enum PrCommands {
         /// Pull Request number
         #[clap(long)]
         pr_number: u64,
+    },
+    /// Get the number of pull requests in a repository
+    Count {
+        /// Project ID or Key
+        #[clap(short, long)]
+        project_id: String,
+        /// Repository ID or Name
+        #[clap(short, long)]
+        repo_id: String,
+        /// Filter by status IDs (comma-separated, e.g., "1,2,3")
+        #[clap(long)]
+        status_ids: Option<String>,
+        /// Filter by assignee user IDs (comma-separated, e.g., "100,200")
+        #[clap(long)]
+        assignee_ids: Option<String>,
+        /// Filter by issue IDs (comma-separated, e.g., "1000,2000")
+        #[clap(long)]
+        issue_ids: Option<String>,
+        /// Filter by created user IDs (comma-separated, e.g., "300,400")
+        #[clap(long)]
+        created_user_ids: Option<String>,
+        /// Offset for pagination
+        #[clap(long)]
+        offset: Option<u32>,
+        /// Number of pull requests to count (1-100, default 20)
+        #[clap(long)]
+        count: Option<u8>,
     },
 }
 
@@ -962,6 +989,119 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to get pull request comment count: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            PrCommands::Count {
+                project_id,
+                repo_id,
+                status_ids,
+                assignee_ids,
+                issue_ids,
+                created_user_ids,
+                offset,
+                count,
+            } => {
+                println!(
+                    "Getting pull request count for repo {} (project {})",
+                    repo_id, project_id
+                );
+
+                let parsed_project_id = ProjectIdOrKey::from_str(&project_id)
+                    .map_err(|e| format!("Failed to parse project_id '{}': {}", project_id, e))?;
+                let parsed_repo_id = RepositoryIdOrName::from_str(&repo_id)
+                    .map_err(|e| format!("Failed to parse repo_id '{}': {}", repo_id, e))?;
+
+                // Parse filter parameters
+                let mut params_builder = GetPullRequestListParamsBuilder::default();
+
+                // Parse status IDs
+                if let Some(status_ids_str) = status_ids {
+                    let status_ids: Result<Vec<StatusId>, _> = status_ids_str
+                        .split(',')
+                        .map(|s| s.trim().parse::<u32>().map(StatusId::new))
+                        .collect();
+                    match status_ids {
+                        Ok(ids) => params_builder.status_ids(ids),
+                        Err(e) => {
+                            eprintln!("❌ Failed to parse status_ids: {}", e);
+                            std::process::exit(1);
+                        }
+                    };
+                }
+
+                // Parse assignee IDs
+                if let Some(assignee_ids_str) = assignee_ids {
+                    let assignee_ids: Result<Vec<UserId>, _> = assignee_ids_str
+                        .split(',')
+                        .map(|s| s.trim().parse::<u32>().map(UserId::new))
+                        .collect();
+                    match assignee_ids {
+                        Ok(ids) => params_builder.assignee_ids(ids),
+                        Err(e) => {
+                            eprintln!("❌ Failed to parse assignee_ids: {}", e);
+                            std::process::exit(1);
+                        }
+                    };
+                }
+
+                // Parse issue IDs
+                if let Some(issue_ids_str) = issue_ids {
+                    let issue_ids: Result<Vec<backlog_core::identifier::IssueId>, _> = issue_ids_str
+                        .split(',')
+                        .map(|s| s.trim().parse::<u32>().map(backlog_core::identifier::IssueId::new))
+                        .collect();
+                    match issue_ids {
+                        Ok(ids) => params_builder.issue_ids(ids),
+                        Err(e) => {
+                            eprintln!("❌ Failed to parse issue_ids: {}", e);
+                            std::process::exit(1);
+                        }
+                    };
+                }
+
+                // Parse created user IDs
+                if let Some(created_user_ids_str) = created_user_ids {
+                    let created_user_ids: Result<Vec<UserId>, _> = created_user_ids_str
+                        .split(',')
+                        .map(|s| s.trim().parse::<u32>().map(UserId::new))
+                        .collect();
+                    match created_user_ids {
+                        Ok(ids) => params_builder.created_user_ids(ids),
+                        Err(e) => {
+                            eprintln!("❌ Failed to parse created_user_ids: {}", e);
+                            std::process::exit(1);
+                        }
+                    };
+                }
+
+                // Set offset and count
+                if let Some(offset) = offset {
+                    params_builder.offset(offset);
+                }
+                if let Some(count) = count {
+                    params_builder.count(count);
+                }
+
+                let params = params_builder.build()
+                    .map_err(|e| format!("Failed to build parameters: {}", e))?;
+
+                match client
+                    .git()
+                    .get_pull_request_count_with_params(
+                        parsed_project_id,
+                        parsed_repo_id,
+                        &params,
+                    )
+                    .await
+                {
+                    Ok(count_response) => {
+                        println!("✅ Pull request count retrieved successfully");
+                        println!("Pull request count: {}", count_response.count);
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to get pull request count: {}", e);
                         std::process::exit(1);
                     }
                 }
