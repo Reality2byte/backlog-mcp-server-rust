@@ -1,4 +1,6 @@
 #[cfg(feature = "writable")]
+use crate::requests::add_pull_request::AddPullRequestParams;
+#[cfg(feature = "writable")]
 use crate::requests::add_pull_request_comment::AddPullRequestCommentParams;
 #[cfg(feature = "writable")]
 use crate::requests::update_pull_request::UpdatePullRequestParams;
@@ -379,6 +381,31 @@ impl GitApi {
         let params_vec: Vec<(String, String)> = params.into();
         self.client.patch(&path, &params_vec).await
     }
+
+    /// Creates a new pull request.
+    ///
+    /// Corresponds to `POST /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests`.
+    ///
+    /// # Arguments
+    ///
+    /// * `project_id_or_key` - The ID or key of the project.
+    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
+    /// * `params` - Parameters for creating the pull request including summary, description, base and branch.
+    #[cfg(feature = "writable")]
+    pub async fn add_pull_request(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        repo_id_or_name: impl Into<RepositoryIdOrName>,
+        params: &AddPullRequestParams,
+    ) -> Result<PullRequest> {
+        let path = format!(
+            "/api/v2/projects/{}/git/repositories/{}/pullRequests",
+            project_id_or_key.into(),
+            repo_id_or_name.into()
+        );
+        let params_vec: Vec<(String, String)> = params.into();
+        self.client.post(&path, &params_vec).await
+    }
 }
 
 #[cfg(test)]
@@ -389,6 +416,10 @@ mod tests {
     // Or, import `backlog_api_core::bytes::Bytes` specifically for the test module if preferred.
     // Let's rely on the top-level `bytes` module being available.
     use crate::models::PrCommentOrder;
+    #[cfg(feature = "writable")]
+    use crate::requests::add_pull_request::{
+        AddPullRequestParams, AddPullRequestParamsBuilder,
+    };
     #[cfg(feature = "writable")]
     use crate::requests::add_pull_request_comment::{
         AddPullRequestCommentParams, AddPullRequestCommentParamsBuilder,
@@ -407,7 +438,7 @@ mod tests {
     };
     use backlog_api_core::bytes::Bytes;
     use backlog_core::identifier::{
-        Identifier, IssueId, PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber,
+        AttachmentId, Identifier, IssueId, PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber,
         StatusId, UserId,
     };
     use client::test_utils::setup_client;
@@ -1695,5 +1726,368 @@ mod tests {
         assert_eq!(prs.len(), 1);
         assert_eq!(prs[0].number.value(), 1);
         assert_eq!(prs[0].summary, "Test PR");
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_pull_request_minimal_params() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+
+        let mock_response = json!({
+            "id": 123,
+            "projectId": 1,
+            "repositoryId": 1,
+            "number": 5,
+            "summary": "Fix authentication bug",
+            "description": "This PR fixes the authentication issue",
+            "base": "main",
+            "branch": "feature/fix-auth",
+            "status": {
+                "id": 1,
+                "name": "Open"
+            },
+            "assignee": null,
+            "issue": null,
+            "baseCommit": null,
+            "branchCommit": null,
+            "closeAt": null,
+            "mergeAt": null,
+            "createdUser": {
+                "id": 1,
+                "userId": "admin",
+                "name": "admin",
+                "roleType": 1,
+                "lang": "ja",
+                "mailAddress": "admin@example.com"
+            },
+            "created": "2024-01-01T12:00:00Z",
+            "updatedUser": {
+                "id": 1,
+                "userId": "admin",
+                "name": "admin",
+                "roleType": 1,
+                "lang": "ja",
+                "mailAddress": "admin@example.com"
+            },
+            "updated": "2024-01-01T12:00:00Z"
+        });
+
+        Mock::given(method("POST"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests",
+                project_key, repo_name
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&mock_response))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+
+        let params = AddPullRequestParams::new(
+            "Fix authentication bug",
+            "This PR fixes the authentication issue",
+            "main",
+            "feature/fix-auth"
+        );
+
+        let result = git_api
+            .add_pull_request(project_id_or_key, repo_id_or_name, &params)
+            .await;
+
+        assert!(result.is_ok());
+        let pr = result.unwrap();
+        assert_eq!(pr.number.value(), 5);
+        assert_eq!(pr.summary, "Fix authentication bug");
+        assert_eq!(pr.description, Some("This PR fixes the authentication issue".to_string()));
+        assert_eq!(pr.base, "main");
+        assert_eq!(pr.branch, "feature/fix-auth");
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_pull_request_full_params() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+
+        let mock_response = json!({
+            "id": 124,
+            "projectId": 1,
+            "repositoryId": 1,
+            "number": 6,
+            "summary": "Add new feature",
+            "description": "This PR adds a new feature with comprehensive tests",
+            "base": "develop",
+            "branch": "feature/new-feature",
+            "status": {
+                "id": 1,
+                "name": "Open"
+            },
+            "assignee": {
+                "id": 456,
+                "userId": "developer",
+                "name": "Developer",
+                "roleType": 1,
+                "lang": "ja",
+                "mailAddress": "developer@example.com"
+            },
+            "issue": {
+                "id": 123,
+                "issueKey": "PROJ-123",
+                "keyId": 123,
+                "summary": "Implement new feature"
+            },
+            "baseCommit": null,
+            "branchCommit": null,
+            "closeAt": null,
+            "mergeAt": null,
+            "createdUser": {
+                "id": 1,
+                "userId": "admin",
+                "name": "admin",
+                "roleType": 1,
+                "lang": "ja",
+                "mailAddress": "admin@example.com"
+            },
+            "created": "2024-01-01T12:00:00Z",
+            "updatedUser": {
+                "id": 1,
+                "userId": "admin",
+                "name": "admin",
+                "roleType": 1,
+                "lang": "ja",
+                "mailAddress": "admin@example.com"
+            },
+            "updated": "2024-01-01T12:00:00Z"
+        });
+
+        Mock::given(method("POST"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests",
+                project_key, repo_name
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&mock_response))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+
+        let params = AddPullRequestParamsBuilder::default()
+            .summary("Add new feature".to_string())
+            .description("This PR adds a new feature with comprehensive tests".to_string())
+            .base("develop".to_string())
+            .branch("feature/new-feature".to_string())
+            .issue_id(IssueId::new(123))
+            .assignee_id(UserId::new(456))
+            .notified_user_ids(vec![UserId::new(789), UserId::new(101112)])
+            .attachment_ids(vec![AttachmentId::new(111), AttachmentId::new(222)])
+            .build()
+            .unwrap();
+
+        let result = git_api
+            .add_pull_request(project_id_or_key, repo_id_or_name, &params)
+            .await;
+
+        assert!(result.is_ok());
+        let pr = result.unwrap();
+        assert_eq!(pr.number.value(), 6);
+        assert_eq!(pr.summary, "Add new feature");
+        assert_eq!(pr.base, "develop");
+        assert_eq!(pr.branch, "feature/new-feature");
+        assert!(pr.assignee.is_some());
+        assert_eq!(pr.assignee.unwrap().id.value(), 456);
+        assert!(pr.related_issue.is_some());
+        assert_eq!(pr.related_issue.unwrap().id.value(), 123);
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_pull_request_project_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "INVALID";
+        let repo_name = "test-repo";
+
+        Mock::given(method("POST"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests",
+                project_key, repo_name
+            )))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+
+        let params = AddPullRequestParams::new(
+            "Test PR",
+            "Test description",
+            "main",
+            "feature/test"
+        );
+
+        let result = git_api
+            .add_pull_request(project_id_or_key, repo_id_or_name, &params)
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_pull_request_repository_not_found() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "invalid-repo";
+
+        Mock::given(method("POST"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests",
+                project_key, repo_name
+            )))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+
+        let params = AddPullRequestParams::new(
+            "Test PR",
+            "Test description",
+            "main",
+            "feature/test"
+        );
+
+        let result = git_api
+            .add_pull_request(project_id_or_key, repo_id_or_name, &params)
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_pull_request_permission_denied() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "RESTRICTED";
+        let repo_name = "test-repo";
+
+        Mock::given(method("POST"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests",
+                project_key, repo_name
+            )))
+            .respond_with(ResponseTemplate::new(403))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+
+        let params = AddPullRequestParams::new(
+            "Test PR",
+            "Test description",
+            "main",
+            "feature/test"
+        );
+
+        let result = git_api
+            .add_pull_request(project_id_or_key, repo_id_or_name, &params)
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_pull_request_invalid_branch() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+
+        let mock_error_response = json!({
+            "errors": [
+                {
+                    "message": "Branch 'nonexistent-branch' does not exist",
+                    "code": 6,
+                    "moreInfo": ""
+                }
+            ]
+        });
+
+        Mock::given(method("POST"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests",
+                project_key, repo_name
+            )))
+            .respond_with(ResponseTemplate::new(400).set_body_json(&mock_error_response))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+
+        let params = AddPullRequestParams::new(
+            "Test PR",
+            "Test description",
+            "main",
+            "nonexistent-branch"
+        );
+
+        let result = git_api
+            .add_pull_request(project_id_or_key, repo_id_or_name, &params)
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_add_pull_request_parameter_builder() {
+        let params_from_new = AddPullRequestParams::new(
+            "Test title",
+            "Test description",
+            "main",
+            "feature/test"
+        );
+        assert_eq!(params_from_new.summary, "Test title");
+        assert_eq!(params_from_new.description, "Test description");
+        assert_eq!(params_from_new.base, "main");
+        assert_eq!(params_from_new.branch, "feature/test");
+        assert!(params_from_new.issue_id.is_none());
+
+        let params_from_builder = AddPullRequestParamsBuilder::default()
+            .summary("Builder title".to_string())
+            .description("Builder description".to_string())
+            .base("develop".to_string())
+            .branch("feature/builder".to_string())
+            .issue_id(IssueId::new(456))
+            .build()
+            .unwrap();
+        assert_eq!(params_from_builder.summary, "Builder title");
+        assert_eq!(params_from_builder.issue_id, Some(IssueId::new(456)));
     }
 }

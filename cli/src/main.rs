@@ -4,6 +4,8 @@ use backlog_api_client::{
     PullRequestNumber, RepositoryIdOrName, StatusId, UserId, client::BacklogApiClient,
 };
 #[cfg(feature = "git_writable")]
+use backlog_api_client::AddPullRequestParamsBuilder;
+#[cfg(feature = "git_writable")]
 use backlog_api_client::{UpdatePullRequestCommentParams, UpdatePullRequestParamsBuilder};
 #[cfg(feature = "git_writable")]
 use backlog_core::identifier::IssueId;
@@ -198,6 +200,40 @@ enum PrCommands {
         /// Number of pull requests to count (1-100, default 20)
         #[clap(long)]
         count: Option<u8>,
+    },
+    /// Create a new pull request
+    #[cfg(feature = "git_writable")]
+    Create {
+        /// Project ID or Key
+        #[clap(short, long)]
+        project_id: String,
+        /// Repository ID or Name
+        #[clap(short, long)]
+        repo_id: String,
+        /// Pull request title
+        #[clap(short, long)]
+        summary: String,
+        /// Pull request description
+        #[clap(short, long)]
+        description: String,
+        /// Target merge branch
+        #[clap(short, long)]
+        base: String,
+        /// Source branch to be merged
+        #[clap(short = 'B', long)]
+        branch: String,
+        /// Related issue ID
+        #[clap(long)]
+        issue_id: Option<u32>,
+        /// Assignee user ID
+        #[clap(long)]
+        assignee_id: Option<u32>,
+        /// User IDs to notify (comma-separated, e.g., "123,456")
+        #[clap(long)]
+        notify_user_ids: Option<String>,
+        /// Attachment IDs (comma-separated, e.g., "789,101112")
+        #[clap(long)]
+        attachment_ids: Option<String>,
     },
 }
 
@@ -1102,6 +1138,112 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to get pull request count: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "git_writable")]
+            PrCommands::Create {
+                project_id,
+                repo_id,
+                summary,
+                description,
+                base,
+                branch,
+                issue_id,
+                assignee_id,
+                notify_user_ids,
+                attachment_ids,
+            } => {
+                println!(
+                    "Creating pull request in repo {} (project {})",
+                    repo_id, project_id
+                );
+
+                let parsed_project_id = ProjectIdOrKey::from_str(&project_id)
+                    .map_err(|e| format!("Failed to parse project_id '{}': {}", project_id, e))?;
+                let parsed_repo_id = RepositoryIdOrName::from_str(&repo_id)
+                    .map_err(|e| format!("Failed to parse repo_id '{}': {}", repo_id, e))?;
+
+                // Build parameters
+                let mut params_builder = AddPullRequestParamsBuilder::default();
+                params_builder
+                    .summary(summary.clone())
+                    .description(description.clone())
+                    .base(base.clone())
+                    .branch(branch.clone());
+
+                // Parse optional issue ID
+                if let Some(issue_id) = issue_id {
+                    params_builder.issue_id(backlog_core::identifier::IssueId::new(issue_id));
+                }
+
+                // Parse optional assignee ID
+                if let Some(assignee_id) = assignee_id {
+                    params_builder.assignee_id(UserId::new(assignee_id));
+                }
+
+                // Parse notify user IDs
+                if let Some(notify_user_ids_str) = notify_user_ids {
+                    let notify_user_ids: Result<Vec<UserId>, _> = notify_user_ids_str
+                        .split(',')
+                        .map(|s| s.trim().parse::<u32>().map(UserId::new))
+                        .collect();
+                    match notify_user_ids {
+                        Ok(ids) => params_builder.notified_user_ids(ids),
+                        Err(e) => {
+                            eprintln!("❌ Failed to parse notify_user_ids: {}", e);
+                            std::process::exit(1);
+                        }
+                    };
+                }
+
+                // Parse attachment IDs
+                if let Some(attachment_ids_str) = attachment_ids {
+                    let attachment_ids: Result<Vec<AttachmentId>, _> = attachment_ids_str
+                        .split(',')
+                        .map(|s| s.trim().parse::<u32>().map(AttachmentId::new))
+                        .collect();
+                    match attachment_ids {
+                        Ok(ids) => params_builder.attachment_ids(ids),
+                        Err(e) => {
+                            eprintln!("❌ Failed to parse attachment_ids: {}", e);
+                            std::process::exit(1);
+                        }
+                    };
+                }
+
+                let params = params_builder.build()
+                    .map_err(|e| format!("Failed to build parameters: {}", e))?;
+
+                match client
+                    .git()
+                    .add_pull_request(
+                        parsed_project_id,
+                        parsed_repo_id,
+                        &params,
+                    )
+                    .await
+                {
+                    Ok(pull_request) => {
+                        println!("✅ Pull request created successfully");
+                        println!("ID: {}", pull_request.id.value());
+                        println!("Number: {}", pull_request.number.value());
+                        println!("Summary: {}", pull_request.summary);
+                        if let Some(description) = &pull_request.description {
+                            println!("Description: {}", description);
+                        }
+                        println!("Base: {}", pull_request.base);
+                        println!("Branch: {}", pull_request.branch);
+                        if let Some(assignee) = &pull_request.assignee {
+                            println!("Assignee: {} (ID: {})", assignee.name, assignee.id.value());
+                        }
+                        if let Some(issue) = &pull_request.related_issue {
+                            println!("Related Issue ID: {}", issue.id.value());
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to create pull request: {}", e);
                         std::process::exit(1);
                     }
                 }

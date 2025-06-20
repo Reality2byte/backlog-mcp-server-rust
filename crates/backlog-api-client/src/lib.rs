@@ -61,6 +61,11 @@ pub use backlog_git::{
 };
 
 #[cfg(all(feature = "git", feature = "git_writable"))]
+pub use backlog_git::requests::add_pull_request::{
+    AddPullRequestParams, AddPullRequestParamsBuilder,
+};
+
+#[cfg(all(feature = "git", feature = "git_writable"))]
 pub use backlog_git::requests::add_pull_request_comment::{
     AddPullRequestCommentParams, AddPullRequestCommentParamsBuilder,
 };
