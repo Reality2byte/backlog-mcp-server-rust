@@ -73,9 +73,9 @@ The library uses Cargo feature flags to enable specific API modules and function
 
 ### Writable Features
 By default, only read operations are enabled. To enable write operations (create, update, delete), use the corresponding `*_writable` features:
-- **`issue_writable`**: Enable write operations for issues
-- **`project_writable`**: Enable write operations for projects
-- **`git_writable`**: Enable write operations for Git/PR
+- **`issue_writable`**: Enable write operations for issues (add, update, delete issues and comments)
+- **`project_writable`**: Enable write operations for projects (add, update, delete categories, statuses, versions, issue types)
+- **`git_writable`**: Enable write operations for Git/PR (add comments, update pull requests)
 - **`all_writable`**: Enable all write operations
 
 ### Additional Features

@@ -13,24 +13,24 @@
 To build the `blg` executable, navigate to the workspace root (`/Users/mac/src/_mydev/backlog-api-client`) and run:
 
 ```bash
-cargo build --package backlog-api-client --features "cli git issue project space" --bin blg
+cargo build --package blg --features "git issue project space"
 ```
 
 For write operations (creating/updating/deleting resources), add the corresponding writable features:
 
 ```bash
-cargo build --package backlog-api-client --features "cli git issue project project_writable space" --bin blg
+cargo build --package blg --features "git git_writable issue project project_writable space"
 ```
 
-Alternatively, if you are in the `backlog-api-client` directory:
+Alternatively, if you are in the `cli` directory:
 
 ```bash
-cargo build --features "cli git issue project space" 
+cargo build --features "git issue project space" 
 # Or with writable features:
-cargo build --features "cli git issue project project_writable space" 
+cargo build --features "git git_writable issue project project_writable space" 
 ```
 
-The `cli`, `git`, `issue`, `project`, and `space` features are required to build the `blg` binary with full functionality. Add `project_writable` for project management operations like category creation/deletion. The executable will be located at `target/debug/blg` (or `target/release/blg` if you add `--release`).
+The `git`, `issue`, `project`, and `space` features are required to build the `blg` binary with full functionality. Add `project_writable` for project management operations like category creation/deletion, and `git_writable` for pull request update operations. The executable will be located at `target/debug/blg` (or `target/release/blg` if you add `--release`).
 
 ## Configuration
 
@@ -134,6 +134,12 @@ blg pr show --project-id MYPROJ --repo-id my-repo --pr-number 42
 
 # Download a pull request attachment
 blg pr download-attachment -p MYPROJ -r my-repo -n 42 -a 56789 -o pr_attachment.zip
+
+# Update a pull request (requires git_writable feature)
+blg pr update -p MYPROJ -r my-repo --pr-number 42 --summary "Updated PR Title" --description "Updated description" --comment "Updated via CLI"
+
+# Update with issue assignment and notifications
+blg pr update -p MYPROJ -r my-repo --pr-number 42 --assignee-id 12345 --issue-id 67890 --notify-user-ids 111,222,333
 ```
 
 ### Getting Help
@@ -189,3 +195,10 @@ The `blg` CLI currently supports the following commands:
 - `pr list --project-id <PROJECT_ID_OR_KEY> --repo-id <REPO_ID_OR_NAME>` - List pull requests in a repository
 - `pr show --project-id <PROJECT_ID_OR_KEY> --repo-id <REPO_ID_OR_NAME> --pr-number <NUMBER>` - Show pull request details
 - `pr download-attachment -p <PROJECT_ID> -r <REPO_ID> -n <PR_NUMBER> -a <ATTACHMENT_ID> -o <FILE_PATH>` - Download a pull request attachment
+- `pr update -p <PROJECT_ID> -r <REPO_ID> --pr-number <NUMBER> [OPTIONS]` - Update a pull request (requires `git_writable` feature)
+  - `--summary <TITLE>` - Update pull request title
+  - `--description <DESC>` - Update pull request description  
+  - `--issue-id <ID>` - Link to a related issue
+  - `--assignee-id <ID>` - Assign to a user
+  - `--notify-user-ids <ID1,ID2>` - Notify users (comma-separated)
+  - `--comment <TEXT>` - Add a comment with the update

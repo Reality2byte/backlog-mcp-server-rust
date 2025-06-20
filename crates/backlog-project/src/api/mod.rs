@@ -2853,9 +2853,7 @@ mod tests {
                 StatusId::new(4),
             ],
         };
-        let result = project_api
-            .update_status_order(project_id, &params)
-            .await;
+        let result = project_api.update_status_order(project_id, &params).await;
         assert!(result.is_ok());
         let statuses = result.unwrap();
         assert_eq!(statuses.len(), 4);
@@ -2896,13 +2894,14 @@ mod tests {
                 // Missing status IDs 3 and 4
             ],
         };
-        let result = project_api
-            .update_status_order(project_id, &params)
-            .await;
+        let result = project_api.update_status_order(project_id, &params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 400);
-            assert_eq!(errors[0].message, "Incomplete status list. All statuses must be included.");
+            assert_eq!(
+                errors[0].message,
+                "Incomplete status list. All statuses must be included."
+            );
         } else {
             panic!("Expected ApiError::HttpStatus, got {:?}", result);
         }
@@ -2940,9 +2939,7 @@ mod tests {
                 StatusId::new(4),
             ],
         };
-        let result = project_api
-            .update_status_order(project_id, &params)
-            .await;
+        let result = project_api.update_status_order(project_id, &params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);

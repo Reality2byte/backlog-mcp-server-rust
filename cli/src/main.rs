@@ -1,9 +1,13 @@
+#[cfg(feature = "git_writable")]
+use backlog_api_client::UpdatePullRequestParamsBuilder;
 use backlog_api_client::{
     AddCommentParamsBuilder, AttachmentId, GetIssueListParamsBuilder, IssueIdOrKey, ProjectId,
     ProjectIdOrKey, PullRequestAttachmentId, PullRequestNumber, RepositoryIdOrName, StatusId,
     UserId, client::BacklogApiClient,
 };
-use backlog_core::identifier::CommentId;
+#[cfg(feature = "git_writable")]
+use backlog_core::identifier::IssueId;
+use backlog_core::identifier::{CommentId, Identifier};
 #[cfg(any(feature = "issue_writable", feature = "project_writable"))]
 use backlog_core::{
     IssueKey,
@@ -18,7 +22,7 @@ use backlog_project::requests::GetProjectParams;
 use backlog_project::requests::{
     AddCategoryParams, AddIssueTypeParams, AddStatusParams, AddVersionParams,
     DeleteIssueTypeParams, DeleteStatusParams, UpdateCategoryParams, UpdateIssueTypeParams,
-    UpdateStatusParams, UpdateStatusOrderParams, UpdateVersionParams,
+    UpdateStatusOrderParams, UpdateStatusParams, UpdateVersionParams,
 };
 use clap::{Args, Parser};
 use std::env;
@@ -106,6 +110,37 @@ enum PrCommands {
     /// Download a pull request attachment
     #[command(about = "Download a pull request attachment")]
     DownloadAttachment(DownloadPrAttachmentArgs),
+    /// Update a pull request
+    #[cfg(feature = "git_writable")]
+    Update {
+        /// Project ID or Key
+        #[clap(short, long)]
+        project_id: String,
+        /// Repository ID or Name
+        #[clap(short, long)]
+        repo_id: String,
+        /// Pull Request number
+        #[clap(long)]
+        pr_number: u64,
+        /// Update summary (title)
+        #[clap(long)]
+        summary: Option<String>,
+        /// Update description
+        #[clap(long)]
+        description: Option<String>,
+        /// Related issue ID
+        #[clap(long)]
+        issue_id: Option<u32>,
+        /// Assignee user ID
+        #[clap(long)]
+        assignee_id: Option<u32>,
+        /// Notification user IDs (comma-separated)
+        #[clap(long, value_delimiter = ',')]
+        notify_user_ids: Option<Vec<u32>>,
+        /// Comment to add with the update
+        #[clap(long)]
+        comment: Option<String>,
+    },
 }
 
 #[derive(Args, Debug)]
@@ -719,6 +754,92 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error downloading PR attachment: {}", e);
+                    }
+                }
+            }
+            #[cfg(feature = "git_writable")]
+            PrCommands::Update {
+                project_id,
+                repo_id,
+                pr_number,
+                summary,
+                description,
+                issue_id,
+                assignee_id,
+                notify_user_ids,
+                comment,
+            } => {
+                println!(
+                    "Updating PR #{} in repo {} (project {})",
+                    pr_number, repo_id, project_id
+                );
+
+                let parsed_project_id = ProjectIdOrKey::from_str(&project_id)
+                    .map_err(|e| format!("Failed to parse project_id '{}': {}", project_id, e))?;
+                let parsed_repo_id = RepositoryIdOrName::from_str(&repo_id)
+                    .map_err(|e| format!("Failed to parse repo_id '{}': {}", repo_id, e))?;
+                let parsed_pr_number = PullRequestNumber::from(pr_number);
+
+                let mut params_builder = UpdatePullRequestParamsBuilder::default();
+
+                if let Some(summary) = summary {
+                    params_builder.summary(Some(summary.clone()));
+                }
+
+                if let Some(description) = description {
+                    params_builder.description(Some(description.clone()));
+                }
+
+                if let Some(issue_id) = issue_id {
+                    params_builder.issue_id(Some(IssueId::new(issue_id)));
+                }
+
+                if let Some(assignee_id) = assignee_id {
+                    params_builder.assignee_id(Some(UserId::new(assignee_id)));
+                }
+
+                if let Some(notify_user_ids) = notify_user_ids {
+                    let user_ids: Vec<UserId> =
+                        notify_user_ids.iter().map(|&id| UserId::new(id)).collect();
+                    params_builder.notified_user_ids(Some(user_ids));
+                }
+
+                if let Some(comment) = comment {
+                    params_builder.comment(Some(comment.clone()));
+                }
+
+                let params = params_builder
+                    .build()
+                    .map_err(|e| format!("Failed to build parameters: {}", e))?;
+
+                match client
+                    .git()
+                    .update_pull_request(
+                        parsed_project_id,
+                        parsed_repo_id,
+                        parsed_pr_number,
+                        &params,
+                    )
+                    .await
+                {
+                    Ok(pull_request) => {
+                        println!("✅ Pull request updated successfully");
+                        println!("ID: {}", pull_request.id.value());
+                        println!("Number: {}", pull_request.number.value());
+                        println!("Summary: {}", pull_request.summary);
+                        if let Some(description) = &pull_request.description {
+                            println!("Description: {}", description);
+                        }
+                        if let Some(assignee) = &pull_request.assignee {
+                            println!("Assignee: {} (ID: {})", assignee.name, assignee.id.value());
+                        }
+                        if let Some(issue) = &pull_request.related_issue {
+                            println!("Related Issue ID: {}", issue.id.value());
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to update pull request: {}", e);
+                        std::process::exit(1);
                     }
                 }
             }

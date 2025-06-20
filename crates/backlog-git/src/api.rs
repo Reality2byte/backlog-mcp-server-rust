@@ -1,5 +1,7 @@
 #[cfg(feature = "writable")]
 use crate::requests::add_pull_request_comment::AddPullRequestCommentParams;
+#[cfg(feature = "writable")]
+use crate::requests::update_pull_request::UpdatePullRequestParams;
 use crate::{
     models::{PullRequest, PullRequestAttachment, PullRequestComment, Repository},
     requests::get_pull_request_comment_list::GetPullRequestCommentListParams,
@@ -218,6 +220,34 @@ impl GitApi {
         let params_vec: Vec<(String, String)> = params.into();
         self.client.post(&path, &params_vec).await
     }
+
+    /// Updates a pull request.
+    ///
+    /// Corresponds to `PATCH /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName/pullRequests/:number`.
+    ///
+    /// # Arguments
+    ///
+    /// * `project_id_or_key` - The ID or key of the project.
+    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
+    /// * `pr_number` - The pull request number.
+    /// * `params` - Parameters for updating the pull request.
+    #[cfg(feature = "writable")]
+    pub async fn update_pull_request(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        repo_id_or_name: impl Into<RepositoryIdOrName>,
+        pr_number: PullRequestNumber,
+        params: &UpdatePullRequestParams,
+    ) -> Result<PullRequest> {
+        let path = format!(
+            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}",
+            project_id_or_key.into(),
+            repo_id_or_name.into(),
+            pr_number.value()
+        );
+        let params_vec: Vec<(String, String)> = params.into();
+        self.client.patch(&path, &params_vec).await
+    }
 }
 
 #[cfg(test)]
@@ -233,9 +263,14 @@ mod tests {
         AddPullRequestCommentParams, AddPullRequestCommentParamsBuilder,
     };
     use crate::requests::get_pull_request_comment_list::GetPullRequestCommentListParamsBuilder;
+    #[cfg(feature = "writable")]
+    use crate::requests::update_pull_request::{
+        UpdatePullRequestParams, UpdatePullRequestParamsBuilder,
+    };
     use backlog_api_core::bytes::Bytes;
     use backlog_core::identifier::{
-        Identifier, PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber, UserId,
+        Identifier, IssueId, PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber,
+        UserId,
     };
     use client::test_utils::setup_client;
     use serde_json::json;
@@ -712,5 +747,339 @@ mod tests {
         let params_from_new = AddPullRequestCommentParams::new("From new method");
         assert_eq!(params_from_new.content, "From new method");
         assert_eq!(params_from_new.notified_user_ids, None);
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_pull_request_success() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+        let pr_number_val = 131;
+        let pr_number = PullRequestNumber::new(pr_number_val);
+
+        let mock_response = json!({
+            "id": 1001,
+            "projectId": 12345,
+            "repositoryId": 67890,
+            "number": pr_number_val,
+            "summary": "Updated PR Title",
+            "description": "Updated PR Description",
+            "base": "main",
+            "branch": "feature/update",
+            "status": {
+                "id": 1,
+                "name": "Open"
+            },
+            "assignee": {
+                "id": 101,
+                "userId": "testuser",
+                "name": "Test User",
+                "roleType": 2,
+                "lang": "ja",
+                "mailAddress": "test@example.com"
+            },
+            "issue": {
+                "id": 5001
+            },
+            "baseCommit": "abc123",
+            "branchCommit": "def456",
+            "closeAt": null,
+            "mergeAt": null,
+            "createdUser": {
+                "id": 1,
+                "userId": "admin",
+                "name": "Admin",
+                "roleType": 1,
+                "lang": "ja",
+                "mailAddress": "admin@example.com"
+            },
+            "created": "2024-01-01T10:00:00Z",
+            "updatedUser": {
+                "id": 101,
+                "userId": "testuser",
+                "name": "Test User",
+                "roleType": 2,
+                "lang": "ja",
+                "mailAddress": "test@example.com"
+            },
+            "updated": "2024-01-01T14:00:00Z"
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}",
+                project_key, repo_name, pr_number_val
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(mock_response))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+        let params = UpdatePullRequestParamsBuilder::default()
+            .summary(Some("Updated PR Title".to_string()))
+            .description(Some("Updated PR Description".to_string()))
+            .issue_id(Some(IssueId::new(5001)))
+            .assignee_id(Some(UserId::new(101)))
+            .comment(Some("Updated via API".to_string()))
+            .build()
+            .unwrap();
+
+        let result = git_api
+            .update_pull_request(project_id_or_key, repo_id_or_name, pr_number, &params)
+            .await;
+
+        assert!(result.is_ok());
+        let pull_request = result.unwrap();
+        assert_eq!(pull_request.id.value(), 1001);
+        assert_eq!(pull_request.summary, "Updated PR Title");
+        assert_eq!(
+            pull_request.description,
+            Some("Updated PR Description".to_string())
+        );
+        assert_eq!(pull_request.assignee.as_ref().unwrap().id, UserId::new(101));
+        assert_eq!(
+            pull_request.related_issue.as_ref().unwrap().id,
+            IssueId::new(5001)
+        );
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_pull_request_minimal_params() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+        let pr_number_val = 132;
+        let pr_number = PullRequestNumber::new(pr_number_val);
+
+        let mock_response = json!({
+            "id": 1002,
+            "projectId": 12345,
+            "repositoryId": 67890,
+            "number": pr_number_val,
+            "summary": "Original Title",
+            "description": "Original Description",
+            "base": "main",
+            "branch": "feature/test",
+            "status": {
+                "id": 1,
+                "name": "Open"
+            },
+            "assignee": null,
+            "issue": null,
+            "baseCommit": "abc123",
+            "branchCommit": "def456",
+            "closeAt": null,
+            "mergeAt": null,
+            "createdUser": {
+                "id": 1,
+                "userId": "admin",
+                "name": "Admin",
+                "roleType": 1,
+                "lang": "ja",
+                "mailAddress": "admin@example.com"
+            },
+            "created": "2024-01-01T10:00:00Z",
+            "updatedUser": {
+                "id": 1,
+                "userId": "admin",
+                "name": "Admin",
+                "roleType": 1,
+                "lang": "ja",
+                "mailAddress": "admin@example.com"
+            },
+            "updated": "2024-01-01T14:00:00Z"
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}",
+                project_key, repo_name, pr_number_val
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(mock_response))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+        let params = UpdatePullRequestParams::new(); // All fields None
+
+        let result = git_api
+            .update_pull_request(project_id_or_key, repo_id_or_name, pr_number, &params)
+            .await;
+
+        assert!(result.is_ok());
+        let pull_request = result.unwrap();
+        assert_eq!(pull_request.id.value(), 1002);
+        assert_eq!(pull_request.summary, "Original Title");
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_pull_request_error_404() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "NONEXISTENT";
+        let repo_name = "norepo";
+        let pr_number_val = 999;
+        let pr_number = PullRequestNumber::new(pr_number_val);
+
+        Mock::given(method("PATCH"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}",
+                project_key, repo_name, pr_number_val
+            )))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+        let params = UpdatePullRequestParamsBuilder::default()
+            .summary(Some("This should fail".to_string()))
+            .build()
+            .unwrap();
+
+        let result = git_api
+            .update_pull_request(project_id_or_key, repo_id_or_name, pr_number, &params)
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_pull_request_with_notifications() {
+        let server = MockServer::start().await;
+        let client = setup_client(&server).await;
+        let git_api = GitApi::new(client);
+
+        let project_key = "TESTPROJECT";
+        let repo_name = "test-repo";
+        let pr_number_val = 133;
+        let pr_number = PullRequestNumber::new(pr_number_val);
+
+        let mock_response = json!({
+            "id": 1003,
+            "projectId": 12345,
+            "repositoryId": 67890,
+            "number": pr_number_val,
+            "summary": "PR with notifications",
+            "description": "Description with notifications",
+            "base": "main",
+            "branch": "feature/notify",
+            "status": {
+                "id": 1,
+                "name": "Open"
+            },
+            "assignee": null,
+            "issue": null,
+            "baseCommit": "abc123",
+            "branchCommit": "def456",
+            "closeAt": null,
+            "mergeAt": null,
+            "createdUser": {
+                "id": 1,
+                "userId": "admin",
+                "name": "Admin",
+                "roleType": 1,
+                "lang": "ja",
+                "mailAddress": "admin@example.com"
+            },
+            "created": "2024-01-01T10:00:00Z",
+            "updatedUser": {
+                "id": 1,
+                "userId": "admin",
+                "name": "Admin",
+                "roleType": 1,
+                "lang": "ja",
+                "mailAddress": "admin@example.com"
+            },
+            "updated": "2024-01-01T15:00:00Z"
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path(format!(
+                "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}",
+                project_key, repo_name, pr_number_val
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(mock_response))
+            .mount(&server)
+            .await;
+
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
+        let params = UpdatePullRequestParamsBuilder::default()
+            .summary(Some("PR with notifications".to_string()))
+            .description(Some("Description with notifications".to_string()))
+            .notified_user_ids(Some(vec![UserId::new(201), UserId::new(202)]))
+            .comment(Some("Updated with notifications".to_string()))
+            .build()
+            .unwrap();
+
+        let result = git_api
+            .update_pull_request(project_id_or_key, repo_id_or_name, pr_number, &params)
+            .await;
+
+        assert!(result.is_ok());
+        let pull_request = result.unwrap();
+        assert_eq!(pull_request.id.value(), 1003);
+        assert_eq!(pull_request.summary, "PR with notifications");
+        assert_eq!(
+            pull_request.description,
+            Some("Description with notifications".to_string())
+        );
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_update_pull_request_parameter_builder() {
+        let params_with_all_fields = UpdatePullRequestParamsBuilder::default()
+            .summary(Some("Test PR".to_string()))
+            .description(Some("Test description".to_string()))
+            .issue_id(Some(IssueId::new(1001)))
+            .assignee_id(Some(UserId::new(2001)))
+            .notified_user_ids(Some(vec![UserId::new(3001), UserId::new(3002)]))
+            .comment(Some("Test comment".to_string()))
+            .build()
+            .unwrap();
+
+        assert_eq!(params_with_all_fields.summary, Some("Test PR".to_string()));
+        assert_eq!(
+            params_with_all_fields.description,
+            Some("Test description".to_string())
+        );
+        assert_eq!(params_with_all_fields.issue_id, Some(IssueId::new(1001)));
+        assert_eq!(params_with_all_fields.assignee_id, Some(UserId::new(2001)));
+        assert_eq!(
+            params_with_all_fields.notified_user_ids,
+            Some(vec![UserId::new(3001), UserId::new(3002)])
+        );
+        assert_eq!(
+            params_with_all_fields.comment,
+            Some("Test comment".to_string())
+        );
+
+        let params_minimal = UpdatePullRequestParams::new();
+        assert_eq!(params_minimal.summary, None);
+        assert_eq!(params_minimal.description, None);
+        assert_eq!(params_minimal.issue_id, None);
+        assert_eq!(params_minimal.assignee_id, None);
+        assert_eq!(params_minimal.notified_user_ids, None);
+        assert_eq!(params_minimal.comment, None);
+
+        let params_default = UpdatePullRequestParams::default();
+        assert_eq!(params_default.summary, None);
+        assert_eq!(params_default.description, None);
     }
 }
