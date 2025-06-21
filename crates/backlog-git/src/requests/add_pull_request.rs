@@ -116,13 +116,16 @@ impl From<&AddPullRequestParams> for Vec<(String, String)> {
 
 #[cfg(feature = "writable")]
 impl IntoRequest for AddPullRequestParams {
-    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        let path = format!(
+    fn path(&self) -> String {
+        format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests",
             self.project_id_or_key, self.repo_id_or_name
-        );
+        )
+    }
+
+    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
         let form: Vec<(String, String)> = (&self).into();
-        self.post(client, base_url, path, &form)
+        self.post(client, base_url, &form)
     }
 }
 

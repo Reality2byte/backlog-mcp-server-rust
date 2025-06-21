@@ -24,11 +24,13 @@ impl GetRepositoryListParams {
 }
 
 impl IntoRequest for GetRepositoryListParams {
-    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        let path = format!(
+    fn path(&self) -> String {
+        format!(
             "/api/v2/projects/{}/git/repositories",
             self.project_id_or_key
-        );
-        self.get(client, base_url, path, &())
+        )
+    }
+    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
+        self.get(client, base_url, &())
     }
 }

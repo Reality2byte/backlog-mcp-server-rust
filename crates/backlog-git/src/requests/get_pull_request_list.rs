@@ -119,16 +119,16 @@ impl GetPullRequestListParams {
 }
 
 impl IntoRequest for GetPullRequestListParams {
-    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        let path = format!(
+    fn path(&self) -> String {
+        format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests",
             self.project_id_or_key, self.repo_id_or_name
-        );
+        )
+    }
 
-        // Convert to query parameters using existing to_query_params method
+    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
         let query_params = self.to_query_params();
-
-        self.get(client, base_url, path, &query_params)
+        self.get(client, base_url, &query_params)
     }
 }
 

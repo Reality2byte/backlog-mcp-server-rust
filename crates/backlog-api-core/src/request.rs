@@ -19,37 +19,29 @@ pub trait IntoRequest {
     /// Returns a ready-to-execute reqwest::Request object.
     fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request>;
 
-    fn get<T>(
-        &self,
-        client: &ReqwestClient,
-        base_url: &Url,
-        path: String,
-        param: &T,
-    ) -> Result<reqwest::Request>
+    fn path(&self) -> String;
+
+    fn get<T>(&self, client: &ReqwestClient, base_url: &Url, query: &T) -> Result<reqwest::Request>
     where
         T: Serialize + ?Sized,
     {
+        let path = self.path();
         let url = base_url.join(&path)?;
 
         let request = client
             .get(url)
             .header("Accept", "application/json")
-            .query(&param)
+            .query(&query)
             .build()?;
 
         Ok(request)
     }
 
-    fn post<T>(
-        &self,
-        client: &ReqwestClient,
-        base_url: &Url,
-        path: String,
-        form: &T,
-    ) -> Result<reqwest::Request>
+    fn post<T>(&self, client: &ReqwestClient, base_url: &Url, form: &T) -> Result<reqwest::Request>
     where
         T: Serialize + ?Sized,
     {
+        let path = self.path();
         let url = base_url.join(&path)?;
 
         let request = client
@@ -61,22 +53,38 @@ pub trait IntoRequest {
         Ok(request)
     }
 
-    fn patch<T>(
-        &self,
-        client: &ReqwestClient,
-        base_url: &Url,
-        path: String,
-        form: &T,
-    ) -> Result<reqwest::Request>
+    fn patch<T>(&self, client: &ReqwestClient, base_url: &Url, form: &T) -> Result<reqwest::Request>
     where
         T: Serialize + ?Sized,
     {
+        let path = self.path();
         let url = base_url.join(&path)?;
 
         let request = client
             .patch(url)
             .header("Accept", "application/json")
             .form(&form)
+            .build()?;
+
+        Ok(request)
+    }
+
+    fn delete<T>(
+        &self,
+        client: &ReqwestClient,
+        base_url: &Url,
+        query: &T,
+    ) -> Result<reqwest::Request>
+    where
+        T: Serialize + ?Sized,
+    {
+        let path = self.path();
+        let url = base_url.join(&path)?;
+
+        let request = client
+            .delete(url)
+            .header("Accept", "application/json")
+            .query(&query)
             .build()?;
 
         Ok(request)
@@ -95,12 +103,15 @@ mod tests {
         struct TestParams;
 
         impl IntoRequest for TestParams {
+            fn path(&self) -> String {
+                "/test".to_string()
+            }
             fn into_request(
                 self,
                 client: &ReqwestClient,
                 base_url: &Url,
             ) -> Result<reqwest::Request> {
-                let url = base_url.join("/test")?;
+                let url = base_url.join("")?;
                 let request = client.get(url).build()?;
                 Ok(request)
             }

@@ -57,13 +57,16 @@ impl GetPullRequestCommentListParams {
 }
 
 impl IntoRequest for GetPullRequestCommentListParams {
-    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        let path = format!(
+    fn path(&self) -> String {
+        format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments",
             self.project_id_or_key,
             self.repo_id_or_name,
             self.pr_number.value()
-        );
-        self.get(client, base_url, path, &self)
+        )
+    }
+
+    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
+        self.get(client, base_url, &self)
     }
 }

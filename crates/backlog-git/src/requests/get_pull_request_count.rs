@@ -95,20 +95,15 @@ impl GetPullRequestCountParams {
 }
 
 impl IntoRequest for GetPullRequestCountParams {
-    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        let path = format!(
+    fn path(&self) -> String {
+        format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/count",
             self.project_id_or_key, self.repo_id_or_name
-        );
+        )
+    }
 
+    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
         let query_params = self.to_query_params();
-        let url = base_url.join(&path)?;
-        let request = client
-            .get(url)
-            .header("Accept", "application/json")
-            .query(&query_params)
-            .build()?;
-
-        Ok(request)
+        self.get(client, base_url, &query_params)
     }
 }

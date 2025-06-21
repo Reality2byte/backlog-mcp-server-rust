@@ -56,15 +56,18 @@ impl From<&UpdatePullRequestCommentParams> for Vec<(String, String)> {
 
 #[cfg(feature = "writable")]
 impl IntoRequest for UpdatePullRequestCommentParams {
-    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        let path = format!(
+    fn path(&self) -> String {
+        format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments/{}",
             self.project_id_or_key,
             self.repo_id_or_name,
             self.pr_number.value(),
             self.comment_id.value()
-        );
+        )
+    }
+
+    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
         let form: Vec<(String, String)> = (&self).into();
-        self.patch(client, base_url, path, &form)
+        self.patch(client, base_url, &form)
     }
 }

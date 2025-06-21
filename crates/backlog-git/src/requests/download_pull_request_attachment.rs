@@ -41,14 +41,17 @@ impl DownloadPullRequestAttachmentParams {
 }
 
 impl IntoRequest for DownloadPullRequestAttachmentParams {
-    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        let path = format!(
+    fn path(&self) -> String {
+        format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",
             self.project_id_or_key,
             self.repo_id_or_name,
             self.pr_number.value(),
             self.attachment_id.value()
-        );
-        self.get(client, base_url, path, &())
+        )
+    }
+
+    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
+        self.get(client, base_url, &())
     }
 }
