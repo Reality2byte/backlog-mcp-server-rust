@@ -216,6 +216,11 @@ The system now includes comprehensive shared file support:
 - **Shared File API**: Added complete support for browsing and downloading shared files
 - **Type Safety Improvements**: Added `FileType` enum and `SharedFileId` for better type safety
 - **Format Detection**: Intelligent content-type and UTF-8 analysis for automatic format handling
+- **Issue Shared Files**: Added support for listing shared files linked to issues
+  - Implemented `get_shared_file_list()` in `backlog-issue` API
+  - Added `issue list-shared-files` command to CLI
+  - Added `get_issue_shared_files` tool to MCP server
+  - Re-exported `IssueSharedFile` type from `backlog-api-client` for proper type resolution
 
 ### TDD Development Process
 When implementing new API features, follow Test-Driven Development:

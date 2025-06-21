@@ -318,6 +318,13 @@ enum IssueCommands {
     /// Get a specific comment for an issue
     #[command(about = "Get a specific comment for an issue")]
     GetComment(GetCommentArgs),
+    /// List shared files linked to an issue
+    #[command(about = "List shared files linked to an issue")]
+    ListSharedFiles {
+        /// Issue ID or Key (e.g., "PROJECT-123" or "12345")
+        #[clap(name = "ISSUE_ID_OR_KEY")]
+        issue_id_or_key: String,
+    },
 }
 
 #[derive(Args, Debug)]
@@ -1680,6 +1687,59 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error getting comment: {}", e);
+                    }
+                }
+            }
+            IssueCommands::ListSharedFiles { issue_id_or_key } => {
+                println!("Listing shared files for issue: {}", issue_id_or_key);
+
+                let parsed_issue_id_or_key =
+                    IssueIdOrKey::from_str(&issue_id_or_key).map_err(|e| {
+                        format!(
+                            "Failed to parse issue_id_or_key '{}': {}",
+                            issue_id_or_key, e
+                        )
+                    })?;
+
+                match client
+                    .issue()
+                    .get_shared_file_list(parsed_issue_id_or_key)
+                    .await
+                {
+                    Ok(shared_files) => {
+                        if shared_files.is_empty() {
+                            println!("No shared files found for this issue.");
+                        } else {
+                            println!("Found {} shared file(s):", shared_files.len());
+                            println!();
+
+                            for (index, file) in shared_files.iter().enumerate() {
+                                println!("{}. {}", index + 1, file.name);
+                                println!("   ID: {}", file.id);
+                                println!("   Directory: {}", file.dir);
+                                match &file.content {
+                                    backlog_issue::models::FileContent::File { size } => {
+                                        println!("   Type: File");
+                                        println!("   Size: {} bytes", size);
+                                    }
+                                    backlog_issue::models::FileContent::Directory => {
+                                        println!("   Type: Directory");
+                                    }
+                                }
+                                println!("   Created by: {}", file.created_user.name);
+                                println!("   Created at: {}", file.created);
+                                if let Some(updated_user) = &file.updated_user {
+                                    println!("   Updated by: {}", updated_user.name);
+                                }
+                                if let Some(updated) = &file.updated {
+                                    println!("   Updated at: {}", updated);
+                                }
+                                println!();
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error listing shared files: {}", e);
                     }
                 }
             }

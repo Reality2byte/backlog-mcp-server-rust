@@ -120,6 +120,10 @@ The following tools are grouped by their respective modules:
         -   `attachment_id` (number, required): The numeric ID of the attachment to download.
         -   `format` (string, optional): Format specification - 'image', 'text', or 'raw'. If not specified, format will be auto-detected.
     -   Output: Content via `rmcp::model::Content::image` for images, `rmcp::model::Content::text` for text files, or JSON with base64-encoded content for raw bytes.
+-   **`get_issue_shared_files`**
+    -   Description: Get a list of shared files linked to a specified issue.
+    -   Input: `issue_id_or_key` (string, required): The issue ID or issue key for which to retrieve shared files. Examples: "MYPROJECTKEY-123", "12345".
+    -   Output: A JSON array of `SharedFile` objects with details like ID, name, directory, size, type, and metadata.
 
 ### Project Tools
 -   **`get_project_status_list`**

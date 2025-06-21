@@ -1,15 +1,15 @@
 use super::request::{
     AddCommentRequest, DownloadAttachmentRequest, GetAttachmentListRequest,
-    GetIssueCommentsRequest, GetIssueDetailsRequest, GetIssuesByMilestoneNameRequest,
-    GetVersionMilestoneListRequest, UpdateIssueRequest,
+    GetIssueCommentsRequest, GetIssueDetailsRequest, GetIssueSharedFilesRequest,
+    GetIssuesByMilestoneNameRequest, GetVersionMilestoneListRequest, UpdateIssueRequest,
 };
 use crate::error::{Error as McpError, Result};
 use crate::util::{MatchResult, find_by_name_from_array};
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
     AddCommentParams, Attachment, AttachmentId, Comment, DownloadedFile, GetCommentListParams,
-    GetIssueListParamsBuilder, Issue, IssueIdOrKey, IssueKey, Milestone, ProjectIdOrKey,
-    UpdateIssueParams,
+    GetIssueListParamsBuilder, Issue, IssueIdOrKey, IssueKey, IssueSharedFile, Milestone,
+    ProjectIdOrKey, UpdateIssueParams,
 };
 use std::str::FromStr;
 use std::sync::Arc;
@@ -169,4 +169,18 @@ pub(crate) async fn add_comment_impl(
         .add_comment(parsed_issue_id_or_key, &add_comment_params)
         .await?;
     Ok(comment)
+}
+
+pub(crate) async fn get_issue_shared_files_impl(
+    client: Arc<Mutex<BacklogApiClient>>,
+    req: GetIssueSharedFilesRequest,
+) -> Result<Vec<IssueSharedFile>> {
+    let parsed_issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
+
+    let client_guard = client.lock().await;
+    let shared_files = client_guard
+        .issue()
+        .get_shared_file_list(parsed_issue_id_or_key)
+        .await?;
+    Ok(shared_files)
 }

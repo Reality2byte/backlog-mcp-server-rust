@@ -13,6 +13,7 @@ use crate::{
     responses::{
         CountCommentResponse, CountIssueResponse, GetAttachmentListResponse,
         GetCommentListResponse, GetCommentResponse, GetIssueListResponse, GetIssueResponse,
+        GetSharedFileListResponse,
     },
 };
 
@@ -147,6 +148,18 @@ impl IssueApi {
         self.0.get(&path).await
     }
 
+    /// Get a list of shared files linked to an issue.
+    ///
+    /// Corresponds to `GET /api/v2/issues/:issueIdOrKey/sharedFiles`.
+    pub async fn get_shared_file_list(
+        &self,
+        issue_id_or_key: impl Into<IssueIdOrKey>,
+    ) -> Result<GetSharedFileListResponse> {
+        let issue_key_str = issue_id_or_key.into().to_string();
+        let path = format!("/api/v2/issues/{}/sharedFiles", issue_key_str);
+        self.0.get(&path).await
+    }
+
     /// Get a specific attachment file by issue ID or key and attachment ID.
     pub async fn get_attachment_file(
         &self,
@@ -169,7 +182,7 @@ mod tests {
     #[cfg(feature = "writable")]
     use crate::requests::AddCommentParamsBuilder;
     use crate::{
-        models::{Attachment, Comment, Issue},
+        models::{Attachment, Comment, FileContent, Issue, SharedFile},
         requests::{
             GetIssueListParamsBuilder,
             get_comment_list::{CommentOrder, GetCommentListParamsBuilder},
@@ -178,7 +191,7 @@ mod tests {
     use backlog_api_core::bytes::Bytes;
     use backlog_core::{
         IssueKey, User,
-        identifier::{AttachmentId, CommentId, IssueId, ProjectId, UserId},
+        identifier::{AttachmentId, CommentId, IssueId, ProjectId, SharedFileId, UserId},
     };
     use chrono::{TimeZone, Utc};
     use client::test_utils::setup_client;
@@ -478,6 +491,32 @@ mod tests {
         }
     }
 
+    fn create_mock_shared_file(
+        id: u32,
+        dir: &str,
+        name: &str,
+        size: Option<u64>,
+        user_id: u32,
+        user_name: &str,
+        created_str: &str,
+    ) -> SharedFile {
+        SharedFile {
+            id: SharedFileId::new(id),
+            dir: dir.to_string(),
+            name: name.to_string(),
+            created_user: create_mock_user(user_id, user_name),
+            created: chrono::DateTime::parse_from_rfc3339(created_str)
+                .unwrap()
+                .with_timezone(&Utc),
+            updated_user: None,
+            updated: None,
+            content: match size {
+                Some(s) => FileContent::File { size: s },
+                None => FileContent::Directory,
+            },
+        }
+    }
+
     #[tokio::test]
     async fn test_get_attachment_list_success() {
         let mock_server = MockServer::start().await;
@@ -543,6 +582,92 @@ mod tests {
 
         let result = issue_api
             .get_attachment_list(IssueIdOrKey::Key(issue_key.parse().unwrap()))
+            .await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_get_shared_file_list_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_key = "TESTKEY-1";
+
+        let expected_shared_files = vec![
+            create_mock_shared_file(
+                1,
+                "/shared",
+                "document.pdf",
+                Some(2048),
+                101,
+                "alice",
+                "2024-01-01T10:00:00Z",
+            ),
+            create_mock_shared_file(
+                2,
+                "/shared/images",
+                "photo.jpg",
+                Some(10240),
+                102,
+                "bob",
+                "2024-01-02T11:00:00Z",
+            ),
+        ];
+
+        Mock::given(method("GET"))
+            .and(path(format!("/api/v2/issues/{}/sharedFiles", issue_key)))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_shared_files))
+            .mount(&mock_server)
+            .await;
+
+        let result = issue_api
+            .get_shared_file_list(IssueIdOrKey::Key(issue_key.parse().unwrap()))
+            .await;
+        assert!(result.is_ok());
+        let shared_files = result.unwrap();
+        assert_eq!(shared_files.len(), 2);
+        assert_eq!(shared_files[0].name, "document.pdf");
+        assert_eq!(shared_files[1].name, "photo.jpg");
+    }
+
+    #[tokio::test]
+    async fn test_get_shared_file_list_empty() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_key = "TESTKEY-2";
+
+        let expected_shared_files: Vec<SharedFile> = vec![];
+
+        Mock::given(method("GET"))
+            .and(path(format!("/api/v2/issues/{}/sharedFiles", issue_key)))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_shared_files))
+            .mount(&mock_server)
+            .await;
+
+        let result = issue_api
+            .get_shared_file_list(IssueIdOrKey::Key(issue_key.parse().unwrap()))
+            .await;
+        assert!(result.is_ok());
+        let shared_files = result.unwrap();
+        assert_eq!(shared_files.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_get_shared_file_list_issue_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_key = "TESTKEY-404";
+
+        Mock::given(method("GET"))
+            .and(path(format!("/api/v2/issues/{}/sharedFiles", issue_key)))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&mock_server)
+            .await;
+
+        let result = issue_api
+            .get_shared_file_list(IssueIdOrKey::Key(issue_key.parse().unwrap()))
             .await;
         assert!(result.is_err());
     }

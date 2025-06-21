@@ -1,4 +1,4 @@
-use crate::models::{Attachment, Comment, Issue};
+use crate::models::{Attachment, Comment, Issue, SharedFile};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -19,4 +19,5 @@ pub type GetIssueListResponse = Vec<Issue>;
 pub type GetCommentListResponse = Vec<Comment>;
 pub type GetCommentResponse = Comment;
 pub type GetAttachmentListResponse = Vec<Attachment>;
+pub type GetSharedFileListResponse = Vec<SharedFile>;
 pub type AddCommentResponse = Comment;

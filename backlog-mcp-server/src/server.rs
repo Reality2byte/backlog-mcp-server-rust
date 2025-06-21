@@ -1,5 +1,7 @@
 use crate::file_utils::{FileFormat, SerializableFile};
-use crate::issue::request::{GetIssueCommentsRequest, UpdateIssueRequest};
+use crate::issue::request::{
+    GetIssueCommentsRequest, GetIssueSharedFilesRequest, UpdateIssueRequest,
+};
 use crate::{
     document::{
         self,
@@ -211,6 +213,19 @@ impl Server {
         let attachments =
             issue::bridge::get_attachment_list_impl(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(attachments)?]))
+    }
+
+    #[tool(
+        name = "get_issue_shared_files",
+        description = "Get a list of shared files linked to a specified issue."
+    )]
+    async fn get_issue_shared_files(
+        &self,
+        #[tool(aggr)] request: GetIssueSharedFilesRequest,
+    ) -> McpResult {
+        let shared_files =
+            issue::bridge::get_issue_shared_files_impl(self.client.clone(), request).await?;
+        Ok(CallToolResult::success(vec![Content::json(shared_files)?]))
     }
 
     #[tool(description = "Get a list of users in the space.")]

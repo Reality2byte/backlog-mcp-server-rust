@@ -34,7 +34,7 @@ pub use backlog_file::{FileApi, GetSharedFilesListParams, GetSharedFilesListResp
 #[cfg(feature = "issue")]
 pub use backlog_issue::{
     IssueApi,
-    models::{Attachment, ChangeLogEntry, Comment, Issue},
+    models::{Attachment, ChangeLogEntry, Comment, Issue, SharedFile as IssueSharedFile},
     requests::{
         AddCommentParams, AddCommentParamsBuilder, GetIssueListParams, GetIssueListParamsBuilder,
         UpdateIssueParams, UpdateIssueParamsBuilder,

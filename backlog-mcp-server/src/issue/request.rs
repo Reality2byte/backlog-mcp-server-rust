@@ -158,3 +158,11 @@ impl TryFrom<AddCommentRequest> for AddCommentParams {
         builder.build()
     }
 }
+
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct GetIssueSharedFilesRequest {
+    #[schemars(
+        description = "The issue ID or issue key for which to retrieve shared files. Examples: 'MYPROJECTKEY-123', '12345'."
+    )]
+    pub issue_id_or_key: String,
+}
