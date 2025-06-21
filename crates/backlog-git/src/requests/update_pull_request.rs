@@ -1,11 +1,9 @@
-use backlog_api_core::{Error as ApiError, IntoRequest, PatchRequest, Result};
+use backlog_api_core::{Error as ApiError, IntoRequest};
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
     identifier::{Identifier, IssueId, PullRequestNumber, UserId},
 };
 use derive_builder::Builder;
-use reqwest::Client as ReqwestClient;
-use url::Url;
 
 /// Parameters for updating a pull request.
 ///
@@ -107,6 +105,10 @@ impl From<&UpdatePullRequestParams> for Vec<(String, String)> {
 
 #[cfg(feature = "writable")]
 impl IntoRequest for UpdatePullRequestParams {
+    fn method(&self) -> reqwest::Method {
+        reqwest::Method::PATCH
+    }
+
     fn path(&self) -> String {
         format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}",
@@ -116,13 +118,8 @@ impl IntoRequest for UpdatePullRequestParams {
         )
     }
 
-    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        self.patch(client, base_url)
-    }
-}
-
-impl PatchRequest for UpdatePullRequestParams {
     fn to_form(&self) -> Vec<(String, String)> {
         From::from(self)
     }
 }
+

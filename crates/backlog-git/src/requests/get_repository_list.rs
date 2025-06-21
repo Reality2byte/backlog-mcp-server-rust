@@ -1,8 +1,6 @@
-use backlog_api_core::{Error as ApiError, GetRequest, IntoRequest, Result};
+use backlog_api_core::{Error as ApiError, IntoRequest};
 use backlog_core::ProjectIdOrKey;
 use derive_builder::Builder;
-use reqwest::Client as ReqwestClient;
-use url::Url;
 
 /// Parameters for getting repository list.
 ///
@@ -24,15 +22,15 @@ impl GetRepositoryListParams {
 }
 
 impl IntoRequest for GetRepositoryListParams {
+    fn method(&self) -> reqwest::Method {
+        reqwest::Method::GET
+    }
+
     fn path(&self) -> String {
         format!(
             "/api/v2/projects/{}/git/repositories",
             self.project_id_or_key
         )
     }
-    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        self.get(client, base_url)
-    }
 }
 
-impl GetRequest for GetRepositoryListParams {}

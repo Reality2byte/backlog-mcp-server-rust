@@ -1,12 +1,10 @@
-use backlog_api_core::{Error as ApiError, GetRequest, IntoRequest, Result};
+use backlog_api_core::{Error as ApiError, IntoRequest};
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
     identifier::{Identifier, PullRequestNumber},
 };
 use derive_builder::Builder;
-use reqwest::Client as ReqwestClient;
 use serde::Serialize;
-use url::Url;
 
 use crate::models::PrCommentOrder;
 
@@ -57,6 +55,10 @@ impl GetPullRequestCommentListParams {
 }
 
 impl IntoRequest for GetPullRequestCommentListParams {
+    fn method(&self) -> reqwest::Method {
+        reqwest::Method::GET
+    }
+
     fn path(&self) -> String {
         format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments",
@@ -66,13 +68,8 @@ impl IntoRequest for GetPullRequestCommentListParams {
         )
     }
 
-    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        self.get(client, base_url)
-    }
-}
-
-impl GetRequest for GetPullRequestCommentListParams {
     fn to_query(&self) -> impl Serialize {
         self
     }
 }
+

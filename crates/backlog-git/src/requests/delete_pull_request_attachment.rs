@@ -1,11 +1,9 @@
-use backlog_api_core::{DeleteRequest, Error as ApiError, IntoRequest, Result};
+use backlog_api_core::{Error as ApiError, IntoRequest};
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
     identifier::{Identifier, PullRequestAttachmentId, PullRequestNumber},
 };
 use derive_builder::Builder;
-use reqwest::Client as ReqwestClient;
-use url::Url;
 
 /// Parameters for deleting a pull request attachment.
 ///
@@ -44,6 +42,10 @@ impl DeletePullRequestAttachmentParams {
 
 #[cfg(feature = "writable")]
 impl IntoRequest for DeletePullRequestAttachmentParams {
+    fn method(&self) -> reqwest::Method {
+        reqwest::Method::DELETE
+    }
+
     fn path(&self) -> String {
         format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",
@@ -53,10 +55,5 @@ impl IntoRequest for DeletePullRequestAttachmentParams {
             self.attachment_id.value()
         )
     }
-
-    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        self.delete(client, base_url)
-    }
 }
 
-impl DeleteRequest for DeletePullRequestAttachmentParams {}

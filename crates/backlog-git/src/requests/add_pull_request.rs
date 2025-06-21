@@ -1,13 +1,9 @@
-#[cfg(feature = "writable")]
-use backlog_api_core::PostRequest;
-use backlog_api_core::{Error as ApiError, IntoRequest, Result};
+use backlog_api_core::{Error as ApiError, IntoRequest};
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
     identifier::{AttachmentId, Identifier, IssueId, UserId},
 };
 use derive_builder::Builder;
-use reqwest::Client as ReqwestClient;
-use url::Url;
 
 /// Parameters for creating a new pull request.
 ///
@@ -118,6 +114,10 @@ impl From<&AddPullRequestParams> for Vec<(String, String)> {
 
 #[cfg(feature = "writable")]
 impl IntoRequest for AddPullRequestParams {
+    fn method(&self) -> reqwest::Method {
+        reqwest::Method::POST
+    }
+
     fn path(&self) -> String {
         format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests",
@@ -125,17 +125,11 @@ impl IntoRequest for AddPullRequestParams {
         )
     }
 
-    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        self.post(client, base_url)
-    }
-}
-
-#[cfg(feature = "writable")]
-impl PostRequest for AddPullRequestParams {
     fn to_form(&self) -> Vec<(String, String)> {
         From::from(self)
     }
 }
+
 
 #[cfg(all(test, feature = "writable"))]
 mod tests {

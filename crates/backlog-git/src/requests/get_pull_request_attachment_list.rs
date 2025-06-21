@@ -1,11 +1,9 @@
-use backlog_api_core::{Error as ApiError, GetRequest, IntoRequest, Result};
+use backlog_api_core::{Error as ApiError, IntoRequest};
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
     identifier::{Identifier, PullRequestNumber},
 };
 use derive_builder::Builder;
-use reqwest::Client as ReqwestClient;
-use url::Url;
 
 /// Parameters for getting pull request attachment list.
 ///
@@ -37,6 +35,10 @@ impl GetPullRequestAttachmentListParams {
 }
 
 impl IntoRequest for GetPullRequestAttachmentListParams {
+    fn method(&self) -> reqwest::Method {
+        reqwest::Method::GET
+    }
+
     fn path(&self) -> String {
         format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments",
@@ -45,10 +47,5 @@ impl IntoRequest for GetPullRequestAttachmentListParams {
             self.pr_number.value()
         )
     }
-
-    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        self.get(client, base_url)
-    }
 }
 
-impl GetRequest for GetPullRequestAttachmentListParams {}

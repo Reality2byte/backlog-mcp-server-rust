@@ -1,5 +1,5 @@
 use crate::Result;
-use reqwest::Client as ReqwestClient;
+use reqwest::{Client as ReqwestClient, Method};
 use serde::Serialize;
 use url::Url;
 
@@ -10,6 +10,22 @@ use url::Url;
 /// HTTP method selection, and body serialization.
 ///
 pub trait IntoRequest {
+    /// Returns the HTTP method for this request.
+    fn method(&self) -> Method;
+
+    /// Returns the URL path for this request.
+    fn path(&self) -> String;
+
+    /// Returns query parameters for GET/DELETE requests.
+    fn to_query(&self) -> impl Serialize {
+        &()
+    }
+
+    /// Returns form data for POST/PATCH requests.
+    fn to_form(&self) -> Vec<(String, String)> {
+        Vec::new()
+    }
+
     /// Converts the parameter into a complete HTTP request.
     ///
     /// # Arguments
@@ -17,91 +33,35 @@ pub trait IntoRequest {
     /// * `base_url` - The base URL for the API (e.g., "https://example.backlog.jp")
     ///
     /// Returns a ready-to-execute reqwest::Request object.
-    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request>;
-
-    fn path(&self) -> String;
-}
-
-pub trait GetRequest: IntoRequest {
-    fn to_query(&self) -> impl Serialize {
-        &()
-    }
-
-    fn get(&self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
+    fn to_request(&self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
         let path = self.path();
         let url = base_url.join(&path)?;
-        let query = self.to_query();
+        let method = self.method();
 
-        let request = client
-            .get(url)
-            .header("Accept", "application/json")
-            .query(&query)
-            .build()?;
+        let request_builder = client
+            .request(method.clone(), url)
+            .header("Accept", "application/json");
+
+        let request = match method {
+            Method::GET | Method::DELETE => {
+                let query = IntoRequest::to_query(self);
+                request_builder.query(&query).build()?
+            }
+            Method::POST | Method::PATCH => {
+                let form = IntoRequest::to_form(self);
+                request_builder.form(&form).build()?
+            }
+            _ => request_builder.build()?,
+        };
 
         Ok(request)
     }
 }
 
-pub trait PostRequest: IntoRequest {
-    fn to_form(&self) -> Vec<(String, String)>;
-
-    fn post(&self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        let path = self.path();
-        let url = base_url.join(&path)?;
-        let form = self.to_form();
-
-        let request = client
-            .post(url)
-            .header("Accept", "application/json")
-            .form(&form)
-            .build()?;
-
-        Ok(request)
-    }
-}
-
-pub trait DeleteRequest: IntoRequest {
-    fn to_query(&self) -> impl Serialize {
-        &()
-    }
-
-    fn delete(&self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        let path = self.path();
-        let url = base_url.join(&path)?;
-        let query = self.to_query();
-
-        let request = client
-            .delete(url)
-            .header("Accept", "application/json")
-            .query(&query)
-            .build()?;
-
-        Ok(request)
-    }
-}
-
-pub trait PatchRequest: IntoRequest {
-    fn to_form(&self) -> Vec<(String, String)>;
-
-    fn patch(&self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        let path = self.path();
-        let url = base_url.join(&path)?;
-        let form = self.to_form();
-
-        let request = client
-            .patch(url)
-            .header("Accept", "application/json")
-            .form(&form)
-            .build()?;
-
-        Ok(request)
-    }
-}
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use url::Url;
 
     #[test]
     fn test_into_request_trait_compiles() {
@@ -110,17 +70,12 @@ mod tests {
         struct TestParams;
 
         impl IntoRequest for TestParams {
+            fn method(&self) -> Method {
+                Method::GET
+            }
+
             fn path(&self) -> String {
                 "/test".to_string()
-            }
-            fn into_request(
-                self,
-                client: &ReqwestClient,
-                base_url: &Url,
-            ) -> Result<reqwest::Request> {
-                let url = base_url.join("")?;
-                let request = client.get(url).build()?;
-                Ok(request)
             }
         }
 
