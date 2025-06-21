@@ -57,7 +57,7 @@ impl GitApi {
         &self,
         params: GetRepositoryListParams,
     ) -> Result<Vec<Repository>> {
-        self.client.execute(&params).await
+        self.client.execute(params).await
     }
 
     /// Fetches a single Git repository by its ID or name.
@@ -68,7 +68,7 @@ impl GitApi {
     ///
     /// * `params` - Parameters including the project ID or key and repository ID or name.
     pub async fn get_repository(&self, params: GetRepositoryParams) -> Result<Repository> {
-        self.client.execute(&params).await
+        self.client.execute(params).await
     }
 
     /// Fetches the list of Pull Requests for a given repository.
@@ -82,7 +82,7 @@ impl GitApi {
         &self,
         params: GetPullRequestListParams,
     ) -> Result<Vec<PullRequest>> {
-        self.client.execute(&params).await
+        self.client.execute(params).await
     }
 
     /// Fetches the list of Pull Requests for a given repository with filtering options.
@@ -98,7 +98,7 @@ impl GitApi {
         &self,
         params: GetPullRequestListParams,
     ) -> Result<Vec<PullRequest>> {
-        self.client.execute(&params).await
+        self.client.execute(params).await
     }
 
     /// Fetches a single Pull Request by its number.
@@ -111,7 +111,7 @@ impl GitApi {
     /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
     /// * `pr_number` - The pull request number.
     pub async fn get_pull_request(&self, params: GetPullRequestParams) -> Result<PullRequest> {
-        self.client.execute(&params).await
+        self.client.execute(params).await
     }
 
     // TODO:
@@ -127,7 +127,7 @@ impl GitApi {
         &self,
         params: GetPullRequestAttachmentListParams,
     ) -> Result<Vec<PullRequestAttachment>> {
-        self.client.execute(&params).await
+        self.client.execute(params).await
     }
 
     /// Downloads the content of a specific pull request attachment.
@@ -163,7 +163,7 @@ impl GitApi {
         &self,
         params: DeletePullRequestAttachmentParams,
     ) -> Result<PullRequestAttachment> {
-        self.client.execute(&params).await
+        self.client.execute(params).await
     }
 
     /// Fetches the list of comments for a specific pull request.
@@ -177,7 +177,7 @@ impl GitApi {
         &self,
         params: GetPullRequestCommentListParams,
     ) -> Result<Vec<PullRequestComment>> {
-        self.client.execute(&params).await
+        self.client.execute(params).await
     }
 
     /// Fetches the count of comments for a specific pull request.
@@ -191,7 +191,7 @@ impl GitApi {
         &self,
         params: GetPullRequestCommentCountParams,
     ) -> Result<PullRequestCommentCount> {
-        self.client.execute(&params).await
+        self.client.execute(params).await
     }
 
     /// Returns the count of pull requests in a repository.
@@ -205,7 +205,7 @@ impl GitApi {
         &self,
         params: GetPullRequestCountParams,
     ) -> Result<PullRequestCount> {
-        self.client.execute(&params).await
+        self.client.execute(params).await
     }
 
     /// Returns the count of pull requests in a repository with filtering options.
@@ -219,7 +219,7 @@ impl GitApi {
         &self,
         params: GetPullRequestListParams,
     ) -> Result<PullRequestCount> {
-        self.client.execute(&params).await
+        self.client.execute(params).await
     }
 
     /// Adds a comment to a specific pull request.
@@ -234,7 +234,7 @@ impl GitApi {
         &self,
         params: AddPullRequestCommentParams,
     ) -> Result<PullRequestComment> {
-        self.client.execute(&params).await
+        self.client.execute(params).await
     }
 
     /// Updates a pull request.
@@ -249,7 +249,7 @@ impl GitApi {
         &self,
         params: UpdatePullRequestParams,
     ) -> Result<PullRequest> {
-        self.client.execute(&params).await
+        self.client.execute(params).await
     }
 
     /// Updates a comment on a specific pull request.
@@ -264,7 +264,7 @@ impl GitApi {
         &self,
         params: UpdatePullRequestCommentParams,
     ) -> Result<PullRequestComment> {
-        self.client.execute(&params).await
+        self.client.execute(params).await
     }
 
     /// Creates a new pull request.
@@ -276,7 +276,7 @@ impl GitApi {
     /// * `params` - Parameters for creating the pull request including path information, summary, description, base and branch.
     #[cfg(feature = "writable")]
     pub async fn add_pull_request(&self, params: AddPullRequestParams) -> Result<PullRequest> {
-        self.client.execute(&params).await
+        self.client.execute(params).await
     }
 }
 

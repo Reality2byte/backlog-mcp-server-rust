@@ -41,12 +41,12 @@ impl Client {
     }
 
     /// Executes a request using the IntoRequest trait
-    pub async fn execute<T, P>(&self, params: &P) -> Result<T>
+    pub async fn execute<T, P>(&self, params: P) -> Result<T>
     where
         T: serde::de::DeserializeOwned,
         P: IntoRequest,
     {
-        let mut request = params.to_request(&self.client, &self.base_url)?;
+        let mut request = params.into_request(&self.client, &self.base_url)?;
 
         // Add authentication headers to the request
         if let Some(token) = &self.auth_token {

@@ -133,7 +133,6 @@ impl IntoRequest for GetPullRequestListParams {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

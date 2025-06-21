@@ -4,6 +4,8 @@ use backlog_core::{
     identifier::{Identifier, IssueId, PullRequestNumber, UserId},
 };
 use derive_builder::Builder;
+#[cfg(feature = "writable")]
+use serde::Serialize;
 
 /// Parameters for updating a pull request.
 ///
@@ -118,8 +120,7 @@ impl IntoRequest for UpdatePullRequestParams {
         )
     }
 
-    fn to_form(&self) -> Vec<(String, String)> {
-        From::from(self)
+    fn to_form(&self) -> impl Serialize {
+        Vec::<(String, String)>::from(self)
     }
 }
-

@@ -4,6 +4,8 @@ use backlog_core::{
     identifier::{AttachmentId, Identifier, IssueId, UserId},
 };
 use derive_builder::Builder;
+#[cfg(feature = "writable")]
+use serde::Serialize;
 
 /// Parameters for creating a new pull request.
 ///
@@ -125,11 +127,10 @@ impl IntoRequest for AddPullRequestParams {
         )
     }
 
-    fn to_form(&self) -> Vec<(String, String)> {
-        From::from(self)
+    fn to_form(&self) -> impl Serialize {
+        Vec::<(String, String)>::from(self)
     }
 }
-
 
 #[cfg(all(test, feature = "writable"))]
 mod tests {

@@ -56,4 +56,3 @@ impl IntoRequest for DeletePullRequestAttachmentParams {
         )
     }
 }
-

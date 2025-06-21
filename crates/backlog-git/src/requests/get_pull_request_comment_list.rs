@@ -72,4 +72,3 @@ impl IntoRequest for GetPullRequestCommentListParams {
         self
     }
 }
-

@@ -53,4 +53,3 @@ impl IntoRequest for DownloadPullRequestAttachmentParams {
         )
     }
 }
-

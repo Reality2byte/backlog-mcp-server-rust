@@ -22,8 +22,8 @@ pub trait IntoRequest {
     }
 
     /// Returns form data for POST/PATCH requests.
-    fn to_form(&self) -> Vec<(String, String)> {
-        Vec::new()
+    fn to_form(&self) -> impl Serialize {
+        &()
     }
 
     /// Converts the parameter into a complete HTTP request.
@@ -33,7 +33,10 @@ pub trait IntoRequest {
     /// * `base_url` - The base URL for the API (e.g., "https://example.backlog.jp")
     ///
     /// Returns a ready-to-execute reqwest::Request object.
-    fn to_request(&self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
+    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request>
+    where
+        Self: Sized,
+    {
         let path = self.path();
         let url = base_url.join(&path)?;
         let method = self.method();
@@ -44,11 +47,11 @@ pub trait IntoRequest {
 
         let request = match method {
             Method::GET | Method::DELETE => {
-                let query = IntoRequest::to_query(self);
+                let query = IntoRequest::to_query(&self);
                 request_builder.query(&query).build()?
             }
             Method::POST | Method::PATCH => {
-                let form = IntoRequest::to_form(self);
+                let form = IntoRequest::to_form(&self);
                 request_builder.form(&form).build()?
             }
             _ => request_builder.build()?,
@@ -57,7 +60,6 @@ pub trait IntoRequest {
         Ok(request)
     }
 }
-
 
 #[cfg(test)]
 mod tests {

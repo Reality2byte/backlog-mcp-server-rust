@@ -108,4 +108,3 @@ impl IntoRequest for GetPullRequestCountParams {
         self.to_query_params()
     }
 }
-
