@@ -121,11 +121,8 @@ impl IntoRequest for AddPullRequestParams {
             "/api/v2/projects/{}/git/repositories/{}/pullRequests",
             self.project_id_or_key, self.repo_id_or_name
         );
-
-        // Convert to form data using the existing From implementation
-        let form_data: Vec<(String, String)> = (&self).into();
-
-        self.post(client, base_url, path, &form_data)
+        let form: Vec<(String, String)> = (&self).into();
+        self.post(client, base_url, path, &form)
     }
 }
 

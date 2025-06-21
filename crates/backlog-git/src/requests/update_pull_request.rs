@@ -114,18 +114,7 @@ impl IntoRequest for UpdatePullRequestParams {
             self.repo_id_or_name,
             self.pr_number.value()
         );
-
-        // Convert to form data using the existing From implementation
-        let form_data: Vec<(String, String)> = (&self).into();
-
-        // Use PATCH method for updates
-        let url = base_url.join(&path)?;
-        let request = client
-            .request(reqwest::Method::PATCH, url)
-            .header("Accept", "application/json")
-            .form(&form_data)
-            .build()?;
-
-        Ok(request)
+        let form: Vec<(String, String)> = (&self).into();
+        self.patch(client, base_url, path, &form)
     }
 }

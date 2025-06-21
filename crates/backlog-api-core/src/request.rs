@@ -60,6 +60,27 @@ pub trait IntoRequest {
 
         Ok(request)
     }
+
+    fn patch<T>(
+        &self,
+        client: &ReqwestClient,
+        base_url: &Url,
+        path: String,
+        form: &T,
+    ) -> Result<reqwest::Request>
+    where
+        T: Serialize + ?Sized,
+    {
+        let url = base_url.join(&path)?;
+
+        let request = client
+            .patch(url)
+            .header("Accept", "application/json")
+            .form(&form)
+            .build()?;
+
+        Ok(request)
+    }
 }
 
 #[cfg(test)]
