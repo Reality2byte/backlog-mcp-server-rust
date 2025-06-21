@@ -1,3 +1,5 @@
+#[cfg(feature = "writable")]
+use backlog_api_core::PostRequest;
 use backlog_api_core::{Error as ApiError, IntoRequest, Result};
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
@@ -124,8 +126,14 @@ impl IntoRequest for AddPullRequestParams {
     }
 
     fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        let form: Vec<(String, String)> = (&self).into();
-        self.post(client, base_url, &form)
+        self.post(client, base_url)
+    }
+}
+
+#[cfg(feature = "writable")]
+impl PostRequest for AddPullRequestParams {
+    fn to_form(&self) -> Vec<(String, String)> {
+        From::from(self)
     }
 }
 

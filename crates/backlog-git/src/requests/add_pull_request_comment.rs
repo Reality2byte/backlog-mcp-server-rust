@@ -1,4 +1,4 @@
-use backlog_api_core::{Error as ApiError, IntoRequest, Result};
+use backlog_api_core::{Error as ApiError, IntoRequest, PostRequest, Result};
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
     identifier::{Identifier, PullRequestNumber, UserId},
@@ -64,6 +64,7 @@ impl From<&AddPullRequestCommentParams> for Vec<(String, String)> {
     }
 }
 
+#[cfg(feature = "writable")]
 impl IntoRequest for AddPullRequestCommentParams {
     fn path(&self) -> String {
         format!(
@@ -75,7 +76,13 @@ impl IntoRequest for AddPullRequestCommentParams {
     }
 
     fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        let form_data: Vec<(String, String)> = (&self).into();
-        self.post(client, base_url, &form_data)
+        self.post(client, base_url)
+    }
+}
+
+#[cfg(feature = "writable")]
+impl PostRequest for AddPullRequestCommentParams {
+    fn to_form(&self) -> Vec<(String, String)> {
+        From::from(self)
     }
 }

@@ -1,4 +1,4 @@
-use backlog_api_core::{Error as ApiError, IntoRequest, Result};
+use backlog_api_core::{Error as ApiError, IntoRequest, PatchRequest, Result};
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
     identifier::{Identifier, IssueId, PullRequestNumber, UserId},
@@ -117,7 +117,12 @@ impl IntoRequest for UpdatePullRequestParams {
     }
 
     fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        let form: Vec<(String, String)> = (&self).into();
-        self.patch(client, base_url, &form)
+        self.patch(client, base_url)
+    }
+}
+
+impl PatchRequest for UpdatePullRequestParams {
+    fn to_form(&self) -> Vec<(String, String)> {
+        From::from(self)
     }
 }

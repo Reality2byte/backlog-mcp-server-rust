@@ -1,4 +1,4 @@
-use backlog_api_core::{Error as ApiError, IntoRequest, Result};
+use backlog_api_core::{DeleteRequest, Error as ApiError, IntoRequest, Result};
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
     identifier::{Identifier, PullRequestAttachmentId, PullRequestNumber},
@@ -55,6 +55,8 @@ impl IntoRequest for DeletePullRequestAttachmentParams {
     }
 
     fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        self.delete(client, base_url, &())
+        self.delete(client, base_url)
     }
 }
+
+impl DeleteRequest for DeletePullRequestAttachmentParams {}

@@ -1,4 +1,4 @@
-use backlog_api_core::{Error as ApiError, IntoRequest, Result};
+use backlog_api_core::{Error as ApiError, GetRequest, IntoRequest, Result};
 use backlog_core::{ProjectIdOrKey, RepositoryIdOrName};
 use derive_builder::Builder;
 use reqwest::Client as ReqwestClient;
@@ -103,7 +103,12 @@ impl IntoRequest for GetPullRequestCountParams {
     }
 
     fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
-        let query_params = self.to_query_params();
-        self.get(client, base_url, &query_params)
+        self.get(client, base_url)
+    }
+}
+
+impl GetRequest for GetPullRequestCountParams {
+    fn to_query(&self) -> impl Serialize {
+        self.to_query_params()
     }
 }

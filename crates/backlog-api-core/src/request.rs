@@ -20,13 +20,17 @@ pub trait IntoRequest {
     fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request>;
 
     fn path(&self) -> String;
+}
 
-    fn get<T>(&self, client: &ReqwestClient, base_url: &Url, query: &T) -> Result<reqwest::Request>
-    where
-        T: Serialize + ?Sized,
-    {
+pub trait GetRequest: IntoRequest {
+    fn to_query(&self) -> impl Serialize {
+        &()
+    }
+
+    fn get(&self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
         let path = self.path();
         let url = base_url.join(&path)?;
+        let query = self.to_query();
 
         let request = client
             .get(url)
@@ -36,13 +40,15 @@ pub trait IntoRequest {
 
         Ok(request)
     }
+}
 
-    fn post<T>(&self, client: &ReqwestClient, base_url: &Url, form: &T) -> Result<reqwest::Request>
-    where
-        T: Serialize + ?Sized,
-    {
+pub trait PostRequest: IntoRequest {
+    fn to_form(&self) -> Vec<(String, String)>;
+
+    fn post(&self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
         let path = self.path();
         let url = base_url.join(&path)?;
+        let form = self.to_form();
 
         let request = client
             .post(url)
@@ -52,39 +58,40 @@ pub trait IntoRequest {
 
         Ok(request)
     }
+}
 
-    fn patch<T>(&self, client: &ReqwestClient, base_url: &Url, form: &T) -> Result<reqwest::Request>
-    where
-        T: Serialize + ?Sized,
-    {
-        let path = self.path();
-        let url = base_url.join(&path)?;
-
-        let request = client
-            .patch(url)
-            .header("Accept", "application/json")
-            .form(&form)
-            .build()?;
-
-        Ok(request)
+pub trait DeleteRequest: IntoRequest {
+    fn to_query(&self) -> impl Serialize {
+        &()
     }
 
-    fn delete<T>(
-        &self,
-        client: &ReqwestClient,
-        base_url: &Url,
-        query: &T,
-    ) -> Result<reqwest::Request>
-    where
-        T: Serialize + ?Sized,
-    {
+    fn delete(&self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
         let path = self.path();
         let url = base_url.join(&path)?;
+        let query = self.to_query();
 
         let request = client
             .delete(url)
             .header("Accept", "application/json")
             .query(&query)
+            .build()?;
+
+        Ok(request)
+    }
+}
+
+pub trait PatchRequest: IntoRequest {
+    fn to_form(&self) -> Vec<(String, String)>;
+
+    fn patch(&self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
+        let path = self.path();
+        let url = base_url.join(&path)?;
+        let form = self.to_form();
+
+        let request = client
+            .patch(url)
+            .header("Accept", "application/json")
+            .form(&form)
             .build()?;
 
         Ok(request)
