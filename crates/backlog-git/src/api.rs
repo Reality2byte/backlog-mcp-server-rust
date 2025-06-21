@@ -3,6 +3,8 @@ use crate::requests::add_pull_request::AddPullRequestParams;
 #[cfg(feature = "writable")]
 use crate::requests::add_pull_request_comment::AddPullRequestCommentParams;
 #[cfg(feature = "writable")]
+use crate::requests::delete_pull_request_attachment::DeletePullRequestAttachmentParams;
+#[cfg(feature = "writable")]
 use crate::requests::update_pull_request::UpdatePullRequestParams;
 #[cfg(feature = "writable")]
 use crate::requests::update_pull_request_comment::UpdatePullRequestCommentParams;
@@ -12,15 +14,18 @@ use crate::{
         PullRequestCount, Repository,
     },
     requests::{
+        download_pull_request_attachment::DownloadPullRequestAttachmentParams,
+        get_pull_request::GetPullRequestParams,
+        get_pull_request_attachment_list::GetPullRequestAttachmentListParams,
+        get_pull_request_comment_count::GetPullRequestCommentCountParams,
         get_pull_request_comment_list::GetPullRequestCommentListParams,
-        get_pull_request_list::GetPullRequestListParams,
+        get_pull_request_count::GetPullRequestCountParams,
+        get_pull_request_list::GetPullRequestListParams, get_repository::GetRepositoryParams,
+        get_repository_list::GetRepositoryListParams,
     },
 };
 use backlog_api_core::Result;
-use backlog_core::{
-    ProjectIdOrKey, RepositoryIdOrName,
-    identifier::{Identifier, PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber},
-};
+use backlog_core::identifier::Identifier;
 use client::{Client, DownloadedFile};
 
 /// Provides access to the Git and Pull Request related API functions.
@@ -47,16 +52,12 @@ impl GitApi {
     ///
     /// # Arguments
     ///
-    /// * `project_id_or_key` - The ID or key of the project.
+    /// * `params` - Parameters including the project ID or key.
     pub async fn get_repository_list(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
+        params: GetRepositoryListParams,
     ) -> Result<Vec<Repository>> {
-        let path = format!(
-            "/api/v2/projects/{}/git/repositories",
-            project_id_or_key.into()
-        );
-        self.client.get(&path).await
+        self.client.execute(params).await
     }
 
     /// Fetches a single Git repository by its ID or name.
@@ -65,19 +66,9 @@ impl GitApi {
     ///
     /// # Arguments
     ///
-    /// * `project_id_or_key` - The ID or key of the project.
-    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
-    pub async fn get_repository(
-        &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        repo_id_or_name: impl Into<RepositoryIdOrName>,
-    ) -> Result<Repository> {
-        let path = format!(
-            "/api/v2/projects/{}/git/repositories/{}",
-            project_id_or_key.into(),
-            repo_id_or_name.into()
-        );
-        self.client.get(&path).await
+    /// * `params` - Parameters including the project ID or key and repository ID or name.
+    pub async fn get_repository(&self, params: GetRepositoryParams) -> Result<Repository> {
+        self.client.execute(params).await
     }
 
     /// Fetches the list of Pull Requests for a given repository.
@@ -86,19 +77,12 @@ impl GitApi {
     ///
     /// # Arguments
     ///
-    /// * `project_id_or_key` - The ID or key of the project.
-    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
+    /// * `params` - Parameters including the project ID or key and repository ID or name.
     pub async fn get_pull_request_list(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        repo_id_or_name: impl Into<RepositoryIdOrName>,
+        params: GetPullRequestListParams,
     ) -> Result<Vec<PullRequest>> {
-        let path = format!(
-            "/api/v2/projects/{}/git/repositories/{}/pullRequests",
-            project_id_or_key.into(),
-            repo_id_or_name.into()
-        );
-        self.client.get(&path).await
+        self.client.execute(params).await
     }
 
     /// Fetches the list of Pull Requests for a given repository with filtering options.
@@ -112,17 +96,9 @@ impl GitApi {
     /// * `params` - Parameters for filtering the pull request list.
     pub async fn get_pull_request_list_with_params(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        repo_id_or_name: impl Into<RepositoryIdOrName>,
-        params: &GetPullRequestListParams,
+        params: GetPullRequestListParams,
     ) -> Result<Vec<PullRequest>> {
-        let path = format!(
-            "/api/v2/projects/{}/git/repositories/{}/pullRequests",
-            project_id_or_key.into(),
-            repo_id_or_name.into()
-        );
-        let query_params = params.to_query_params();
-        self.client.get_with_params(&path, &query_params).await
+        self.client.execute(params).await
     }
 
     /// Fetches a single Pull Request by its number.
@@ -134,19 +110,8 @@ impl GitApi {
     /// * `project_id_or_key` - The ID or key of the project.
     /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
     /// * `pr_number` - The pull request number.
-    pub async fn get_pull_request(
-        &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        repo_id_or_name: impl Into<RepositoryIdOrName>,
-        pr_number: PullRequestNumber,
-    ) -> Result<PullRequest> {
-        let path = format!(
-            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}",
-            project_id_or_key.into(),
-            repo_id_or_name.into(),
-            pr_number.value()
-        );
-        self.client.get(&path).await
+    pub async fn get_pull_request(&self, params: GetPullRequestParams) -> Result<PullRequest> {
+        self.client.execute(params).await
     }
 
     // TODO:
@@ -160,17 +125,9 @@ impl GitApi {
     /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/repositories/:repoIdOrName/pullRequests/:number/attachments`.
     pub async fn get_pull_request_attachment_list(
         &self,
-        project_id_or_key: &ProjectIdOrKey, // Keeping as reference based on existing code
-        repo_id_or_name: &RepositoryIdOrName, // Keeping as reference
-        pr_number: PullRequestNumber,
-    ) -> backlog_api_core::Result<Vec<PullRequestAttachment>> {
-        let path = format!(
-            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments",
-            project_id_or_key, // Display trait を利用
-            repo_id_or_name,   // Display trait を利用
-            pr_number.value()
-        );
-        self.client.get(&path).await // クエリパラメータはなし
+        params: GetPullRequestAttachmentListParams,
+    ) -> Result<Vec<PullRequestAttachment>> {
+        self.client.execute(params).await
     }
 
     /// Downloads the content of a specific pull request attachment.
@@ -179,23 +136,17 @@ impl GitApi {
     ///
     /// # Arguments
     ///
-    /// * `project_id_or_key` - The ID or key of the project.
-    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
-    /// * `pr_number` - The pull request number.
-    /// * `attachment_id` - The ID of the attachment to download.
+    /// * `params` - Parameters including the project ID or key, repository ID or name, pull request number, and attachment ID.
     pub async fn download_pull_request_attachment(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        repo_id_or_name: impl Into<RepositoryIdOrName>,
-        pr_number: PullRequestNumber,
-        attachment_id: PullRequestAttachmentId,
+        params: DownloadPullRequestAttachmentParams,
     ) -> Result<DownloadedFile> {
         let path = format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",
-            project_id_or_key.into(),
-            repo_id_or_name.into(),
-            pr_number.value(),
-            attachment_id.value(),
+            params.project_id_or_key,
+            params.repo_id_or_name,
+            params.pr_number.value(),
+            params.attachment_id.value()
         );
         self.client.download_file_raw(&path).await
     }
@@ -206,26 +157,13 @@ impl GitApi {
     ///
     /// # Arguments
     ///
-    /// * `project_id_or_key` - The ID or key of the project.
-    /// * `repo_id_or_name` - The ID or name of the repository.
-    /// * `pr_number` - The pull request number.
-    /// * `attachment_id` - The ID of the attachment to delete.
+    /// * `params` - Parameters including the project ID or key, repository ID or name, pull request number, and attachment ID.
     #[cfg(feature = "writable")]
     pub async fn delete_pull_request_attachment(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        repo_id_or_name: impl Into<RepositoryIdOrName>,
-        pr_number: PullRequestNumber,
-        attachment_id: PullRequestAttachmentId,
+        params: DeletePullRequestAttachmentParams,
     ) -> Result<PullRequestAttachment> {
-        let path = format!(
-            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",
-            project_id_or_key.into(),
-            repo_id_or_name.into(),
-            pr_number.value(),
-            attachment_id.value(),
-        );
-        self.client.delete(&path).await
+        self.client.execute(params).await
     }
 
     /// Fetches the list of comments for a specific pull request.
@@ -248,22 +186,12 @@ impl GitApi {
     ///
     /// # Arguments
     ///
-    /// * `project_id_or_key` - The ID or key of the project.
-    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
-    /// * `pr_number` - The pull request number.
+    /// * `params` - Parameters including the project ID or key, repository ID or name, and pull request number.
     pub async fn get_pull_request_comment_count(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        repo_id_or_name: impl Into<RepositoryIdOrName>,
-        pr_number: PullRequestNumber,
+        params: GetPullRequestCommentCountParams,
     ) -> Result<PullRequestCommentCount> {
-        let path = format!(
-            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments/count",
-            project_id_or_key.into(),
-            repo_id_or_name.into(),
-            pr_number.value()
-        );
-        self.client.get(&path).await
+        self.client.execute(params).await
     }
 
     /// Returns the count of pull requests in a repository.
@@ -272,19 +200,12 @@ impl GitApi {
     ///
     /// # Arguments
     ///
-    /// * `project_id_or_key` - The ID or key of the project.
-    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
+    /// * `params` - Parameters including the project ID or key and repository ID or name.
     pub async fn get_pull_request_count(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        repo_id_or_name: impl Into<RepositoryIdOrName>,
+        params: GetPullRequestCountParams,
     ) -> Result<PullRequestCount> {
-        let path = format!(
-            "/api/v2/projects/{}/git/repositories/{}/pullRequests/count",
-            project_id_or_key.into(),
-            repo_id_or_name.into()
-        );
-        self.client.get(&path).await
+        self.client.execute(params).await
     }
 
     /// Returns the count of pull requests in a repository with filtering options.
@@ -293,22 +214,12 @@ impl GitApi {
     ///
     /// # Arguments
     ///
-    /// * `project_id_or_key` - The ID or key of the project.
-    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
-    /// * `params` - Optional parameters for filtering pull requests.
+    /// * `params` - Parameters including the project ID or key, repository ID or name, and optional filtering parameters.
     pub async fn get_pull_request_count_with_params(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        repo_id_or_name: impl Into<RepositoryIdOrName>,
-        params: &GetPullRequestListParams,
+        params: GetPullRequestListParams,
     ) -> Result<PullRequestCount> {
-        let path = format!(
-            "/api/v2/projects/{}/git/repositories/{}/pullRequests/count",
-            project_id_or_key.into(),
-            repo_id_or_name.into()
-        );
-        let query_params = params.to_query_params();
-        self.client.get_with_params(&path, &query_params).await
+        self.client.execute(params).await
     }
 
     /// Adds a comment to a specific pull request.
@@ -332,26 +243,13 @@ impl GitApi {
     ///
     /// # Arguments
     ///
-    /// * `project_id_or_key` - The ID or key of the project.
-    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
-    /// * `pr_number` - The pull request number.
-    /// * `params` - Parameters for updating the pull request.
+    /// * `params` - Parameters for updating the pull request including path information and optional update fields.
     #[cfg(feature = "writable")]
     pub async fn update_pull_request(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        repo_id_or_name: impl Into<RepositoryIdOrName>,
-        pr_number: PullRequestNumber,
-        params: &UpdatePullRequestParams,
+        params: UpdatePullRequestParams,
     ) -> Result<PullRequest> {
-        let path = format!(
-            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}",
-            project_id_or_key.into(),
-            repo_id_or_name.into(),
-            pr_number.value()
-        );
-        let params_vec: Vec<(String, String)> = params.into();
-        self.client.patch(&path, &params_vec).await
+        self.client.execute(params).await
     }
 
     /// Updates a comment on a specific pull request.
@@ -360,29 +258,13 @@ impl GitApi {
     ///
     /// # Arguments
     ///
-    /// * `project_id_or_key` - The ID or key of the project.
-    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
-    /// * `pr_number` - The pull request number.
-    /// * `comment_id` - The ID of the comment to update.
-    /// * `params` - Parameters for updating the comment.
+    /// * `params` - Parameters for updating the comment including path information and the new content.
     #[cfg(feature = "writable")]
     pub async fn update_pull_request_comment(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        repo_id_or_name: impl Into<RepositoryIdOrName>,
-        pr_number: PullRequestNumber,
-        comment_id: PullRequestCommentId,
-        params: &UpdatePullRequestCommentParams,
+        params: UpdatePullRequestCommentParams,
     ) -> Result<PullRequestComment> {
-        let path = format!(
-            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments/{}",
-            project_id_or_key.into(),
-            repo_id_or_name.into(),
-            pr_number.value(),
-            comment_id.value()
-        );
-        let params_vec: Vec<(String, String)> = params.into();
-        self.client.patch(&path, &params_vec).await
+        self.client.execute(params).await
     }
 
     /// Creates a new pull request.
@@ -401,6 +283,7 @@ impl GitApi {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use backlog_core::{ProjectIdOrKey, RepositoryIdOrName};
     // backlog_api_core::bytes is already in scope from the top-level import if we change it there.
     // No, the top level import is `backlog_api_core::bytes`, so here we'd use `bytes::Bytes`.
     // Or, import `backlog_api_core::bytes::Bytes` specifically for the test module if preferred.
@@ -412,6 +295,7 @@ mod tests {
     use crate::requests::add_pull_request_comment::{
         AddPullRequestCommentParams, AddPullRequestCommentParamsBuilder,
     };
+    use crate::requests::get_pull_request_count::GetPullRequestCountParamsBuilder;
     #[cfg(feature = "writable")]
     use crate::requests::update_pull_request::{
         UpdatePullRequestParams, UpdatePullRequestParamsBuilder,
@@ -467,11 +351,15 @@ mod tests {
             .mount(&server)
             .await;
 
-        let project_id_or_key = project_key.parse().unwrap();
-        let repo_id_or_name = repo_name.parse().unwrap();
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
         let result = git_api
-            .get_pull_request_attachment_list(&project_id_or_key, &repo_id_or_name, pr_number)
+            .get_pull_request_attachment_list(GetPullRequestAttachmentListParams::new(
+                project_id_or_key,
+                repo_id_or_name,
+                pr_number,
+            ))
             .await;
 
         assert!(result.is_ok());
@@ -504,11 +392,15 @@ mod tests {
             .mount(&server)
             .await;
 
-        let project_id_or_key = project_key.parse().unwrap();
-        let repo_id_or_name = repo_name.parse().unwrap();
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
         let result = git_api
-            .get_pull_request_attachment_list(&project_id_or_key, &repo_id_or_name, pr_number)
+            .get_pull_request_attachment_list(GetPullRequestAttachmentListParams::new(
+                project_id_or_key,
+                repo_id_or_name,
+                pr_number,
+            ))
             .await;
 
         assert!(result.is_ok());
@@ -535,11 +427,15 @@ mod tests {
             .mount(&server)
             .await;
 
-        let project_id_or_key = project_key.parse().unwrap();
-        let repo_id_or_name = repo_name.parse().unwrap();
+        let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
         let result = git_api
-            .get_pull_request_attachment_list(&project_id_or_key, &repo_id_or_name, pr_number)
+            .get_pull_request_attachment_list(GetPullRequestAttachmentListParams::new(
+                project_id_or_key,
+                repo_id_or_name,
+                pr_number,
+            ))
             .await;
 
         assert!(result.is_err());
@@ -581,14 +477,14 @@ mod tests {
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
         let attachment_id = PullRequestAttachmentId::new(attachment_id_val);
 
-        let result = git_api
-            .download_pull_request_attachment(
-                project_id_or_key,
-                repo_id_or_name,
-                pr_number,
-                attachment_id,
-            )
-            .await;
+        let params = DownloadPullRequestAttachmentParams::new(
+            project_id_or_key,
+            repo_id_or_name,
+            pr_number,
+            attachment_id,
+        );
+
+        let result = git_api.download_pull_request_attachment(params).await;
 
         assert!(result.is_ok());
         let downloaded_file = result.unwrap();
@@ -622,14 +518,14 @@ mod tests {
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
         let attachment_id = PullRequestAttachmentId::new(attachment_id_val);
 
-        let result = git_api
-            .download_pull_request_attachment(
-                project_id_or_key,
-                repo_id_or_name,
-                pr_number,
-                attachment_id,
-            )
-            .await;
+        let params = DownloadPullRequestAttachmentParams::new(
+            project_id_or_key,
+            repo_id_or_name,
+            pr_number,
+            attachment_id,
+        );
+
+        let result = git_api.download_pull_request_attachment(params).await;
 
         assert!(result.is_err());
         // Example: Check for specific error kind if ApiError is structured enough
@@ -997,6 +893,9 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
         let params = UpdatePullRequestParamsBuilder::default()
+            .project_id_or_key(project_id_or_key)
+            .repo_id_or_name(repo_id_or_name)
+            .pr_number(pr_number)
             .summary(Some("Updated PR Title".to_string()))
             .description(Some("Updated PR Description".to_string()))
             .issue_id(Some(IssueId::new(5001)))
@@ -1005,9 +904,7 @@ mod tests {
             .build()
             .unwrap();
 
-        let result = git_api
-            .update_pull_request(project_id_or_key, repo_id_or_name, pr_number, &params)
-            .await;
+        let result = git_api.update_pull_request(params).await;
 
         assert!(result.is_ok());
         let pull_request = result.unwrap();
@@ -1086,11 +983,9 @@ mod tests {
 
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
-        let params = UpdatePullRequestParams::new(); // All fields None
+        let params = UpdatePullRequestParams::new(project_id_or_key, repo_id_or_name, pr_number); // All fields None
 
-        let result = git_api
-            .update_pull_request(project_id_or_key, repo_id_or_name, pr_number, &params)
-            .await;
+        let result = git_api.update_pull_request(params).await;
 
         assert!(result.is_ok());
         let pull_request = result.unwrap();
@@ -1122,13 +1017,14 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
         let params = UpdatePullRequestParamsBuilder::default()
+            .project_id_or_key(project_id_or_key)
+            .repo_id_or_name(repo_id_or_name)
+            .pr_number(pr_number)
             .summary(Some("This should fail".to_string()))
             .build()
             .unwrap();
 
-        let result = git_api
-            .update_pull_request(project_id_or_key, repo_id_or_name, pr_number, &params)
-            .await;
+        let result = git_api.update_pull_request(params).await;
 
         assert!(result.is_err());
     }
@@ -1196,6 +1092,9 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
         let params = UpdatePullRequestParamsBuilder::default()
+            .project_id_or_key(project_id_or_key)
+            .repo_id_or_name(repo_id_or_name)
+            .pr_number(pr_number)
             .summary(Some("PR with notifications".to_string()))
             .description(Some("Description with notifications".to_string()))
             .notified_user_ids(Some(vec![UserId::new(201), UserId::new(202)]))
@@ -1203,9 +1102,7 @@ mod tests {
             .build()
             .unwrap();
 
-        let result = git_api
-            .update_pull_request(project_id_or_key, repo_id_or_name, pr_number, &params)
-            .await;
+        let result = git_api.update_pull_request(params).await;
 
         assert!(result.is_ok());
         let pull_request = result.unwrap();
@@ -1220,7 +1117,14 @@ mod tests {
     #[cfg(feature = "writable")]
     #[tokio::test]
     async fn test_update_pull_request_parameter_builder() {
+        let project_id_or_key: ProjectIdOrKey = "TEST".parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = "test-repo".parse().unwrap();
+        let pr_number = PullRequestNumber::new(123);
+
         let params_with_all_fields = UpdatePullRequestParamsBuilder::default()
+            .project_id_or_key(project_id_or_key.clone())
+            .repo_id_or_name(repo_id_or_name.clone())
+            .pr_number(pr_number)
             .summary(Some("Test PR".to_string()))
             .description(Some("Test description".to_string()))
             .issue_id(Some(IssueId::new(1001)))
@@ -1246,17 +1150,17 @@ mod tests {
             Some("Test comment".to_string())
         );
 
-        let params_minimal = UpdatePullRequestParams::new();
+        let params_minimal = UpdatePullRequestParams::new(
+            project_id_or_key.clone(),
+            repo_id_or_name.clone(),
+            pr_number,
+        );
         assert_eq!(params_minimal.summary, None);
         assert_eq!(params_minimal.description, None);
         assert_eq!(params_minimal.issue_id, None);
         assert_eq!(params_minimal.assignee_id, None);
         assert_eq!(params_minimal.notified_user_ids, None);
         assert_eq!(params_minimal.comment, None);
-
-        let params_default = UpdatePullRequestParams::default();
-        assert_eq!(params_default.summary, None);
-        assert_eq!(params_default.description, None);
     }
 
     #[tokio::test]
@@ -1286,9 +1190,9 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
-        let result = git_api
-            .get_pull_request_comment_count(project_id_or_key, repo_id_or_name, pr_number)
-            .await;
+        let params =
+            GetPullRequestCommentCountParams::new(project_id_or_key, repo_id_or_name, pr_number);
+        let result = git_api.get_pull_request_comment_count(params).await;
 
         assert!(result.is_ok());
         let comment_count = result.unwrap();
@@ -1322,9 +1226,9 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
-        let result = git_api
-            .get_pull_request_comment_count(project_id_or_key, repo_id_or_name, pr_number)
-            .await;
+        let params =
+            GetPullRequestCommentCountParams::new(project_id_or_key, repo_id_or_name, pr_number);
+        let result = git_api.get_pull_request_comment_count(params).await;
 
         assert!(result.is_ok());
         let comment_count = result.unwrap();
@@ -1354,9 +1258,9 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
-        let result = git_api
-            .get_pull_request_comment_count(project_id_or_key, repo_id_or_name, pr_number)
-            .await;
+        let params =
+            GetPullRequestCommentCountParams::new(project_id_or_key, repo_id_or_name, pr_number);
+        let result = git_api.get_pull_request_comment_count(params).await;
 
         assert!(result.is_err());
     }
@@ -1404,17 +1308,15 @@ mod tests {
 
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
-        let params = UpdatePullRequestCommentParams::new("Updated comment content");
+        let params = UpdatePullRequestCommentParams::new(
+            project_id_or_key,
+            repo_id_or_name,
+            pr_number,
+            comment_id,
+            "Updated comment content",
+        );
 
-        let result = git_api
-            .update_pull_request_comment(
-                project_id_or_key,
-                repo_id_or_name,
-                pr_number,
-                comment_id,
-                &params,
-            )
-            .await;
+        let result = git_api.update_pull_request_comment(params).await;
 
         assert!(result.is_ok());
         let comment = result.unwrap();
@@ -1448,17 +1350,15 @@ mod tests {
 
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
-        let params = UpdatePullRequestCommentParams::new("This should fail");
+        let params = UpdatePullRequestCommentParams::new(
+            project_id_or_key,
+            repo_id_or_name,
+            pr_number,
+            comment_id,
+            "This should fail",
+        );
 
-        let result = git_api
-            .update_pull_request_comment(
-                project_id_or_key,
-                repo_id_or_name,
-                pr_number,
-                comment_id,
-                &params,
-            )
-            .await;
+        let result = git_api.update_pull_request_comment(params).await;
 
         assert!(result.is_err());
     }
@@ -1488,17 +1388,15 @@ mod tests {
 
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
-        let params = UpdatePullRequestCommentParams::new("Unauthorized update");
+        let params = UpdatePullRequestCommentParams::new(
+            project_id_or_key,
+            repo_id_or_name,
+            pr_number,
+            comment_id,
+            "Unauthorized update",
+        );
 
-        let result = git_api
-            .update_pull_request_comment(
-                project_id_or_key,
-                repo_id_or_name,
-                pr_number,
-                comment_id,
-                &params,
-            )
-            .await;
+        let result = git_api.update_pull_request_comment(params).await;
 
         assert!(result.is_err());
     }
@@ -1506,10 +1404,25 @@ mod tests {
     #[cfg(feature = "writable")]
     #[tokio::test]
     async fn test_update_pull_request_comment_parameter_builder() {
-        let params_from_new = UpdatePullRequestCommentParams::new("Test content");
+        let project_id_or_key: ProjectIdOrKey = "TEST".parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = "test-repo".parse().unwrap();
+        let pr_number = PullRequestNumber::new(123);
+        let comment_id = PullRequestCommentId::new(456);
+
+        let params_from_new = UpdatePullRequestCommentParams::new(
+            project_id_or_key.clone(),
+            repo_id_or_name.clone(),
+            pr_number,
+            comment_id,
+            "Test content",
+        );
         assert_eq!(params_from_new.content, "Test content");
 
         let params_from_builder = UpdatePullRequestCommentParamsBuilder::default()
+            .project_id_or_key(project_id_or_key)
+            .repo_id_or_name(repo_id_or_name)
+            .pr_number(pr_number)
+            .comment_id(comment_id)
             .content("Builder content".to_string())
             .build()
             .unwrap();
@@ -1541,9 +1454,8 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
-        let result = git_api
-            .get_pull_request_count(project_id_or_key, repo_id_or_name)
-            .await;
+        let params = GetPullRequestCountParams::new(project_id_or_key, repo_id_or_name);
+        let result = git_api.get_pull_request_count(params).await;
 
         assert!(result.is_ok());
         let count_response = result.unwrap();
@@ -1571,9 +1483,8 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
-        let result = git_api
-            .get_pull_request_count(project_id_or_key, repo_id_or_name)
-            .await;
+        let params = GetPullRequestCountParams::new(project_id_or_key, repo_id_or_name);
+        let result = git_api.get_pull_request_count(params).await;
 
         assert!(result.is_err());
     }
@@ -1605,15 +1516,15 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
-        let params = GetPullRequestListParamsBuilder::default()
-            .status_ids(vec![StatusId::new(1)])
-            .assignee_ids(vec![UserId::new(100)])
+        let params = GetPullRequestCountParamsBuilder::default()
+            .project_id_or_key(project_id_or_key)
+            .repo_id_or_name(repo_id_or_name)
+            .status_ids(Some(vec![1]))
+            .assignee_ids(Some(vec![100]))
             .build()
             .unwrap();
 
-        let result = git_api
-            .get_pull_request_count_with_params(project_id_or_key, repo_id_or_name, &params)
-            .await;
+        let result = git_api.get_pull_request_count(params).await;
 
         assert!(result.is_ok());
         let count_response = result.unwrap();
@@ -1645,9 +1556,8 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
-        let result = git_api
-            .get_pull_request_count(project_id_or_key, repo_id_or_name)
-            .await;
+        let params = GetPullRequestCountParams::new(project_id_or_key, repo_id_or_name);
+        let result = git_api.get_pull_request_count(params).await;
 
         assert!(result.is_ok());
         let count_response = result.unwrap();
@@ -1719,14 +1629,14 @@ mod tests {
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
         let params = GetPullRequestListParamsBuilder::default()
+            .project_id_or_key(project_id_or_key)
+            .repo_id_or_name(repo_id_or_name)
             .status_ids(vec![StatusId::new(1)])
             .count(10)
             .build()
             .unwrap();
 
-        let result = git_api
-            .get_pull_request_list_with_params(project_id_or_key, repo_id_or_name, &params)
-            .await;
+        let result = git_api.get_pull_request_list(params).await;
 
         assert!(result.is_ok());
         let prs = result.unwrap();
@@ -2141,7 +2051,12 @@ mod tests {
         let attach_id = PullRequestAttachmentId::new(attachment_id);
 
         let result = git_api
-            .delete_pull_request_attachment(project_id_or_key, repo_id_or_name, pr_num, attach_id)
+            .delete_pull_request_attachment(DeletePullRequestAttachmentParams::new(
+                project_id_or_key,
+                repo_id_or_name,
+                pr_num,
+                attach_id,
+            ))
             .await;
 
         assert!(result.is_ok());
@@ -2188,7 +2103,12 @@ mod tests {
         let attach_id = PullRequestAttachmentId::new(attachment_id);
 
         let result = git_api
-            .delete_pull_request_attachment(project_id_or_key, repo_id_or_name, pr_num, attach_id)
+            .delete_pull_request_attachment(DeletePullRequestAttachmentParams::new(
+                project_id_or_key,
+                repo_id_or_name,
+                pr_num,
+                attach_id,
+            ))
             .await;
 
         assert!(result.is_err());
@@ -2221,7 +2141,12 @@ mod tests {
         let attach_id = PullRequestAttachmentId::new(attachment_id);
 
         let result = git_api
-            .delete_pull_request_attachment(project_id_or_key, repo_id_or_name, pr_num, attach_id)
+            .delete_pull_request_attachment(DeletePullRequestAttachmentParams::new(
+                project_id_or_key,
+                repo_id_or_name,
+                pr_num,
+                attach_id,
+            ))
             .await;
 
         assert!(result.is_err());

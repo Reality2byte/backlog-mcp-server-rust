@@ -57,10 +57,17 @@ pub use backlog_git::{
         PullRequestComment, PullRequestCommentCount, PullRequestCount, Repository, Star,
     },
     requests::{
+        download_pull_request_attachment::DownloadPullRequestAttachmentParams,
+        get_pull_request::GetPullRequestParams,
+        get_pull_request_attachment_list::GetPullRequestAttachmentListParams,
+        get_pull_request_comment_count::GetPullRequestCommentCountParams,
         get_pull_request_comment_list::{
             GetPullRequestCommentListParams, GetPullRequestCommentListParamsBuilder,
         },
+        get_pull_request_count::{GetPullRequestCountParams, GetPullRequestCountParamsBuilder},
         get_pull_request_list::{GetPullRequestListParams, GetPullRequestListParamsBuilder},
+        get_repository::GetRepositoryParams,
+        get_repository_list::GetRepositoryListParams,
     },
 };
 
@@ -83,6 +90,9 @@ pub use backlog_git::requests::update_pull_request::{
 pub use backlog_git::requests::update_pull_request_comment::{
     UpdatePullRequestCommentParams, UpdatePullRequestCommentParamsBuilder,
 };
+
+#[cfg(all(feature = "git", feature = "git_writable"))]
+pub use backlog_git::requests::delete_pull_request_attachment::DeletePullRequestAttachmentParams;
 
 // Project module (from backlog_project)
 #[cfg(feature = "project")]

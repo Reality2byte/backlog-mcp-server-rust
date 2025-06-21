@@ -2,14 +2,17 @@
 use backlog_api_client::AddPullRequestParamsBuilder;
 #[cfg(feature = "issue_writable")]
 use backlog_api_client::LinkSharedFilesToIssueParamsBuilder;
-use backlog_api_client::{
-    AddCommentParamsBuilder, AttachmentId, GetIssueListParamsBuilder,
-    GetPullRequestListParamsBuilder, IssueIdOrKey, ProjectId, ProjectIdOrKey,
-    PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber, RepositoryIdOrName, StatusId,
-    UserId, WikiId, client::BacklogApiClient,
-};
 #[cfg(feature = "git_writable")]
-use backlog_api_client::{UpdatePullRequestCommentParams, UpdatePullRequestParamsBuilder};
+#[allow(unused_imports)]
+use backlog_api_client::UpdatePullRequestCommentParams;
+#[cfg(feature = "git_writable")]
+#[allow(unused_imports)]
+use backlog_api_client::UpdatePullRequestParamsBuilder;
+use backlog_api_client::{
+    AddCommentParamsBuilder, AttachmentId, GetIssueListParamsBuilder, IssueIdOrKey, ProjectId,
+    ProjectIdOrKey, PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber,
+    RepositoryIdOrName, StatusId, UserId, WikiId, client::BacklogApiClient,
+};
 #[cfg(feature = "git_writable")]
 use backlog_core::identifier::IssueId;
 #[cfg(feature = "issue_writable")]
@@ -848,7 +851,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Listing repositories for project: {}", project_id);
                 let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
                 // Assumes backlog_git is enabled via features for the client build
-                let repos = client.git().get_repository_list(proj_id_or_key).await?;
+                let params = backlog_api_client::GetRepositoryListParams::new(proj_id_or_key);
+                let repos = client.git().get_repository_list(params).await?;
                 // TODO: Pretty print repositories
                 println!("{:?}", repos);
             }
@@ -859,10 +863,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Showing repository {} in project: {}", repo_id, project_id);
                 let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
                 let repo_id_or_name = repo_id.parse::<RepositoryIdOrName>()?;
-                let repo = client
-                    .git()
-                    .get_repository(proj_id_or_key, repo_id_or_name)
-                    .await?;
+                let params =
+                    backlog_api_client::GetRepositoryParams::new(proj_id_or_key, repo_id_or_name);
+                let repo = client.git().get_repository(params).await?;
                 // TODO: Pretty print repository
                 println!("{:?}", repo);
             }
@@ -878,10 +881,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
                 let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
                 let repo_id_or_name = repo_id.parse::<RepositoryIdOrName>()?;
-                let prs = client
-                    .git()
-                    .get_pull_request_list(proj_id_or_key, repo_id_or_name)
-                    .await?;
+                let params = backlog_api_client::GetPullRequestListParams::new(
+                    proj_id_or_key,
+                    repo_id_or_name,
+                );
+                let prs = client.git().get_pull_request_list(params).await?;
                 // TODO: Pretty print pull requests
                 println!("{:?}", prs);
             }
@@ -898,10 +902,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let repo_id_or_name = repo_id.parse::<RepositoryIdOrName>()?;
                 let pr_num = PullRequestNumber::from(pr_number);
 
-                let pr = client
-                    .git()
-                    .get_pull_request(proj_id_or_key, repo_id_or_name, pr_num)
-                    .await?;
+                let params = backlog_api_client::GetPullRequestParams::new(
+                    proj_id_or_key,
+                    repo_id_or_name,
+                    pr_num,
+                );
+                let pr = client.git().get_pull_request(params).await?;
                 // TODO: Pretty print pull request
                 println!("{:?}", pr);
             }
@@ -925,16 +931,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 let parsed_pr_number = PullRequestNumber::from(dl_args.pr_number);
 
-                match client
-                    .git()
-                    .download_pull_request_attachment(
-                        parsed_project_id,
-                        parsed_repo_id,
-                        parsed_pr_number,
-                        parsed_attachment_id,
-                    )
-                    .await
-                {
+                let params = backlog_api_client::DownloadPullRequestAttachmentParams::new(
+                    parsed_project_id,
+                    parsed_repo_id,
+                    parsed_pr_number,
+                    parsed_attachment_id,
+                );
+                match client.git().download_pull_request_attachment(params).await {
                     Ok(downloaded_file) => {
                         if let Err(e) = fs::write(&dl_args.output, &downloaded_file.bytes).await {
                             eprintln!(
@@ -978,16 +981,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let parsed_attachment_id = PullRequestAttachmentId::new(del_args.attachment_id);
                 let parsed_pr_number = PullRequestNumber::from(del_args.pr_number);
 
-                match client
-                    .git()
-                    .delete_pull_request_attachment(
-                        parsed_project_id,
-                        parsed_repo_id,
-                        parsed_pr_number,
-                        parsed_attachment_id,
-                    )
-                    .await
-                {
+                let params = backlog_api_client::DeletePullRequestAttachmentParams::new(
+                    parsed_project_id,
+                    parsed_repo_id,
+                    parsed_pr_number,
+                    parsed_attachment_id,
+                );
+                match client.git().delete_pull_request_attachment(params).await {
                     Ok(deleted_attachment) => {
                         println!("✅ Attachment deleted successfully");
                         println!("Deleted attachment ID: {}", deleted_attachment.id.value());
@@ -1023,7 +1023,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .map_err(|e| format!("Failed to parse repo_id '{}': {}", repo_id, e))?;
                 let parsed_pr_number = PullRequestNumber::from(pr_number);
 
-                let mut params_builder = UpdatePullRequestParamsBuilder::default();
+                let mut params_builder =
+                    backlog_api_client::UpdatePullRequestParamsBuilder::default();
+                params_builder
+                    .project_id_or_key(parsed_project_id)
+                    .repo_id_or_name(parsed_repo_id)
+                    .pr_number(parsed_pr_number);
 
                 if let Some(summary) = summary {
                     params_builder.summary(Some(summary.clone()));
@@ -1055,16 +1060,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .build()
                     .map_err(|e| format!("Failed to build parameters: {}", e))?;
 
-                match client
-                    .git()
-                    .update_pull_request(
-                        parsed_project_id,
-                        parsed_repo_id,
-                        parsed_pr_number,
-                        &params,
-                    )
-                    .await
-                {
+                match client.git().update_pull_request(params).await {
                     Ok(pull_request) => {
                         println!("✅ Pull request updated successfully");
                         println!("ID: {}", pull_request.id.value());
@@ -1106,19 +1102,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let parsed_pr_number = PullRequestNumber::from(pr_number);
                 let parsed_comment_id = PullRequestCommentId::new(comment_id);
 
-                let params = UpdatePullRequestCommentParams::new(&content);
+                let params = backlog_api_client::UpdatePullRequestCommentParams::new(
+                    parsed_project_id,
+                    parsed_repo_id,
+                    parsed_pr_number,
+                    parsed_comment_id,
+                    &content,
+                );
 
-                match client
-                    .git()
-                    .update_pull_request_comment(
-                        parsed_project_id,
-                        parsed_repo_id,
-                        parsed_pr_number,
-                        parsed_comment_id,
-                        &params,
-                    )
-                    .await
-                {
+                match client.git().update_pull_request_comment(params).await {
                     Ok(comment) => {
                         println!("✅ Pull request comment updated successfully");
                         println!("Comment ID: {}", comment.id.value());
@@ -1153,15 +1145,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .map_err(|e| format!("Failed to parse repo_id '{}': {}", repo_id, e))?;
                 let parsed_pr_number = PullRequestNumber::from(pr_number);
 
-                match client
-                    .git()
-                    .get_pull_request_comment_count(
-                        parsed_project_id,
-                        parsed_repo_id,
-                        parsed_pr_number,
-                    )
-                    .await
-                {
+                let params = backlog_api_client::GetPullRequestCommentCountParams::new(
+                    parsed_project_id,
+                    parsed_repo_id,
+                    parsed_pr_number,
+                );
+                match client.git().get_pull_request_comment_count(params).await {
                     Ok(count_response) => {
                         println!("✅ Pull request comment count retrieved successfully");
                         println!("Comment count: {}", count_response.count);
@@ -1179,8 +1168,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 assignee_ids,
                 issue_ids,
                 created_user_ids,
-                offset,
-                count,
+                offset: _,
+                count: _,
             } => {
                 println!(
                     "Getting pull request count for repo {} (project {})",
@@ -1193,16 +1182,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .map_err(|e| format!("Failed to parse repo_id '{}': {}", repo_id, e))?;
 
                 // Parse filter parameters
-                let mut params_builder = GetPullRequestListParamsBuilder::default();
+                let mut params_builder =
+                    backlog_api_client::GetPullRequestCountParamsBuilder::default();
+                params_builder
+                    .project_id_or_key(parsed_project_id)
+                    .repo_id_or_name(parsed_repo_id);
 
                 // Parse status IDs
                 if let Some(status_ids_str) = status_ids {
-                    let status_ids: Result<Vec<StatusId>, _> = status_ids_str
+                    let status_ids: Result<Vec<u32>, _> = status_ids_str
                         .split(',')
-                        .map(|s| s.trim().parse::<u32>().map(StatusId::new))
+                        .map(|s| s.trim().parse::<u32>())
                         .collect();
                     match status_ids {
-                        Ok(ids) => params_builder.status_ids(ids),
+                        Ok(ids) => params_builder.status_ids(Some(ids)),
                         Err(e) => {
                             eprintln!("❌ Failed to parse status_ids: {}", e);
                             std::process::exit(1);
@@ -1212,12 +1205,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 // Parse assignee IDs
                 if let Some(assignee_ids_str) = assignee_ids {
-                    let assignee_ids: Result<Vec<UserId>, _> = assignee_ids_str
+                    let assignee_ids: Result<Vec<u32>, _> = assignee_ids_str
                         .split(',')
-                        .map(|s| s.trim().parse::<u32>().map(UserId::new))
+                        .map(|s| s.trim().parse::<u32>())
                         .collect();
                     match assignee_ids {
-                        Ok(ids) => params_builder.assignee_ids(ids),
+                        Ok(ids) => params_builder.assignee_ids(Some(ids)),
                         Err(e) => {
                             eprintln!("❌ Failed to parse assignee_ids: {}", e);
                             std::process::exit(1);
@@ -1227,17 +1220,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 // Parse issue IDs
                 if let Some(issue_ids_str) = issue_ids {
-                    let issue_ids: Result<Vec<backlog_core::identifier::IssueId>, _> =
-                        issue_ids_str
-                            .split(',')
-                            .map(|s| {
-                                s.trim()
-                                    .parse::<u32>()
-                                    .map(backlog_core::identifier::IssueId::new)
-                            })
-                            .collect();
+                    let issue_ids: Result<Vec<u32>, _> = issue_ids_str
+                        .split(',')
+                        .map(|s| s.trim().parse::<u32>())
+                        .collect();
                     match issue_ids {
-                        Ok(ids) => params_builder.issue_ids(ids),
+                        Ok(ids) => params_builder.issue_ids(Some(ids)),
                         Err(e) => {
                             eprintln!("❌ Failed to parse issue_ids: {}", e);
                             std::process::exit(1);
@@ -1247,12 +1235,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 // Parse created user IDs
                 if let Some(created_user_ids_str) = created_user_ids {
-                    let created_user_ids: Result<Vec<UserId>, _> = created_user_ids_str
+                    let created_user_ids: Result<Vec<u32>, _> = created_user_ids_str
                         .split(',')
-                        .map(|s| s.trim().parse::<u32>().map(UserId::new))
+                        .map(|s| s.trim().parse::<u32>())
                         .collect();
                     match created_user_ids {
-                        Ok(ids) => params_builder.created_user_ids(ids),
+                        Ok(ids) => params_builder.created_user_ids(Some(ids)),
                         Err(e) => {
                             eprintln!("❌ Failed to parse created_user_ids: {}", e);
                             std::process::exit(1);
@@ -1260,23 +1248,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     };
                 }
 
-                // Set offset and count
-                if let Some(offset) = offset {
-                    params_builder.offset(offset);
-                }
-                if let Some(count) = count {
-                    params_builder.count(count);
-                }
+                // Note: offset and count are not supported for pull request count
 
                 let params = params_builder
                     .build()
                     .map_err(|e| format!("Failed to build parameters: {}", e))?;
 
-                match client
-                    .git()
-                    .get_pull_request_count_with_params(parsed_project_id, parsed_repo_id, &params)
-                    .await
-                {
+                match client.git().get_pull_request_count(params).await {
                     Ok(count_response) => {
                         println!("✅ Pull request count retrieved successfully");
                         println!("Pull request count: {}", count_response.count);
