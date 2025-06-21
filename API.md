@@ -36,8 +36,11 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Implemented**: 4/? endpoints (Document-specific API is not fully documented in the official API)
 - **Read operations**: list_documents(), get_document_tree(), get_document(), download_attachment()
 
+### backlog-wiki (WikiApi)
+- **Implemented**: 4/15 endpoints (27%)
+- **Read operations**: get_wiki_list(), get_wiki_detail(), get_wiki_count(), get_wiki_attachment_list()
+
 ### Not Implemented
-- **Wikis**: 0/15 endpoints
 - **Activities**: 0/4 endpoints
 - **Notifications**: 0/4 endpoints
 - **Watchings**: 0/7 endpoints
@@ -170,16 +173,16 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ❌ UpdateWikiPage: Updates information about Wiki page: PATCH /api/v2/wikis/:wikiId
 - ❌ GetWikiPageAttachment: Downloads Wiki page’s attachment file: GET /api/v2/wikis/:wikiId/attachments/:attachmentId
 - ❌ GetWikiPageHistory: Returns history of Wiki page: GET /api/v2/wikis/:wikiId/history
-- ❌ GetWikiPageList: Returns list of Wiki pages: GET /api/v2/wikis
+- ✅ GetWikiPageList: Returns list of Wiki pages: GET /api/v2/wikis
 - ❌ GetWikiPageTagList: Returns list of tags that are used in the project: GET /api/v2/wikis/tags
-- ❌ GetWikiPage: Returns information about Wiki page: GET /api/v2/wikis/:wikiId
-- ❌ GetListOfWikiAttachments: Gets list of files attached to Wiki: GET /api/v2/wikis/:wikiId/attachments
+- ✅ GetWikiPage: Returns information about Wiki page: GET /api/v2/wikis/:wikiId
+- ✅ GetListOfWikiAttachments: Gets list of files attached to Wiki: GET /api/v2/wikis/:wikiId/attachments
 - ❌ LinkSharedFilesToWiki: Links Shared Files to Wiki: POST /api/v2/wikis/:wikiId/sharedFiles
 - ❌ RemoveLinkToSharedFileFromWiki: Removes link to shared file from Wiki: DELETE /api/v2/wikis/:wikiId/sharedFiles/:id
 - ❌ RemoveWikiAttachment: Removes files attached to Wiki: DELETE /api/v2/wikis/:wikiId/attachments/:attachmentId
 - ❌ GetListOfSharedFilesOnWiki: Returns the list of Shared Files on Wiki: GET /api/v2/wikis/:wikiId/sharedFiles
 - ❌ DeleteWikiPage: Deletes Wiki page: DELETE /api/v2/wikis/:wikiId
-- ❌ CountWikiPage: Returns number of Wiki pages: GET /api/v2/wikis/count
+- ✅ CountWikiPage: Returns number of Wiki pages: GET /api/v2/wikis/count
 - ❌ AddWikiPage: Adds new Wiki page: POST /api/v2/wikis
 - ❌ AttachFileToWiki: Attaches file to Wiki: POST /api/v2/wikis/:wikiId/attachments
 

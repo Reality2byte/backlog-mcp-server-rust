@@ -17,3 +17,11 @@ pub(crate) struct GetWikiListRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keyword: Option<String>,
 }
+
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct GetWikiAttachmentListRequest {
+    #[schemars(
+        description = "Wiki page ID to retrieve attachments for. Must be a positive integer."
+    )]
+    pub wiki_id: u32,
+}

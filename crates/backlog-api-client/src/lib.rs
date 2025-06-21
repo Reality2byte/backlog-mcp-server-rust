@@ -99,7 +99,7 @@ pub use backlog_user::UserApi;
 // Wiki module (from backlog_wiki)
 #[cfg(feature = "wiki")]
 pub use backlog_wiki::{
-    GetWikiCountParams, GetWikiCountParamsBuilder, GetWikiCountResponse, GetWikiDetailResponse,
-    GetWikiListParams, GetWikiListParamsBuilder, GetWikiListResponse, Wiki, WikiApi,
-    WikiAttachment, WikiCount, WikiDetail, WikiTag,
+    GetWikiAttachmentListResponse, GetWikiCountParams, GetWikiCountParamsBuilder,
+    GetWikiCountResponse, GetWikiDetailResponse, GetWikiListParams, GetWikiListParamsBuilder,
+    GetWikiListResponse, Wiki, WikiApi, WikiAttachment, WikiCount, WikiDetail, WikiTag,
 };

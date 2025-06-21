@@ -6,7 +6,7 @@ use backlog_api_client::{
     AddCommentParamsBuilder, AttachmentId, GetIssueListParamsBuilder,
     GetPullRequestListParamsBuilder, IssueIdOrKey, ProjectId, ProjectIdOrKey,
     PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber, RepositoryIdOrName, StatusId,
-    UserId, client::BacklogApiClient,
+    UserId, WikiId, client::BacklogApiClient,
 };
 #[cfg(feature = "git_writable")]
 use backlog_api_client::{UpdatePullRequestCommentParams, UpdatePullRequestParamsBuilder};
@@ -58,6 +58,9 @@ enum Commands {
     Project(ProjectArgs),
     /// Manage users
     User(UserArgs),
+    /// Manage wikis
+    #[cfg(feature = "wiki")]
+    Wiki(WikiArgs),
 }
 
 #[derive(Parser)]
@@ -758,6 +761,24 @@ enum UserCommands {
         /// Output file path to save the icon
         #[clap(short, long, value_name = "FILE_PATH")]
         output: PathBuf,
+    },
+}
+
+#[cfg(feature = "wiki")]
+#[derive(Parser)]
+struct WikiArgs {
+    #[clap(subcommand)]
+    command: WikiCommands,
+}
+
+#[cfg(feature = "wiki")]
+#[derive(Parser)]
+enum WikiCommands {
+    /// List attachments for a wiki page
+    ListAttachments {
+        /// Wiki ID
+        #[clap(name = "WIKI_ID")]
+        wiki_id: u32,
     },
 }
 
@@ -2744,6 +2765,43 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error downloading user icon: {}", e);
+                    }
+                }
+            }
+        },
+        #[cfg(feature = "wiki")]
+        Commands::Wiki(wiki_args) => match wiki_args.command {
+            WikiCommands::ListAttachments { wiki_id } => {
+                println!("Listing attachments for wiki ID: {}", wiki_id);
+
+                match client
+                    .wiki()
+                    .get_wiki_attachment_list(WikiId::new(wiki_id))
+                    .await
+                {
+                    Ok(attachments) => {
+                        if attachments.is_empty() {
+                            println!("No attachments found for this wiki page");
+                        } else {
+                            println!("Found {} attachment(s):", attachments.len());
+                            for attachment in attachments {
+                                println!(
+                                    "[{}] {} ({} bytes)",
+                                    attachment.id.value(),
+                                    attachment.name,
+                                    attachment.size
+                                );
+                                println!(
+                                    "  Created by: {} at {}",
+                                    attachment.created_user.name,
+                                    attachment.created.format("%Y-%m-%d %H:%M:%S")
+                                );
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to list wiki attachments: {}", e);
+                        std::process::exit(1);
                     }
                 }
             }

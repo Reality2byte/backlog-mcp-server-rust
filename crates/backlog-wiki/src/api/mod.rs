@@ -1,6 +1,9 @@
 use crate::{
     requests::{GetWikiCountParams, GetWikiListParams},
-    responses::{GetWikiCountResponse, GetWikiDetailResponse, GetWikiListResponse},
+    responses::{
+        GetWikiAttachmentListResponse, GetWikiCountResponse, GetWikiDetailResponse,
+        GetWikiListResponse,
+    },
 };
 use backlog_api_core::Result;
 use backlog_core::identifier::{Identifier, WikiId};
@@ -39,6 +42,18 @@ impl WikiApi {
     pub async fn get_wiki_list(&self, params: GetWikiListParams) -> Result<GetWikiListResponse> {
         let query_params: Vec<(String, String)> = params.into();
         self.0.get_with_params("/api/v2/wikis", &query_params).await
+    }
+
+    /// Get wiki attachment list
+    /// Corresponds to `GET /api/v2/wikis/:wikiId/attachments`.
+    pub async fn get_wiki_attachment_list(
+        &self,
+        wiki_id: impl Into<WikiId>,
+    ) -> Result<GetWikiAttachmentListResponse> {
+        let wiki_id = wiki_id.into();
+        self.0
+            .get(&format!("/api/v2/wikis/{}/attachments", wiki_id.value()))
+            .await
     }
 }
 
@@ -548,6 +563,147 @@ mod tests {
             .await;
 
         let result = wiki_api.get_wiki_detail(WikiId::new(403)).await;
+        assert!(result.is_err());
+    }
+
+    // Helper function for creating mock WikiAttachment
+    fn create_mock_wiki_attachment(
+        id: u32,
+        name: &str,
+        size: u64,
+        user_id: u32,
+        user_name: &str,
+    ) -> WikiAttachment {
+        let created_time = Utc.with_ymd_and_hms(2024, 1, 1, 12, 0, 0).unwrap();
+        WikiAttachment {
+            id: WikiAttachmentId::new(id),
+            name: name.to_string(),
+            size,
+            created_user: create_mock_user(user_id, user_name),
+            created: created_time,
+        }
+    }
+
+    // Tests for get_wiki_attachment_list
+    #[tokio::test]
+    async fn test_get_wiki_attachment_list_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        let expected_attachments = vec![
+            create_mock_wiki_attachment(1, "document.pdf", 1024, 1, "john"),
+            create_mock_wiki_attachment(2, "image.png", 2048, 2, "alice"),
+            create_mock_wiki_attachment(3, "spreadsheet.xlsx", 4096, 1, "john"),
+        ];
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/123/attachments"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_attachments))
+            .mount(&mock_server)
+            .await;
+
+        let result = wiki_api.get_wiki_attachment_list(WikiId::new(123)).await;
+        assert!(result.is_ok());
+        let attachments = result.unwrap();
+        assert_eq!(attachments.len(), 3);
+        assert_eq!(attachments[0].name, "document.pdf");
+        assert_eq!(attachments[0].size, 1024);
+        assert_eq!(attachments[1].name, "image.png");
+        assert_eq!(attachments[1].size, 2048);
+        assert_eq!(attachments[2].name, "spreadsheet.xlsx");
+        assert_eq!(attachments[2].size, 4096);
+    }
+
+    #[tokio::test]
+    async fn test_get_wiki_attachment_list_with_u32_id() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        let expected_attachments =
+            vec![create_mock_wiki_attachment(10, "readme.txt", 512, 3, "bob")];
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/456/attachments"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_attachments))
+            .mount(&mock_server)
+            .await;
+
+        // Test using u32 directly (Into<WikiId> conversion)
+        let result = wiki_api.get_wiki_attachment_list(456u32).await;
+        assert!(result.is_ok());
+        let attachments = result.unwrap();
+        assert_eq!(attachments.len(), 1);
+        assert_eq!(attachments[0].name, "readme.txt");
+        assert_eq!(attachments[0].size, 512);
+    }
+
+    #[tokio::test]
+    async fn test_get_wiki_attachment_list_empty_result() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        let expected_attachments: Vec<WikiAttachment> = vec![];
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/789/attachments"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_attachments))
+            .mount(&mock_server)
+            .await;
+
+        let result = wiki_api.get_wiki_attachment_list(WikiId::new(789)).await;
+        assert!(result.is_ok());
+        let attachments = result.unwrap();
+        assert!(attachments.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_get_wiki_attachment_list_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/404/attachments"))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&mock_server)
+            .await;
+
+        let result = wiki_api.get_wiki_attachment_list(WikiId::new(404)).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_get_wiki_attachment_list_server_error() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/500/attachments"))
+            .respond_with(ResponseTemplate::new(500))
+            .mount(&mock_server)
+            .await;
+
+        let result = wiki_api.get_wiki_attachment_list(WikiId::new(500)).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_get_wiki_attachment_list_unauthorized() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/403/attachments"))
+            .respond_with(ResponseTemplate::new(403))
+            .mount(&mock_server)
+            .await;
+
+        let result = wiki_api.get_wiki_attachment_list(WikiId::new(403)).await;
         assert!(result.is_err());
     }
 }

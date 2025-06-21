@@ -8,4 +8,6 @@ pub use models::{Wiki, WikiAttachment, WikiCount, WikiDetail, WikiTag};
 pub use requests::{
     GetWikiCountParams, GetWikiCountParamsBuilder, GetWikiListParams, GetWikiListParamsBuilder,
 };
-pub use responses::{GetWikiCountResponse, GetWikiDetailResponse, GetWikiListResponse};
+pub use responses::{
+    GetWikiAttachmentListResponse, GetWikiCountResponse, GetWikiDetailResponse, GetWikiListResponse,
+};

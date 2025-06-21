@@ -100,6 +100,12 @@ blg project issue-type-delete MFP --issue-type-id 12345 --substitute-issue-type-
 blg space logo --output logo.png
 ```
 
+**Wiki Management:**
+```bash
+# List attachments for a wiki page
+blg wiki list-attachments 12345
+```
+
 **Issue Management:**
 ```bash
 # List issues for a project
@@ -216,3 +222,6 @@ The `blg` CLI currently supports the following commands:
 - `user me` - Get information about the authenticated user
 - `user show <USER_ID>` - Show detailed information about a specific user (requires `user` feature)
 - `user icon <USER_ID> --output <FILE_PATH>` - Download user icon to a file
+
+### Wiki Commands
+- `wiki list-attachments <WIKI_ID>` - List attachments for a specific wiki page

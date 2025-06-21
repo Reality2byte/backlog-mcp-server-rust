@@ -33,7 +33,7 @@ use crate::{
     user::{self, request::GetUserListRequest},
     wiki::{
         self,
-        request::{GetWikiDetailRequest, GetWikiListRequest},
+        request::{GetWikiAttachmentListRequest, GetWikiDetailRequest, GetWikiListRequest},
     },
 };
 
@@ -338,6 +338,16 @@ impl Server {
         let client = self.client.lock().await;
         let wikis = wiki::bridge::get_wiki_list(&client, request).await?;
         Ok(CallToolResult::success(vec![Content::json(wikis)?]))
+    }
+
+    #[tool(description = "Get a list of attachments for a specified wiki page.")]
+    async fn get_wiki_attachment_list(
+        &self,
+        #[tool(aggr)] request: GetWikiAttachmentListRequest,
+    ) -> McpResult {
+        let client = self.client.lock().await;
+        let attachments = wiki::bridge::get_wiki_attachment_list(&client, request).await?;
+        Ok(CallToolResult::success(vec![Content::json(attachments)?]))
     }
 
     #[cfg(feature = "git_writable")]

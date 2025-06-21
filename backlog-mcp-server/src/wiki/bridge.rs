@@ -1,5 +1,7 @@
 use crate::error::{Error as McpError, Result};
-use crate::wiki::request::{GetWikiDetailRequest, GetWikiListRequest};
+use crate::wiki::request::{
+    GetWikiAttachmentListRequest, GetWikiDetailRequest, GetWikiListRequest,
+};
 use backlog_api_client::{GetWikiListParamsBuilder, ProjectIdOrKey, client::BacklogApiClient};
 use backlog_core::{
     ProjectKey,
@@ -52,4 +54,16 @@ pub(crate) async fn get_wiki_detail(
     let wiki_detail = wiki_api.get_wiki_detail(wiki_id).await?;
 
     Ok(serde_json::to_value(wiki_detail)?)
+}
+
+pub(crate) async fn get_wiki_attachment_list(
+    client: &BacklogApiClient,
+    request: GetWikiAttachmentListRequest,
+) -> Result<serde_json::Value> {
+    let wiki_api = client.wiki();
+    let wiki_id = WikiId::new(request.wiki_id);
+
+    let attachments = wiki_api.get_wiki_attachment_list(wiki_id).await?;
+
+    Ok(serde_json::to_value(attachments)?)
 }
