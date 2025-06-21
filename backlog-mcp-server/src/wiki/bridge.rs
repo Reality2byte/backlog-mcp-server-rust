@@ -1,11 +1,14 @@
 use crate::error::{Error as McpError, Result};
 use crate::wiki::request::{
-    GetWikiAttachmentListRequest, GetWikiDetailRequest, GetWikiListRequest,
+    DownloadWikiAttachmentRequest, GetWikiAttachmentListRequest, GetWikiDetailRequest,
+    GetWikiListRequest,
 };
-use backlog_api_client::{GetWikiListParamsBuilder, ProjectIdOrKey, client::BacklogApiClient};
+use backlog_api_client::{
+    DownloadedFile, GetWikiListParamsBuilder, ProjectIdOrKey, client::BacklogApiClient,
+};
 use backlog_core::{
     ProjectKey,
-    identifier::{ProjectId, WikiId},
+    identifier::{ProjectId, WikiAttachmentId, WikiId},
 };
 use std::str::FromStr;
 
@@ -66,4 +69,19 @@ pub(crate) async fn get_wiki_attachment_list(
     let attachments = wiki_api.get_wiki_attachment_list(wiki_id).await?;
 
     Ok(serde_json::to_value(attachments)?)
+}
+
+pub(crate) async fn download_wiki_attachment(
+    client: &BacklogApiClient,
+    request: DownloadWikiAttachmentRequest,
+) -> Result<DownloadedFile> {
+    let wiki_api = client.wiki();
+    let wiki_id = WikiId::new(request.wiki_id);
+    let attachment_id = WikiAttachmentId::new(request.attachment_id);
+
+    let downloaded_file = wiki_api
+        .download_wiki_attachment(wiki_id, attachment_id)
+        .await?;
+
+    Ok(downloaded_file)
 }

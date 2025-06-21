@@ -33,7 +33,10 @@ use crate::{
     user::{self, request::GetUserListRequest},
     wiki::{
         self,
-        request::{GetWikiAttachmentListRequest, GetWikiDetailRequest, GetWikiListRequest},
+        request::{
+            DownloadWikiAttachmentRequest, GetWikiAttachmentListRequest, GetWikiDetailRequest,
+            GetWikiListRequest,
+        },
     },
 };
 
@@ -348,6 +351,26 @@ impl Server {
         let client = self.client.lock().await;
         let attachments = wiki::bridge::get_wiki_attachment_list(&client, request).await?;
         Ok(CallToolResult::success(vec![Content::json(attachments)?]))
+    }
+
+    #[tool(
+        description = "Download an attachment from a wiki page. Automatically detects format (image, text, or raw bytes) or you can specify the format parameter. Returns the file content in the appropriate format."
+    )]
+    async fn download_wiki_attachment(
+        &self,
+        #[tool(aggr)] request: DownloadWikiAttachmentRequest,
+    ) -> McpResult {
+        let explicit_format = request
+            .format
+            .as_deref()
+            .map(str::parse::<FileFormat>)
+            .transpose()?;
+
+        let client = self.client.lock().await;
+        let file = wiki::bridge::download_wiki_attachment(&client, request).await?;
+
+        let response_data = SerializableFile::new(file, explicit_format)?;
+        Ok(CallToolResult::success(vec![response_data.try_into()?]))
     }
 
     #[cfg(feature = "git_writable")]

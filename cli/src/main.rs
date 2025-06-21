@@ -14,6 +14,8 @@ use backlog_api_client::{UpdatePullRequestCommentParams, UpdatePullRequestParams
 use backlog_core::identifier::IssueId;
 #[cfg(feature = "issue_writable")]
 use backlog_core::identifier::SharedFileId;
+#[cfg(feature = "wiki")]
+use backlog_core::identifier::WikiAttachmentId;
 use backlog_core::identifier::{CommentId, Identifier};
 #[cfg(any(feature = "issue_writable", feature = "project_writable"))]
 use backlog_core::{
@@ -779,6 +781,18 @@ enum WikiCommands {
         /// Wiki ID
         #[clap(name = "WIKI_ID")]
         wiki_id: u32,
+    },
+    /// Download an attachment from a wiki page
+    DownloadAttachment {
+        /// Wiki ID
+        #[clap(name = "WIKI_ID")]
+        wiki_id: u32,
+        /// Attachment ID
+        #[clap(name = "ATTACHMENT_ID")]
+        attachment_id: u32,
+        /// Output file path (if not specified, use original filename)
+        #[clap(short, long)]
+        output: Option<String>,
     },
 }
 
@@ -2801,6 +2815,45 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to list wiki attachments: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            WikiCommands::DownloadAttachment {
+                wiki_id,
+                attachment_id,
+                output,
+            } => {
+                println!(
+                    "Downloading attachment {} from wiki ID: {}",
+                    attachment_id, wiki_id
+                );
+
+                match client
+                    .wiki()
+                    .download_wiki_attachment(
+                        WikiId::new(wiki_id),
+                        WikiAttachmentId::new(attachment_id),
+                    )
+                    .await
+                {
+                    Ok(downloaded_file) => {
+                        let filename = output.unwrap_or(downloaded_file.filename.clone());
+
+                        match tokio::fs::write(&filename, &downloaded_file.bytes).await {
+                            Ok(_) => {
+                                println!("✅ Successfully downloaded to: {}", filename);
+                                println!("   Content-Type: {}", downloaded_file.content_type);
+                                println!("   File size: {} bytes", downloaded_file.bytes.len());
+                            }
+                            Err(e) => {
+                                eprintln!("❌ Failed to write file '{}': {}", filename, e);
+                                std::process::exit(1);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to download wiki attachment: {}", e);
                         std::process::exit(1);
                     }
                 }

@@ -25,3 +25,18 @@ pub(crate) struct GetWikiAttachmentListRequest {
     )]
     pub wiki_id: u32,
 }
+
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct DownloadWikiAttachmentRequest {
+    #[schemars(
+        description = "Wiki page ID to download attachment from. Must be a positive integer."
+    )]
+    pub wiki_id: u32,
+    #[schemars(description = "Attachment ID to download. Must be a positive integer.")]
+    pub attachment_id: u32,
+    #[schemars(
+        description = "Optional format specification: 'image', 'text', or 'raw'. If not specified, format will be auto-detected."
+    )]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub format: Option<String>,
+}

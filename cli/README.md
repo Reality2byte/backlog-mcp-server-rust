@@ -104,6 +104,12 @@ blg space logo --output logo.png
 ```bash
 # List attachments for a wiki page
 blg wiki list-attachments 12345
+
+# Download an attachment from a wiki page with original filename
+blg wiki download-attachment 12345 67890
+
+# Download an attachment from a wiki page with custom filename
+blg wiki download-attachment 12345 67890 --output custom_name.png
 ```
 
 **Issue Management:**
@@ -225,3 +231,4 @@ The `blg` CLI currently supports the following commands:
 
 ### Wiki Commands
 - `wiki list-attachments <WIKI_ID>` - List attachments for a specific wiki page
+- `wiki download-attachment <WIKI_ID> <ATTACHMENT_ID> [--output <FILE_PATH>]` - Download an attachment from a wiki page

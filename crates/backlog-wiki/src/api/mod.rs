@@ -6,7 +6,7 @@ use crate::{
     },
 };
 use backlog_api_core::Result;
-use backlog_core::identifier::{Identifier, WikiId};
+use backlog_core::identifier::{Identifier, WikiAttachmentId, WikiId};
 use client::Client;
 
 pub struct WikiApi(Client);
@@ -53,6 +53,24 @@ impl WikiApi {
         let wiki_id = wiki_id.into();
         self.0
             .get(&format!("/api/v2/wikis/{}/attachments", wiki_id.value()))
+            .await
+    }
+
+    /// Download wiki attachment
+    /// Corresponds to `GET /api/v2/wikis/:wikiId/attachments/:attachmentId`.
+    pub async fn download_wiki_attachment(
+        &self,
+        wiki_id: impl Into<WikiId>,
+        attachment_id: impl Into<WikiAttachmentId>,
+    ) -> Result<client::DownloadedFile> {
+        let wiki_id = wiki_id.into();
+        let attachment_id = attachment_id.into();
+        self.0
+            .download_file_raw(&format!(
+                "/api/v2/wikis/{}/attachments/{}",
+                wiki_id.value(),
+                attachment_id.value()
+            ))
             .await
     }
 }
@@ -704,6 +722,165 @@ mod tests {
             .await;
 
         let result = wiki_api.get_wiki_attachment_list(WikiId::new(403)).await;
+        assert!(result.is_err());
+    }
+
+    // Tests for download_wiki_attachment
+    #[tokio::test]
+    async fn test_download_wiki_attachment_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        let attachment_content = "This is a test attachment content.";
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/123/attachments/456"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_bytes(attachment_content)
+                    .insert_header("Content-Type", "application/octet-stream")
+                    .insert_header("Content-Disposition", "attachment; filename=\"test.txt\""),
+            )
+            .mount(&mock_server)
+            .await;
+
+        let result = wiki_api
+            .download_wiki_attachment(WikiId::new(123), WikiAttachmentId::new(456))
+            .await;
+        assert!(result.is_ok());
+        let downloaded_file = result.unwrap();
+        assert_eq!(downloaded_file.filename, "test.txt");
+        assert_eq!(downloaded_file.content_type, "application/octet-stream");
+        assert_eq!(downloaded_file.bytes.len(), attachment_content.len());
+    }
+
+    #[tokio::test]
+    async fn test_download_wiki_attachment_with_u32_ids() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        let attachment_content = "Test content for u32 ID test.";
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/789/attachments/101"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_bytes(attachment_content)
+                    .insert_header("Content-Type", "image/png")
+                    .insert_header("Content-Disposition", "attachment; filename=\"image.png\""),
+            )
+            .mount(&mock_server)
+            .await;
+
+        // Test using u32 directly (Into<WikiId> and Into<WikiAttachmentId> conversions)
+        let result = wiki_api.download_wiki_attachment(789u32, 101u32).await;
+        assert!(result.is_ok());
+        let downloaded_file = result.unwrap();
+        assert_eq!(downloaded_file.filename, "image.png");
+        assert_eq!(downloaded_file.content_type, "image/png");
+        assert_eq!(downloaded_file.bytes.len(), attachment_content.len());
+    }
+
+    #[tokio::test]
+    async fn test_download_wiki_attachment_binary_content() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        let binary_content = vec![0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]; // PNG header
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/555/attachments/777"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_bytes(binary_content.clone())
+                    .insert_header("Content-Type", "image/png")
+                    .insert_header("Content-Disposition", "attachment; filename=\"binary.png\""),
+            )
+            .mount(&mock_server)
+            .await;
+
+        let result = wiki_api
+            .download_wiki_attachment(WikiId::new(555), WikiAttachmentId::new(777))
+            .await;
+        assert!(result.is_ok());
+        let downloaded_file = result.unwrap();
+        assert_eq!(downloaded_file.filename, "binary.png");
+        assert_eq!(downloaded_file.content_type, "image/png");
+        assert_eq!(downloaded_file.bytes, binary_content);
+    }
+
+    #[tokio::test]
+    async fn test_download_wiki_attachment_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/999/attachments/999"))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&mock_server)
+            .await;
+
+        let result = wiki_api
+            .download_wiki_attachment(WikiId::new(999), WikiAttachmentId::new(999))
+            .await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_download_wiki_attachment_wiki_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/404/attachments/1"))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&mock_server)
+            .await;
+
+        let result = wiki_api
+            .download_wiki_attachment(WikiId::new(404), WikiAttachmentId::new(1))
+            .await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_download_wiki_attachment_server_error() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/123/attachments/456"))
+            .respond_with(ResponseTemplate::new(500))
+            .mount(&mock_server)
+            .await;
+
+        let result = wiki_api
+            .download_wiki_attachment(WikiId::new(123), WikiAttachmentId::new(456))
+            .await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_download_wiki_attachment_unauthorized() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/123/attachments/456"))
+            .respond_with(ResponseTemplate::new(403))
+            .mount(&mock_server)
+            .await;
+
+        let result = wiki_api
+            .download_wiki_attachment(WikiId::new(123), WikiAttachmentId::new(456))
+            .await;
         assert!(result.is_err());
     }
 }
