@@ -124,21 +124,11 @@ impl Server {
         &self,
         #[tool(aggr)] request: DownloadDocumentAttachmentRequest,
     ) -> McpResult {
-        let explicit_format = match request.format.as_deref() {
-            Some("image") => Some(FileFormat::Image),
-            Some("text") => Some(FileFormat::Text),
-            Some("raw") => Some(FileFormat::Raw),
-            Some(other) => {
-                return Err(McpError::invalid_request(
-                    format!(
-                        "Invalid format '{}'. Valid options: 'image', 'text', 'raw'",
-                        other
-                    ),
-                    None,
-                ));
-            }
-            None => None,
-        };
+        let explicit_format = request
+            .format
+            .as_deref()
+            .map(str::parse::<FileFormat>)
+            .transpose()?;
 
         let file =
             document::bridge::download_document_attachment_bridge(self.client.clone(), request)
@@ -242,21 +232,11 @@ impl Server {
         &self,
         #[tool(aggr)] request: DownloadAttachmentRequest,
     ) -> McpResult {
-        let explicit_format = match request.format.as_deref() {
-            Some("image") => Some(FileFormat::Image),
-            Some("text") => Some(FileFormat::Text),
-            Some("raw") => Some(FileFormat::Raw),
-            Some(other) => {
-                return Err(McpError::invalid_request(
-                    format!(
-                        "Invalid format '{}'. Valid options: 'image', 'text', 'raw'",
-                        other
-                    ),
-                    None,
-                ));
-            }
-            None => None,
-        };
+        let explicit_format = request
+            .format
+            .as_deref()
+            .map(str::parse::<FileFormat>)
+            .transpose()?;
 
         let file =
             issue::bridge::download_issue_attachment_file(self.client.clone(), request).await?;
@@ -291,21 +271,11 @@ impl Server {
         &self,
         #[tool(aggr)] request: DownloadSharedFileRequest,
     ) -> McpResult {
-        let explicit_format = match request.format.as_deref() {
-            Some("image") => Some(FileFormat::Image),
-            Some("text") => Some(FileFormat::Text),
-            Some("raw") => Some(FileFormat::Raw),
-            Some(other) => {
-                return Err(McpError::invalid_request(
-                    format!(
-                        "Invalid format '{}'. Valid options: 'image', 'text', 'raw'",
-                        other
-                    ),
-                    None,
-                ));
-            }
-            None => None,
-        };
+        let explicit_format = request
+            .format
+            .as_deref()
+            .map(str::parse::<FileFormat>)
+            .transpose()?;
 
         let file = file::bridge::download_shared_file_bridge(self.client.clone(), request).await?;
 
@@ -331,21 +301,11 @@ impl Server {
         &self,
         #[tool(aggr)] request: DownloadPullRequestAttachmentRequest,
     ) -> McpResult {
-        let explicit_format = match request.format.as_deref() {
-            Some("image") => Some(FileFormat::Image),
-            Some("text") => Some(FileFormat::Text),
-            Some("raw") => Some(FileFormat::Raw),
-            Some(other) => {
-                return Err(McpError::invalid_request(
-                    format!(
-                        "Invalid format '{}'. Valid options: 'image', 'text', 'raw'",
-                        other
-                    ),
-                    None,
-                ));
-            }
-            None => None,
-        };
+        let explicit_format = request
+            .format
+            .as_deref()
+            .map(str::parse::<FileFormat>)
+            .transpose()?;
 
         let file = git::bridge::download_pr_attachment_bridge(self.client.clone(), request).await?;
 

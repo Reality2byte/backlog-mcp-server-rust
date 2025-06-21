@@ -9,6 +9,25 @@ pub enum FileFormat {
     Raw,
 }
 
+impl std::str::FromStr for FileFormat {
+    type Err = McpError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "image" => Ok(FileFormat::Image),
+            "text" => Ok(FileFormat::Text),
+            "raw" => Ok(FileFormat::Raw),
+            other => Err(McpError::invalid_request(
+                format!(
+                    "Invalid format '{}'. Valid options: 'image', 'text', 'raw'",
+                    other
+                ),
+                None,
+            )),
+        }
+    }
+}
+
 pub struct FormatDetector;
 
 impl FormatDetector {

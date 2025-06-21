@@ -1,5 +1,7 @@
 use backlog_api_core::Result;
-use backlog_core::{ProjectIdOrKey, identifier::CategoryId};
+use backlog_core::ProjectIdOrKey;
+#[cfg(feature = "writable")]
+use backlog_core::identifier::CategoryId;
 use client::Client;
 
 use crate::requests::{GetProjectListResponse, GetProjectParams, GetProjectResponse};
