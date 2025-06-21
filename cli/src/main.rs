@@ -1313,6 +1313,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // Build parameters
                 let mut params_builder = AddPullRequestParamsBuilder::default();
                 params_builder
+                    .project_id_or_key(parsed_project_id)
+                    .repo_id_or_name(parsed_repo_id)
                     .summary(summary.clone())
                     .description(description.clone())
                     .base(base.clone())
@@ -1362,11 +1364,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .build()
                     .map_err(|e| format!("Failed to build parameters: {}", e))?;
 
-                match client
-                    .git()
-                    .add_pull_request(parsed_project_id, parsed_repo_id, &params)
-                    .await
-                {
+                match client.git().add_pull_request(params).await {
                     Ok(pull_request) => {
                         println!("✅ Pull request created successfully");
                         println!("ID: {}", pull_request.id.value());

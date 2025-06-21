@@ -391,23 +391,10 @@ impl GitApi {
     ///
     /// # Arguments
     ///
-    /// * `project_id_or_key` - The ID or key of the project.
-    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
-    /// * `params` - Parameters for creating the pull request including summary, description, base and branch.
+    /// * `params` - Parameters for creating the pull request including path information, summary, description, base and branch.
     #[cfg(feature = "writable")]
-    pub async fn add_pull_request(
-        &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        repo_id_or_name: impl Into<RepositoryIdOrName>,
-        params: &AddPullRequestParams,
-    ) -> Result<PullRequest> {
-        let path = format!(
-            "/api/v2/projects/{}/git/repositories/{}/pullRequests",
-            project_id_or_key.into(),
-            repo_id_or_name.into()
-        );
-        let params_vec: Vec<(String, String)> = params.into();
-        self.client.post(&path, &params_vec).await
+    pub async fn add_pull_request(&self, params: AddPullRequestParams) -> Result<PullRequest> {
+        self.client.execute(params).await
     }
 }
 
@@ -1810,15 +1797,15 @@ mod tests {
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
         let params = AddPullRequestParams::new(
+            project_id_or_key,
+            repo_id_or_name,
             "Fix authentication bug",
             "This PR fixes the authentication issue",
             "main",
             "feature/fix-auth",
         );
 
-        let result = git_api
-            .add_pull_request(project_id_or_key, repo_id_or_name, &params)
-            .await;
+        let result = git_api.add_pull_request(params).await;
 
         assert!(result.is_ok());
         let pr = result.unwrap();
@@ -1906,6 +1893,8 @@ mod tests {
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
         let params = AddPullRequestParamsBuilder::default()
+            .project_id_or_key(project_id_or_key)
+            .repo_id_or_name(repo_id_or_name)
             .summary("Add new feature".to_string())
             .description("This PR adds a new feature with comprehensive tests".to_string())
             .base("develop".to_string())
@@ -1917,9 +1906,7 @@ mod tests {
             .build()
             .unwrap();
 
-        let result = git_api
-            .add_pull_request(project_id_or_key, repo_id_or_name, &params)
-            .await;
+        let result = git_api.add_pull_request(params).await;
 
         assert!(result.is_ok());
         let pr = result.unwrap();
@@ -1955,12 +1942,16 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
-        let params =
-            AddPullRequestParams::new("Test PR", "Test description", "main", "feature/test");
+        let params = AddPullRequestParams::new(
+            project_id_or_key,
+            repo_id_or_name,
+            "Test PR",
+            "Test description",
+            "main",
+            "feature/test",
+        );
 
-        let result = git_api
-            .add_pull_request(project_id_or_key, repo_id_or_name, &params)
-            .await;
+        let result = git_api.add_pull_request(params).await;
 
         assert!(result.is_err());
     }
@@ -1987,12 +1978,16 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
-        let params =
-            AddPullRequestParams::new("Test PR", "Test description", "main", "feature/test");
+        let params = AddPullRequestParams::new(
+            project_id_or_key,
+            repo_id_or_name,
+            "Test PR",
+            "Test description",
+            "main",
+            "feature/test",
+        );
 
-        let result = git_api
-            .add_pull_request(project_id_or_key, repo_id_or_name, &params)
-            .await;
+        let result = git_api.add_pull_request(params).await;
 
         assert!(result.is_err());
     }
@@ -2019,12 +2014,16 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
-        let params =
-            AddPullRequestParams::new("Test PR", "Test description", "main", "feature/test");
+        let params = AddPullRequestParams::new(
+            project_id_or_key,
+            repo_id_or_name,
+            "Test PR",
+            "Test description",
+            "main",
+            "feature/test",
+        );
 
-        let result = git_api
-            .add_pull_request(project_id_or_key, repo_id_or_name, &params)
-            .await;
+        let result = git_api.add_pull_request(params).await;
 
         assert!(result.is_err());
     }
@@ -2061,12 +2060,16 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
-        let params =
-            AddPullRequestParams::new("Test PR", "Test description", "main", "nonexistent-branch");
+        let params = AddPullRequestParams::new(
+            project_id_or_key,
+            repo_id_or_name,
+            "Test PR",
+            "Test description",
+            "main",
+            "nonexistent-branch",
+        );
 
-        let result = git_api
-            .add_pull_request(project_id_or_key, repo_id_or_name, &params)
-            .await;
+        let result = git_api.add_pull_request(params).await;
 
         assert!(result.is_err());
     }
@@ -2074,8 +2077,17 @@ mod tests {
     #[cfg(feature = "writable")]
     #[tokio::test]
     async fn test_add_pull_request_parameter_builder() {
-        let params_from_new =
-            AddPullRequestParams::new("Test title", "Test description", "main", "feature/test");
+        let project_id_or_key: ProjectIdOrKey = "TEST".parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = "test-repo".parse().unwrap();
+
+        let params_from_new = AddPullRequestParams::new(
+            project_id_or_key.clone(),
+            repo_id_or_name.clone(),
+            "Test title",
+            "Test description",
+            "main",
+            "feature/test",
+        );
         assert_eq!(params_from_new.summary, "Test title");
         assert_eq!(params_from_new.description, "Test description");
         assert_eq!(params_from_new.base, "main");
@@ -2083,6 +2095,8 @@ mod tests {
         assert!(params_from_new.issue_id.is_none());
 
         let params_from_builder = AddPullRequestParamsBuilder::default()
+            .project_id_or_key(project_id_or_key)
+            .repo_id_or_name(repo_id_or_name)
             .summary("Builder title".to_string())
             .description("Builder description".to_string())
             .base("develop".to_string())
