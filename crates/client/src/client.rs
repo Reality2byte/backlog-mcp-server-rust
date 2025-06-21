@@ -1,4 +1,4 @@
-use backlog_api_core::{BacklogApiErrorResponse, Error as ApiError, Result, bytes};
+use backlog_api_core::{BacklogApiErrorResponse, Error as ApiError, IntoRequest, Result, bytes};
 use reqwest::header::{CONTENT_DISPOSITION, CONTENT_TYPE};
 use url::Url;
 
@@ -38,6 +38,33 @@ impl Client {
     pub fn with_api_key(mut self, key: impl Into<String>) -> Self {
         self.api_key = Some(key.into());
         self
+    }
+
+    /// Executes a request using the IntoRequest trait
+    pub async fn execute<T, P>(&self, params: P) -> Result<T>
+    where
+        T: serde::de::DeserializeOwned,
+        P: IntoRequest,
+    {
+        let mut request = params.into_request(&self.base_url, &self.client)?;
+
+        // Add authentication headers to the request
+        if let Some(token) = &self.auth_token {
+            let headers = request.headers_mut();
+            headers.insert(
+                reqwest::header::AUTHORIZATION,
+                format!("Bearer {}", token).parse().map_err(|e| {
+                    ApiError::InvalidBuildParameter(format!("Invalid auth token: {}", e))
+                })?,
+            );
+        }
+
+        if let Some(key) = &self.api_key {
+            let url = request.url_mut();
+            url.query_pairs_mut().append_pair("apiKey", key);
+        }
+
+        self.execute_request(request).await
     }
 
     /// Makes a GET request to the specified path
@@ -97,6 +124,30 @@ impl Client {
         P: serde::Serialize,
     {
         let request = self.prepare_request(reqwest::Method::PATCH, path, params)?;
+        self.execute_request(request).await
+    }
+
+    /// Legacy method for backward compatibility - converts old IntoRequest to form data
+    /// TODO: Remove this once all APIs are migrated to the new IntoRequest pattern
+    #[cfg(feature = "writable")]
+    pub async fn post_with_request<T, P>(&self, path: &str, params: P) -> Result<T>
+    where
+        T: serde::de::DeserializeOwned,
+        P: serde::Serialize,
+    {
+        let request = self.prepare_request(reqwest::Method::POST, path, &params)?;
+        self.execute_request(request).await
+    }
+
+    /// Legacy method for backward compatibility - converts old IntoRequest to form data  
+    /// TODO: Remove this once all APIs are migrated to the new IntoRequest pattern
+    #[cfg(feature = "writable")]
+    pub async fn patch_with_request<T, P>(&self, path: &str, params: P) -> Result<T>
+    where
+        T: serde::de::DeserializeOwned,
+        P: serde::Serialize,
+    {
+        let request = self.prepare_request(reqwest::Method::PATCH, path, &params)?;
         self.execute_request(request).await
     }
 

@@ -37,3 +37,5 @@ derive_builder = "0.20"
 schemars = { version = "0.9", features = ["chrono04"] }
 wiremock = "0.6.1"
 base64 = "0.22"
+serde_urlencoded = "0.7"
+form_urlencoded = "1.2"

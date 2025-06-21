@@ -329,26 +329,13 @@ impl GitApi {
     ///
     /// # Arguments
     ///
-    /// * `project_id_or_key` - The ID or key of the project.
-    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
-    /// * `pr_number` - The pull request number.
-    /// * `params` - Parameters for the comment including content and optional user notifications.
+    /// * `params` - Parameters for the comment including path information, content and optional user notifications.
     #[cfg(feature = "writable")]
     pub async fn add_pull_request_comment(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        repo_id_or_name: impl Into<RepositoryIdOrName>,
-        pr_number: PullRequestNumber,
-        params: &AddPullRequestCommentParams,
+        params: AddPullRequestCommentParams,
     ) -> Result<PullRequestComment> {
-        let path = format!(
-            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments",
-            project_id_or_key.into(),
-            repo_id_or_name.into(),
-            pr_number.value()
-        );
-        let params_vec: Vec<(String, String)> = params.into();
-        self.client.post(&path, &params_vec).await
+        self.client.execute(params).await
     }
 
     /// Updates a pull request.
@@ -815,11 +802,14 @@ mod tests {
 
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
-        let params = AddPullRequestCommentParams::new("This is a test comment");
+        let params = AddPullRequestCommentParams::new(
+            project_id_or_key,
+            repo_id_or_name,
+            pr_number,
+            "This is a test comment",
+        );
 
-        let result = git_api
-            .add_pull_request_comment(project_id_or_key, repo_id_or_name, pr_number, &params)
-            .await;
+        let result = git_api.add_pull_request_comment(params).await;
 
         assert!(result.is_ok());
         let comment = result.unwrap();
@@ -870,14 +860,15 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
         let params = AddPullRequestCommentParamsBuilder::default()
+            .project_id_or_key(project_id_or_key)
+            .repo_id_or_name(repo_id_or_name)
+            .pr_number(pr_number)
             .content("Comment with notifications".to_string())
             .notified_user_ids(Some(vec![UserId::new(101), UserId::new(102)]))
             .build()
             .unwrap();
 
-        let result = git_api
-            .add_pull_request_comment(project_id_or_key, repo_id_or_name, pr_number, &params)
-            .await;
+        let result = git_api.add_pull_request_comment(params).await;
         assert!(result.is_ok());
         let comment = result.unwrap();
         assert_eq!(comment.id, PullRequestCommentId(37));
@@ -907,11 +898,14 @@ mod tests {
 
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
-        let params = AddPullRequestCommentParams::new("This comment should fail");
+        let params = AddPullRequestCommentParams::new(
+            project_id_or_key,
+            repo_id_or_name,
+            pr_number,
+            "This comment should fail",
+        );
 
-        let result = git_api
-            .add_pull_request_comment(project_id_or_key, repo_id_or_name, pr_number, &params)
-            .await;
+        let result = git_api.add_pull_request_comment(params).await;
 
         assert!(result.is_err());
     }
@@ -919,7 +913,14 @@ mod tests {
     #[cfg(feature = "writable")]
     #[tokio::test]
     async fn test_add_pull_request_comment_parameter_builder() {
+        let project_id_or_key: ProjectIdOrKey = "TEST".parse().unwrap();
+        let repo_id_or_name: RepositoryIdOrName = "test-repo".parse().unwrap();
+        let pr_number = PullRequestNumber::new(123);
+
         let params_with_all_fields = AddPullRequestCommentParamsBuilder::default()
+            .project_id_or_key(project_id_or_key.clone())
+            .repo_id_or_name(repo_id_or_name.clone())
+            .pr_number(pr_number)
             .content("Test content".to_string())
             .notified_user_ids(Some(vec![UserId::new(1), UserId::new(2), UserId::new(3)]))
             .build()
@@ -932,6 +933,9 @@ mod tests {
         );
 
         let params_minimal = AddPullRequestCommentParamsBuilder::default()
+            .project_id_or_key(project_id_or_key.clone())
+            .repo_id_or_name(repo_id_or_name.clone())
+            .pr_number(pr_number)
             .content("Minimal content".to_string())
             .build()
             .unwrap();
@@ -939,7 +943,12 @@ mod tests {
         assert_eq!(params_minimal.content, "Minimal content");
         assert_eq!(params_minimal.notified_user_ids, None);
 
-        let params_from_new = AddPullRequestCommentParams::new("From new method");
+        let params_from_new = AddPullRequestCommentParams::new(
+            project_id_or_key,
+            repo_id_or_name,
+            pr_number,
+            "From new method",
+        );
         assert_eq!(params_from_new.content, "From new method");
         assert_eq!(params_from_new.notified_user_ids, None);
     }

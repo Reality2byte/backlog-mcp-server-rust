@@ -13,6 +13,8 @@ backlog-core = { path = "../backlog-core", features = ["schemars"] }
 backlog-api-core = { path = "../backlog-api-core" }
 client = { path = "../client" }
 derive_builder = { workspace = true }
+reqwest = { workspace = true }
+url = { workspace = true }
 
 [features]
 default = []

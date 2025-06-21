@@ -135,11 +135,21 @@ impl TryFrom<AddPullRequestCommentRequest> for AddPullRequestCommentParams {
     type Error = ApiError;
 
     fn try_from(req: AddPullRequestCommentRequest) -> Result<Self, Self::Error> {
+        use backlog_api_client::{ProjectIdOrKey, PullRequestNumber, RepositoryIdOrName};
+        use std::str::FromStr;
+
+        let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+        let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
+        let pr_number = PullRequestNumber::from(req.pr_number);
+
         let notified_user_ids = req
             .notified_user_ids
             .map(|ids| ids.into_iter().map(UserId::new).collect());
 
         AddPullRequestCommentParamsBuilder::default()
+            .project_id_or_key(project_id_or_key)
+            .repo_id_or_name(repo_id_or_name)
+            .pr_number(pr_number)
             .content(req.content)
             .notified_user_ids(notified_user_ids)
             .build()

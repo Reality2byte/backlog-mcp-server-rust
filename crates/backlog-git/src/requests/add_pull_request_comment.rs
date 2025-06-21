@@ -1,11 +1,24 @@
-use backlog_api_core::Error as ApiError;
-use backlog_core::identifier::{Identifier, UserId};
+use backlog_api_core::{Error as ApiError, IntoRequest, Result};
+use backlog_core::{
+    ProjectIdOrKey, RepositoryIdOrName,
+    identifier::{Identifier, PullRequestNumber, UserId},
+};
 use derive_builder::Builder;
+use reqwest::Client as ReqwestClient;
+use url::Url;
 
 /// Parameters for adding a comment to a pull request.
+///
+/// This struct now includes all path information needed to construct the complete request.
 #[derive(Builder, Debug, Clone)]
 #[builder(build_fn(error = "ApiError"))]
 pub struct AddPullRequestCommentParams {
+    /// The project ID or key where the repository is located.
+    pub project_id_or_key: ProjectIdOrKey,
+    /// The repository ID or name.
+    pub repo_id_or_name: RepositoryIdOrName,
+    /// The pull request number.
+    pub pr_number: PullRequestNumber,
     /// The content of the comment.
     pub content: String,
     /// List of user IDs to notify about this comment.
@@ -14,9 +27,17 @@ pub struct AddPullRequestCommentParams {
 }
 
 impl AddPullRequestCommentParams {
-    /// Creates a new instance with only the required content field.
-    pub fn new(content: impl Into<String>) -> Self {
+    /// Creates a new instance with all required fields.
+    pub fn new(
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        repo_id_or_name: impl Into<RepositoryIdOrName>,
+        pr_number: PullRequestNumber,
+        content: impl Into<String>,
+    ) -> Self {
         Self {
+            project_id_or_key: project_id_or_key.into(),
+            repo_id_or_name: repo_id_or_name.into(),
+            pr_number,
             content: content.into(),
             notified_user_ids: None,
         }
@@ -40,5 +61,28 @@ impl From<&AddPullRequestCommentParams> for Vec<(String, String)> {
         }
 
         seq
+    }
+}
+
+impl IntoRequest for AddPullRequestCommentParams {
+    fn into_request(self, base_url: &Url, client: &ReqwestClient) -> Result<reqwest::Request> {
+        let path = format!(
+            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments",
+            self.project_id_or_key,
+            self.repo_id_or_name,
+            self.pr_number.value()
+        );
+        let url = base_url.join(&path)?;
+
+        // Convert to form data using the existing From implementation
+        let form_data: Vec<(String, String)> = (&self).into();
+
+        let request = client
+            .post(url)
+            .header("Accept", "application/json")
+            .form(&form_data)
+            .build()?;
+
+        Ok(request)
     }
 }

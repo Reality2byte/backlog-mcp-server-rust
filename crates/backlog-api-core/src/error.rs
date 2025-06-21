@@ -22,6 +22,9 @@ pub enum Error {
     #[error("Invalid build parameter error: {0}")]
     InvalidBuildParameter(String),
 
+    #[error("Serialization error: {0}")]
+    SerializationError(String),
+
     #[error("Backlog API Error (HTTP {status}): {errors_summary}")]
     HttpStatus {
         status: u16,

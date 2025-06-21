@@ -1657,7 +1657,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 let params = builder.build()?;
 
-                match client.issue().update_issue(issue_id_or_key, &params).await {
+                match client.issue().update_issue(issue_id_or_key, params).await {
                     Ok(issue) => {
                         println!("Issue updated successfully!");
                         println!("Issue Key: {}", issue.issue_key);

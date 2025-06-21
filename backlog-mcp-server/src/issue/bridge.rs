@@ -100,7 +100,7 @@ pub(crate) async fn update_issue_impl(
     let client_guard = client.lock().await;
     let updated_issue = client_guard
         .issue()
-        .update_issue(issue_id_or_key, &update_params)
+        .update_issue(issue_id_or_key, update_params)
         .await?;
     Ok(updated_issue)
 }

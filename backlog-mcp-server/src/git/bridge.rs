@@ -140,15 +140,8 @@ pub(crate) async fn add_pull_request_comment_bridge(
     client: Arc<Mutex<BacklogApiClient>>,
     req: AddPullRequestCommentRequest,
 ) -> Result<PullRequestComment> {
-    let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
-    let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
-    let pr_number = PullRequestNumber::from(req.pr_number);
-
     let params = AddPullRequestCommentParams::try_from(req)?;
 
     let client_guard = client.lock().await;
-    Ok(client_guard
-        .git()
-        .add_pull_request_comment(project_id_or_key, repo_id_or_name, pr_number, &params)
-        .await?)
+    Ok(client_guard.git().add_pull_request_comment(params).await?)
 }

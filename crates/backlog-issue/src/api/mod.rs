@@ -55,7 +55,7 @@ impl IssueApi {
     /// Add a new issue with the provided parameters.
     #[cfg(feature = "writable")]
     pub async fn add_issue(&self, params: AddIssueParams) -> Result<AddIssueResponse> {
-        self.0.post("/api/v2/issues", &params).await
+        self.0.post_with_request("/api/v2/issues", params).await
     }
 
     /// Delete an issue by its key.
@@ -74,11 +74,11 @@ impl IssueApi {
     pub async fn update_issue(
         &self,
         issue_id_or_key: impl Into<IssueIdOrKey>,
-        params: &UpdateIssueParams,
+        params: UpdateIssueParams,
     ) -> Result<UpdateIssueResponse> {
         let issue_id_or_key_str: String = issue_id_or_key.into().into();
         self.0
-            .patch(&format!("/api/v2/issues/{}", issue_id_or_key_str), params)
+            .patch_with_request(&format!("/api/v2/issues/{}", issue_id_or_key_str), params)
             .await
     }
 
