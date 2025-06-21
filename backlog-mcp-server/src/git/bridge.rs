@@ -122,16 +122,12 @@ pub(crate) async fn get_pull_request_comment_list_tool(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetPullRequestCommentListRequest,
 ) -> Result<Vec<PullRequestComment>> {
-    let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
-    let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
-    let pr_number = PullRequestNumber::from(req.pr_number);
-
     let params = GetPullRequestCommentListParams::try_from(req)?;
 
     let client_guard = client.lock().await;
     Ok(client_guard
         .git()
-        .get_pull_request_comment_list(project_id_or_key, repo_id_or_name, pr_number, params)
+        .get_pull_request_comment_list(params)
         .await?)
 }
 

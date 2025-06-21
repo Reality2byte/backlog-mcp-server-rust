@@ -46,7 +46,7 @@ impl Client {
         T: serde::de::DeserializeOwned,
         P: IntoRequest,
     {
-        let mut request = params.into_request(&self.base_url, &self.client)?;
+        let mut request = params.into_request(&self.client, &self.base_url)?;
 
         // Add authentication headers to the request
         if let Some(token) = &self.auth_token {

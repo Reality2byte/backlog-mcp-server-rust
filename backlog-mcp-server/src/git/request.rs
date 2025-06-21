@@ -8,7 +8,6 @@ use backlog_api_client::{
 use backlog_core::identifier::UserId;
 use rmcp::schemars::{self, JsonSchema}; // rmcp::schemars を使用
 use serde::Deserialize;
-use std::str::FromStr;
 
 #[derive(Deserialize, JsonSchema, Debug)]
 pub struct ListPullRequestsRequest {
@@ -98,6 +97,13 @@ impl TryFrom<GetPullRequestCommentListRequest> for GetPullRequestCommentListPara
     type Error = ApiError;
 
     fn try_from(req: GetPullRequestCommentListRequest) -> Result<Self, Self::Error> {
+        use backlog_api_client::{ProjectIdOrKey, PullRequestNumber, RepositoryIdOrName};
+        use std::str::FromStr;
+
+        let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+        let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
+        let pr_number = PullRequestNumber::from(req.pr_number);
+
         let order = req
             .order
             .as_deref()
@@ -105,6 +111,9 @@ impl TryFrom<GetPullRequestCommentListRequest> for GetPullRequestCommentListPara
             .transpose()?;
 
         GetPullRequestCommentListParamsBuilder::default()
+            .project_id_or_key(project_id_or_key)
+            .repo_id_or_name(repo_id_or_name)
+            .pr_number(pr_number)
             .min_id(req.min_id)
             .max_id(req.max_id)
             .count(req.count)

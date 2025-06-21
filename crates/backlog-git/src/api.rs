@@ -234,24 +234,12 @@ impl GitApi {
     ///
     /// # Arguments
     ///
-    /// * `project_id_or_key` - The ID or key of the project.
-    /// * `repo_id_or_name` - The ID (as a string) or name of the repository.
-    /// * `pr_number` - The pull request number.
-    /// * `params` - Optional query parameters for filtering and pagination.
+    /// * `params` - Parameters including path information and optional query parameters for filtering and pagination.
     pub async fn get_pull_request_comment_list(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        repo_id_or_name: impl Into<RepositoryIdOrName>,
-        pr_number: PullRequestNumber,
         params: GetPullRequestCommentListParams,
     ) -> Result<Vec<PullRequestComment>> {
-        let path = format!(
-            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments",
-            project_id_or_key.into(),
-            repo_id_or_name.into(),
-            pr_number.value()
-        );
-        self.client.get_with_params(&path, &params).await
+        self.client.execute(params).await
     }
 
     /// Fetches the count of comments for a specific pull request.
@@ -707,14 +695,10 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
 
-        let result = git_api
-            .get_pull_request_comment_list(
-                project_id_or_key,
-                repo_id_or_name,
-                pr_number,
-                GetPullRequestCommentListParams::default(),
-            )
-            .await;
+        let params =
+            GetPullRequestCommentListParams::new(project_id_or_key, repo_id_or_name, pr_number);
+
+        let result = git_api.get_pull_request_comment_list(params).await;
 
         assert!(result.is_ok());
         let comments = result.unwrap();
@@ -749,14 +733,15 @@ mod tests {
         let project_id_or_key: ProjectIdOrKey = project_key.parse().unwrap();
         let repo_id_or_name: RepositoryIdOrName = repo_name.parse().unwrap();
         let params = GetPullRequestCommentListParamsBuilder::default()
+            .project_id_or_key(project_id_or_key)
+            .repo_id_or_name(repo_id_or_name)
+            .pr_number(pr_number)
             .count(Some(1))
             .order(Some(PrCommentOrder::Asc))
             .build()
             .unwrap();
 
-        let result = git_api
-            .get_pull_request_comment_list(project_id_or_key, repo_id_or_name, pr_number, params)
-            .await;
+        let result = git_api.get_pull_request_comment_list(params).await;
 
         assert!(result.is_ok());
     }

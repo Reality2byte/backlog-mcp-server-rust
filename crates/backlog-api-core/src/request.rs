@@ -9,67 +9,47 @@ use url::Url;
 /// into ready-to-execute reqwest::Request objects, including URL path construction,
 /// HTTP method selection, and body serialization.
 ///
-/// # Implementation Strategy
-///
-/// Each request parameter struct should:
-/// 1. Include all necessary path components (project_id, repo_name, etc.)
-/// 2. Know its target HTTP method (GET, POST, PATCH, DELETE)
-/// 3. Know its API endpoint path
-/// 4. Handle its own parameter serialization
-///
-/// # Examples
-///
-/// ```no_run
-/// use backlog_api_core::{IntoRequest, Result};
-/// use backlog_core::{ProjectIdOrKey, RepositoryIdOrName, identifier::PullRequestNumber};
-/// use reqwest::Client;
-/// use url::Url;
-///
-/// struct AddPullRequestCommentParams {
-///     pub project_id_or_key: ProjectIdOrKey,
-///     pub repo_id_or_name: RepositoryIdOrName,
-///     pub pr_number: PullRequestNumber,
-///     pub content: String,
-///     pub notified_user_ids: Option<Vec<u32>>,
-/// }
-///
-/// impl IntoRequest for AddPullRequestCommentParams {
-///     fn into_request(self, base_url: &Url, client: &ReqwestClient) -> Result<reqwest::Request> {
-///         let path = format!(
-///             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments",
-///             self.project_id_or_key, self.repo_id_or_name, self.pr_number.value()
-///         );
-///         let url = base_url.join(&path)?;
-///         
-///         let mut form = vec![("content".to_string(), self.content)];
-///         if let Some(user_ids) = self.notified_user_ids {
-///             for id in user_ids {
-///                 form.push(("notifiedUserId[]".to_string(), id.to_string()));
-///             }
-///         }
-///         
-///         let request = client.post(url).form(&form).build()?;
-///         Ok(request)
-///     }
-/// }
-/// ```
 pub trait IntoRequest {
     /// Converts the parameter into a complete HTTP request.
     ///
     /// # Arguments
-    /// * `base_url` - The base URL for the API (e.g., "https://example.backlog.jp")
     /// * `client` - The reqwest client to use for building the request
+    /// * `base_url` - The base URL for the API (e.g., "https://example.backlog.jp")
     ///
     /// Returns a ready-to-execute reqwest::Request object.
-    fn into_request(self, base_url: &Url, client: &ReqwestClient) -> Result<reqwest::Request>;
+    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request>;
 
-    fn post<T: Serialize + ?Sized>(
+    fn get<T>(
         &self,
+        client: &ReqwestClient,
         base_url: &Url,
         path: String,
+        param: &T,
+    ) -> Result<reqwest::Request>
+    where
+        T: Serialize + ?Sized,
+    {
+        let url = base_url.join(&path)?;
+
+        let request = client
+            .get(url)
+            .header("Accept", "application/json")
+            .query(&param)
+            .build()?;
+
+        Ok(request)
+    }
+
+    fn post<T>(
+        &self,
         client: &ReqwestClient,
+        base_url: &Url,
+        path: String,
         form: &T,
-    ) -> Result<reqwest::Request> {
+    ) -> Result<reqwest::Request>
+    where
+        T: Serialize + ?Sized,
+    {
         let url = base_url.join(&path)?;
 
         let request = client
@@ -96,8 +76,8 @@ mod tests {
         impl IntoRequest for TestParams {
             fn into_request(
                 self,
-                base_url: &Url,
                 client: &ReqwestClient,
+                base_url: &Url,
             ) -> Result<reqwest::Request> {
                 let url = base_url.join("/test")?;
                 let request = client.get(url).build()?;

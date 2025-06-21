@@ -65,7 +65,7 @@ impl From<&AddPullRequestCommentParams> for Vec<(String, String)> {
 }
 
 impl IntoRequest for AddPullRequestCommentParams {
-    fn into_request(self, base_url: &Url, client: &ReqwestClient) -> Result<reqwest::Request> {
+    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request> {
         let path = format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments",
             self.project_id_or_key,
@@ -73,6 +73,6 @@ impl IntoRequest for AddPullRequestCommentParams {
             self.pr_number.value()
         );
         let form_data: Vec<(String, String)> = (&self).into();
-        self.post(base_url, path, client, &form_data)
+        self.post(client, base_url, path, &form_data)
     }
 }
