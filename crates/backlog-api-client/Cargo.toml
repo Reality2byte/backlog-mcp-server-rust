@@ -5,7 +5,7 @@ edition.workspace = true
 license.workspace = true
 
 [features]
-default = ["issue", "project", "space", "user", "document", "git", "file"] # Library defaults without writable features
+default = ["issue", "project", "space", "user", "document", "git", "file", "wiki"] # Library defaults without writable features
 issue = ["backlog-issue"]
 project = ["backlog-project", "backlog-domain-models"]
 space = ["backlog-space"]
@@ -13,6 +13,7 @@ user = ["backlog-user"]
 document = ["backlog-document"]
 git = ["backlog-git"]
 file = ["backlog-file"]
+wiki = ["backlog-wiki"]
 schemars = [ # Added schemars feature to propagate to sub-crates
     "backlog-core/schemars",
     "backlog-domain-models?/schemars",
@@ -23,6 +24,7 @@ schemars = [ # Added schemars feature to propagate to sub-crates
     "backlog-document?/schemars",
     "backlog-git?/schemars",
     "backlog-file?/schemars",
+    "backlog-wiki?/schemars",
 ]
 all_writable = ["issue_writable", "project_writable", "space_writable", "user_writable", "git_writable"]
 issue_writable = ["backlog-issue?/writable", "client/writable"]
@@ -43,5 +45,6 @@ backlog-user = { path = "../backlog-user", optional = true }
 backlog-document = { path = "../backlog-document", optional = true }
 backlog-git = { path = "../backlog-git", optional = true }
 backlog-file = { path = "../backlog-file", optional = true }
+backlog-wiki = { path = "../backlog-wiki", optional = true }
 tokio = { workspace = true }
 url = { workspace = true }

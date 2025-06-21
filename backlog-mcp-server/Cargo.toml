@@ -7,7 +7,7 @@ license.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["issue_writable"]
+default = ["issue_writable", "git_writable"]
 issue_writable = ["backlog-api-client/issue_writable"]
 git_writable = ["backlog-api-client/git_writable"]
 
@@ -19,9 +19,10 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 
 # Dependencies on other workspace crates
-backlog-api-client = { path = "../crates/backlog-api-client", features = ["issue", "document", "git", "project", "user", "file", "schemars"] } # Added "file" feature
+backlog-api-client = { path = "../crates/backlog-api-client", features = ["issue", "document", "git", "project", "user", "file", "wiki", "schemars"] } # Added "file" and "wiki" features
 backlog-project = { path = "../crates/backlog-project" }
 backlog-file = { path = "../crates/backlog-file" }
+backlog-wiki = { path = "../crates/backlog-wiki" }
 backlog-core = { path = "../crates/backlog-core" } # For ProjectIdOrKey parsing and other core types
 schemars = { workspace = true, features = ["derive"] } # For JsonSchema derive
 strsim = "0.11.1"

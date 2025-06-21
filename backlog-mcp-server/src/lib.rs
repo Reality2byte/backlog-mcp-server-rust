@@ -7,6 +7,7 @@ pub mod project;
 mod server;
 pub mod user;
 mod util;
+pub mod wiki;
 
 mod file_utils;
 pub use file_utils::{FileFormat, SerializableFile};

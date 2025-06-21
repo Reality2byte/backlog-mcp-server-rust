@@ -138,6 +138,7 @@ dependencies = [
  "backlog-project",
  "backlog-space",
  "backlog-user",
+ "backlog-wiki",
  "client",
  "tokio",
  "url",
@@ -293,6 +294,22 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
+ "tokio",
+ "wiremock",
+]
+
+[[package]]
+name = "backlog-wiki"
+version = "0.1.0"
+dependencies = [
+ "backlog-api-core",
+ "backlog-core",
+ "chrono",
+ "client",
+ "derive_builder",
+ "schemars 0.9.0",
+ "serde",
+ "serde_json",
  "tokio",
  "wiremock",
 ]
@@ -1123,6 +1140,7 @@ dependencies = [
  "backlog-core",
  "backlog-file",
  "backlog-project",
+ "backlog-wiki",
  "base64",
  "rmcp",
  "schemars 0.9.0",

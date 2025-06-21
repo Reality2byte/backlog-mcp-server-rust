@@ -91,6 +91,8 @@ impl_identifier!(
     (PullRequestId, u32),
     (PullRequestCommentId, u32),
     (CustomListItemId, u32),
+    (WikiId, u32),
+    (WikiTagId, u32),
     // u64 identifiers
     (SvnRevision, u64),
     (PullRequestNumber, u64)

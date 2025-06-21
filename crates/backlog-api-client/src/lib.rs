@@ -16,7 +16,7 @@ pub use backlog_core::{
     // UserId,
     identifier::{
         AttachmentId, DocumentId, ProjectId, PullRequestAttachmentId, PullRequestCommentId,
-        PullRequestNumber, StatusId, UserId,
+        PullRequestNumber, StatusId, UserId, WikiId, WikiTagId,
     },
 };
 
@@ -95,3 +95,9 @@ pub use backlog_space::SpaceApi;
 // User module (from backlog_user)
 #[cfg(feature = "user")]
 pub use backlog_user::UserApi;
+
+// Wiki module (from backlog_wiki)
+#[cfg(feature = "wiki")]
+pub use backlog_wiki::{
+    GetWikiListParams, GetWikiListParamsBuilder, GetWikiListResponse, Wiki, WikiApi, WikiTag,
+};

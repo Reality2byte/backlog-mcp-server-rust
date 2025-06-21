@@ -59,4 +59,9 @@ impl BacklogApiClient {
     pub fn file(&self) -> backlog_file::FileApi {
         backlog_file::FileApi::new(self.client.clone())
     }
+
+    #[cfg(feature = "wiki")]
+    pub fn wiki(&self) -> backlog_wiki::WikiApi {
+        backlog_wiki::WikiApi::new(self.client.clone())
+    }
 }
