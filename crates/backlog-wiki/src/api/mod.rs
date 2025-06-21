@@ -1,4 +1,7 @@
-use crate::{requests::GetWikiListParams, responses::GetWikiListResponse};
+use crate::{
+    requests::{GetWikiCountParams, GetWikiListParams},
+    responses::{GetWikiCountResponse, GetWikiListResponse},
+};
 use backlog_api_core::Result;
 use client::Client;
 
@@ -7,6 +10,15 @@ pub struct WikiApi(Client);
 impl WikiApi {
     pub fn new(client: Client) -> Self {
         Self(client)
+    }
+
+    /// Get wiki page count
+    /// Corresponds to `GET /api/v2/wikis/count`.
+    pub async fn get_wiki_count(&self, params: GetWikiCountParams) -> Result<GetWikiCountResponse> {
+        let query_params: Vec<(String, String)> = params.into();
+        self.0
+            .get_with_params("/api/v2/wikis/count", &query_params)
+            .await
     }
 
     /// Get wiki page list
@@ -21,8 +33,8 @@ impl WikiApi {
 mod tests {
     use super::*;
     use crate::{
-        models::{Wiki, WikiTag},
-        requests::GetWikiListParamsBuilder,
+        models::{Wiki, WikiCount, WikiTag},
+        requests::{GetWikiCountParamsBuilder, GetWikiListParamsBuilder},
     };
     use backlog_core::{
         Language, ProjectKey, Role, User,
@@ -233,6 +245,112 @@ mod tests {
             .build()
             .unwrap();
         let result = wiki_api.get_wiki_list(params).await;
+        assert!(result.is_err());
+    }
+
+    // Tests for get_wiki_count
+    #[tokio::test]
+    async fn test_get_wiki_count_without_project() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        let expected_count = WikiCount { count: 42 };
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/count"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_count))
+            .mount(&mock_server)
+            .await;
+
+        let params = GetWikiCountParamsBuilder::default().build().unwrap();
+        let result = wiki_api.get_wiki_count(params).await;
+        assert!(result.is_ok());
+        let count = result.unwrap();
+        assert_eq!(count.count, 42);
+    }
+
+    #[tokio::test]
+    async fn test_get_wiki_count_with_project() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        let expected_count = WikiCount { count: 15 };
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/count"))
+            .and(query_param("projectIdOrKey", "MYPROJECT"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_count))
+            .mount(&mock_server)
+            .await;
+
+        let params = GetWikiCountParamsBuilder::default()
+            .project_id_or_key("MYPROJECT".parse::<ProjectKey>().unwrap())
+            .build()
+            .unwrap();
+        let result = wiki_api.get_wiki_count(params).await;
+        assert!(result.is_ok());
+        let count = result.unwrap();
+        assert_eq!(count.count, 15);
+    }
+
+    #[tokio::test]
+    async fn test_get_wiki_count_zero_count() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        let expected_count = WikiCount { count: 0 };
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/count"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_count))
+            .mount(&mock_server)
+            .await;
+
+        let params = GetWikiCountParamsBuilder::default().build().unwrap();
+        let result = wiki_api.get_wiki_count(params).await;
+        assert!(result.is_ok());
+        let count = result.unwrap();
+        assert_eq!(count.count, 0);
+    }
+
+    #[tokio::test]
+    async fn test_get_wiki_count_server_error() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/count"))
+            .respond_with(ResponseTemplate::new(500))
+            .mount(&mock_server)
+            .await;
+
+        let params = GetWikiCountParamsBuilder::default().build().unwrap();
+        let result = wiki_api.get_wiki_count(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_get_wiki_count_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/count"))
+            .and(query_param("projectIdOrKey", "NONEXISTENT"))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&mock_server)
+            .await;
+
+        let params = GetWikiCountParamsBuilder::default()
+            .project_id_or_key("NONEXISTENT".parse::<ProjectKey>().unwrap())
+            .build()
+            .unwrap();
+        let result = wiki_api.get_wiki_count(params).await;
         assert!(result.is_err());
     }
 }
