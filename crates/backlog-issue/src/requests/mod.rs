@@ -2,6 +2,8 @@ pub mod add_comment;
 pub mod add_issue;
 pub mod get_comment_list;
 pub mod get_issue_list;
+#[cfg(feature = "writable")]
+pub mod link_shared_files;
 pub mod update_issue;
 
 pub type CountIssueParams = get_issue_list::GetIssueListParams;
@@ -11,4 +13,6 @@ pub use add_comment::{AddCommentParams, AddCommentParamsBuilder};
 pub use add_issue::{AddIssueParams, AddIssueParamsBuilder};
 pub use get_comment_list::{GetCommentListParams, GetCommentListParamsBuilder};
 pub use get_issue_list::{GetIssueListParams, GetIssueListParamsBuilder};
+#[cfg(feature = "writable")]
+pub use link_shared_files::{LinkSharedFilesToIssueParams, LinkSharedFilesToIssueParamsBuilder};
 pub use update_issue::{UpdateIssueParams, UpdateIssueParamsBuilder};

@@ -21,3 +21,5 @@ pub type GetCommentResponse = Comment;
 pub type GetAttachmentListResponse = Vec<Attachment>;
 pub type GetSharedFileListResponse = Vec<SharedFile>;
 pub type AddCommentResponse = Comment;
+#[cfg(feature = "writable")]
+pub type LinkSharedFilesToIssueResponse = Vec<SharedFile>;

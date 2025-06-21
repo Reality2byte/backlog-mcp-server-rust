@@ -3,10 +3,13 @@ use backlog_core::{IssueIdOrKey, IssueKey, identifier::Identifier};
 use client::{Client, DownloadedFile};
 
 #[cfg(feature = "writable")]
-use crate::requests::{AddCommentParams, AddIssueParams, UpdateIssueParams};
+use crate::requests::{
+    AddCommentParams, AddIssueParams, LinkSharedFilesToIssueParams, UpdateIssueParams,
+};
 #[cfg(feature = "writable")]
 use crate::responses::{
-    AddCommentResponse, AddIssueResponse, DeleteIssueResponse, UpdateIssueResponse,
+    AddCommentResponse, AddIssueResponse, DeleteIssueResponse, LinkSharedFilesToIssueResponse,
+    UpdateIssueResponse,
 };
 use crate::{
     requests::{CountIssueParams, GetCommentListParams, GetIssueListParams},
@@ -160,6 +163,21 @@ impl IssueApi {
         self.0.get(&path).await
     }
 
+    /// Link shared files to an issue.
+    ///
+    /// Corresponds to `POST /api/v2/issues/:issueIdOrKey/sharedFiles`.
+    #[cfg(feature = "writable")]
+    pub async fn link_shared_files_to_issue(
+        &self,
+        issue_id_or_key: impl Into<IssueIdOrKey>,
+        params: &LinkSharedFilesToIssueParams,
+    ) -> Result<LinkSharedFilesToIssueResponse> {
+        let issue_key_str = issue_id_or_key.into().to_string();
+        let path = format!("/api/v2/issues/{}/sharedFiles", issue_key_str);
+        let params_vec: Vec<(String, String)> = params.into();
+        self.0.post(&path, &params_vec).await
+    }
+
     /// Get a specific attachment file by issue ID or key and attachment ID.
     pub async fn get_attachment_file(
         &self,
@@ -180,7 +198,7 @@ impl IssueApi {
 mod tests {
     use super::*;
     #[cfg(feature = "writable")]
-    use crate::requests::AddCommentParamsBuilder;
+    use crate::requests::{AddCommentParamsBuilder, LinkSharedFilesToIssueParamsBuilder};
     use crate::{
         models::{Attachment, Comment, FileContent, Issue, SharedFile},
         requests::{
@@ -1007,6 +1025,190 @@ mod tests {
 
         let result = issue_api
             .get_comment(IssueIdOrKey::Key(issue_key.parse().unwrap()), comment_id)
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_link_shared_files_to_issue_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_key = "TESTKEY-1";
+
+        let expected_shared_files = vec![
+            create_mock_shared_file(
+                123,
+                "/shared",
+                "document.pdf",
+                Some(1024),
+                101,
+                "alice",
+                "2023-01-01T00:00:00Z",
+            ),
+            create_mock_shared_file(
+                456,
+                "/files",
+                "image.png",
+                Some(2048),
+                102,
+                "bob",
+                "2023-01-02T00:00:00Z",
+            ),
+        ];
+
+        Mock::given(method("POST"))
+            .and(path(format!("/api/v2/issues/{}/sharedFiles", issue_key)))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_shared_files))
+            .mount(&mock_server)
+            .await;
+
+        let params = LinkSharedFilesToIssueParamsBuilder::default()
+            .shared_file_ids(vec![SharedFileId::new(123), SharedFileId::new(456)])
+            .build()
+            .unwrap();
+
+        let result = issue_api
+            .link_shared_files_to_issue(IssueIdOrKey::Key(issue_key.parse().unwrap()), &params)
+            .await;
+
+        assert!(result.is_ok());
+        let shared_files = result.unwrap();
+        assert_eq!(shared_files.len(), 2);
+        assert_eq!(shared_files[0].id, SharedFileId::new(123));
+        assert_eq!(shared_files[1].id, SharedFileId::new(456));
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_link_shared_files_to_issue_single_file() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_key = "TESTKEY-2";
+
+        let expected_shared_file = vec![create_mock_shared_file(
+            789,
+            "/documents",
+            "report.xlsx",
+            Some(4096),
+            103,
+            "charlie",
+            "2023-01-03T00:00:00Z",
+        )];
+
+        Mock::given(method("POST"))
+            .and(path(format!("/api/v2/issues/{}/sharedFiles", issue_key)))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_shared_file))
+            .mount(&mock_server)
+            .await;
+
+        let params = LinkSharedFilesToIssueParamsBuilder::default()
+            .shared_file_ids(vec![SharedFileId::new(789)])
+            .build()
+            .unwrap();
+
+        let result = issue_api
+            .link_shared_files_to_issue(IssueIdOrKey::Key(issue_key.parse().unwrap()), &params)
+            .await;
+
+        assert!(result.is_ok());
+        let shared_files = result.unwrap();
+        assert_eq!(shared_files.len(), 1);
+        assert_eq!(shared_files[0].id, SharedFileId::new(789));
+        assert_eq!(shared_files[0].name, "report.xlsx");
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_link_shared_files_to_issue_with_issue_id() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_id = 123;
+
+        let expected_shared_file = vec![create_mock_shared_file(
+            999,
+            "/uploads",
+            "data.csv",
+            Some(512),
+            104,
+            "david",
+            "2023-01-04T00:00:00Z",
+        )];
+
+        Mock::given(method("POST"))
+            .and(path(format!("/api/v2/issues/{}/sharedFiles", issue_id)))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_shared_file))
+            .mount(&mock_server)
+            .await;
+
+        let params = LinkSharedFilesToIssueParamsBuilder::default()
+            .shared_file_ids(vec![SharedFileId::new(999)])
+            .build()
+            .unwrap();
+
+        let result = issue_api
+            .link_shared_files_to_issue(IssueIdOrKey::Id(IssueId::new(issue_id as u32)), &params)
+            .await;
+
+        assert!(result.is_ok());
+        let shared_files = result.unwrap();
+        assert_eq!(shared_files.len(), 1);
+        assert_eq!(shared_files[0].id, SharedFileId::new(999));
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_link_shared_files_to_issue_issue_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_key = "TESTKEY-404";
+
+        Mock::given(method("POST"))
+            .and(path(format!("/api/v2/issues/{}/sharedFiles", issue_key)))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&mock_server)
+            .await;
+
+        let params = LinkSharedFilesToIssueParamsBuilder::default()
+            .shared_file_ids(vec![SharedFileId::new(123)])
+            .build()
+            .unwrap();
+
+        let result = issue_api
+            .link_shared_files_to_issue(IssueIdOrKey::Key(issue_key.parse().unwrap()), &params)
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    #[cfg(feature = "writable")]
+    #[tokio::test]
+    async fn test_link_shared_files_to_issue_invalid_file_id() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+        let issue_key = "TESTKEY-1";
+
+        Mock::given(method("POST"))
+            .and(path(format!("/api/v2/issues/{}/sharedFiles", issue_key)))
+            .respond_with(ResponseTemplate::new(400).set_body_json(serde_json::json!({
+                "errors": [{"message": "Invalid shared file ID"}]
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let params = LinkSharedFilesToIssueParamsBuilder::default()
+            .shared_file_ids(vec![SharedFileId::new(999999)])
+            .build()
+            .unwrap();
+
+        let result = issue_api
+            .link_shared_files_to_issue(IssueIdOrKey::Key(issue_key.parse().unwrap()), &params)
             .await;
 
         assert!(result.is_err());

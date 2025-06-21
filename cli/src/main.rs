@@ -1,5 +1,7 @@
 #[cfg(feature = "git_writable")]
 use backlog_api_client::AddPullRequestParamsBuilder;
+#[cfg(feature = "issue_writable")]
+use backlog_api_client::LinkSharedFilesToIssueParamsBuilder;
 use backlog_api_client::{
     AddCommentParamsBuilder, AttachmentId, GetIssueListParamsBuilder,
     GetPullRequestListParamsBuilder, IssueIdOrKey, ProjectId, ProjectIdOrKey,
@@ -10,6 +12,8 @@ use backlog_api_client::{
 use backlog_api_client::{UpdatePullRequestCommentParams, UpdatePullRequestParamsBuilder};
 #[cfg(feature = "git_writable")]
 use backlog_core::identifier::IssueId;
+#[cfg(feature = "issue_writable")]
+use backlog_core::identifier::SharedFileId;
 use backlog_core::identifier::{CommentId, Identifier};
 #[cfg(any(feature = "issue_writable", feature = "project_writable"))]
 use backlog_core::{
@@ -324,6 +328,17 @@ enum IssueCommands {
         /// Issue ID or Key (e.g., "PROJECT-123" or "12345")
         #[clap(name = "ISSUE_ID_OR_KEY")]
         issue_id_or_key: String,
+    },
+    /// Link shared files to an issue
+    #[cfg(feature = "issue_writable")]
+    #[command(about = "Link shared files to an issue")]
+    LinkSharedFiles {
+        /// Issue ID or Key (e.g., "PROJECT-123" or "12345")
+        #[clap(name = "ISSUE_ID_OR_KEY")]
+        issue_id_or_key: String,
+        /// Shared file IDs to link (comma-separated)
+        #[clap(short, long, value_delimiter = ',')]
+        file_ids: Vec<u32>,
     },
 }
 
@@ -1743,8 +1758,74 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+            #[cfg(feature = "issue_writable")]
+            IssueCommands::LinkSharedFiles {
+                issue_id_or_key,
+                file_ids,
+            } => {
+                println!(
+                    "Linking {} shared file(s) to issue: {}",
+                    file_ids.len(),
+                    issue_id_or_key
+                );
+
+                let parsed_issue_id_or_key =
+                    IssueIdOrKey::from_str(&issue_id_or_key).map_err(|e| {
+                        format!(
+                            "Failed to parse issue_id_or_key '{}': {}",
+                            issue_id_or_key, e
+                        )
+                    })?;
+
+                let shared_file_ids: Vec<SharedFileId> =
+                    file_ids.iter().map(|&id| SharedFileId::new(id)).collect();
+
+                let params = LinkSharedFilesToIssueParamsBuilder::default()
+                    .shared_file_ids(shared_file_ids)
+                    .build()
+                    .map_err(|e| format!("Failed to build parameters: {}", e))?;
+
+                match client
+                    .issue()
+                    .link_shared_files_to_issue(parsed_issue_id_or_key, &params)
+                    .await
+                {
+                    Ok(linked_files) => {
+                        println!(
+                            "✅ Successfully linked {} shared file(s) to the issue!",
+                            linked_files.len()
+                        );
+                        println!();
+
+                        for (index, file) in linked_files.iter().enumerate() {
+                            println!("{}. {}", index + 1, file.name);
+                            println!("   ID: {}", file.id);
+                            println!("   Directory: {}", file.dir);
+                            match &file.content {
+                                backlog_issue::models::FileContent::File { size } => {
+                                    println!("   Type: File");
+                                    println!("   Size: {} bytes", size);
+                                }
+                                backlog_issue::models::FileContent::Directory => {
+                                    println!("   Type: Directory");
+                                }
+                            }
+                            println!("   Created by: {}", file.created_user.name);
+                            println!("   Created at: {}", file.created);
+                            println!();
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to link shared files to issue: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
             #[cfg(not(feature = "issue_writable"))]
-            IssueCommands::Create(_) | IssueCommands::Update(_) | IssueCommands::Delete(_) => {
+            IssueCommands::Create(_)
+            | IssueCommands::Update(_)
+            | IssueCommands::Delete(_)
+            | IssueCommands::LinkSharedFiles { .. } => {
                 eprintln!(
                     "Issue creation, update, and deletion are not available. Please build with 'issue_writable' feature."
                 );

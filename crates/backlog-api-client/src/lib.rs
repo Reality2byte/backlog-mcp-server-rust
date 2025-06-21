@@ -42,6 +42,12 @@ pub use backlog_issue::{
     },
 };
 
+// Issue writable operations (from backlog_issue)
+#[cfg(all(feature = "issue", feature = "issue_writable"))]
+pub use backlog_issue::requests::{
+    LinkSharedFilesToIssueParams, LinkSharedFilesToIssueParamsBuilder,
+};
+
 // Git module (from backlog_git)
 #[cfg(feature = "git")]
 pub use backlog_git::{

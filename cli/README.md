@@ -19,7 +19,7 @@ cargo build --package blg --features "git issue project space"
 For write operations (creating/updating/deleting resources), add the corresponding writable features:
 
 ```bash
-cargo build --package blg --features "git git_writable issue project project_writable space"
+cargo build --package blg --features "git git_writable issue issue_writable project project_writable space"
 ```
 
 Alternatively, if you are in the `cli` directory:
@@ -27,10 +27,10 @@ Alternatively, if you are in the `cli` directory:
 ```bash
 cargo build --features "git issue project space" 
 # Or with writable features:
-cargo build --features "git git_writable issue project project_writable space" 
+cargo build --features "git git_writable issue issue_writable project project_writable space" 
 ```
 
-The `git`, `issue`, `project`, and `space` features are required to build the `blg` binary with full functionality. Add `project_writable` for project management operations like category creation/deletion, and `git_writable` for pull request update operations. The executable will be located at `target/debug/blg` (or `target/release/blg` if you add `--release`).
+The `git`, `issue`, `project`, and `space` features are required to build the `blg` binary with full functionality. Add `project_writable` for project management operations like category creation/deletion, `issue_writable` for issue operations like linking shared files, and `git_writable` for pull request update operations. The executable will be located at `target/debug/blg` (or `target/release/blg` if you add `--release`).
 
 ## Configuration
 
@@ -113,6 +113,12 @@ blg issue add-comment MYPROJ-101 --content "This is a comment"
 
 # Download an issue attachment
 blg issue download-attachment MYPROJ-101 12345 --output downloaded_file.dat
+
+# List shared files linked to an issue
+blg issue list-shared-files MYPROJ-101
+
+# Link shared files to an issue (requires issue_writable feature)
+blg issue link-shared-files MYPROJ-101 --file-ids 123,456,789
 ```
 
 **Repository Management:**
@@ -186,6 +192,8 @@ The `blg` CLI currently supports the following commands:
 - `issue show <ISSUE_ID_OR_KEY>` - Show detailed information about a specific issue
 - `issue add-comment <ISSUE_ID_OR_KEY> --content <CONTENT>` - Add a comment to an issue
 - `issue download-attachment <ISSUE_ID_OR_KEY> <ATTACHMENT_ID> --output <FILE_PATH>` - Download an issue attachment
+- `issue list-shared-files <ISSUE_ID_OR_KEY>` - List shared files linked to an issue
+- `issue link-shared-files <ISSUE_ID_OR_KEY> --file-ids <FILE_ID1,FILE_ID2>` - Link shared files to an issue (requires `issue_writable` feature)
 
 ### Repository Commands
 - `repo list --project-id <PROJECT_ID_OR_KEY>` - List repositories in a project

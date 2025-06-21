@@ -14,9 +14,9 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Write operations** (requires `writable` feature): add_category(), update_category(), delete_category(), add_issue_type(), delete_issue_type(), update_issue_type(), add_version(), update_version(), delete_version(), add_status(), update_status(), delete_status(), update_status_order()
 
 ### backlog-issue (IssueApi)
-- **Implemented**: 13/26 endpoints (50%)
+- **Implemented**: 14/26 endpoints (54%)
 - **Read operations**: get_issue(), get_issue_list(), count_issue(), get_comment_list(), get_comment(), count_comment(), get_attachment_list(), get_attachment_file(), get_shared_file_list()
-- **Write operations** (requires `writable` feature): add_issue(), delete_issue(), update_issue(), add_comment()
+- **Write operations** (requires `writable` feature): add_issue(), delete_issue(), update_issue(), add_comment(), link_shared_files_to_issue()
 
 ### backlog-file (FileApi)
 - **Implemented**: 2/2 endpoints (100%)
@@ -111,7 +111,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 
 ### Shared files
 - ✅ GetListOfLinkedSharedFiles: Returns the list of linked Shared Files to issues: GET /api/v2/issues/:issueIdOrKey/sharedFiles
-- ❌ LinkSharedFilesToIssue: Links shared files to issue: POST /api/v2/issues/:issueIdOrKey/sharedFiles
+- ✅ LinkSharedFilesToIssue: Links shared files to issue: POST /api/v2/issues/:issueIdOrKey/sharedFiles
 - ❌ RemoveLinkToSharedFileFromIssue: Removes link to shared file from issue: DELETE /api/v2/issues/:issueIdOrKey/sharedFiles/:id
 - ❌ GetIssueParticipantList: null: GET /api/v2/issues/:issueIdOrKey/participants
 
