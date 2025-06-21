@@ -5,6 +5,9 @@ use crate::{
         GetWikiListResponse,
     },
 };
+
+#[cfg(feature = "writable")]
+use crate::requests::UpdateWikiParams;
 use backlog_api_core::Result;
 use backlog_core::identifier::{Identifier, WikiAttachmentId, WikiId};
 use client::Client;
@@ -73,6 +76,21 @@ impl WikiApi {
             ))
             .await
     }
+
+    /// Update wiki page
+    /// Corresponds to `PATCH /api/v2/wikis/:wikiId`.
+    #[cfg(feature = "writable")]
+    pub async fn update_wiki(
+        &self,
+        wiki_id: impl Into<WikiId>,
+        params: &UpdateWikiParams,
+    ) -> Result<GetWikiDetailResponse> {
+        let wiki_id = wiki_id.into();
+        let params_vec: Vec<(String, String)> = params.into();
+        self.0
+            .patch(&format!("/api/v2/wikis/{}", wiki_id.value()), &params_vec)
+            .await
+    }
 }
 
 #[cfg(test)]
@@ -82,6 +100,9 @@ mod tests {
         models::{Wiki, WikiAttachment, WikiCount, WikiDetail, WikiTag},
         requests::{GetWikiCountParamsBuilder, GetWikiListParamsBuilder},
     };
+
+    #[cfg(feature = "writable")]
+    use crate::requests::UpdateWikiParams;
     use backlog_core::identifier::SharedFileId;
     use backlog_core::{
         Language, ProjectKey, Role, Star, User,
@@ -882,5 +903,208 @@ mod tests {
             .download_wiki_attachment(WikiId::new(123), WikiAttachmentId::new(456))
             .await;
         assert!(result.is_err());
+    }
+
+    // Tests for update_wiki
+    #[cfg(all(test, feature = "writable"))]
+    mod update_wiki_tests {
+        use super::*;
+        use wiremock::matchers::{body_string_contains, header, method, path};
+
+        #[tokio::test]
+        async fn test_update_wiki_success_with_all_params() {
+            let mock_server = MockServer::start().await;
+            let client = setup_client(&mock_server).await;
+            let wiki_api = WikiApi::new(client);
+
+            let expected_detail = create_mock_wiki_detail(123, 456, "Updated Wiki Title");
+
+            Mock::given(method("PATCH"))
+                .and(path("/api/v2/wikis/123"))
+                .and(header("Content-Type", "application/x-www-form-urlencoded"))
+                .and(body_string_contains("name=Updated+Wiki+Title"))
+                .and(body_string_contains("content=Updated+wiki+content"))
+                .and(body_string_contains("mailNotify=true"))
+                .respond_with(ResponseTemplate::new(200).set_body_json(&expected_detail))
+                .mount(&mock_server)
+                .await;
+
+            let params = UpdateWikiParams::new()
+                .name("Updated Wiki Title")
+                .content("Updated wiki content")
+                .mail_notify(true);
+
+            let result = wiki_api.update_wiki(WikiId::new(123), &params).await;
+            assert!(result.is_ok());
+            let detail = result.unwrap();
+            assert_eq!(detail.name, "Updated Wiki Title");
+            assert_eq!(detail.id.value(), 123);
+        }
+
+        #[tokio::test]
+        async fn test_update_wiki_success_with_name_only() {
+            let mock_server = MockServer::start().await;
+            let client = setup_client(&mock_server).await;
+            let wiki_api = WikiApi::new(client);
+
+            let expected_detail = create_mock_wiki_detail(456, 789, "New Title Only");
+
+            Mock::given(method("PATCH"))
+                .and(path("/api/v2/wikis/456"))
+                .and(header("Content-Type", "application/x-www-form-urlencoded"))
+                .and(body_string_contains("name=New+Title+Only"))
+                .respond_with(ResponseTemplate::new(200).set_body_json(&expected_detail))
+                .mount(&mock_server)
+                .await;
+
+            let params = UpdateWikiParams::new().name("New Title Only");
+
+            let result = wiki_api.update_wiki(WikiId::new(456), &params).await;
+            assert!(result.is_ok());
+            let detail = result.unwrap();
+            assert_eq!(detail.name, "New Title Only");
+        }
+
+        #[tokio::test]
+        async fn test_update_wiki_success_with_content_only() {
+            let mock_server = MockServer::start().await;
+            let client = setup_client(&mock_server).await;
+            let wiki_api = WikiApi::new(client);
+
+            let expected_detail = create_mock_wiki_detail(789, 123, "Original Title");
+
+            Mock::given(method("PATCH"))
+                .and(path("/api/v2/wikis/789"))
+                .and(header("Content-Type", "application/x-www-form-urlencoded"))
+                .and(body_string_contains("content=New+content+here"))
+                .respond_with(ResponseTemplate::new(200).set_body_json(&expected_detail))
+                .mount(&mock_server)
+                .await;
+
+            let params = UpdateWikiParams::new().content("New content here");
+
+            let result = wiki_api.update_wiki(789u32, &params).await;
+            assert!(result.is_ok());
+        }
+
+        #[tokio::test]
+        async fn test_update_wiki_success_with_mail_notify_false() {
+            let mock_server = MockServer::start().await;
+            let client = setup_client(&mock_server).await;
+            let wiki_api = WikiApi::new(client);
+
+            let expected_detail = create_mock_wiki_detail(111, 222, "Test Wiki");
+
+            Mock::given(method("PATCH"))
+                .and(path("/api/v2/wikis/111"))
+                .and(header("Content-Type", "application/x-www-form-urlencoded"))
+                .and(body_string_contains("mailNotify=false"))
+                .respond_with(ResponseTemplate::new(200).set_body_json(&expected_detail))
+                .mount(&mock_server)
+                .await;
+
+            let params = UpdateWikiParams::new().mail_notify(false);
+
+            let result = wiki_api.update_wiki(111u32, &params).await;
+            assert!(result.is_ok());
+        }
+
+        #[tokio::test]
+        async fn test_update_wiki_success_with_special_characters() {
+            let mock_server = MockServer::start().await;
+            let client = setup_client(&mock_server).await;
+            let wiki_api = WikiApi::new(client);
+
+            let expected_detail = create_mock_wiki_detail(333, 444, "Title & <Special>");
+
+            Mock::given(method("PATCH"))
+                .and(path("/api/v2/wikis/333"))
+                .and(header("Content-Type", "application/x-www-form-urlencoded"))
+                .respond_with(ResponseTemplate::new(200).set_body_json(&expected_detail))
+                .mount(&mock_server)
+                .await;
+
+            let params = UpdateWikiParams::new()
+                .name("Title & <Special>")
+                .content("Content with \"quotes\" and symbols: @#$%");
+
+            let result = wiki_api.update_wiki(333u32, &params).await;
+            assert!(result.is_ok());
+        }
+
+        #[tokio::test]
+        async fn test_update_wiki_not_found() {
+            let mock_server = MockServer::start().await;
+            let client = setup_client(&mock_server).await;
+            let wiki_api = WikiApi::new(client);
+
+            Mock::given(method("PATCH"))
+                .and(path("/api/v2/wikis/404"))
+                .respond_with(ResponseTemplate::new(404))
+                .mount(&mock_server)
+                .await;
+
+            let params = UpdateWikiParams::new().name("Does not exist");
+
+            let result = wiki_api.update_wiki(404u32, &params).await;
+            assert!(result.is_err());
+        }
+
+        #[tokio::test]
+        async fn test_update_wiki_unauthorized() {
+            let mock_server = MockServer::start().await;
+            let client = setup_client(&mock_server).await;
+            let wiki_api = WikiApi::new(client);
+
+            Mock::given(method("PATCH"))
+                .and(path("/api/v2/wikis/403"))
+                .respond_with(ResponseTemplate::new(403))
+                .mount(&mock_server)
+                .await;
+
+            let params = UpdateWikiParams::new().name("Unauthorized");
+
+            let result = wiki_api.update_wiki(403u32, &params).await;
+            assert!(result.is_err());
+        }
+
+        #[tokio::test]
+        async fn test_update_wiki_server_error() {
+            let mock_server = MockServer::start().await;
+            let client = setup_client(&mock_server).await;
+            let wiki_api = WikiApi::new(client);
+
+            Mock::given(method("PATCH"))
+                .and(path("/api/v2/wikis/500"))
+                .respond_with(ResponseTemplate::new(500))
+                .mount(&mock_server)
+                .await;
+
+            let params = UpdateWikiParams::new().content("Server error content");
+
+            let result = wiki_api.update_wiki(500u32, &params).await;
+            assert!(result.is_err());
+        }
+
+        #[tokio::test]
+        async fn test_update_wiki_empty_params() {
+            let mock_server = MockServer::start().await;
+            let client = setup_client(&mock_server).await;
+            let wiki_api = WikiApi::new(client);
+
+            let expected_detail = create_mock_wiki_detail(555, 666, "Unchanged");
+
+            Mock::given(method("PATCH"))
+                .and(path("/api/v2/wikis/555"))
+                .and(header("Content-Type", "application/x-www-form-urlencoded"))
+                .respond_with(ResponseTemplate::new(200).set_body_json(&expected_detail))
+                .mount(&mock_server)
+                .await;
+
+            let params = UpdateWikiParams::new(); // No parameters set
+
+            let result = wiki_api.update_wiki(555u32, &params).await;
+            assert!(result.is_ok());
+        }
     }
 }

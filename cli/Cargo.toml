@@ -14,6 +14,7 @@ backlog-core = { path = "../crates/backlog-core" }
 backlog-domain-models = { path = "../crates/backlog-domain-models" }
 backlog-project = { path = "../crates/backlog-project" }
 backlog-issue = { path = "../crates/backlog-issue" }
+backlog-wiki = { path = "../crates/backlog-wiki" }
 clap = { version = "4.5", features = ["derive"] }
 tokio = { workspace = true, features = ["full", "macros", "rt-multi-thread"] }
 
@@ -31,4 +32,5 @@ all = ["git", "issue", "project", "space", "user", "document", "file", "wiki"]
 issue_writable = ["backlog-api-client/issue_writable"]
 project_writable = ["backlog-api-client/project_writable"]
 git_writable = ["backlog-api-client/git_writable"]
-all_writable = ["issue_writable", "project_writable", "git_writable"]
+wiki_writable = ["backlog-api-client/wiki_writable"]
+all_writable = ["issue_writable", "project_writable", "git_writable", "wiki_writable"]

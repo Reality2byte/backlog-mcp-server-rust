@@ -33,6 +33,8 @@ use backlog_project::requests::{
     DeleteIssueTypeParams, DeleteStatusParams, UpdateCategoryParams, UpdateIssueTypeParams,
     UpdateStatusOrderParams, UpdateStatusParams, UpdateVersionParams,
 };
+#[cfg(feature = "wiki_writable")]
+use backlog_wiki::UpdateWikiParams;
 use clap::{Args, Parser};
 use std::env;
 use std::path::PathBuf;
@@ -793,6 +795,22 @@ enum WikiCommands {
         /// Output file path (if not specified, use original filename)
         #[clap(short, long)]
         output: Option<String>,
+    },
+    /// Update a wiki page
+    #[cfg(feature = "wiki_writable")]
+    Update {
+        /// Wiki ID
+        #[clap(name = "WIKI_ID")]
+        wiki_id: u32,
+        /// New wiki page name
+        #[clap(long)]
+        name: Option<String>,
+        /// New wiki page content
+        #[clap(long)]
+        content: Option<String>,
+        /// Send email notification of update
+        #[clap(long)]
+        mail_notify: Option<bool>,
     },
 }
 
@@ -2854,6 +2872,61 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to download wiki attachment: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "wiki_writable")]
+            WikiCommands::Update {
+                wiki_id,
+                name,
+                content,
+                mail_notify,
+            } => {
+                println!("Updating wiki ID: {}", wiki_id);
+
+                // Create params with provided options
+                let mut params = UpdateWikiParams::new();
+
+                if let Some(name) = name {
+                    params = params.name(name);
+                }
+
+                if let Some(content) = content {
+                    params = params.content(content);
+                }
+
+                if let Some(mail_notify) = mail_notify {
+                    params = params.mail_notify(mail_notify);
+                }
+
+                match client
+                    .wiki()
+                    .update_wiki(WikiId::new(wiki_id), &params)
+                    .await
+                {
+                    Ok(wiki_detail) => {
+                        println!("✅ Wiki updated successfully");
+                        println!("ID: {}", wiki_detail.id.value());
+                        println!("Name: {}", wiki_detail.name);
+                        println!("Project ID: {}", wiki_detail.project_id.value());
+                        println!("Updated by: {}", wiki_detail.updated_user.name);
+                        println!(
+                            "Updated at: {}",
+                            wiki_detail.updated.format("%Y-%m-%d %H:%M:%S")
+                        );
+
+                        if !wiki_detail.tags.is_empty() {
+                            let tag_names: Vec<String> = wiki_detail
+                                .tags
+                                .iter()
+                                .map(|tag| tag.name.clone())
+                                .collect();
+                            println!("Tags: {}", tag_names.join(", "));
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to update wiki: {}", e);
                         std::process::exit(1);
                     }
                 }

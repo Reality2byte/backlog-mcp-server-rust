@@ -103,3 +103,6 @@ pub use backlog_wiki::{
     GetWikiCountResponse, GetWikiDetailResponse, GetWikiListParams, GetWikiListParamsBuilder,
     GetWikiListResponse, Wiki, WikiApi, WikiAttachment, WikiCount, WikiDetail, WikiTag,
 };
+
+#[cfg(all(feature = "wiki", feature = "wiki_writable"))]
+pub use backlog_wiki::UpdateWikiParams;

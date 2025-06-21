@@ -37,8 +37,9 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Read operations**: list_documents(), get_document_tree(), get_document(), download_attachment()
 
 ### backlog-wiki (WikiApi)
-- **Implemented**: 5/15 endpoints (33%)
+- **Implemented**: 6/15 endpoints (40%)
 - **Read operations**: get_wiki_list(), get_wiki_detail(), get_wiki_count(), get_wiki_attachment_list(), download_wiki_attachment()
+- **Write operations** (requires `writable` feature): update_wiki()
 
 ### Not Implemented
 - **Activities**: 0/4 endpoints
@@ -170,7 +171,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ✅ GetListOfSharedFiles: Gets list of Shared Files: GET /api/v2/projects/:projectIdOrKey/files/metadata/:path
 
 ### Wikis
-- ❌ UpdateWikiPage: Updates information about Wiki page: PATCH /api/v2/wikis/:wikiId
+- ✅ UpdateWikiPage: Updates information about Wiki page: PATCH /api/v2/wikis/:wikiId
 - ✅ GetWikiPageAttachment: Downloads Wiki page’s attachment file: GET /api/v2/wikis/:wikiId/attachments/:attachmentId
 - ❌ GetWikiPageHistory: Returns history of Wiki page: GET /api/v2/wikis/:wikiId/history
 - ✅ GetWikiPageList: Returns list of Wiki pages: GET /api/v2/wikis

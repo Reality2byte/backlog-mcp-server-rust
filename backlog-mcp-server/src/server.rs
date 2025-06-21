@@ -40,6 +40,9 @@ use crate::{
     },
 };
 
+#[cfg(feature = "wiki_writable")]
+use crate::wiki::request::UpdateWikiRequest;
+
 #[cfg(feature = "git_writable")]
 use crate::git::request::AddPullRequestCommentRequest;
 use backlog_api_client::client::BacklogApiClient;
@@ -371,6 +374,16 @@ impl Server {
 
         let response_data = SerializableFile::new(file, explicit_format)?;
         Ok(CallToolResult::success(vec![response_data.try_into()?]))
+    }
+
+    #[cfg(feature = "wiki_writable")]
+    #[tool(
+        description = "Update a wiki page. You can update the page name, content, and/or email notification settings."
+    )]
+    async fn update_wiki(&self, #[tool(aggr)] request: UpdateWikiRequest) -> McpResult {
+        let client = self.client.lock().await;
+        let wiki_detail = wiki::bridge::update_wiki(&client, request).await?;
+        Ok(CallToolResult::success(vec![Content::json(wiki_detail)?]))
     }
 
     #[cfg(feature = "git_writable")]

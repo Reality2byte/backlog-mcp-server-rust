@@ -40,3 +40,19 @@ pub(crate) struct DownloadWikiAttachmentRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub format: Option<String>,
 }
+
+#[cfg(feature = "wiki_writable")]
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct UpdateWikiRequest {
+    #[schemars(description = "Wiki page ID to update. Must be a positive integer.")]
+    pub wiki_id: u32,
+    #[schemars(description = "Optional new page name.")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[schemars(description = "Optional new page content.")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
+    #[schemars(description = "Optional whether to send email notification of update.")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mail_notify: Option<bool>,
+}

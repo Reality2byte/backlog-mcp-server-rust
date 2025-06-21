@@ -6,6 +6,7 @@ license.workspace = true
 
 [features]
 default = []
+writable = ["client/writable"]
 schemars = ["backlog-core/schemars", "dep:schemars"]
 
 [dependencies]

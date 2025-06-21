@@ -3,13 +3,19 @@ use crate::wiki::request::{
     DownloadWikiAttachmentRequest, GetWikiAttachmentListRequest, GetWikiDetailRequest,
     GetWikiListRequest,
 };
+
+#[cfg(feature = "wiki_writable")]
+use crate::wiki::request::UpdateWikiRequest;
 use backlog_api_client::{
     DownloadedFile, GetWikiListParamsBuilder, ProjectIdOrKey, client::BacklogApiClient,
 };
+
 use backlog_core::{
     ProjectKey,
     identifier::{ProjectId, WikiAttachmentId, WikiId},
 };
+#[cfg(feature = "wiki_writable")]
+use backlog_wiki::UpdateWikiParams;
 use std::str::FromStr;
 
 pub(crate) async fn get_wiki_list(
@@ -84,4 +90,32 @@ pub(crate) async fn download_wiki_attachment(
         .await?;
 
     Ok(downloaded_file)
+}
+
+#[cfg(feature = "wiki_writable")]
+pub(crate) async fn update_wiki(
+    client: &BacklogApiClient,
+    request: UpdateWikiRequest,
+) -> Result<serde_json::Value> {
+    let wiki_api = client.wiki();
+    let wiki_id = WikiId::new(request.wiki_id);
+
+    // Build UpdateWikiParams from request
+    let mut params = UpdateWikiParams::new();
+
+    if let Some(name) = request.name {
+        params = params.name(name);
+    }
+
+    if let Some(content) = request.content {
+        params = params.content(content);
+    }
+
+    if let Some(mail_notify) = request.mail_notify {
+        params = params.mail_notify(mail_notify);
+    }
+
+    let wiki_detail = wiki_api.update_wiki(wiki_id, &params).await?;
+
+    Ok(serde_json::to_value(wiki_detail)?)
 }

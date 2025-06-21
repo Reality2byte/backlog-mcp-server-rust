@@ -19,7 +19,7 @@ cargo build --package blg --features "git issue project space"
 For write operations (creating/updating/deleting resources), add the corresponding writable features:
 
 ```bash
-cargo build --package blg --features "git git_writable issue issue_writable project project_writable space"
+cargo build --package blg --features "git git_writable issue issue_writable project project_writable space wiki wiki_writable"
 ```
 
 Alternatively, if you are in the `cli` directory:
@@ -27,10 +27,10 @@ Alternatively, if you are in the `cli` directory:
 ```bash
 cargo build --features "git issue project space" 
 # Or with writable features:
-cargo build --features "git git_writable issue issue_writable project project_writable space" 
+cargo build --features "git git_writable issue issue_writable project project_writable space wiki wiki_writable" 
 ```
 
-The `git`, `issue`, `project`, and `space` features are required to build the `blg` binary with full functionality. Add `project_writable` for project management operations like category creation/deletion, `issue_writable` for issue operations like linking shared files, and `git_writable` for pull request update operations. The executable will be located at `target/debug/blg` (or `target/release/blg` if you add `--release`).
+The `git`, `issue`, `project`, `space`, and `wiki` features are required to build the `blg` binary with full functionality. Add `project_writable` for project management operations like category creation/deletion, `issue_writable` for issue operations like linking shared files, `git_writable` for pull request update operations, and `wiki_writable` for wiki page update operations. The executable will be located at `target/debug/blg` (or `target/release/blg` if you add `--release`).
 
 ## Configuration
 
@@ -110,6 +110,18 @@ blg wiki download-attachment 12345 67890
 
 # Download an attachment from a wiki page with custom filename
 blg wiki download-attachment 12345 67890 --output custom_name.png
+
+# Update a wiki page name
+blg wiki update 12345 --name "New Wiki Title"
+
+# Update a wiki page content
+blg wiki update 12345 --content "Updated content for the wiki page"
+
+# Update both name and content with email notification
+blg wiki update 12345 --name "Updated Title" --content "Updated content" --mail-notify true
+
+# Update content without email notification
+blg wiki update 12345 --content "Silent update" --mail-notify false
 ```
 
 **Issue Management:**
@@ -232,3 +244,4 @@ The `blg` CLI currently supports the following commands:
 ### Wiki Commands
 - `wiki list-attachments <WIKI_ID>` - List attachments for a specific wiki page
 - `wiki download-attachment <WIKI_ID> <ATTACHMENT_ID> [--output <FILE_PATH>]` - Download an attachment from a wiki page
+- `wiki update <WIKI_ID> [--name <NEW_NAME>] [--content <NEW_CONTENT>] [--mail-notify <true|false>]` - Update a wiki page (requires `wiki_writable` feature)
