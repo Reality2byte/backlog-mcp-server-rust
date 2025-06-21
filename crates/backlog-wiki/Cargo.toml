@@ -11,6 +11,7 @@ schemars = ["backlog-core/schemars", "dep:schemars"]
 [dependencies]
 backlog-core = { path = "../backlog-core" }
 backlog-api-core = { path = "../backlog-api-core" }
+backlog-file = { path = "../backlog-file" }
 client = { path = "../client" }
 serde = { workspace = true }
 serde_json = { workspace = true }

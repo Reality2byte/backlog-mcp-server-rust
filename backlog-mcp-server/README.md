@@ -153,6 +153,16 @@ The following tools are grouped by their respective modules:
     -   Description: Get a list of users in the space.
     -   Input: (No parameters)
 
+### Wiki Tools
+-   **`get_wiki_list`**
+    -   Description: Get a list of wiki pages. Can be filtered by project and keyword.
+    -   Input:
+        -   `project_id_or_key` (string, optional): The project ID or project key to filter wikis by. Examples: "MYPROJECTKEY", "123".
+        -   `keyword` (string, optional): Filter wiki pages by keyword in title or content.
+-   **`get_wiki_detail`**
+    -   Description: Get detailed information about a specific wiki page including content, attachments, shared files, and stars.
+    -   Input: `wiki_id` (number, required): Wiki page ID to retrieve details for. Must be a positive integer.
+
 ## File Download Features
 
 All file download tools (`download_document_attachment`, `download_issue_attachment`, `download_pull_request_attachment`, and `download_shared_file`) support intelligent format detection and handling:

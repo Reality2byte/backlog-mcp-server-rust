@@ -1,7 +1,10 @@
 use crate::error::{Error as McpError, Result};
-use crate::wiki::request::GetWikiListRequest;
+use crate::wiki::request::{GetWikiDetailRequest, GetWikiListRequest};
 use backlog_api_client::{GetWikiListParamsBuilder, ProjectIdOrKey, client::BacklogApiClient};
-use backlog_core::{ProjectKey, identifier::ProjectId};
+use backlog_core::{
+    ProjectKey,
+    identifier::{ProjectId, WikiId},
+};
 use std::str::FromStr;
 
 pub(crate) async fn get_wiki_list(
@@ -37,4 +40,16 @@ pub(crate) async fn get_wiki_list(
     let wikis = wiki_api.get_wiki_list(params).await?;
 
     Ok(serde_json::to_value(wikis)?)
+}
+
+pub(crate) async fn get_wiki_detail(
+    client: &BacklogApiClient,
+    request: GetWikiDetailRequest,
+) -> Result<serde_json::Value> {
+    let wiki_api = client.wiki();
+    let wiki_id = WikiId::new(request.wiki_id);
+
+    let wiki_detail = wiki_api.get_wiki_detail(wiki_id).await?;
+
+    Ok(serde_json::to_value(wiki_detail)?)
 }

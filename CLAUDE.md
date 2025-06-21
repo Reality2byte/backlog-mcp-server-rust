@@ -23,7 +23,8 @@ crates/                     # Internal library crates
 ├── backlog-project/        # Project management API
 ├── backlog-space/          # Space management API
 ├── backlog-user/           # User management API
-├── backlog-document/       # Document/Wiki API
+├── backlog-document/       # Document API
+├── backlog-wiki/           # Wiki API
 ├── backlog-git/            # Git repository API
 ├── backlog-file/           # Shared file API
 └── client/                 # Generic HTTP client wrapper

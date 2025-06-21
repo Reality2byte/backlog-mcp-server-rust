@@ -1,8 +1,9 @@
 use crate::{
     requests::{GetWikiCountParams, GetWikiListParams},
-    responses::{GetWikiCountResponse, GetWikiListResponse},
+    responses::{GetWikiCountResponse, GetWikiDetailResponse, GetWikiListResponse},
 };
 use backlog_api_core::Result;
+use backlog_core::identifier::{Identifier, WikiId};
 use client::Client;
 
 pub struct WikiApi(Client);
@@ -21,6 +22,18 @@ impl WikiApi {
             .await
     }
 
+    /// Get wiki page details
+    /// Corresponds to `GET /api/v2/wikis/:wikiId`.
+    pub async fn get_wiki_detail(
+        &self,
+        wiki_id: impl Into<WikiId>,
+    ) -> Result<GetWikiDetailResponse> {
+        let wiki_id = wiki_id.into();
+        self.0
+            .get(&format!("/api/v2/wikis/{}", wiki_id.value()))
+            .await
+    }
+
     /// Get wiki page list
     /// Corresponds to `GET /api/v2/wikis`.
     pub async fn get_wiki_list(&self, params: GetWikiListParams) -> Result<GetWikiListResponse> {
@@ -33,13 +46,15 @@ impl WikiApi {
 mod tests {
     use super::*;
     use crate::{
-        models::{Wiki, WikiCount, WikiTag},
+        models::{Wiki, WikiAttachment, WikiCount, WikiDetail, WikiTag},
         requests::{GetWikiCountParamsBuilder, GetWikiListParamsBuilder},
     };
+    use backlog_core::identifier::SharedFileId;
     use backlog_core::{
-        Language, ProjectKey, Role, User,
-        identifier::{ProjectId, UserId, WikiId, WikiTagId},
+        Language, ProjectKey, Role, Star, User,
+        identifier::{Identifier, ProjectId, StarId, UserId, WikiAttachmentId, WikiId, WikiTagId},
     };
+    use backlog_file::models::{FileContent, SharedFile};
     use chrono::{TimeZone, Utc};
     use client::test_utils::setup_client;
     use wiremock::matchers::{method, path, query_param};
@@ -351,6 +366,188 @@ mod tests {
             .build()
             .unwrap();
         let result = wiki_api.get_wiki_count(params).await;
+        assert!(result.is_err());
+    }
+
+    // Helper function for creating mock WikiDetail
+    fn create_mock_wiki_detail(id: u32, project_id: u32, name: &str) -> WikiDetail {
+        let created_time = Utc.with_ymd_and_hms(2024, 1, 1, 10, 0, 0).unwrap();
+        let updated_time = Utc.with_ymd_and_hms(2024, 1, 2, 15, 30, 0).unwrap();
+
+        WikiDetail {
+            id: WikiId::new(id),
+            project_id: ProjectId::new(project_id),
+            name: name.to_string(),
+            content: format!("# {}\n\nThis is the content of {}.", name, name),
+            tags: vec![WikiTag {
+                id: WikiTagId::new(1),
+                name: "documentation".to_string(),
+            }],
+            attachments: vec![WikiAttachment {
+                id: WikiAttachmentId::new(100),
+                name: "attachment.pdf".to_string(),
+                size: 1024,
+                created_user: create_mock_user(1, "john"),
+                created: created_time,
+            }],
+            shared_files: vec![SharedFile {
+                id: SharedFileId::new(200),
+                project_id: ProjectId::new(project_id),
+                dir: "/docs".to_string(),
+                name: "shared.png".to_string(),
+                created_user: create_mock_user(2, "alice"),
+                created: created_time,
+                updated_user: None,
+                updated: None,
+                content: FileContent::File { size: 2048 },
+            }],
+            stars: vec![Star {
+                id: StarId::new(300),
+                comment: Some("Great documentation!".to_string()),
+                url: format!("https://example.backlog.jp/view/PROJ-{}", id),
+                presenter: create_mock_user(3, "bob"),
+                created: created_time,
+            }],
+            created_user: create_mock_user(1, "john"),
+            created: created_time,
+            updated_user: create_mock_user(2, "alice"),
+            updated: updated_time,
+        }
+    }
+
+    // Tests for get_wiki_detail
+    #[tokio::test]
+    async fn test_get_wiki_detail_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        let expected_detail = create_mock_wiki_detail(123, 456, "API Documentation");
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/123"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_detail))
+            .mount(&mock_server)
+            .await;
+
+        let result = wiki_api.get_wiki_detail(WikiId::new(123)).await;
+        assert!(result.is_ok());
+        let detail = result.unwrap();
+        assert_eq!(detail.id.value(), 123);
+        assert_eq!(detail.project_id.value(), 456);
+        assert_eq!(detail.name, "API Documentation");
+        assert!(detail.content.contains("API Documentation"));
+        assert_eq!(detail.tags.len(), 1);
+        assert_eq!(detail.attachments.len(), 1);
+        assert_eq!(detail.shared_files.len(), 1);
+        assert_eq!(detail.stars.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_get_wiki_detail_with_u32_id() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        let expected_detail = create_mock_wiki_detail(789, 101, "User Guide");
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/789"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_detail))
+            .mount(&mock_server)
+            .await;
+
+        // Test using u32 directly (Into<WikiId> conversion)
+        let result = wiki_api.get_wiki_detail(789u32).await;
+        assert!(result.is_ok());
+        let detail = result.unwrap();
+        assert_eq!(detail.id.value(), 789);
+        assert_eq!(detail.name, "User Guide");
+    }
+
+    #[tokio::test]
+    async fn test_get_wiki_detail_minimal_response() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        let minimal_detail = WikiDetail {
+            id: WikiId::new(999),
+            project_id: ProjectId::new(777),
+            name: "Minimal Wiki".to_string(),
+            content: "Simple content".to_string(),
+            tags: vec![],
+            attachments: vec![],
+            shared_files: vec![],
+            stars: vec![],
+            created_user: create_mock_user(1, "creator"),
+            created: Utc.with_ymd_and_hms(2024, 1, 1, 10, 0, 0).unwrap(),
+            updated_user: create_mock_user(1, "creator"),
+            updated: Utc.with_ymd_and_hms(2024, 1, 1, 10, 0, 0).unwrap(),
+        };
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/999"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&minimal_detail))
+            .mount(&mock_server)
+            .await;
+
+        let result = wiki_api.get_wiki_detail(WikiId::new(999)).await;
+        assert!(result.is_ok());
+        let detail = result.unwrap();
+        assert_eq!(detail.id.value(), 999);
+        assert_eq!(detail.name, "Minimal Wiki");
+        assert!(detail.tags.is_empty());
+        assert!(detail.attachments.is_empty());
+        assert!(detail.shared_files.is_empty());
+        assert!(detail.stars.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_get_wiki_detail_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/404"))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&mock_server)
+            .await;
+
+        let result = wiki_api.get_wiki_detail(WikiId::new(404)).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_get_wiki_detail_server_error() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/500"))
+            .respond_with(ResponseTemplate::new(500))
+            .mount(&mock_server)
+            .await;
+
+        let result = wiki_api.get_wiki_detail(WikiId::new(500)).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_get_wiki_detail_unauthorized() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let wiki_api = WikiApi::new(client);
+
+        Mock::given(method("GET"))
+            .and(path("/api/v2/wikis/403"))
+            .respond_with(ResponseTemplate::new(403))
+            .mount(&mock_server)
+            .await;
+
+        let result = wiki_api.get_wiki_detail(WikiId::new(403)).await;
         assert!(result.is_err());
     }
 }

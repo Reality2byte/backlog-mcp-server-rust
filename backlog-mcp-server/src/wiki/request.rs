@@ -1,6 +1,12 @@
 use rmcp::schemars;
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct GetWikiDetailRequest {
+    #[schemars(description = "Wiki page ID to retrieve details for. Must be a positive integer.")]
+    pub wiki_id: u32,
+}
+
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
 pub(crate) struct GetWikiListRequest {
     #[schemars(
         description = "Optional project ID or project key to filter wiki pages. Examples: \"MYPROJECTKEY\", \"123\"."

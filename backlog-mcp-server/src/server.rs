@@ -31,7 +31,10 @@ use crate::{
     },
     project::{self, request::GetProjectStatusListRequest},
     user::{self, request::GetUserListRequest},
-    wiki::{self, request::GetWikiListRequest},
+    wiki::{
+        self,
+        request::{GetWikiDetailRequest, GetWikiListRequest},
+    },
 };
 
 #[cfg(feature = "git_writable")]
@@ -321,6 +324,13 @@ impl Server {
         let comments =
             git::bridge::get_pull_request_comment_list_tool(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(comments)?]))
+    }
+
+    #[tool(description = "Get detailed information about a specific wiki page.")]
+    async fn get_wiki_detail(&self, #[tool(aggr)] request: GetWikiDetailRequest) -> McpResult {
+        let client = self.client.lock().await;
+        let detail = wiki::bridge::get_wiki_detail(&client, request).await?;
+        Ok(CallToolResult::success(vec![Content::json(detail)?]))
     }
 
     #[tool(description = "Get a list of wiki pages. Can be filtered by project and keyword.")]

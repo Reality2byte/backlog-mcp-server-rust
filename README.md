@@ -24,7 +24,8 @@ crates/                     # Internal library crates
 ├── backlog-project/        # Project management API
 ├── backlog-space/          # Space management API
 ├── backlog-user/           # User management API
-├── backlog-document/       # Document/Wiki API
+├── backlog-document/       # Document API
+├── backlog-wiki/           # Wiki API
 ├── backlog-git/            # Git repository API
 ├── backlog-file/           # Shared file API
 └── client/                 # Generic HTTP client wrapper
@@ -51,6 +52,7 @@ Model Context Protocol server that exposes Backlog API functionalities as AI-fri
 
 #### API Domain Modules
 - **`backlog-document/`**: Client module for Backlog's Document API endpoints.
+- **`backlog-wiki/`**: Client module for Backlog's Wiki API endpoints (listing, details, count).
 - **`backlog-file/`**: Client module for Backlog's Shared File API endpoints (listing and downloading shared files).
 - **`backlog-git/`**: Client module for Backlog's Git repository and Pull Request API endpoints.
 - **`backlog-issue/`**: Client module for Backlog's Issue API endpoints (including comments and attachments).
@@ -67,7 +69,8 @@ The library uses Cargo feature flags to enable specific API modules and function
 - **`project`**: Enable Project API support (categories, statuses, milestones)
 - **`space`**: Enable Space API support
 - **`user`**: Enable User API support
-- **`document`**: Enable Document/Wiki API support
+- **`document`**: Enable Document API support
+- **`wiki`**: Enable Wiki API support
 - **`git`**: Enable Git repository and Pull Request API support
 - **`file`**: Enable Shared File API support
 
