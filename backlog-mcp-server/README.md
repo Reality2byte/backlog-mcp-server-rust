@@ -5,10 +5,12 @@ This server allows MCP-compatible clients (such as AI assistants) to utilize Bac
 
 ## Key Features
 
-- **Unified File Download**: All file download tools now support intelligent format detection, automatically handling images, text files, and raw binary data
-- **Shared File Support**: Browse and download shared files from Backlog projects
+- **Comprehensive API Coverage**: 30+ tools covering documents, issues, pull requests, projects, users, shared files, and wikis
+- **Write Operations Enabled**: Create, update, and manage Backlog resources with AI assistance
+- **Unified File Download**: Intelligent format detection for all file types (images, text, raw binary)
+- **Shared File Integration**: Browse and download project shared files with type-safe operations
+- **Wiki Management**: Complete wiki operations including content updates and attachment management
 - **Flexible Format Control**: Override automatic detection with explicit format specification
-- **Comprehensive API Coverage**: Access documents, issues, pull requests, projects, users, and shared files
 
 ## Available Tools
 
@@ -162,10 +164,27 @@ The following tools are grouped by their respective modules:
 -   **`get_wiki_detail`**
     -   Description: Get detailed information about a specific wiki page including content, attachments, shared files, and stars.
     -   Input: `wiki_id` (number, required): Wiki page ID to retrieve details for. Must be a positive integer.
+-   **`get_wiki_attachment_list`**
+    -   Description: Get a list of attachments for a specified wiki page.
+    -   Input: `wiki_id` (number, required): Wiki page ID to retrieve attachments for. Must be a positive integer.
+-   **`download_wiki_attachment`**
+    -   Description: Download an attachment from a wiki page. Automatically detects format (image, text, or raw bytes) or you can specify the format parameter. Returns the file content in the appropriate format.
+    -   Input:
+        -   `wiki_id` (number, required): Wiki page ID to download attachment from. Must be a positive integer.
+        -   `attachment_id` (number, required): Attachment ID to download. Must be a positive integer.
+        -   `format` (string, optional): Format specification - 'image', 'text', or 'raw'. If not specified, format will be auto-detected.
+    -   Output: Content via `rmcp::model::Content::image` for images, `rmcp::model::Content::text` for text files, or JSON with base64-encoded content for raw bytes.
+-   **`update_wiki`**
+    -   Description: Update a wiki page. You can update the page name, content, and/or email notification settings. This tool is only available if the `wiki_writable` feature is enabled.
+    -   Input:
+        -   `wiki_id` (number, required): Wiki page ID to update. Must be a positive integer.
+        -   `name` (string, optional): Optional new page name.
+        -   `content` (string, optional): Optional new page content.
+        -   `mail_notify` (boolean, optional): Optional whether to send email notification of update.
 
 ## File Download Features
 
-All file download tools (`download_document_attachment`, `download_issue_attachment`, `download_pull_request_attachment`, and `download_shared_file`) support intelligent format detection and handling:
+All file download tools (`download_document_attachment`, `download_issue_attachment`, `download_pull_request_attachment`, `download_wiki_attachment`, and `download_shared_file`) support intelligent format detection and handling:
 
 ### Automatic Format Detection
 - **Images**: Files with `image/*` content type are automatically detected and returned as base64-encoded images via `rmcp::model::Content::image`
@@ -186,19 +205,34 @@ The system uses multiple strategies to determine if a file is text:
 
 ## Feature Flags
 
--   **`issue_writable`**
-    -   Enabling this feature flag makes the `update_issue` and `add_comment` tools available.
-    -   It is enabled by default.
-    -   To control features during build:
-        -   Disable: `cargo build --no-default-features`
-        -   Enable explicitly: `cargo build --features issue_writable`
+The MCP server supports multiple feature flags to enable different write operations:
 
--   **`git_writable`**
-    -   Enabling this feature flag makes the `add_pull_request_comment` tool available.
-    -   It is not enabled by default.
-    -   To enable this feature:
-        -   `cargo build --features git_writable`
-        -   Combined with issue_writable: `cargo build --features "issue_writable,git_writable"`
+-   **`issue_writable`** (enabled by default)
+    -   Enables: `update_issue` and `add_comment_to_issue` tools
+    -   Allows AI agents to modify issue content and add comments
+
+-   **`git_writable`** (enabled by default)
+    -   Enables: `add_pull_request_comment` tool
+    -   Allows AI agents to add comments to pull requests
+
+-   **`wiki_writable`** (enabled by default)
+    -   Enables: `update_wiki` tool
+    -   Allows AI agents to update wiki page content, names, and notification settings
+
+### Build Configuration
+
+```bash
+# Default build (includes all writable features)
+cargo build --package mcp-backlog-server
+
+# Read-only mode (no write operations)
+cargo build --package mcp-backlog-server --no-default-features
+
+# Selective features
+cargo build --package mcp-backlog-server --features issue_writable
+cargo build --package mcp-backlog-server --features "issue_writable,git_writable"
+cargo build --package mcp-backlog-server --features "issue_writable,git_writable,wiki_writable"
+```
 
 ## Configuration
 
@@ -216,16 +250,23 @@ These environment variables are expected to be passed by the MCP client system w
 Run the following command in the project root directory:
 
 ```bash
+# Default build with all features (recommended for AI agents)
 cargo build --package mcp-backlog-server
+
+# Release build for production
+cargo build --package mcp-backlog-server --release
 ```
 
 To build with specific features:
 
 ```bash
+# Read-only mode
 cargo build --package mcp-backlog-server --no-default-features
+
+# Selective writable features
 cargo build --package mcp-backlog-server --features issue_writable
-cargo build --package mcp-backlog-server --features git_writable
 cargo build --package mcp-backlog-server --features "issue_writable,git_writable"
+cargo build --package mcp-backlog-server --features "issue_writable,git_writable,wiki_writable"
 ```
 
 ### Run (for local testing)
@@ -233,34 +274,63 @@ cargo build --package mcp-backlog-server --features "issue_writable,git_writable
 After setting the environment variables, you can run the server directly with the following command:
 
 ```bash
-BACKLOG_BASE_URL="your_backlog_base_url" \
+# Default run with all features (recommended)
+BACKLOG_BASE_URL="https://your-space.backlog.jp" \
 BACKLOG_API_KEY="your_backlog_api_key" \
 cargo run --package mcp-backlog-server
 ```
 
-To run with specific features (e.g., enabling both issue and git writable features):
+To run with specific features:
 
 ```bash
-BACKLOG_BASE_URL="your_backlog_base_url" \
+# Read-only mode
+BACKLOG_BASE_URL="https://your-space.backlog.jp" \
 BACKLOG_API_KEY="your_backlog_api_key" \
-cargo run --package mcp-backlog-server --features "issue_writable,git_writable"
+cargo run --package mcp-backlog-server --no-default-features
+
+# With specific writable features
+BACKLOG_BASE_URL="https://your-space.backlog.jp" \
+BACKLOG_API_KEY="your_backlog_api_key" \
+cargo run --package mcp-backlog-server --features "issue_writable,git_writable,wiki_writable"
 ```
 
 The server will listen for MCP client requests on standard input/output.
 
-## Example Configuration for MCP server
-```
+## Example Configuration for MCP Client
+
+### Claude Desktop Configuration
+
+Add the following to your Claude Desktop MCP configuration:
+
+```json
+{
   "mcpServers": {
     "backlog_mcp_server": {
       "autoApprove": [],
       "disabled": false,
       "timeout": 60,
-      "command": "/path/to/mcp-backlog-server",
+      "command": "/path/to/target/release/mcp-backlog-server",
       "args": [],
       "env": {
-        "BACKLOG_BASE_URL": "https://example.backlog.com",
-        "BACKLOG_API_KEY": "YOUR_API_KEY"
+        "BACKLOG_BASE_URL": "https://your-space.backlog.jp",
+        "BACKLOG_API_KEY": "YOUR_BACKLOG_API_KEY"
       },
       "transportType": "stdio"
     }
   }
+}
+```
+
+### Tool Summary
+
+With the default configuration, you'll have access to **30+ tools** for comprehensive Backlog automation:
+
+- **Documents** (3 tools): View document trees, get details, download attachments
+- **Git/Pull Requests** (8 tools): Manage repositories, PRs, comments, and attachments
+- **Issues** (8 tools): View, update issues, manage comments, attachments, and shared files
+- **Projects** (1 tool): Get project status information
+- **Shared Files** (2 tools): Browse and download project shared files
+- **Users** (1 tool): List space users
+- **Wikis** (5 tools): Manage wiki pages, attachments, and content updates
+
+The server includes both **read operations** for information gathering and **write operations** for taking actions, making it ideal for AI-powered Backlog automation workflows.
