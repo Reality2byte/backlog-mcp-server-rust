@@ -72,17 +72,7 @@ impl IntoRequest for AddPullRequestCommentParams {
             self.repo_id_or_name,
             self.pr_number.value()
         );
-        let url = base_url.join(&path)?;
-
-        // Convert to form data using the existing From implementation
         let form_data: Vec<(String, String)> = (&self).into();
-
-        let request = client
-            .post(url)
-            .header("Accept", "application/json")
-            .form(&form_data)
-            .build()?;
-
-        Ok(request)
+        self.post(base_url, path, client, &form_data)
     }
 }

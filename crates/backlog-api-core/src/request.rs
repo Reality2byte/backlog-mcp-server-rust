@@ -1,5 +1,6 @@
 use crate::Result;
 use reqwest::Client as ReqwestClient;
+use serde::Serialize;
 use url::Url;
 
 /// A trait for converting request parameters into a complete HTTP request.
@@ -61,6 +62,24 @@ pub trait IntoRequest {
     ///
     /// Returns a ready-to-execute reqwest::Request object.
     fn into_request(self, base_url: &Url, client: &ReqwestClient) -> Result<reqwest::Request>;
+
+    fn post<T: Serialize + ?Sized>(
+        &self,
+        base_url: &Url,
+        path: String,
+        client: &ReqwestClient,
+        form: &T,
+    ) -> Result<reqwest::Request> {
+        let url = base_url.join(&path)?;
+
+        let request = client
+            .post(url)
+            .header("Accept", "application/json")
+            .form(&form)
+            .build()?;
+
+        Ok(request)
+    }
 }
 
 #[cfg(test)]
