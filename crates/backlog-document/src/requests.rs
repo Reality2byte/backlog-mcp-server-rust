@@ -1,3 +1,4 @@
+use backlog_api_core::{HttpMethod, IntoRequest};
 use backlog_core::ProjectIdOrKey;
 use backlog_core::identifier::ProjectId;
 use derive_builder::Builder;
@@ -72,5 +73,98 @@ impl From<GetDocumentTreeParams> for Vec<(String, String)> {
             "projectIdOrKey".to_string(),
             params.project_id_or_key.to_string(),
         )]
+    }
+}
+
+/// Parameters for getting a specific document.
+#[derive(Debug, Clone, PartialEq)]
+pub struct GetDocumentParams {
+    pub document_id: backlog_core::identifier::DocumentId,
+}
+
+impl GetDocumentParams {
+    pub fn new(document_id: impl Into<backlog_core::identifier::DocumentId>) -> Self {
+        Self {
+            document_id: document_id.into(),
+        }
+    }
+}
+
+/// Parameters for downloading document attachment.
+#[derive(Debug, Clone, PartialEq)]
+pub struct DownloadAttachmentParams {
+    pub document_id: backlog_core::identifier::DocumentId,
+    pub attachment_id: backlog_core::identifier::DocumentAttachmentId,
+}
+
+impl DownloadAttachmentParams {
+    pub fn new(
+        document_id: impl Into<backlog_core::identifier::DocumentId>,
+        attachment_id: impl Into<backlog_core::identifier::DocumentAttachmentId>,
+    ) -> Self {
+        Self {
+            document_id: document_id.into(),
+            attachment_id: attachment_id.into(),
+        }
+    }
+}
+
+// IntoRequest implementations for unified access control
+impl IntoRequest for ListDocumentsParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Get
+    }
+
+    fn path(&self) -> String {
+        "/api/v2/documents".to_string()
+    }
+
+    fn to_query(&self) -> impl Serialize {
+        Vec::<(String, String)>::from(self.clone())
+    }
+}
+
+impl IntoRequest for GetDocumentTreeParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Get
+    }
+
+    fn path(&self) -> String {
+        "/api/v2/documents/tree".to_string()
+    }
+
+    fn to_query(&self) -> impl Serialize {
+        Vec::<(String, String)>::from(self.clone())
+    }
+}
+
+impl IntoRequest for GetDocumentParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Get
+    }
+
+    fn path(&self) -> String {
+        format!("/api/v2/documents/{}", self.document_id)
+    }
+
+    fn to_query(&self) -> impl Serialize {
+        Vec::<(String, String)>::new()
+    }
+}
+
+impl IntoRequest for DownloadAttachmentParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Get
+    }
+
+    fn path(&self) -> String {
+        format!(
+            "/api/v2/documents/{}/attachments/{}",
+            self.document_id, self.attachment_id
+        )
+    }
+
+    fn to_query(&self) -> impl Serialize {
+        Vec::<(String, String)>::new()
     }
 }

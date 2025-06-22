@@ -5,7 +5,8 @@ use tokio::sync::Mutex;
 
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
-    DocumentDetail, DocumentTreeResponse, DownloadedFile, GetDocumentTreeParams,
+    DocumentDetail, DocumentTreeResponse, DownloadAttachmentParams, DownloadedFile,
+    GetDocumentParams, GetDocumentTreeParams,
 };
 use backlog_core::{
     ProjectIdOrKey,
@@ -23,7 +24,8 @@ pub(crate) async fn get_document_details(
 ) -> Result<DocumentDetail> {
     let client = client.lock().await;
     let document_id = DocumentId::from_str(req.document_id.trim())?;
-    let document = client.document().get_document(document_id.clone()).await?;
+    let params = GetDocumentParams::new(document_id.clone());
+    let document = client.document().get_document(params).await?;
     Ok(document)
 }
 
@@ -35,9 +37,10 @@ pub(crate) async fn download_document_attachment_bridge(
     let document_id = DocumentId::from_str(req.document_id.trim())?;
     let attachment_id = DocumentAttachmentId::new(req.attachment_id);
 
+    let params = DownloadAttachmentParams::new(document_id, attachment_id);
     client_guard
         .document()
-        .download_attachment(document_id, attachment_id)
+        .download_attachment(params)
         .await
         .map_err(crate::error::Error::from)
 }

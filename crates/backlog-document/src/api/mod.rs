@@ -1,8 +1,10 @@
 use crate::DocumentTreeResponse;
 use crate::models::{Document, DocumentDetail};
-use crate::requests::{GetDocumentTreeParams, ListDocumentsParams};
+use crate::requests::{
+    DownloadAttachmentParams, GetDocumentParams, GetDocumentTreeParams, ListDocumentsParams,
+};
 use backlog_api_core::Result;
-use backlog_core::identifier::{DocumentAttachmentId, DocumentId, Identifier};
+use backlog_core::identifier::Identifier;
 use client::{Client, DownloadedFile};
 
 pub struct DocumentApi(Client);
@@ -15,10 +17,7 @@ impl DocumentApi {
     /// Get documents
     /// GET /api/v2/documents
     pub async fn list_documents(&self, params: ListDocumentsParams) -> Result<Vec<Document>> {
-        let query_params: Vec<(String, String)> = params.into();
-        self.0
-            .get_with_params("/api/v2/documents", &query_params)
-            .await
+        self.0.execute(params).await
     }
 
     /// Get document tree
@@ -27,33 +26,27 @@ impl DocumentApi {
         &self,
         params: GetDocumentTreeParams,
     ) -> Result<DocumentTreeResponse> {
-        let query_params: Vec<(String, String)> = params.into();
-        self.0
-            .get_with_params("/api/v2/documents/tree", &query_params)
-            .await
+        self.0.execute(params).await
     }
 
     /// Get document
     /// GET /api/v2/documents/:documentId
-    pub async fn get_document(&self, document_id: impl Into<DocumentId>) -> Result<DocumentDetail> {
-        let path = format!("/api/v2/documents/{}", document_id.into());
-        self.0.get(&path).await
+    pub async fn get_document(&self, params: GetDocumentParams) -> Result<DocumentDetail> {
+        self.0.execute(params).await
     }
 
     /// Get document attachment
     /// GET /api/v2/documents/:documentId/attachments/:attachmentId
     pub async fn download_attachment(
         &self,
-        document_id: impl Into<DocumentId>,
-        attachment_id: impl Into<DocumentAttachmentId>,
+        params: DownloadAttachmentParams,
     ) -> Result<DownloadedFile> {
         let path = format!(
             "/api/v2/documents/{}/attachments/{}",
-            document_id.into().value(),
-            attachment_id.into().value()
+            params.document_id.value(),
+            params.attachment_id.value()
         );
-
-        self.0.download_file_raw(&path).await // Implemented method body
+        self.0.download_file_raw(&path).await
     }
 }
 
@@ -61,7 +54,7 @@ impl DocumentApi {
 mod tests {
     use super::*;
     use backlog_api_core::bytes;
-    use backlog_core::identifier::DocumentAttachmentId;
+    use backlog_core::identifier::{DocumentAttachmentId, DocumentId};
     use client::test_utils::setup_client;
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -96,9 +89,8 @@ mod tests {
         let document_id = DocumentId::new(document_id_val.to_string());
         let attachment_id = DocumentAttachmentId::new(attachment_id_val);
 
-        let result = doc_api
-            .download_attachment(document_id, attachment_id)
-            .await;
+        let params = DownloadAttachmentParams::new(document_id, attachment_id);
+        let result = doc_api.download_attachment(params).await;
 
         assert!(result.is_ok());
         let downloaded_file = result.unwrap();
@@ -131,9 +123,8 @@ mod tests {
         let document_id = DocumentId::new(document_id_val.to_string());
         let attachment_id = DocumentAttachmentId::new(attachment_id_val);
 
-        let result = doc_api
-            .download_attachment(document_id, attachment_id)
-            .await;
+        let params = DownloadAttachmentParams::new(document_id, attachment_id);
+        let result = doc_api.download_attachment(params).await;
 
         assert!(result.is_err());
         // Optionally, check the specific error type if desired
