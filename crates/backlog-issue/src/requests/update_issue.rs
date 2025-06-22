@@ -1,51 +1,155 @@
-use backlog_api_core::Error as ApiError;
-use backlog_core::identifier::{
-    AttachmentId, CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ResolutionId, UserId,
+use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
+use backlog_core::{
+    IssueIdOrKey,
+    identifier::{
+        AttachmentId, CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ResolutionId,
+        UserId,
+    },
 };
 use derive_builder::Builder;
 use serde::Serialize;
 
-#[derive(Debug, Clone, Default, Builder, Serialize)]
-#[builder(default, setter(strip_option, into))]
+#[derive(Debug, Clone, Builder)]
+#[builder(setter(strip_option, into))]
 #[builder(build_fn(error = "ApiError"))]
 pub struct UpdateIssueParams {
-    #[builder(setter(into, strip_option))]
+    #[builder(setter(into))]
+    pub issue_id_or_key: IssueIdOrKey,
+    #[builder(default, setter(into, strip_option))]
     pub summary: Option<String>,
-    #[builder(setter(into, strip_option))]
+    #[builder(default, setter(into, strip_option))]
     pub parent_issue_id: Option<IssueId>,
-    #[builder(setter(into, strip_option))]
+    #[builder(default, setter(into, strip_option))]
     pub description: Option<String>,
-    #[builder(setter(into, strip_option))]
+    #[builder(default, setter(into, strip_option))]
     pub start_date: Option<String>, // API expects "yyyy-MM-dd"
-    #[builder(setter(into, strip_option))]
+    #[builder(default, setter(into, strip_option))]
     pub due_date: Option<String>, // API expects "yyyy-MM-dd"
-    #[builder(setter(into, strip_option))]
+    #[builder(default, setter(into, strip_option))]
     pub estimated_hours: Option<f32>,
-    #[builder(setter(into, strip_option))]
+    #[builder(default, setter(into, strip_option))]
     pub actual_hours: Option<f32>,
-    #[builder(setter(into, strip_option))]
+    #[builder(default, setter(into, strip_option))]
     pub issue_type_id: Option<IssueTypeId>,
-    #[builder(setter(into, strip_option))]
+    #[builder(default, setter(into, strip_option))]
     pub category_id: Option<Vec<CategoryId>>,
-    #[builder(setter(into, strip_option))]
+    #[builder(default, setter(into, strip_option))]
     pub version_id: Option<Vec<MilestoneId>>, // Note: API doc says versionId, but existing AddIssueParams uses MilestoneId for version_id. Assuming MilestoneId is correct for consistency or if it's a typo in AddIssueParams. For now, using MilestoneId as per existing code.
-    #[builder(setter(into, strip_option))]
+    #[builder(default, setter(into, strip_option))]
     pub milestone_id: Option<Vec<MilestoneId>>,
-    #[builder(setter(into, strip_option))]
+    #[builder(default, setter(into, strip_option))]
     pub priority_id: Option<PriorityId>,
-    #[builder(setter(into, strip_option))]
+    #[builder(default, setter(into, strip_option))]
     pub assignee_id: Option<UserId>,
-    #[builder(setter(into, strip_option))]
+    #[builder(default, setter(into, strip_option))]
     pub notified_user_id: Option<Vec<UserId>>,
-    #[builder(setter(into, strip_option))]
+    #[builder(default, setter(into, strip_option))]
     pub attachment_id: Option<Vec<AttachmentId>>,
-    #[builder(setter(into, strip_option))]
+    #[builder(default, setter(into, strip_option))]
     pub status_id: Option<String>, // API doc says Number, but existing GetIssueListParams uses String for status_id. Assuming String for flexibility, or it might be an ID of a status. Let's use String for now and clarify if needed. The response shows status as an object, but request is often just ID.
-    #[builder(setter(into, strip_option))]
+    #[builder(default, setter(into, strip_option))]
     pub resolution_id: Option<ResolutionId>,
-    #[builder(setter(into, strip_option))]
+    #[builder(default, setter(into, strip_option))]
     pub comment: Option<String>,
     // Custom fields are omitted for now due to their dynamic nature.
     // customField_{id}
     // customField_{id}_otherValue
+}
+
+impl IntoRequest for UpdateIssueParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Patch
+    }
+
+    fn path(&self) -> String {
+        format!("/api/v2/issues/{}", self.issue_id_or_key)
+    }
+
+    fn to_form(&self) -> impl Serialize {
+        let mut params = Vec::new();
+
+        if let Some(summary) = &self.summary {
+            params.push(("summary".to_string(), summary.clone()));
+        }
+
+        if let Some(parent_issue_id) = &self.parent_issue_id {
+            params.push(("parentIssueId".to_string(), parent_issue_id.to_string()));
+        }
+
+        if let Some(description) = &self.description {
+            params.push(("description".to_string(), description.clone()));
+        }
+
+        if let Some(start_date) = &self.start_date {
+            params.push(("startDate".to_string(), start_date.clone()));
+        }
+
+        if let Some(due_date) = &self.due_date {
+            params.push(("dueDate".to_string(), due_date.clone()));
+        }
+
+        if let Some(estimated_hours) = self.estimated_hours {
+            params.push(("estimatedHours".to_string(), estimated_hours.to_string()));
+        }
+
+        if let Some(actual_hours) = self.actual_hours {
+            params.push(("actualHours".to_string(), actual_hours.to_string()));
+        }
+
+        if let Some(issue_type_id) = &self.issue_type_id {
+            params.push(("issueTypeId".to_string(), issue_type_id.to_string()));
+        }
+
+        if let Some(category_ids) = &self.category_id {
+            for category_id in category_ids {
+                params.push(("categoryId[]".to_string(), category_id.to_string()));
+            }
+        }
+
+        if let Some(version_ids) = &self.version_id {
+            for version_id in version_ids {
+                params.push(("versionId[]".to_string(), version_id.to_string()));
+            }
+        }
+
+        if let Some(milestone_ids) = &self.milestone_id {
+            for milestone_id in milestone_ids {
+                params.push(("milestoneId[]".to_string(), milestone_id.to_string()));
+            }
+        }
+
+        if let Some(priority_id) = &self.priority_id {
+            params.push(("priorityId".to_string(), priority_id.to_string()));
+        }
+
+        if let Some(assignee_id) = &self.assignee_id {
+            params.push(("assigneeId".to_string(), assignee_id.to_string()));
+        }
+
+        if let Some(notified_user_ids) = &self.notified_user_id {
+            for user_id in notified_user_ids {
+                params.push(("notifiedUserId[]".to_string(), user_id.to_string()));
+            }
+        }
+
+        if let Some(attachment_ids) = &self.attachment_id {
+            for attachment_id in attachment_ids {
+                params.push(("attachmentId[]".to_string(), attachment_id.to_string()));
+            }
+        }
+
+        if let Some(status_id) = &self.status_id {
+            params.push(("statusId".to_string(), status_id.clone()));
+        }
+
+        if let Some(resolution_id) = &self.resolution_id {
+            params.push(("resolutionId".to_string(), resolution_id.to_string()));
+        }
+
+        if let Some(comment) = &self.comment {
+            params.push(("comment".to_string(), comment.clone()));
+        }
+
+        params
+    }
 }

@@ -98,14 +98,10 @@ pub(crate) async fn update_issue_impl(
         return Err(McpError::NothingToUpdate);
     }
 
-    let issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
     let update_params = UpdateIssueParams::try_from(req)?;
 
     let client_guard = client.lock().await;
-    let updated_issue = client_guard
-        .issue()
-        .update_issue(issue_id_or_key, update_params)
-        .await?;
+    let updated_issue = client_guard.issue().update_issue(update_params).await?;
     Ok(updated_issue)
 }
 

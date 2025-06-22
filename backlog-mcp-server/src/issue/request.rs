@@ -50,7 +50,12 @@ pub(crate) struct UpdateIssueRequest {
 impl TryFrom<UpdateIssueRequest> for UpdateIssueParams {
     type Error = ApiError;
     fn try_from(req: UpdateIssueRequest) -> Result<Self, Self::Error> {
+        use backlog_api_client::IssueIdOrKey;
+        use std::str::FromStr;
+
+        let issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
         let mut builder = UpdateIssueParamsBuilder::default();
+        builder.issue_id_or_key(issue_id_or_key);
         if let Some(summary) = req.summary {
             builder.summary(summary);
         }

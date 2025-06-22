@@ -1603,6 +1603,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let issue_id_or_key = update_args.issue_id_or_key.parse::<IssueIdOrKey>()?;
 
                 let mut builder = UpdateIssueParamsBuilder::default();
+                builder.issue_id_or_key(issue_id_or_key);
 
                 if let Some(summary) = &update_args.summary {
                     builder.summary(summary);
@@ -1638,7 +1639,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 let params = builder.build()?;
 
-                match client.issue().update_issue(issue_id_or_key, params).await {
+                match client.issue().update_issue(params).await {
                     Ok(issue) => {
                         println!("Issue updated successfully!");
                         println!("Issue Key: {}", issue.issue_key);
