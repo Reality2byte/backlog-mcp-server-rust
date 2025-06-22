@@ -295,6 +295,7 @@ dependencies = [
  "backlog-core",
  "chrono",
  "client",
+ "derive_builder",
  "serde",
  "serde_json",
  "thiserror",
