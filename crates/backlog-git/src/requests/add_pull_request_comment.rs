@@ -1,4 +1,4 @@
-use backlog_api_core::{Error as ApiError, IntoRequest};
+use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
     identifier::{Identifier, PullRequestNumber, UserId},
@@ -66,8 +66,8 @@ impl From<&AddPullRequestCommentParams> for Vec<(String, String)> {
 
 #[cfg(feature = "writable")]
 impl IntoRequest for AddPullRequestCommentParams {
-    fn method(&self) -> reqwest::Method {
-        reqwest::Method::POST
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Post
     }
 
     fn path(&self) -> String {

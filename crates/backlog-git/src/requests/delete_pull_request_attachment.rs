@@ -1,4 +1,4 @@
-use backlog_api_core::{Error as ApiError, IntoRequest};
+use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
     identifier::{Identifier, PullRequestAttachmentId, PullRequestNumber},
@@ -42,8 +42,8 @@ impl DeletePullRequestAttachmentParams {
 
 #[cfg(feature = "writable")]
 impl IntoRequest for DeletePullRequestAttachmentParams {
-    fn method(&self) -> reqwest::Method {
-        reqwest::Method::DELETE
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Delete
     }
 
     fn path(&self) -> String {

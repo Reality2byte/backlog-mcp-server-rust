@@ -1,5 +1,5 @@
-use crate::Result;
-use reqwest::{Client as ReqwestClient, Method};
+use crate::{HttpMethod, Result};
+use reqwest::Client as ReqwestClient;
 use serde::Serialize;
 use url::Url;
 
@@ -11,7 +11,7 @@ use url::Url;
 ///
 pub trait IntoRequest {
     /// Returns the HTTP method for this request.
-    fn method(&self) -> Method;
+    fn method(&self) -> HttpMethod;
 
     /// Returns the URL path for this request.
     fn path(&self) -> String;
@@ -40,21 +40,21 @@ pub trait IntoRequest {
         let path = self.path();
         let url = base_url.join(&path)?;
         let method = self.method();
+        let reqwest_method = method.to_reqwest();
 
         let request_builder = client
-            .request(method.clone(), url)
+            .request(reqwest_method, url)
             .header("Accept", "application/json");
 
         let request = match method {
-            Method::GET | Method::DELETE => {
+            HttpMethod::Get | HttpMethod::Delete => {
                 let query = IntoRequest::to_query(&self);
                 request_builder.query(&query).build()?
             }
-            Method::POST | Method::PATCH => {
+            HttpMethod::Post | HttpMethod::Patch => {
                 let form = IntoRequest::to_form(&self);
                 request_builder.form(&form).build()?
             }
-            _ => request_builder.build()?,
         };
 
         Ok(request)
@@ -72,8 +72,8 @@ mod tests {
         struct TestParams;
 
         impl IntoRequest for TestParams {
-            fn method(&self) -> Method {
-                Method::GET
+            fn method(&self) -> HttpMethod {
+                HttpMethod::Get
             }
 
             fn path(&self) -> String {

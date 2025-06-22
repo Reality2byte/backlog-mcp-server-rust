@@ -1,4 +1,4 @@
-use backlog_api_core::{Error as ApiError, IntoRequest};
+use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
 use backlog_core::{ProjectIdOrKey, RepositoryIdOrName};
 use derive_builder::Builder;
 
@@ -28,8 +28,8 @@ impl GetRepositoryParams {
 }
 
 impl IntoRequest for GetRepositoryParams {
-    fn method(&self) -> reqwest::Method {
-        reqwest::Method::GET
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Get
     }
 
     fn path(&self) -> String {

@@ -1,4 +1,4 @@
-use backlog_api_core::{Error as ApiError, IntoRequest};
+use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
     identifier::{Identifier, PullRequestNumber},
@@ -55,8 +55,8 @@ impl GetPullRequestCommentListParams {
 }
 
 impl IntoRequest for GetPullRequestCommentListParams {
-    fn method(&self) -> reqwest::Method {
-        reqwest::Method::GET
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Get
     }
 
     fn path(&self) -> String {

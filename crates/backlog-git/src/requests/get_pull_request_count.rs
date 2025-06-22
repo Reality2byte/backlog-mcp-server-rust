@@ -1,4 +1,4 @@
-use backlog_api_core::{Error as ApiError, IntoRequest};
+use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
 use backlog_core::{ProjectIdOrKey, RepositoryIdOrName};
 use derive_builder::Builder;
 use serde::Serialize;
@@ -93,8 +93,8 @@ impl GetPullRequestCountParams {
 }
 
 impl IntoRequest for GetPullRequestCountParams {
-    fn method(&self) -> reqwest::Method {
-        reqwest::Method::GET
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Get
     }
 
     fn path(&self) -> String {
