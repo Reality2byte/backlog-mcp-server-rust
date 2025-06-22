@@ -1,5 +1,5 @@
 use crate::requests::{GetOwnUserParams, GetUserIconParams, GetUserListParams, GetUserParams};
-use backlog_api_core::{IntoRequest, Result};
+use backlog_api_core::Result;
 use backlog_core::User;
 use client::{Client, DownloadedFile};
 
@@ -28,12 +28,11 @@ impl UserApi {
         self.0.execute(params).await
     }
 
-    /// Gets the user icon image data using IntoRequest pattern.
+    /// Gets the user icon image data using IntoDownloadRequest pattern.
     ///
     /// Corresponds to `GET /api/v2/users/:userId/icon`.
     pub async fn get_user_icon(&self, params: GetUserIconParams) -> Result<DownloadedFile> {
-        let path = params.path();
-        self.0.download_file_raw(&path).await
+        self.0.download_file(params).await
     }
 }
 

@@ -5,7 +5,6 @@ use crate::{
     GetSpaceResponse,
     requests::{GetSpaceLogoParams, GetSpaceParams},
 };
-use backlog_api_core::IntoRequest;
 
 pub struct SpaceApi(Client);
 
@@ -20,11 +19,10 @@ impl SpaceApi {
         self.0.execute(params).await
     }
 
-    /// Get space logo
+    /// Get space logo using IntoDownloadRequest pattern
     /// Corresponds to `GET /api/v2/space/image`.
     pub async fn get_space_logo(&self, params: GetSpaceLogoParams) -> Result<DownloadedFile> {
-        let path = params.path();
-        self.0.download_file_raw(&path).await
+        self.0.download_file(params).await
     }
 }
 

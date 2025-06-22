@@ -1,4 +1,6 @@
-use backlog_api_core::{BacklogApiErrorResponse, Error as ApiError, IntoRequest, Result, bytes};
+use backlog_api_core::{
+    BacklogApiErrorResponse, Error as ApiError, IntoDownloadRequest, IntoRequest, Result, bytes,
+};
 use reqwest::header::{CONTENT_DISPOSITION, CONTENT_TYPE};
 use url::Url;
 
@@ -142,6 +144,15 @@ impl Client {
 
     pub async fn download_file_raw(&self, path: &str) -> Result<DownloadedFile> {
         let request = self.prepare_request(reqwest::Method::GET, path, &())?;
+        self.execute_unified(request, FileResponse).await
+    }
+
+    /// Downloads a file using the IntoDownloadRequest trait
+    pub async fn download_file<P>(&self, params: P) -> Result<DownloadedFile>
+    where
+        P: IntoDownloadRequest,
+    {
+        let request = params.into_download_request(&self.client, &self.base_url)?;
         self.execute_unified(request, FileResponse).await
     }
 

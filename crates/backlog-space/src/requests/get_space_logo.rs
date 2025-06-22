@@ -1,4 +1,4 @@
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::{HttpMethod, IntoDownloadRequest, IntoRequest};
 
 /// Parameters for getting space logo.
 ///
@@ -18,6 +18,12 @@ impl IntoRequest for GetSpaceLogoParams {
         HttpMethod::Get
     }
 
+    fn path(&self) -> String {
+        "/api/v2/space/image".to_string()
+    }
+}
+
+impl IntoDownloadRequest for GetSpaceLogoParams {
     fn path(&self) -> String {
         "/api/v2/space/image".to_string()
     }

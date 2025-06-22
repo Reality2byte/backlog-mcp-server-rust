@@ -1,11 +1,8 @@
 use backlog_api_core::Result;
-use backlog_core::{
-    ProjectIdOrKey,
-    identifier::{Identifier, SharedFileId},
-};
+use backlog_core::{ProjectIdOrKey, identifier::SharedFileId};
 use client::{Client, DownloadedFile};
 
-use crate::requests::{GetSharedFilesListParams, GetSharedFilesListResponse};
+use crate::requests::{GetFileParams, GetSharedFilesListParams, GetSharedFilesListResponse};
 
 pub struct FileApi(Client);
 
@@ -32,13 +29,8 @@ impl FileApi {
         project_id_or_key: impl Into<ProjectIdOrKey>,
         shared_file_id: SharedFileId,
     ) -> Result<DownloadedFile> {
-        let project_id_or_key_val = project_id_or_key.into();
-        let shared_file_id_val = shared_file_id.value();
-        let url = format!(
-            "/api/v2/projects/{}/files/{}",
-            project_id_or_key_val, shared_file_id_val
-        );
-        self.0.download_file_raw(&url).await
+        let params = GetFileParams::new(project_id_or_key, shared_file_id);
+        self.0.download_file(params).await
     }
 }
 

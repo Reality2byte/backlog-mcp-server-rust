@@ -61,6 +61,38 @@ pub trait IntoRequest {
     }
 }
 
+/// A trait for converting request parameters into a download request.
+///
+/// Similar to IntoRequest but specifically designed for file download operations
+/// that return binary data instead of JSON.
+pub trait IntoDownloadRequest {
+    /// Returns the URL path for this download request.
+    fn path(&self) -> String;
+
+    /// Converts the parameter into a complete HTTP GET request for downloading.
+    ///
+    /// # Arguments
+    /// * `client` - The reqwest client to use for building the request
+    /// * `base_url` - The base URL for the API (e.g., "https://example.backlog.jp")
+    ///
+    /// Returns a ready-to-execute reqwest::Request object for file download.
+    fn into_download_request(
+        self,
+        client: &ReqwestClient,
+        base_url: &Url,
+    ) -> Result<reqwest::Request>
+    where
+        Self: Sized,
+    {
+        let path = self.path();
+        let url = base_url.join(&path)?;
+
+        let request = client.request(reqwest::Method::GET, url).build()?;
+
+        Ok(request)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
