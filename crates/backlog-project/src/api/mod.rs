@@ -1,7 +1,5 @@
 use backlog_api_core::Result;
 use backlog_core::ProjectIdOrKey;
-#[cfg(feature = "writable")]
-use backlog_core::identifier::CategoryId;
 use client::Client;
 
 use crate::requests::{
@@ -98,12 +96,9 @@ impl ProjectApi {
     #[cfg(feature = "writable")]
     pub async fn add_category(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        params: &crate::requests::AddCategoryParams,
+        params: crate::requests::AddCategoryParams,
     ) -> Result<Category> {
-        let path = format!("/api/v2/projects/{}/categories", project_id_or_key.into());
-        let params_vec: Vec<(String, String)> = params.into();
-        self.0.post(&path, &params_vec).await
+        self.0.execute(params).await
     }
 
     /// Updates a category in a project.
@@ -112,17 +107,9 @@ impl ProjectApi {
     #[cfg(feature = "writable")]
     pub async fn update_category(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        category_id: impl Into<CategoryId>,
-        params: &crate::requests::UpdateCategoryParams,
+        params: crate::requests::UpdateCategoryParams,
     ) -> Result<Category> {
-        let path = format!(
-            "/api/v2/projects/{}/categories/{}",
-            project_id_or_key.into(),
-            category_id.into()
-        );
-        let params_vec: Vec<(String, String)> = params.into();
-        self.0.patch(&path, &params_vec).await
+        self.0.execute(params).await
     }
 
     /// Deletes a category from a project.
@@ -131,15 +118,9 @@ impl ProjectApi {
     #[cfg(feature = "writable")]
     pub async fn delete_category(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        category_id: impl Into<CategoryId>,
+        params: crate::requests::DeleteCategoryParams,
     ) -> Result<Category> {
-        let path = format!(
-            "/api/v2/projects/{}/categories/{}",
-            project_id_or_key.into(),
-            category_id.into()
-        );
-        self.0.delete(&path).await
+        self.0.execute(params).await
     }
 
     /// Adds an issue type to a project.
@@ -148,12 +129,9 @@ impl ProjectApi {
     #[cfg(feature = "writable")]
     pub async fn add_issue_type(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        params: &crate::requests::AddIssueTypeParams,
+        params: crate::requests::AddIssueTypeParams,
     ) -> Result<IssueType> {
-        let path = format!("/api/v2/projects/{}/issueTypes", project_id_or_key.into());
-        let params_vec: Vec<(String, String)> = params.into();
-        self.0.post(&path, &params_vec).await
+        self.0.execute(params).await
     }
 
     /// Deletes an issue type from a project.
@@ -162,17 +140,9 @@ impl ProjectApi {
     #[cfg(feature = "writable")]
     pub async fn delete_issue_type(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        issue_type_id: impl Into<backlog_core::identifier::IssueTypeId>,
-        params: &crate::requests::DeleteIssueTypeParams,
+        params: crate::requests::DeleteIssueTypeParams,
     ) -> Result<IssueType> {
-        let path = format!(
-            "/api/v2/projects/{}/issueTypes/{}",
-            project_id_or_key.into(),
-            issue_type_id.into()
-        );
-        let params_vec: Vec<(String, String)> = params.into();
-        self.0.delete_with_params(&path, &params_vec).await
+        self.0.execute(params).await
     }
 
     /// Updates an issue type in a project.
@@ -180,17 +150,9 @@ impl ProjectApi {
     #[cfg(feature = "writable")]
     pub async fn update_issue_type(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        issue_type_id: impl Into<backlog_core::identifier::IssueTypeId>,
-        params: &crate::requests::UpdateIssueTypeParams,
+        params: crate::requests::UpdateIssueTypeParams,
     ) -> Result<IssueType> {
-        let path = format!(
-            "/api/v2/projects/{}/issueTypes/{}",
-            project_id_or_key.into(),
-            issue_type_id.into()
-        );
-        let params_vec: Vec<(String, String)> = params.into();
-        self.0.patch(&path, &params_vec).await
+        self.0.execute(params).await
     }
 
     /// Adds a version/milestone to a project.
@@ -837,10 +799,8 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::AddCategoryParams {
-            name: "Development".to_string(),
-        };
-        let result = project_api.add_category(project_id, &params).await;
+        let params = crate::requests::AddCategoryParams::new(project_id, "Development");
+        let result = project_api.add_category(params).await;
         assert!(result.is_ok());
         let category = result.unwrap();
         assert_eq!(category.name, "Development");
@@ -871,12 +831,11 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::AddCategoryParams {
-            name: "Existing Category".to_string(),
-        };
-        let result = project_api
-            .add_category(ProjectIdOrKey::from_str(project_key).unwrap(), &params)
-            .await;
+        let params = crate::requests::AddCategoryParams::new(
+            ProjectIdOrKey::from_str(project_key).unwrap(),
+            "Existing Category"
+        );
+        let result = project_api.add_category(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 400);
@@ -908,7 +867,7 @@ mod tests {
             .mount(&server)
             .await;
 
-        let result = project_api.delete_category(project_id, category_id).await;
+        let result = project_api.delete_category(crate::requests::DeleteCategoryParams::new(project_id, category_id)).await;
         assert!(result.is_ok());
         let category = result.unwrap();
         assert_eq!(category.name, "Development");
@@ -942,7 +901,10 @@ mod tests {
             .await;
 
         let result = project_api
-            .delete_category(ProjectIdOrKey::from_str(project_key).unwrap(), category_id)
+            .delete_category(crate::requests::DeleteCategoryParams::new(
+                ProjectIdOrKey::from_str(project_key).unwrap(),
+                category_id
+            ))
             .await;
         assert!(result.is_ok());
         let category = result.unwrap();
@@ -976,7 +938,7 @@ mod tests {
             .mount(&server)
             .await;
 
-        let result = project_api.delete_category(project_id, category_id).await;
+        let result = project_api.delete_category(crate::requests::DeleteCategoryParams::new(project_id, category_id)).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
@@ -1011,7 +973,7 @@ mod tests {
             .mount(&server)
             .await;
 
-        let result = project_api.delete_category(project_id, category_id).await;
+        let result = project_api.delete_category(crate::requests::DeleteCategoryParams::new(project_id, category_id)).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
@@ -1043,12 +1005,13 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateCategoryParams {
-            name: "Updated Category".to_string(),
-        };
+        let params = crate::requests::UpdateCategoryParams::new(
+            project_id,
+            category_id,
+            "Updated Category"
+        );
 
-        let result = project_api
-            .update_category(project_id, category_id, &params)
+        let result = project_api.update_category(params)
             .await;
         assert!(result.is_ok(), "Result was: {:?}", result);
         let category = result.unwrap();
@@ -1080,16 +1043,13 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateCategoryParams {
-            name: "Category with Key".to_string(),
-        };
+        let params = crate::requests::UpdateCategoryParams::new(
+            ProjectIdOrKey::from_str(project_key).unwrap(),
+            category_id,
+            "Category with Key"
+        );
 
-        let result = project_api
-            .update_category(
-                ProjectIdOrKey::from_str(project_key).unwrap(),
-                category_id,
-                &params,
-            )
+        let result = project_api.update_category(params)
             .await;
         assert!(result.is_ok());
         let category = result.unwrap();
@@ -1121,12 +1081,13 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateCategoryParams {
-            name: "Non-existent Category".to_string(),
-        };
+        let params = crate::requests::UpdateCategoryParams::new(
+            project_id,
+            category_id,
+            "Non-existent Category"
+        );
 
-        let result = project_api
-            .update_category(project_id, category_id, &params)
+        let result = project_api.update_category(params)
             .await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
@@ -1162,12 +1123,13 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateCategoryParams {
-            name: "Test Category".to_string(),
-        };
+        let params = crate::requests::UpdateCategoryParams::new(
+            project_id,
+            category_id,
+            "Test Category"
+        );
 
-        let result = project_api
-            .update_category(project_id, category_id, &params)
+        let result = project_api.update_category(params)
             .await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
@@ -1202,13 +1164,10 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::AddIssueTypeParams {
-            name: "Bug".to_string(),
-            color: backlog_domain_models::IssueTypeColor::DarkRed,
-            template_summary: Some("Subject".to_string()),
-            template_description: Some("Description".to_string()),
-        };
-        let result = project_api.add_issue_type(project_id, &params).await;
+        let mut params = crate::requests::AddIssueTypeParams::new(project_id, "Bug", backlog_domain_models::IssueTypeColor::DarkRed);
+        params.template_summary = Some("Subject".to_string());
+        params.template_description = Some("Description".to_string());
+        let result = project_api.add_issue_type(params).await;
         assert!(result.is_ok());
         let issue_type = result.unwrap();
         assert_eq!(issue_type.name, "Bug");
@@ -1245,15 +1204,8 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::AddIssueTypeParams {
-            name: "Task".to_string(),
-            color: backlog_domain_models::IssueTypeColor::Green,
-            template_summary: None,
-            template_description: None,
-        };
-        let result = project_api
-            .add_issue_type(ProjectIdOrKey::from_str(project_key).unwrap(), &params)
-            .await;
+        let params = crate::requests::AddIssueTypeParams::new(ProjectIdOrKey::from_str(project_key).unwrap(), "Task", backlog_domain_models::IssueTypeColor::Green);
+        let result = project_api.add_issue_type(params).await;
         assert!(result.is_ok());
         let issue_type = result.unwrap();
         assert_eq!(issue_type.name, "Task");
@@ -1286,15 +1238,8 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::AddIssueTypeParams {
-            name: "Existing Issue Type".to_string(),
-            color: backlog_domain_models::IssueTypeColor::Red,
-            template_summary: None,
-            template_description: None,
-        };
-        let result = project_api
-            .add_issue_type(ProjectIdOrKey::from_str(project_key).unwrap(), &params)
-            .await;
+        let params = crate::requests::AddIssueTypeParams::new(ProjectIdOrKey::from_str(project_key).unwrap(), "Existing Issue Type", backlog_domain_models::IssueTypeColor::Red);
+        let result = project_api.add_issue_type(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 400);
@@ -1328,13 +1273,8 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::AddIssueTypeParams {
-            name: "New Issue Type".to_string(),
-            color: backlog_domain_models::IssueTypeColor::Blue,
-            template_summary: None,
-            template_description: None,
-        };
-        let result = project_api.add_issue_type(project_id, &params).await;
+        let params = crate::requests::AddIssueTypeParams::new(project_id, "New Issue Type", backlog_domain_models::IssueTypeColor::Blue);
+        let result = project_api.add_issue_type(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
@@ -1370,12 +1310,8 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::DeleteIssueTypeParams {
-            substitute_issue_type_id,
-        };
-        let result = project_api
-            .delete_issue_type(project_id, issue_type_id, &params)
-            .await;
+        let params = crate::requests::DeleteIssueTypeParams::new(project_id, issue_type_id, substitute_issue_type_id);
+        let result = project_api.delete_issue_type(params).await;
         assert!(result.is_ok());
         let issue_type = result.unwrap();
         assert_eq!(issue_type.name, "Deleted Issue Type");
@@ -1412,16 +1348,8 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::DeleteIssueTypeParams {
-            substitute_issue_type_id,
-        };
-        let result = project_api
-            .delete_issue_type(
-                ProjectIdOrKey::from_str(project_key).unwrap(),
-                issue_type_id,
-                &params,
-            )
-            .await;
+        let params = crate::requests::DeleteIssueTypeParams::new(ProjectIdOrKey::from_str(project_key).unwrap(), issue_type_id, substitute_issue_type_id);
+        let result = project_api.delete_issue_type(params).await;
         assert!(result.is_ok());
         let issue_type = result.unwrap();
         assert_eq!(issue_type.name, "Task Type");
@@ -1455,12 +1383,8 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::DeleteIssueTypeParams {
-            substitute_issue_type_id,
-        };
-        let result = project_api
-            .delete_issue_type(project_id, issue_type_id, &params)
-            .await;
+        let params = crate::requests::DeleteIssueTypeParams::new(project_id, issue_type_id, substitute_issue_type_id);
+        let result = project_api.delete_issue_type(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
@@ -1496,12 +1420,8 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::DeleteIssueTypeParams {
-            substitute_issue_type_id,
-        };
-        let result = project_api
-            .delete_issue_type(project_id, issue_type_id, &params)
-            .await;
+        let params = crate::requests::DeleteIssueTypeParams::new(project_id, issue_type_id, substitute_issue_type_id);
+        let result = project_api.delete_issue_type(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
@@ -1536,16 +1456,13 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateIssueTypeParams {
-            name: Some("Updated Bug Type".to_string()),
-            color: Some(backlog_domain_models::IssueTypeColor::Green),
-            template_summary: Some("Updated Summary".to_string()),
-            template_description: Some("Updated Description".to_string()),
-        };
+        let mut params = crate::requests::UpdateIssueTypeParams::new(project_id, issue_type_id);
+        params.name = Some("Updated Bug Type".to_string());
+        params.color = Some(backlog_domain_models::IssueTypeColor::Green);
+        params.template_summary = Some("Updated Summary".to_string());
+        params.template_description = Some("Updated Description".to_string());
 
-        let result = project_api
-            .update_issue_type(project_id, issue_type_id, &params)
-            .await;
+        let result = project_api.update_issue_type(params).await;
         assert!(result.is_ok(), "Result was: {:?}", result);
         let issue_type = result.unwrap();
         assert_eq!(issue_type.id, issue_type_id);
@@ -1587,16 +1504,10 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateIssueTypeParams {
-            name: Some("Only Name Updated".to_string()),
-            color: None,
-            template_summary: None,
-            template_description: None,
-        };
+        let mut params = crate::requests::UpdateIssueTypeParams::new(project_id, issue_type_id);
+        params.name = Some("Only Name Updated".to_string());
 
-        let result = project_api
-            .update_issue_type(project_id, issue_type_id, &params)
-            .await;
+        let result = project_api.update_issue_type(params).await;
         assert!(result.is_ok());
         let issue_type = result.unwrap();
         assert_eq!(issue_type.name, "Only Name Updated");
@@ -1628,16 +1539,10 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateIssueTypeParams {
-            name: Some("Non-existent Issue Type".to_string()),
-            color: None,
-            template_summary: None,
-            template_description: None,
-        };
+        let mut params = crate::requests::UpdateIssueTypeParams::new(project_id, issue_type_id);
+        params.name = Some("Non-existent Issue Type".to_string());
 
-        let result = project_api
-            .update_issue_type(project_id, issue_type_id, &params)
-            .await;
+        let result = project_api.update_issue_type(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
@@ -1672,16 +1577,10 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateIssueTypeParams {
-            name: Some("Issue Type".to_string()),
-            color: None,
-            template_summary: None,
-            template_description: None,
-        };
+        let mut params = crate::requests::UpdateIssueTypeParams::new(project_id, issue_type_id);
+        params.name = Some("Issue Type".to_string());
 
-        let result = project_api
-            .update_issue_type(project_id, issue_type_id, &params)
-            .await;
+        let result = project_api.update_issue_type(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
@@ -1719,20 +1618,12 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateIssueTypeParams {
-            name: Some("Updated with Key".to_string()),
-            color: Some(backlog_domain_models::IssueTypeColor::Pink),
-            template_summary: Some("Key-based update".to_string()),
-            template_description: None,
-        };
+        let mut params = crate::requests::UpdateIssueTypeParams::new(ProjectIdOrKey::from_str(project_key).unwrap(), issue_type_id);
+        params.name = Some("Updated with Key".to_string());
+        params.color = Some(backlog_domain_models::IssueTypeColor::Pink);
+        params.template_summary = Some("Key-based update".to_string());
 
-        let result = project_api
-            .update_issue_type(
-                ProjectIdOrKey::from_str(project_key).unwrap(),
-                issue_type_id,
-                &params,
-            )
-            .await;
+        let result = project_api.update_issue_type(params).await;
         assert!(result.is_ok());
         let issue_type = result.unwrap();
         assert_eq!(issue_type.name, "Updated with Key");

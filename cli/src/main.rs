@@ -33,7 +33,7 @@ use backlog_project::requests::GetProjectListParams;
 #[cfg(feature = "project_writable")]
 use backlog_project::requests::{
     AddCategoryParams, AddIssueTypeParams, AddStatusParams, AddVersionParams,
-    DeleteIssueTypeParams, DeleteStatusParams, UpdateCategoryParams, UpdateIssueTypeParams,
+    DeleteCategoryParams, DeleteIssueTypeParams, DeleteStatusParams, UpdateCategoryParams, UpdateIssueTypeParams,
     UpdateStatusOrderParams, UpdateStatusParams, UpdateVersionParams,
 };
 use backlog_space::GetSpaceLogoParams;
@@ -2087,9 +2087,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
-                let params = AddCategoryParams { name: name.clone() };
+                let params = AddCategoryParams::new(proj_id_or_key, name.clone());
 
-                match client.project().add_category(proj_id_or_key, &params).await {
+                match client.project().add_category(params).await {
                     Ok(category) => {
                         println!("Category added successfully:");
                         println!(
@@ -2115,11 +2115,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let cat_id = CategoryId::new(category_id);
-                let params = UpdateCategoryParams { name: name.clone() };
+                let params = UpdateCategoryParams::new(proj_id_or_key, cat_id, name.clone());
 
                 match client
                     .project()
-                    .update_category(proj_id_or_key, cat_id, &params)
+                    .update_category(params)
                     .await
                 {
                     Ok(category) => {
@@ -2149,7 +2149,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 match client
                     .project()
-                    .delete_category(proj_id_or_key, cat_id)
+                    .delete_category(DeleteCategoryParams::new(proj_id_or_key, cat_id))
                     .await
                 {
                     Ok(category) => {
@@ -2189,16 +2189,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     )
                 })?;
 
-                let params = AddIssueTypeParams {
-                    name: name.clone(),
-                    color: parsed_color,
-                    template_summary: template_summary.clone(),
-                    template_description: template_description.clone(),
-                };
+                let mut params = AddIssueTypeParams::new(proj_id_or_key, &name, parsed_color);
+                params.template_summary = template_summary.clone();
+                params.template_description = template_description.clone();
 
                 match client
                     .project()
-                    .add_issue_type(proj_id_or_key, &params)
+                    .add_issue_type(params)
                     .await
                 {
                     Ok(issue_type) => {
@@ -2235,13 +2232,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let issue_type_id_val = IssueTypeId::new(issue_type_id);
                 let substitute_id = IssueTypeId::new(substitute_issue_type_id);
 
-                let params = DeleteIssueTypeParams {
-                    substitute_issue_type_id: substitute_id,
-                };
+                let params = DeleteIssueTypeParams::new(proj_id_or_key, issue_type_id_val, substitute_id);
 
                 match client
                     .project()
-                    .delete_issue_type(proj_id_or_key, issue_type_id_val, &params)
+                    .delete_issue_type(params)
                     .await
                 {
                     Ok(issue_type) => {
@@ -2294,16 +2289,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     None
                 };
 
-                let params = UpdateIssueTypeParams {
-                    name: name.clone(),
-                    color: parsed_color,
-                    template_summary: template_summary.clone(),
-                    template_description: template_description.clone(),
-                };
+                let mut params = UpdateIssueTypeParams::new(proj_id_or_key, issue_type_id_val);
+                params.name = name.clone();
+                params.color = parsed_color;
+                params.template_summary = template_summary.clone();
+                params.template_description = template_description.clone();
 
                 match client
                     .project()
-                    .update_issue_type(proj_id_or_key, issue_type_id_val, &params)
+                    .update_issue_type(params)
                     .await
                 {
                     Ok(issue_type) => {

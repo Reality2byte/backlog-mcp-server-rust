@@ -207,7 +207,18 @@ impl IntoRequest for GetResolutionListParams {
 #[cfg(feature = "writable")]
 #[derive(Debug, Clone)]
 pub struct AddCategoryParams {
+    pub project_id_or_key: ProjectIdOrKey,
     pub name: String,
+}
+
+#[cfg(feature = "writable")]
+impl AddCategoryParams {
+    pub fn new(project_id_or_key: impl Into<ProjectIdOrKey>, name: impl Into<String>) -> Self {
+        Self {
+            project_id_or_key: project_id_or_key.into(),
+            name: name.into(),
+        }
+    }
 }
 
 #[cfg(feature = "writable")]
@@ -218,9 +229,41 @@ impl From<&AddCategoryParams> for Vec<(String, String)> {
 }
 
 #[cfg(feature = "writable")]
+impl IntoRequest for AddCategoryParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Post
+    }
+
+    fn path(&self) -> String {
+        format!("/api/v2/projects/{}/categories", self.project_id_or_key)
+    }
+
+    fn to_form(&self) -> impl Serialize {
+        Vec::<(String, String)>::from(self)
+    }
+}
+
+#[cfg(feature = "writable")]
 #[derive(Debug, Clone)]
 pub struct UpdateCategoryParams {
+    pub project_id_or_key: ProjectIdOrKey,
+    pub category_id: backlog_core::identifier::CategoryId,
     pub name: String,
+}
+
+#[cfg(feature = "writable")]
+impl UpdateCategoryParams {
+    pub fn new(
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        category_id: impl Into<backlog_core::identifier::CategoryId>,
+        name: impl Into<String>,
+    ) -> Self {
+        Self {
+            project_id_or_key: project_id_or_key.into(),
+            category_id: category_id.into(),
+            name: name.into(),
+        }
+    }
 }
 
 #[cfg(feature = "writable")]
@@ -231,8 +274,55 @@ impl From<&UpdateCategoryParams> for Vec<(String, String)> {
 }
 
 #[cfg(feature = "writable")]
+impl IntoRequest for UpdateCategoryParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Patch
+    }
+
+    fn path(&self) -> String {
+        format!("/api/v2/projects/{}/categories/{}", self.project_id_or_key, self.category_id)
+    }
+
+    fn to_form(&self) -> impl Serialize {
+        Vec::<(String, String)>::from(self)
+    }
+}
+
+#[cfg(feature = "writable")]
+#[derive(Debug, Clone)]
+pub struct DeleteCategoryParams {
+    pub project_id_or_key: ProjectIdOrKey,
+    pub category_id: backlog_core::identifier::CategoryId,
+}
+
+#[cfg(feature = "writable")]
+impl DeleteCategoryParams {
+    pub fn new(
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        category_id: impl Into<backlog_core::identifier::CategoryId>,
+    ) -> Self {
+        Self {
+            project_id_or_key: project_id_or_key.into(),
+            category_id: category_id.into(),
+        }
+    }
+}
+
+#[cfg(feature = "writable")]
+impl IntoRequest for DeleteCategoryParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Delete
+    }
+
+    fn path(&self) -> String {
+        format!("/api/v2/projects/{}/categories/{}", self.project_id_or_key, self.category_id)
+    }
+}
+
+#[cfg(feature = "writable")]
 #[derive(Debug, Clone)]
 pub struct AddIssueTypeParams {
+    pub project_id_or_key: ProjectIdOrKey,
     pub name: String,
     pub color: backlog_domain_models::IssueTypeColor,
     pub template_summary: Option<String>,
@@ -240,11 +330,29 @@ pub struct AddIssueTypeParams {
 }
 
 #[cfg(feature = "writable")]
+impl AddIssueTypeParams {
+    pub fn new(
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        name: impl Into<String>,
+        color: backlog_domain_models::IssueTypeColor,
+    ) -> Self {
+        Self {
+            project_id_or_key: project_id_or_key.into(),
+            name: name.into(),
+            color,
+            template_summary: None,
+            template_description: None,
+        }
+    }
+}
+
+#[cfg(feature = "writable")]
 impl From<&AddIssueTypeParams> for Vec<(String, String)> {
     fn from(params: &AddIssueTypeParams) -> Self {
-        let mut seq = Vec::new();
-        seq.push(("name".to_string(), params.name.clone()));
-        seq.push(("color".to_string(), params.color.as_hex().to_string()));
+        let mut seq = vec![
+            ("name".to_string(), params.name.clone()),
+            ("color".to_string(), params.color.as_hex().to_string()),
+        ];
 
         if let Some(template_summary) = &params.template_summary {
             seq.push(("templateSummary".to_string(), template_summary.clone()));
@@ -262,9 +370,41 @@ impl From<&AddIssueTypeParams> for Vec<(String, String)> {
 }
 
 #[cfg(feature = "writable")]
+impl IntoRequest for AddIssueTypeParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Post
+    }
+
+    fn path(&self) -> String {
+        format!("/api/v2/projects/{}/issueTypes", self.project_id_or_key)
+    }
+
+    fn to_form(&self) -> impl Serialize {
+        Vec::<(String, String)>::from(self)
+    }
+}
+
+#[cfg(feature = "writable")]
 #[derive(Debug, Clone)]
 pub struct DeleteIssueTypeParams {
+    pub project_id_or_key: ProjectIdOrKey,
+    pub issue_type_id: backlog_core::identifier::IssueTypeId,
     pub substitute_issue_type_id: backlog_core::identifier::IssueTypeId,
+}
+
+#[cfg(feature = "writable")]
+impl DeleteIssueTypeParams {
+    pub fn new(
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        issue_type_id: impl Into<backlog_core::identifier::IssueTypeId>,
+        substitute_issue_type_id: impl Into<backlog_core::identifier::IssueTypeId>,
+    ) -> Self {
+        Self {
+            project_id_or_key: project_id_or_key.into(),
+            issue_type_id: issue_type_id.into(),
+            substitute_issue_type_id: substitute_issue_type_id.into(),
+        }
+    }
 }
 
 #[cfg(feature = "writable")]
@@ -278,12 +418,46 @@ impl From<&DeleteIssueTypeParams> for Vec<(String, String)> {
 }
 
 #[cfg(feature = "writable")]
+impl IntoRequest for DeleteIssueTypeParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Delete
+    }
+
+    fn path(&self) -> String {
+        format!("/api/v2/projects/{}/issueTypes/{}", self.project_id_or_key, self.issue_type_id)
+    }
+
+    fn to_form(&self) -> impl Serialize {
+        Vec::<(String, String)>::from(self)
+    }
+}
+
+#[cfg(feature = "writable")]
 #[derive(Debug, Clone)]
 pub struct UpdateIssueTypeParams {
+    pub project_id_or_key: ProjectIdOrKey,
+    pub issue_type_id: backlog_core::identifier::IssueTypeId,
     pub name: Option<String>,
     pub color: Option<backlog_domain_models::IssueTypeColor>,
     pub template_summary: Option<String>,
     pub template_description: Option<String>,
+}
+
+#[cfg(feature = "writable")]
+impl UpdateIssueTypeParams {
+    pub fn new(
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        issue_type_id: impl Into<backlog_core::identifier::IssueTypeId>,
+    ) -> Self {
+        Self {
+            project_id_or_key: project_id_or_key.into(),
+            issue_type_id: issue_type_id.into(),
+            name: None,
+            color: None,
+            template_summary: None,
+            template_description: None,
+        }
+    }
 }
 
 #[cfg(feature = "writable")]
@@ -311,6 +485,21 @@ impl From<&UpdateIssueTypeParams> for Vec<(String, String)> {
         }
 
         seq
+    }
+}
+
+#[cfg(feature = "writable")]
+impl IntoRequest for UpdateIssueTypeParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Patch
+    }
+
+    fn path(&self) -> String {
+        format!("/api/v2/projects/{}/issueTypes/{}", self.project_id_or_key, self.issue_type_id)
+    }
+
+    fn to_form(&self) -> impl Serialize {
+        Vec::<(String, String)>::from(self)
     }
 }
 
