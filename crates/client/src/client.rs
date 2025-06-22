@@ -2,12 +2,101 @@ use backlog_api_core::{BacklogApiErrorResponse, Error as ApiError, IntoRequest, 
 use reqwest::header::{CONTENT_DISPOSITION, CONTENT_TYPE};
 use url::Url;
 
+/// A trait for converting HTTP responses into different output types
+pub trait IntoResponse {
+    type Output;
+
+    /// Convert a reqwest::Response into the desired output type
+    #[allow(clippy::wrong_self_convention)]
+    fn from_response(
+        self,
+        response: reqwest::Response,
+    ) -> impl std::future::Future<Output = Result<Self::Output>> + Send;
+}
+
+/// A marker type to indicate JSON response deserialization
+#[derive(Debug)]
+pub struct JsonResponse<T>(std::marker::PhantomData<T>);
+
+impl<T> Default for JsonResponse<T> {
+    fn default() -> Self {
+        Self(std::marker::PhantomData)
+    }
+}
+
+impl<T> JsonResponse<T> {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+impl<T> IntoResponse for JsonResponse<T>
+where
+    T: serde::de::DeserializeOwned + Send,
+{
+    type Output = T;
+
+    async fn from_response(self, response: reqwest::Response) -> Result<Self::Output> {
+        let json_value = response.json::<serde_json::Value>().await?;
+        let entity = serde_json::from_value(json_value)?;
+        Ok(entity)
+    }
+}
+
 /// A type that represents a downloaded file's metadata and content.
 #[derive(Debug, Clone)]
 pub struct DownloadedFile {
     pub filename: String,
     pub content_type: String,
     pub bytes: bytes::Bytes,
+}
+
+/// A marker type to indicate file download response
+#[derive(Debug)]
+pub struct FileResponse;
+
+unsafe impl Send for FileResponse {}
+unsafe impl Sync for FileResponse {}
+
+impl IntoResponse for FileResponse {
+    type Output = DownloadedFile;
+
+    async fn from_response(self, response: reqwest::Response) -> Result<Self::Output> {
+        let headers = response.headers().clone();
+        let bytes_content = response.bytes().await.map_err(ApiError::from)?;
+
+        // Extract filename from Content-Disposition
+        let filename = headers
+            .get(CONTENT_DISPOSITION)
+            .and_then(|value| value.to_str().ok())
+            .and_then(|value| {
+                // Simple parser for `filename="name.ext"` or `filename*=UTF-8''name.ext`
+                if let Some(start) = value.find("filename=\"") {
+                    let remainder = &value[start + 10..];
+                    remainder.find('"').map(|end| remainder[..end].to_string())
+                } else if let Some(start) = value.find("filename*=UTF-8''") {
+                    let remainder = &value[start + 17..];
+                    // This doesn't handle URL decoding, but it's a start
+                    Some(remainder.to_string())
+                } else {
+                    None
+                }
+            })
+            .unwrap_or_else(|| "downloaded_file".to_string()); // Default filename
+
+        // Extract Content-Type
+        let content_type = headers
+            .get(CONTENT_TYPE)
+            .and_then(|value| value.to_str().ok())
+            .unwrap_or("application/octet-stream") // Default content type
+            .to_string();
+
+        Ok(DownloadedFile {
+            filename,
+            content_type,
+            bytes: bytes_content,
+        })
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -43,11 +132,28 @@ impl Client {
     /// Executes a request using the IntoRequest trait
     pub async fn execute<T, P>(&self, params: P) -> Result<T>
     where
-        T: serde::de::DeserializeOwned,
+        T: serde::de::DeserializeOwned + Send,
         P: IntoRequest,
     {
-        let mut request = params.into_request(&self.client, &self.base_url)?;
+        let request = params.into_request(&self.client, &self.base_url)?;
+        self.execute_unified(request, JsonResponse::<T>::new())
+            .await
+    }
 
+    pub async fn download_file_raw(&self, path: &str) -> Result<DownloadedFile> {
+        let request = self.prepare_request(reqwest::Method::GET, path, &())?;
+        self.execute_unified(request, FileResponse).await
+    }
+
+    /// Unified method for executing requests with customizable response handling
+    pub async fn execute_unified<R>(
+        &self,
+        mut request: reqwest::Request,
+        response_handler: R,
+    ) -> Result<R::Output>
+    where
+        R: IntoResponse,
+    {
         // Add authentication headers to the request
         if let Some(token) = &self.auth_token {
             let headers = request.headers_mut();
@@ -64,7 +170,38 @@ impl Client {
             url.query_pairs_mut().append_pair("apiKey", key);
         }
 
-        self.execute_request(request).await
+        let response = self.client.execute(request).await?;
+
+        if !response.status().is_success() {
+            let status = response.status().as_u16();
+            let error_body_text = response
+                .text()
+                .await
+                .unwrap_or_else(|e| format!("Failed to read error body: {}", e));
+
+            // Attempt to parse as BacklogApiErrorResponse
+            match serde_json::from_str::<BacklogApiErrorResponse>(&error_body_text) {
+                Ok(parsed_errors) => {
+                    let summary = parsed_errors
+                        .errors
+                        .iter()
+                        .map(|e| e.message.clone())
+                        .collect::<Vec<String>>()
+                        .join("; ");
+                    return Err(ApiError::HttpStatus {
+                        status,
+                        errors: parsed_errors.errors,
+                        errors_summary: summary,
+                    });
+                }
+                Err(_) => {
+                    let summary = format!("HTTP Error {} with body: {}", status, error_body_text);
+                    return Err(ApiError::InvalidBuildParameter(summary));
+                }
+            }
+        }
+
+        response_handler.from_response(response).await
     }
 
     // Helper methods
@@ -98,126 +235,5 @@ impl Client {
         }
 
         Ok(req)
-    }
-
-    async fn execute_request<T: serde::de::DeserializeOwned>(
-        &self,
-        request: reqwest::Request,
-    ) -> Result<T> {
-        let response = self.client.execute(request).await?; // Returns ApiError::Http on reqwest error
-
-        if !response.status().is_success() {
-            let status = response.status().as_u16();
-            let error_body_text = response
-                .text()
-                .await
-                .unwrap_or_else(|e| format!("Failed to read error body: {}", e));
-
-            // Attempt to parse as BacklogApiErrorResponse
-            match serde_json::from_str::<BacklogApiErrorResponse>(&error_body_text) {
-                Ok(parsed_errors) => {
-                    let summary = parsed_errors
-                        .errors
-                        .iter()
-                        .map(|e| e.message.clone())
-                        .collect::<Vec<String>>()
-                        .join("; ");
-                    return Err(ApiError::HttpStatus {
-                        status,
-                        errors: parsed_errors.errors,
-                        errors_summary: summary,
-                    });
-                }
-                Err(_) => {
-                    // If parsing specific error structure fails, return a more generic error
-                    // including the status and raw body.
-                    // For now, we'll use the existing ApiError::Http, but ideally,
-                    // we'd have a variant like HttpErrorWithBody or enhance ApiError::Http.
-                    // This part needs careful consideration of how reqwest::Error is built for status errors.
-                    // For simplicity, we'll re-create a basic error string.
-                    // A better approach would be to ensure reqwest::Error::from(response) captures this.
-                    // However, reqwest::Error::from_response is not public.
-                    // We can construct a generic error message for now.
-                    let summary = format!("HTTP Error {} with body: {}", status, error_body_text);
-                    // This will be wrapped by ApiError::Http if we make a reqwest::Error
-                    // For now, let's use a generic parameter error or a new dedicated variant if we add one.
-                    // To keep it simple and avoid changing ApiError further in this step:
-                    return Err(ApiError::InvalidBuildParameter(summary)); // Corrected to InvalidBuildParameter
-                }
-            }
-        }
-
-        // Success path
-        let json_value = response.json::<serde_json::Value>().await?; // Can return ApiError::Http or ApiError::Json
-        let entity = serde_json::from_value(json_value)?; // Can return ApiError::Json
-        Ok(entity)
-    }
-
-    pub async fn download_file_raw(&self, path: &str) -> Result<DownloadedFile> {
-        let request = self.prepare_request(reqwest::Method::GET, path, &())?;
-        let response = self.client.execute(request).await?;
-
-        if !response.status().is_success() {
-            let status = response.status().as_u16();
-            let error_body_text = response
-                .text()
-                .await
-                .unwrap_or_else(|e| format!("Failed to read error body: {}", e));
-            match serde_json::from_str::<BacklogApiErrorResponse>(&error_body_text) {
-                Ok(parsed_errors) => {
-                    let summary = parsed_errors
-                        .errors
-                        .iter()
-                        .map(|e| e.message.clone())
-                        .collect::<Vec<String>>()
-                        .join("; ");
-                    return Err(ApiError::HttpStatus {
-                        status,
-                        errors: parsed_errors.errors,
-                        errors_summary: summary,
-                    });
-                }
-                Err(_) => {
-                    let summary = format!("HTTP Error {} with body: {}", status, error_body_text);
-                    return Err(ApiError::InvalidBuildParameter(summary));
-                }
-            }
-        }
-
-        // Success path
-        let headers = response.headers().clone();
-        let bytes_content = response.bytes().await.map_err(ApiError::from)?;
-
-        // Extract filename from Content-Disposition
-        let filename = headers
-            .get(CONTENT_DISPOSITION)
-            .and_then(|value| value.to_str().ok())
-            .and_then(|value| {
-                // Simple parser for `filename="name.ext"` or `filename*=UTF-8''name.ext`
-                if let Some(start) = value.find("filename=\"") {
-                    let remainder = &value[start + 10..];
-                    remainder.find('"').map(|end| remainder[..end].to_string())
-                } else if let Some(start) = value.find("filename*=UTF-8''") {
-                    let remainder = &value[start + 17..];
-                    // This doesn't handle URL decoding, but it's a start
-                    Some(remainder.to_string())
-                } else {
-                    None
-                }
-            })
-            .unwrap_or_else(|| "downloaded_file".to_string()); // Default filename
-
-        // Extract Content-Type
-        let content_type = headers
-            .get(CONTENT_TYPE)
-            .and_then(|value| value.to_str().ok())
-            .unwrap_or("application/octet-stream") // Default content type
-            .to_string();
-
-        Ok(DownloadedFile {
-            filename,
-            content_type,
-            bytes: bytes_content,
-        })
     }
 }
