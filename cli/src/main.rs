@@ -11,7 +11,7 @@ use backlog_api_client::UpdatePullRequestParamsBuilder;
 use backlog_api_client::{
     AddCommentParamsBuilder, AttachmentId, GetIssueListParamsBuilder, IssueIdOrKey, ProjectId,
     ProjectIdOrKey, PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber,
-    RepositoryIdOrName, StatusId, UserId, WikiId, client::BacklogApiClient,
+    RepositoryIdOrName, StatusId, UserId, WikiId, backlog_issue, client::BacklogApiClient,
 };
 #[cfg(feature = "git_writable")]
 use backlog_core::identifier::IssueId;
@@ -1376,7 +1376,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             IssueCommands::Show { issue_id_or_key } => {
                 println!("Showing issue: {}", issue_id_or_key);
                 let parsed_issue_id_or_key = issue_id_or_key.parse::<IssueIdOrKey>()?;
-                let issue = client.issue().get_issue(parsed_issue_id_or_key).await?;
+                let issue = client
+                    .issue()
+                    .get_issue(backlog_issue::GetIssueParams::new(parsed_issue_id_or_key))
+                    .await?;
                 // TODO: Pretty print issue
                 println!("{:?}", issue);
             }
@@ -1653,7 +1656,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 let issue_key = delete_args.issue_key.parse::<IssueKey>()?;
 
-                match client.issue().delete_issue(issue_key).await {
+                match client
+                    .issue()
+                    .delete_issue(backlog_issue::DeleteIssueParams::new(issue_key))
+                    .await
+                {
                     Ok(issue) => {
                         println!("Issue deleted successfully!");
                         println!("Deleted Issue Key: {}", issue.issue_key);
@@ -1758,7 +1765,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 match client
                     .issue()
-                    .get_shared_file_list(parsed_issue_id_or_key)
+                    .get_shared_file_list(backlog_issue::GetSharedFileListParams::new(
+                        parsed_issue_id_or_key,
+                    ))
                     .await
                 {
                     Ok(shared_files) => {

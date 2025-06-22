@@ -9,7 +9,7 @@ use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
     AddCommentParams, Attachment, AttachmentId, Comment, DownloadedFile, GetCommentListParams,
     GetIssueListParamsBuilder, Issue, IssueIdOrKey, IssueKey, IssueSharedFile, Milestone,
-    ProjectIdOrKey, UpdateIssueParams,
+    ProjectIdOrKey, UpdateIssueParams, backlog_issue, backlog_project,
 };
 use std::str::FromStr;
 use std::sync::Arc;
@@ -23,7 +23,7 @@ pub(crate) async fn get_issue_details(
     let parsed_issue_key = IssueKey::from_str(req.issue_key.trim())?;
     let issue = client_guard
         .issue()
-        .get_issue(parsed_issue_key.clone())
+        .get_issue(backlog_issue::GetIssueParams::new(parsed_issue_key.clone()))
         .await?;
     Ok(issue)
 }
@@ -138,7 +138,9 @@ pub(crate) async fn get_attachment_list_impl(
     let client_guard = client.lock().await;
     let attachments = client_guard
         .issue()
-        .get_attachment_list(parsed_issue_id_or_key.clone()) // Explicitly clone
+        .get_attachment_list(backlog_issue::GetAttachmentListParams::new(
+            parsed_issue_id_or_key.clone(),
+        ))
         .await?;
     Ok(attachments)
 }
@@ -179,7 +181,9 @@ pub(crate) async fn get_issue_shared_files_impl(
     let client_guard = client.lock().await;
     let shared_files = client_guard
         .issue()
-        .get_shared_file_list(parsed_issue_id_or_key)
+        .get_shared_file_list(backlog_issue::GetSharedFileListParams::new(
+            parsed_issue_id_or_key,
+        ))
         .await?;
     Ok(shared_files)
 }

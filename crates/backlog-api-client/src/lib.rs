@@ -43,6 +43,10 @@ pub use backlog_issue::{
     },
 };
 
+// Re-export backlog_issue module for parameter access
+#[cfg(feature = "issue")]
+pub use backlog_issue;
+
 // Issue writable operations (from backlog_issue)
 #[cfg(all(feature = "issue", feature = "issue_writable"))]
 pub use backlog_issue::requests::{
@@ -98,6 +102,10 @@ pub use backlog_git::requests::delete_pull_request_attachment::DeletePullRequest
 // Project module (from backlog_project)
 #[cfg(feature = "project")]
 pub use backlog_project::{IssueType, Milestone, Project, ProjectApi, Status};
+
+// Re-export backlog_project module for parameter access
+#[cfg(feature = "project")]
+pub use backlog_project;
 
 // Space module (from backlog_space)
 #[cfg(feature = "space")]

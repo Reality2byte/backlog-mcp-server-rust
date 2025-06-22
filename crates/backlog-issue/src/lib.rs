@@ -4,6 +4,10 @@ pub mod requests;
 pub mod responses;
 
 pub use api::IssueApi;
+pub use requests::{GetAttachmentListParams, GetIssueParams, GetSharedFileListParams};
+
+#[cfg(feature = "writable")]
+pub use requests::DeleteIssueParams;
 
 #[cfg(test)]
 mod tests {

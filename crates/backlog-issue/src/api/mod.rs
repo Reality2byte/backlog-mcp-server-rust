@@ -1,10 +1,11 @@
 use backlog_api_core::Result;
-use backlog_core::{IssueIdOrKey, IssueKey, identifier::Identifier};
+use backlog_core::{IssueIdOrKey, identifier::Identifier};
 use client::{Client, DownloadedFile};
 
 #[cfg(feature = "writable")]
 use crate::requests::{
-    AddCommentParams, AddIssueParams, LinkSharedFilesToIssueParams, UpdateIssueParams,
+    AddCommentParams, AddIssueParams, DeleteIssueParams, LinkSharedFilesToIssueParams,
+    UpdateIssueParams,
 };
 #[cfg(feature = "writable")]
 use crate::responses::{
@@ -13,8 +14,8 @@ use crate::responses::{
 };
 use crate::{
     requests::{
-        CountCommentParams, CountIssueParams, GetCommentListParams, GetCommentParams,
-        GetIssueListParams,
+        CountCommentParams, CountIssueParams, GetAttachmentListParams, GetCommentListParams,
+        GetCommentParams, GetIssueListParams, GetIssueParams, GetSharedFileListParams,
     },
     responses::{
         CountCommentResponse, CountIssueResponse, GetAttachmentListResponse,
@@ -31,14 +32,8 @@ impl IssueApi {
     }
 
     /// Get issue by its ID or key.
-    pub async fn get_issue(
-        &self,
-        issue_id_or_key: impl Into<IssueIdOrKey>,
-    ) -> Result<GetIssueResponse> {
-        let issue_id_or_key_str: String = issue_id_or_key.into().into();
-        self.0
-            .get(&format!("/api/v2/issues/{}", issue_id_or_key_str))
-            .await
+    pub async fn get_issue(&self, params: GetIssueParams) -> Result<GetIssueResponse> {
+        self.0.execute(params).await
     }
 
     /// Get a list of issues with optional parameters.
@@ -59,13 +54,8 @@ impl IssueApi {
 
     /// Delete an issue by its key.
     #[cfg(feature = "writable")]
-    pub async fn delete_issue(
-        &self,
-        issue_key: impl Into<IssueKey>,
-    ) -> Result<DeleteIssueResponse> {
-        self.0
-            .delete(&format!("/api/v2/issues/{}", issue_key.into()))
-            .await
+    pub async fn delete_issue(&self, params: DeleteIssueParams) -> Result<DeleteIssueResponse> {
+        self.0.execute(params).await
     }
 
     /// Update an existing issue by its ID or key.
@@ -108,11 +98,9 @@ impl IssueApi {
     /// Get a list of attachments for an issue by its ID or key.
     pub async fn get_attachment_list(
         &self,
-        issue_id_or_key: impl Into<IssueIdOrKey>,
+        params: GetAttachmentListParams,
     ) -> Result<GetAttachmentListResponse> {
-        let issue_key_str = issue_id_or_key.into().to_string();
-        let path = format!("/api/v2/issues/{}/attachments", issue_key_str);
-        self.0.get(&path).await
+        self.0.execute(params).await
     }
 
     /// Get a list of shared files linked to an issue.
@@ -120,11 +108,9 @@ impl IssueApi {
     /// Corresponds to `GET /api/v2/issues/:issueIdOrKey/sharedFiles`.
     pub async fn get_shared_file_list(
         &self,
-        issue_id_or_key: impl Into<IssueIdOrKey>,
+        params: GetSharedFileListParams,
     ) -> Result<GetSharedFileListResponse> {
-        let issue_key_str = issue_id_or_key.into().to_string();
-        let path = format!("/api/v2/issues/{}/sharedFiles", issue_key_str);
-        self.0.get(&path).await
+        self.0.execute(params).await
     }
 
     /// Link shared files to an issue.
@@ -515,7 +501,9 @@ mod tests {
             .await;
 
         let result = issue_api
-            .get_attachment_list(IssueIdOrKey::Key(issue_key.parse().unwrap()))
+            .get_attachment_list(GetAttachmentListParams::new(IssueIdOrKey::Key(
+                issue_key.parse().unwrap(),
+            )))
             .await;
         assert!(result.is_ok());
         let attachments = result.unwrap();
@@ -540,7 +528,9 @@ mod tests {
             .await;
 
         let result = issue_api
-            .get_attachment_list(IssueIdOrKey::Key(issue_key.parse().unwrap()))
+            .get_attachment_list(GetAttachmentListParams::new(IssueIdOrKey::Key(
+                issue_key.parse().unwrap(),
+            )))
             .await;
         assert!(result.is_ok());
         assert!(result.unwrap().is_empty());
@@ -560,7 +550,9 @@ mod tests {
             .await;
 
         let result = issue_api
-            .get_attachment_list(IssueIdOrKey::Key(issue_key.parse().unwrap()))
+            .get_attachment_list(GetAttachmentListParams::new(IssueIdOrKey::Key(
+                issue_key.parse().unwrap(),
+            )))
             .await;
         assert!(result.is_err());
     }
@@ -600,7 +592,9 @@ mod tests {
             .await;
 
         let result = issue_api
-            .get_shared_file_list(IssueIdOrKey::Key(issue_key.parse().unwrap()))
+            .get_shared_file_list(GetSharedFileListParams::new(IssueIdOrKey::Key(
+                issue_key.parse().unwrap(),
+            )))
             .await;
         assert!(result.is_ok());
         let shared_files = result.unwrap();
@@ -625,7 +619,9 @@ mod tests {
             .await;
 
         let result = issue_api
-            .get_shared_file_list(IssueIdOrKey::Key(issue_key.parse().unwrap()))
+            .get_shared_file_list(GetSharedFileListParams::new(IssueIdOrKey::Key(
+                issue_key.parse().unwrap(),
+            )))
             .await;
         assert!(result.is_ok());
         let shared_files = result.unwrap();
@@ -646,7 +642,9 @@ mod tests {
             .await;
 
         let result = issue_api
-            .get_shared_file_list(IssueIdOrKey::Key(issue_key.parse().unwrap()))
+            .get_shared_file_list(GetSharedFileListParams::new(IssueIdOrKey::Key(
+                issue_key.parse().unwrap(),
+            )))
             .await;
         assert!(result.is_err());
     }
