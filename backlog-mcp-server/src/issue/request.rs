@@ -1,6 +1,6 @@
 use backlog_api_client::{
     AddCommentParams, AddCommentParamsBuilder, ApiError, CommentOrder, GetCommentListParams,
-    GetCommentListParamsBuilder, UpdateIssueParams, UpdateIssueParamsBuilder,
+    GetCommentListParamsBuilder, IssueIdOrKey, UpdateIssueParams, UpdateIssueParamsBuilder,
 };
 use rmcp::schemars;
 use std::str::FromStr;
@@ -99,7 +99,9 @@ pub(crate) struct GetIssueCommentsRequest {
 impl TryFrom<GetIssueCommentsRequest> for GetCommentListParams {
     type Error = ApiError;
     fn try_from(req: GetIssueCommentsRequest) -> Result<Self, Self::Error> {
+        let issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
         let mut params_builder = GetCommentListParamsBuilder::default();
+        params_builder.issue_id_or_key(issue_id_or_key);
 
         if let Some(min_id) = req.min_id {
             params_builder.min_id(min_id);
@@ -139,9 +141,12 @@ pub(crate) struct AddCommentRequest {
 impl TryFrom<AddCommentRequest> for AddCommentParams {
     type Error = ApiError;
     fn try_from(req: AddCommentRequest) -> Result<Self, Self::Error> {
-        use backlog_api_client::{AttachmentId, UserId};
+        use backlog_api_client::{AttachmentId, IssueIdOrKey, UserId};
+        use std::str::FromStr;
 
+        let issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
         let mut builder = AddCommentParamsBuilder::default();
+        builder.issue_id_or_key(issue_id_or_key);
         builder.content(req.content);
 
         if let Some(user_ids) = req.notified_user_ids {

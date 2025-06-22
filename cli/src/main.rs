@@ -1472,6 +1472,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     })?;
 
                 let mut builder = AddCommentParamsBuilder::default();
+                builder.issue_id_or_key(parsed_issue_id_or_key);
                 builder.content(&add_args.content);
 
                 // Parse notify_users if provided
@@ -1506,11 +1507,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 let params = builder.build()?;
 
-                match client
-                    .issue()
-                    .add_comment(parsed_issue_id_or_key, &params)
-                    .await
-                {
+                match client.issue().add_comment(params).await {
                     Ok(comment) => {
                         println!("Comment added successfully!");
                         println!("Comment ID: {}", comment.id);
@@ -1681,7 +1678,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         )
                     })?;
 
-                match client.issue().count_comment(parsed_issue_id_or_key).await {
+                match client
+                    .issue()
+                    .count_comment(backlog_issue::requests::CountCommentParams::new(
+                        parsed_issue_id_or_key,
+                    ))
+                    .await
+                {
                     Ok(response) => {
                         println!(
                             "Comment count for issue {}: {}",
@@ -1711,7 +1714,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 match client
                     .issue()
-                    .get_comment(parsed_issue_id_or_key, comment_id)
+                    .get_comment(backlog_issue::requests::GetCommentParams::new(
+                        parsed_issue_id_or_key,
+                        comment_id,
+                    ))
                     .await
                 {
                     Ok(comment) => {
@@ -1815,15 +1821,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     file_ids.iter().map(|&id| SharedFileId::new(id)).collect();
 
                 let params = LinkSharedFilesToIssueParamsBuilder::default()
+                    .issue_id_or_key(parsed_issue_id_or_key)
                     .shared_file_ids(shared_file_ids)
                     .build()
                     .map_err(|e| format!("Failed to build parameters: {}", e))?;
 
-                match client
-                    .issue()
-                    .link_shared_files_to_issue(parsed_issue_id_or_key, &params)
-                    .await
-                {
+                match client.issue().link_shared_files_to_issue(params).await {
                     Ok(linked_files) => {
                         println!(
                             "✅ Successfully linked {} shared file(s) to the issue!",

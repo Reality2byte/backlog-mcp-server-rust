@@ -1,5 +1,8 @@
-use backlog_api_core::Error as ApiError;
-use backlog_core::identifier::{AttachmentId, Identifier, UserId};
+use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
+use backlog_core::{
+    IssueIdOrKey,
+    identifier::{AttachmentId, Identifier, UserId},
+};
 use derive_builder::Builder;
 use serde::Serialize;
 
@@ -15,28 +18,46 @@ use serde::Serialize;
 /// use backlog_core::identifier::{UserId, AttachmentId};
 ///
 /// let params = AddCommentParamsBuilder::default()
+///     .issue_id_or_key("TEST-1")
 ///     .content("This is a new comment")
 ///     .notified_user_id(vec![UserId::new(123), UserId::new(456)])
 ///     .attachment_id(vec![AttachmentId::new(789)])
 ///     .build()
 ///     .unwrap();
 /// ```
-#[derive(Debug, Clone, Builder, Serialize)]
+#[derive(Debug, Clone, Builder)]
 #[builder(setter(strip_option, into), build_fn(error = "ApiError"))]
 pub struct AddCommentParams {
+    /// The issue ID or key to add the comment to.
+    #[builder(setter(into))]
+    pub issue_id_or_key: IssueIdOrKey,
+
     /// The content of the comment (required).
     #[builder(setter(into))]
     pub content: String,
 
     /// User IDs to notify about this comment (optional).
     #[builder(default, setter(into, strip_option))]
-    #[serde(rename = "notifiedUserId[]", skip_serializing_if = "Option::is_none")]
     pub notified_user_id: Option<Vec<UserId>>,
 
     /// Attachment IDs to include with this comment (optional).
     #[builder(default, setter(into, strip_option))]
-    #[serde(rename = "attachmentId[]", skip_serializing_if = "Option::is_none")]
     pub attachment_id: Option<Vec<AttachmentId>>,
+}
+
+impl IntoRequest for AddCommentParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Post
+    }
+
+    fn path(&self) -> String {
+        format!("/api/v2/issues/{}/comments", self.issue_id_or_key)
+    }
+
+    fn to_form(&self) -> impl Serialize {
+        let params: Vec<(String, String)> = self.into();
+        params
+    }
 }
 
 impl From<&AddCommentParams> for Vec<(String, String)> {
@@ -74,6 +95,7 @@ mod tests {
     #[test]
     fn test_add_comment_params_content_only() {
         let params = AddCommentParamsBuilder::default()
+            .issue_id_or_key("TEST-1".parse::<backlog_core::IssueKey>().unwrap())
             .content("Test comment")
             .build()
             .unwrap();
@@ -86,6 +108,7 @@ mod tests {
     #[test]
     fn test_add_comment_params_with_notifications_and_attachments() {
         let params = AddCommentParamsBuilder::default()
+            .issue_id_or_key("TEST-2".parse::<backlog_core::IssueKey>().unwrap())
             .content("Test comment with notifications")
             .notified_user_id(vec![UserId::new(123), UserId::new(456)])
             .attachment_id(vec![AttachmentId::new(789), AttachmentId::new(101112)])
@@ -100,6 +123,7 @@ mod tests {
     #[test]
     fn test_add_comment_params_builder_error_on_missing_content() {
         let result = AddCommentParamsBuilder::default()
+            .issue_id_or_key("TEST-3".parse::<backlog_core::IssueKey>().unwrap())
             .notified_user_id(vec![UserId::new(123)])
             .build();
 

@@ -1,12 +1,13 @@
 use crate::models::ParentChildCondition;
-use backlog_api_core::Error as ApiError;
+use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
 use backlog_core::identifier::{
     CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ProjectId, ResolutionId, StatusId,
     UserId,
 };
 use derive_builder::Builder;
+use serde::Serialize;
 
-#[derive(Debug, Builder)]
+#[derive(Debug, Clone, Builder)]
 #[builder(build_fn(error = "ApiError"))]
 pub struct GetIssueListParams {
     #[builder(default, setter(into, strip_option))]
@@ -57,6 +58,21 @@ pub struct GetIssueListParams {
     pub keyword: Option<String>, // (e.g., "bug", "feature")
     #[builder(default, setter(into, strip_option))]
     pub id: Option<Vec<IssueId>>, // for id[] parameter
+}
+
+impl IntoRequest for GetIssueListParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Get
+    }
+
+    fn path(&self) -> String {
+        "/api/v2/issues".to_string()
+    }
+
+    fn to_query(&self) -> impl Serialize {
+        let params: Vec<(String, String)> = self.clone().into();
+        params
+    }
 }
 
 // Convert GetIssueListParams to vector of pairs because

@@ -12,7 +12,10 @@ use crate::responses::{
     UpdateIssueResponse,
 };
 use crate::{
-    requests::{CountIssueParams, GetCommentListParams, GetIssueListParams},
+    requests::{
+        CountCommentParams, CountIssueParams, GetCommentListParams, GetCommentParams,
+        GetIssueListParams,
+    },
     responses::{
         CountCommentResponse, CountIssueResponse, GetAttachmentListResponse,
         GetCommentListResponse, GetCommentResponse, GetIssueListResponse, GetIssueResponse,
@@ -40,16 +43,12 @@ impl IssueApi {
 
     /// Get a list of issues with optional parameters.
     pub async fn get_issue_list(&self, params: GetIssueListParams) -> Result<GetIssueListResponse> {
-        let params_vec: Vec<(String, String)> = params.into();
-        self.0.get_with_params("/api/v2/issues", &params_vec).await
+        self.0.execute(params).await
     }
 
     /// Count issues based on the provided parameters.
     pub async fn count_issue(&self, params: CountIssueParams) -> Result<CountIssueResponse> {
-        let params: Vec<(String, String)> = params.into();
-        self.0
-            .get_with_params("/api/v2/issues/count", &params)
-            .await
+        self.0.execute(params).await
     }
 
     /// Add a new issue with the provided parameters.
@@ -84,61 +83,26 @@ impl IssueApi {
 
     /// Add a new comment to an existing issue.
     #[cfg(feature = "writable")]
-    pub async fn add_comment(
-        &self,
-        issue_id_or_key: impl Into<IssueIdOrKey>,
-        params: &AddCommentParams,
-    ) -> Result<AddCommentResponse> {
-        let issue_id_or_key_str: String = issue_id_or_key.into().into();
-        let params_vec: Vec<(String, String)> = params.into();
-        self.0
-            .post(
-                &format!("/api/v2/issues/{}/comments", issue_id_or_key_str),
-                &params_vec,
-            )
-            .await
+    pub async fn add_comment(&self, params: AddCommentParams) -> Result<AddCommentResponse> {
+        self.0.execute(params).await
     }
 
     /// Get a list of comments for an issue by its ID or key.
     pub async fn get_comment_list(
         &self,
-        issue_id_or_key: impl Into<IssueIdOrKey>,
-        params: Option<GetCommentListParams>,
+        params: GetCommentListParams,
     ) -> Result<GetCommentListResponse> {
-        let issue_key_str = issue_id_or_key.into().to_string();
-        let path = format!("/api/v2/issues/{}/comments", issue_key_str);
-        let query_params = params.map_or_else(Vec::new, |p| p.to_query_params());
-        self.0.get_with_params(&path, &query_params).await
+        self.0.execute(params).await
     }
 
     /// Count comments for an issue by its ID or key.
-    pub async fn count_comment(
-        &self,
-        issue_id_or_key: impl Into<IssueIdOrKey>,
-    ) -> Result<CountCommentResponse> {
-        let issue_id_or_key_str: String = issue_id_or_key.into().into();
-        self.0
-            .get(&format!(
-                "/api/v2/issues/{}/comments/count",
-                issue_id_or_key_str
-            ))
-            .await
+    pub async fn count_comment(&self, params: CountCommentParams) -> Result<CountCommentResponse> {
+        self.0.execute(params).await
     }
 
     /// Get a specific comment for an issue by its ID or key and comment ID.
-    pub async fn get_comment(
-        &self,
-        issue_id_or_key: impl Into<IssueIdOrKey>,
-        comment_id: backlog_core::identifier::CommentId,
-    ) -> Result<GetCommentResponse> {
-        let issue_id_or_key_str: String = issue_id_or_key.into().into();
-        let comment_id_val = comment_id.value();
-        self.0
-            .get(&format!(
-                "/api/v2/issues/{}/comments/{}",
-                issue_id_or_key_str, comment_id_val
-            ))
-            .await
+    pub async fn get_comment(&self, params: GetCommentParams) -> Result<GetCommentResponse> {
+        self.0.execute(params).await
     }
 
     /// Get a list of attachments for an issue by its ID or key.
@@ -169,13 +133,9 @@ impl IssueApi {
     #[cfg(feature = "writable")]
     pub async fn link_shared_files_to_issue(
         &self,
-        issue_id_or_key: impl Into<IssueIdOrKey>,
-        params: &LinkSharedFilesToIssueParams,
+        params: LinkSharedFilesToIssueParams,
     ) -> Result<LinkSharedFilesToIssueResponse> {
-        let issue_key_str = issue_id_or_key.into().to_string();
-        let path = format!("/api/v2/issues/{}/sharedFiles", issue_key_str);
-        let params_vec: Vec<(String, String)> = params.into();
-        self.0.post(&path, &params_vec).await
+        self.0.execute(params).await
     }
 
     /// Get a specific attachment file by issue ID or key and attachment ID.
@@ -373,9 +333,11 @@ mod tests {
             .respond_with(ResponseTemplate::new(200).set_body_json(&expected_comments))
             .mount(&mock_server)
             .await;
-        let result = issue_api
-            .get_comment_list(IssueIdOrKey::Key(issue_key.parse().unwrap()), None)
-            .await;
+        let params = GetCommentListParamsBuilder::default()
+            .issue_id_or_key(IssueIdOrKey::Key(issue_key.parse().unwrap()))
+            .build()
+            .unwrap();
+        let result = issue_api.get_comment_list(params).await;
         assert!(result.is_ok());
         let comments = result.unwrap();
         assert_eq!(comments.len(), 2);
@@ -398,16 +360,12 @@ mod tests {
             .mount(&mock_server)
             .await;
         let params = GetCommentListParamsBuilder::default()
+            .issue_id_or_key(IssueIdOrKey::Id(IssueId::new(issue_id as u32)))
             .count(1u8)
             .order(CommentOrder::Asc)
             .build()
             .unwrap();
-        let result = issue_api
-            .get_comment_list(
-                IssueIdOrKey::Id(IssueId::new(issue_id as u32)),
-                Some(params),
-            )
-            .await;
+        let result = issue_api.get_comment_list(params).await;
         assert!(result.is_ok());
         let comments = result.unwrap();
         assert_eq!(comments.len(), 1);
@@ -427,9 +385,11 @@ mod tests {
             .respond_with(ResponseTemplate::new(200).set_body_json(&expected_comments))
             .mount(&mock_server)
             .await;
-        let result = issue_api
-            .get_comment_list(IssueIdOrKey::Key(issue_key.parse().unwrap()), None)
-            .await;
+        let params = GetCommentListParamsBuilder::default()
+            .issue_id_or_key(IssueIdOrKey::Key(issue_key.parse().unwrap()))
+            .build()
+            .unwrap();
+        let result = issue_api.get_comment_list(params).await;
         assert!(result.is_ok());
         assert!(result.unwrap().is_empty());
     }
@@ -446,9 +406,11 @@ mod tests {
             .respond_with(ResponseTemplate::new(404))
             .mount(&mock_server)
             .await;
-        let result = issue_api
-            .get_comment_list(IssueIdOrKey::Key(issue_key.parse().unwrap()), None)
-            .await;
+        let params = GetCommentListParamsBuilder::default()
+            .issue_id_or_key(IssueIdOrKey::Key(issue_key.parse().unwrap()))
+            .build()
+            .unwrap();
+        let result = issue_api.get_comment_list(params).await;
         assert!(result.is_err());
     }
 
@@ -476,15 +438,14 @@ mod tests {
             .mount(&mock_server)
             .await;
         let params = GetCommentListParamsBuilder::default()
+            .issue_id_or_key(IssueIdOrKey::Key(issue_key.parse().unwrap()))
             .min_id(5u64)
             .max_id(15u64)
             .count(1u8)
             .order(CommentOrder::Desc)
             .build()
             .unwrap();
-        let result = issue_api
-            .get_comment_list(IssueIdOrKey::Key(issue_key.parse().unwrap()), Some(params))
-            .await;
+        let result = issue_api.get_comment_list(params).await;
         assert!(result.is_ok());
         let comments = result.unwrap();
         assert_eq!(comments.len(), 1);
@@ -778,13 +739,12 @@ mod tests {
             .await;
 
         let params = AddCommentParamsBuilder::default()
+            .issue_id_or_key(IssueIdOrKey::Key(issue_key.parse().unwrap()))
             .content("This is a test comment")
             .build()
             .unwrap();
 
-        let result = issue_api
-            .add_comment(IssueIdOrKey::Key(issue_key.parse().unwrap()), &params)
-            .await;
+        let result = issue_api.add_comment(params).await;
 
         assert!(result.is_ok());
         let comment = result.unwrap();
@@ -809,15 +769,14 @@ mod tests {
             .await;
 
         let params = AddCommentParamsBuilder::default()
+            .issue_id_or_key(IssueIdOrKey::Key(issue_key.parse().unwrap()))
             .content("Comment with notifications")
             .notified_user_id(vec![UserId::new(123), UserId::new(456)])
             .attachment_id(vec![AttachmentId::new(789)])
             .build()
             .unwrap();
 
-        let result = issue_api
-            .add_comment(IssueIdOrKey::Key(issue_key.parse().unwrap()), &params)
-            .await;
+        let result = issue_api.add_comment(params).await;
 
         if let Err(e) = &result {
             panic!("Expected success, but got error: {:?}", e);
@@ -845,13 +804,12 @@ mod tests {
             .await;
 
         let params = AddCommentParamsBuilder::default()
+            .issue_id_or_key(IssueIdOrKey::Key(issue_key.parse().unwrap()))
             .content("Test comment")
             .build()
             .unwrap();
 
-        let result = issue_api
-            .add_comment(IssueIdOrKey::Key(issue_key.parse().unwrap()), &params)
-            .await;
+        let result = issue_api.add_comment(params).await;
 
         assert!(result.is_err());
     }
@@ -872,7 +830,9 @@ mod tests {
             .await;
 
         let result = issue_api
-            .count_comment(IssueIdOrKey::Key(issue_key.parse().unwrap()))
+            .count_comment(CountCommentParams::new(IssueIdOrKey::Key(
+                issue_key.parse().unwrap(),
+            )))
             .await;
 
         assert!(result.is_ok());
@@ -896,7 +856,9 @@ mod tests {
             .await;
 
         let result = issue_api
-            .count_comment(IssueIdOrKey::Id(IssueId::new(issue_id as u32)))
+            .count_comment(CountCommentParams::new(IssueIdOrKey::Id(IssueId::new(
+                issue_id as u32,
+            ))))
             .await;
 
         assert!(result.is_ok());
@@ -918,7 +880,9 @@ mod tests {
             .await;
 
         let result = issue_api
-            .count_comment(IssueIdOrKey::Key(issue_key.parse().unwrap()))
+            .count_comment(CountCommentParams::new(IssueIdOrKey::Key(
+                issue_key.parse().unwrap(),
+            )))
             .await;
 
         assert!(result.is_err());
@@ -944,7 +908,10 @@ mod tests {
             .await;
 
         let result = issue_api
-            .get_comment(IssueIdOrKey::Key(issue_key.parse().unwrap()), comment_id)
+            .get_comment(GetCommentParams::new(
+                IssueIdOrKey::Key(issue_key.parse().unwrap()),
+                comment_id,
+            ))
             .await;
 
         assert!(result.is_ok());
@@ -973,7 +940,10 @@ mod tests {
             .await;
 
         let result = issue_api
-            .get_comment(IssueIdOrKey::Id(IssueId::new(issue_id as u32)), comment_id)
+            .get_comment(GetCommentParams::new(
+                IssueIdOrKey::Id(IssueId::new(issue_id as u32)),
+                comment_id,
+            ))
             .await;
 
         assert!(result.is_ok());
@@ -1000,7 +970,10 @@ mod tests {
             .await;
 
         let result = issue_api
-            .get_comment(IssueIdOrKey::Key(issue_key.parse().unwrap()), comment_id)
+            .get_comment(GetCommentParams::new(
+                IssueIdOrKey::Key(issue_key.parse().unwrap()),
+                comment_id,
+            ))
             .await;
 
         assert!(result.is_err());
@@ -1024,7 +997,10 @@ mod tests {
             .await;
 
         let result = issue_api
-            .get_comment(IssueIdOrKey::Key(issue_key.parse().unwrap()), comment_id)
+            .get_comment(GetCommentParams::new(
+                IssueIdOrKey::Key(issue_key.parse().unwrap()),
+                comment_id,
+            ))
             .await;
 
         assert!(result.is_err());
@@ -1066,13 +1042,12 @@ mod tests {
             .await;
 
         let params = LinkSharedFilesToIssueParamsBuilder::default()
+            .issue_id_or_key(IssueIdOrKey::Key(issue_key.parse().unwrap()))
             .shared_file_ids(vec![SharedFileId::new(123), SharedFileId::new(456)])
             .build()
             .unwrap();
 
-        let result = issue_api
-            .link_shared_files_to_issue(IssueIdOrKey::Key(issue_key.parse().unwrap()), &params)
-            .await;
+        let result = issue_api.link_shared_files_to_issue(params).await;
 
         assert!(result.is_ok());
         let shared_files = result.unwrap();
@@ -1106,13 +1081,12 @@ mod tests {
             .await;
 
         let params = LinkSharedFilesToIssueParamsBuilder::default()
+            .issue_id_or_key(IssueIdOrKey::Key(issue_key.parse().unwrap()))
             .shared_file_ids(vec![SharedFileId::new(789)])
             .build()
             .unwrap();
 
-        let result = issue_api
-            .link_shared_files_to_issue(IssueIdOrKey::Key(issue_key.parse().unwrap()), &params)
-            .await;
+        let result = issue_api.link_shared_files_to_issue(params).await;
 
         assert!(result.is_ok());
         let shared_files = result.unwrap();
@@ -1146,13 +1120,12 @@ mod tests {
             .await;
 
         let params = LinkSharedFilesToIssueParamsBuilder::default()
+            .issue_id_or_key(IssueIdOrKey::Id(IssueId::new(issue_id as u32)))
             .shared_file_ids(vec![SharedFileId::new(999)])
             .build()
             .unwrap();
 
-        let result = issue_api
-            .link_shared_files_to_issue(IssueIdOrKey::Id(IssueId::new(issue_id as u32)), &params)
-            .await;
+        let result = issue_api.link_shared_files_to_issue(params).await;
 
         assert!(result.is_ok());
         let shared_files = result.unwrap();
@@ -1175,13 +1148,12 @@ mod tests {
             .await;
 
         let params = LinkSharedFilesToIssueParamsBuilder::default()
+            .issue_id_or_key(IssueIdOrKey::Key(issue_key.parse().unwrap()))
             .shared_file_ids(vec![SharedFileId::new(123)])
             .build()
             .unwrap();
 
-        let result = issue_api
-            .link_shared_files_to_issue(IssueIdOrKey::Key(issue_key.parse().unwrap()), &params)
-            .await;
+        let result = issue_api.link_shared_files_to_issue(params).await;
 
         assert!(result.is_err());
     }
@@ -1203,13 +1175,12 @@ mod tests {
             .await;
 
         let params = LinkSharedFilesToIssueParamsBuilder::default()
+            .issue_id_or_key(IssueIdOrKey::Key(issue_key.parse().unwrap()))
             .shared_file_ids(vec![SharedFileId::new(999999)])
             .build()
             .unwrap();
 
-        let result = issue_api
-            .link_shared_files_to_issue(IssueIdOrKey::Key(issue_key.parse().unwrap()), &params)
-            .await;
+        let result = issue_api.link_shared_files_to_issue(params).await;
 
         assert!(result.is_err());
     }

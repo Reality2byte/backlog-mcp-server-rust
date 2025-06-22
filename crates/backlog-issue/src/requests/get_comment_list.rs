@@ -1,5 +1,5 @@
-use backlog_api_core::Error as ApiError;
-use backlog_core::Error as CoreError;
+use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
+use backlog_core::{Error as CoreError, IssueIdOrKey};
 use derive_builder::Builder;
 use serde::Serialize;
 use std::{fmt, str::FromStr};
@@ -55,9 +55,12 @@ impl FromStr for CommentOrder {
 ///     .build()
 ///     .unwrap();
 /// ```
-#[derive(Debug, Clone, Default, Builder)]
-#[builder(default, setter(strip_option, into), build_fn(error = "ApiError"))]
+#[derive(Debug, Clone, Builder)]
+#[builder(setter(strip_option, into), build_fn(error = "ApiError"))]
 pub struct GetCommentListParams {
+    /// The issue ID or key to get comments from.
+    #[builder(setter(into))]
+    pub issue_id_or_key: IssueIdOrKey,
     /// The minimum comment ID to include in the results.
     #[builder(default)]
     min_id: Option<u64>,
@@ -70,6 +73,20 @@ pub struct GetCommentListParams {
     /// The sort order for the comments.
     #[builder(default)]
     order: Option<CommentOrder>,
+}
+
+impl IntoRequest for GetCommentListParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Get
+    }
+
+    fn path(&self) -> String {
+        format!("/api/v2/issues/{}/comments", self.issue_id_or_key)
+    }
+
+    fn to_query(&self) -> impl Serialize {
+        self.to_query_params()
+    }
 }
 
 impl GetCommentListParams {

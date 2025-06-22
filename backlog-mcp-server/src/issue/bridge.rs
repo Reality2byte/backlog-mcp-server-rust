@@ -109,13 +109,12 @@ pub(crate) async fn get_issue_comments_impl(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetIssueCommentsRequest,
 ) -> Result<Vec<Comment>> {
-    let parsed_issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
     let comment_params = GetCommentListParams::try_from(req)?;
 
     let client_guard = client.lock().await;
     let comments = client_guard
         .issue()
-        .get_comment_list(parsed_issue_id_or_key, Some(comment_params))
+        .get_comment_list(comment_params)
         .await?;
     Ok(comments)
 }
@@ -160,14 +159,10 @@ pub(crate) async fn add_comment_impl(
     client: Arc<Mutex<BacklogApiClient>>,
     req: AddCommentRequest,
 ) -> Result<Comment> {
-    let parsed_issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
     let add_comment_params = AddCommentParams::try_from(req)?;
 
     let client_guard = client.lock().await;
-    let comment = client_guard
-        .issue()
-        .add_comment(parsed_issue_id_or_key, &add_comment_params)
-        .await?;
+    let comment = client_guard.issue().add_comment(add_comment_params).await?;
     Ok(comment)
 }
 
