@@ -285,6 +285,8 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
+ "tokio",
+ "wiremock",
 ]
 
 [[package]]
@@ -356,6 +358,7 @@ dependencies = [
  "backlog-domain-models",
  "backlog-issue",
  "backlog-project",
+ "backlog-space",
  "backlog-user",
  "backlog-wiki",
  "clap",

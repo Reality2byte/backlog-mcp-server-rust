@@ -36,6 +36,7 @@ use backlog_project::requests::{
     DeleteIssueTypeParams, DeleteStatusParams, UpdateCategoryParams, UpdateIssueTypeParams,
     UpdateStatusOrderParams, UpdateStatusParams, UpdateVersionParams,
 };
+use backlog_space::GetSpaceLogoParams;
 use backlog_user::GetOwnUserParams;
 use backlog_user::GetUserIconParams;
 use backlog_user::GetUserListParams;
@@ -1868,9 +1869,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             SpaceCommands::Logo { output } => {
                 println!("Downloading space logo to {}", output.display());
 
-                match client.space().get_space_logo().await {
-                    Ok(logo_bytes) => {
-                        if let Err(e) = fs::write(&output, &logo_bytes).await {
+                match client
+                    .space()
+                    .get_space_logo(GetSpaceLogoParams::new())
+                    .await
+                {
+                    Ok(downloaded_file) => {
+                        if let Err(e) = fs::write(&output, &downloaded_file.bytes).await {
                             eprintln!("Error writing logo to {}: {}", output.display(), e);
                         } else {
                             println!(
