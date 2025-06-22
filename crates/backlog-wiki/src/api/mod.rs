@@ -12,7 +12,6 @@ use crate::{
 #[cfg(feature = "writable")]
 use crate::requests::UpdateWikiRequestParams;
 use backlog_api_core::Result;
-use backlog_core::identifier::Identifier;
 use client::Client;
 
 pub struct WikiApi(Client);
@@ -58,12 +57,7 @@ impl WikiApi {
         &self,
         params: DownloadWikiAttachmentParams,
     ) -> Result<client::DownloadedFile> {
-        let path = format!(
-            "/api/v2/wikis/{}/attachments/{}",
-            params.wiki_id.value(),
-            params.attachment_id.value()
-        );
-        self.0.download_file_raw(&path).await
+        self.0.download_file(params).await
     }
 
     /// Update wiki page using the new IntoRequest pattern

@@ -1,4 +1,4 @@
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::{HttpMethod, IntoDownloadRequest, IntoRequest};
 use backlog_core::ProjectIdOrKey;
 use backlog_core::identifier::ProjectId;
 use derive_builder::Builder;
@@ -166,5 +166,14 @@ impl IntoRequest for DownloadAttachmentParams {
 
     fn to_query(&self) -> impl Serialize {
         Vec::<(String, String)>::new()
+    }
+}
+
+impl IntoDownloadRequest for DownloadAttachmentParams {
+    fn path(&self) -> String {
+        format!(
+            "/api/v2/documents/{}/attachments/{}",
+            self.document_id, self.attachment_id
+        )
     }
 }

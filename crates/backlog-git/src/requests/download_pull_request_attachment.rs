@@ -1,4 +1,4 @@
-use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
+use backlog_api_core::{Error as ApiError, HttpMethod, IntoDownloadRequest, IntoRequest};
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
     identifier::{Identifier, PullRequestAttachmentId, PullRequestNumber},
@@ -43,6 +43,18 @@ impl IntoRequest for DownloadPullRequestAttachmentParams {
         HttpMethod::Get
     }
 
+    fn path(&self) -> String {
+        format!(
+            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",
+            self.project_id_or_key,
+            self.repo_id_or_name,
+            self.pr_number.value(),
+            self.attachment_id.value()
+        )
+    }
+}
+
+impl IntoDownloadRequest for DownloadPullRequestAttachmentParams {
     fn path(&self) -> String {
         format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",

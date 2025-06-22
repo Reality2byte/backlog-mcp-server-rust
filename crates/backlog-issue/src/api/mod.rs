@@ -1,5 +1,4 @@
 use backlog_api_core::Result;
-use backlog_core::{IssueIdOrKey, identifier::Identifier};
 use client::{Client, DownloadedFile};
 
 #[cfg(feature = "writable")]
@@ -14,8 +13,9 @@ use crate::responses::{
 };
 use crate::{
     requests::{
-        CountCommentParams, CountIssueParams, GetAttachmentListParams, GetCommentListParams,
-        GetCommentParams, GetIssueListParams, GetIssueParams, GetSharedFileListParams,
+        CountCommentParams, CountIssueParams, GetAttachmentFileParams, GetAttachmentListParams,
+        GetCommentListParams, GetCommentParams, GetIssueListParams, GetIssueParams,
+        GetSharedFileListParams,
     },
     responses::{
         CountCommentResponse, CountIssueResponse, GetAttachmentListResponse,
@@ -120,16 +120,9 @@ impl IssueApi {
     /// Get a specific attachment file by issue ID or key and attachment ID.
     pub async fn get_attachment_file(
         &self,
-        issue_id_or_key: impl Into<IssueIdOrKey>,
-        attachment_id: backlog_core::identifier::AttachmentId,
+        params: GetAttachmentFileParams,
     ) -> backlog_api_core::Result<DownloadedFile> {
-        let issue_id_or_key_str = issue_id_or_key.into().to_string();
-        let attachment_id_val = attachment_id.value();
-        let path = format!(
-            "/api/v2/issues/{}/attachments/{}",
-            issue_id_or_key_str, attachment_id_val
-        );
-        self.0.download_file_raw(&path).await
+        self.0.download_file(params).await
     }
 }
 
@@ -146,6 +139,7 @@ mod tests {
         },
     };
     use backlog_api_core::bytes::Bytes;
+    use backlog_core::IssueIdOrKey;
     use backlog_core::{
         IssueKey, User,
         identifier::{AttachmentId, CommentId, IssueId, ProjectId, SharedFileId, UserId},
@@ -674,9 +668,8 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let result = issue_api
-            .get_attachment_file(issue_id_or_key, attachment_id)
-            .await;
+        let params = GetAttachmentFileParams::new(issue_id_or_key, attachment_id);
+        let result = issue_api.get_attachment_file(params).await;
 
         assert!(result.is_ok());
         let downloaded_file = result.unwrap();
@@ -705,9 +698,8 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let result = issue_api
-            .get_attachment_file(issue_id_or_key, attachment_id)
-            .await;
+        let params = GetAttachmentFileParams::new(issue_id_or_key, attachment_id);
+        let result = issue_api.get_attachment_file(params).await;
         assert!(result.is_err());
         // Optionally, check for specific error type if ApiError exposes it well
         // e.g., matches!(result.unwrap_err(), backlog_api_core::Error::HttpStatus { status: reqwest::StatusCode::NOT_FOUND, .. })

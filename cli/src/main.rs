@@ -1436,11 +1436,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 let parsed_attachment_id = AttachmentId::new(dl_args.attachment_id);
 
-                match client
-                    .issue()
-                    .get_attachment_file(parsed_issue_id_or_key, parsed_attachment_id)
-                    .await
-                {
+                let params = backlog_issue::requests::GetAttachmentFileParams::new(
+                    parsed_issue_id_or_key,
+                    parsed_attachment_id,
+                );
+                match client.issue().get_attachment_file(params).await {
                     Ok(downloaded_file) => {
                         if let Err(e) = fs::write(&dl_args.output, &downloaded_file.bytes).await {
                             eprintln!(

@@ -25,7 +25,6 @@ use crate::{
     },
 };
 use backlog_api_core::Result;
-use backlog_core::identifier::Identifier;
 use client::{Client, DownloadedFile};
 
 /// Provides access to the Git and Pull Request related API functions.
@@ -141,14 +140,7 @@ impl GitApi {
         &self,
         params: DownloadPullRequestAttachmentParams,
     ) -> Result<DownloadedFile> {
-        let path = format!(
-            "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",
-            params.project_id_or_key,
-            params.repo_id_or_name,
-            params.pr_number.value(),
-            params.attachment_id.value()
-        );
-        self.client.download_file_raw(&path).await
+        self.client.download_file(params).await
     }
 
     /// Deletes an attachment from a pull request.

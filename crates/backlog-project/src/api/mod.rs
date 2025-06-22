@@ -4,8 +4,9 @@ use client::Client;
 
 use crate::requests::{
     GetCategoryListParams, GetIssueTypeListParams, GetPriorityListParams, GetProjectDetailParams,
-    GetProjectListParams, GetProjectListResponse, GetProjectResponse, GetResolutionListParams,
-    GetStatusListParams, GetVersionMilestoneListParams, GetVersionMilestoneListResponse,
+    GetProjectIconParams, GetProjectListParams, GetProjectListResponse, GetProjectResponse,
+    GetResolutionListParams, GetStatusListParams, GetVersionMilestoneListParams,
+    GetVersionMilestoneListResponse,
 };
 use backlog_domain_models::{Category, IssueType, Milestone, Priority, Resolution, Status};
 
@@ -85,8 +86,8 @@ impl ProjectApi {
         &self,
         project_id_or_key: impl Into<ProjectIdOrKey>,
     ) -> Result<Vec<u8>> {
-        let path = format!("/api/v2/projects/{}/image", project_id_or_key.into());
-        let downloaded_file = self.0.download_file_raw(&path).await?;
+        let params = GetProjectIconParams::new(project_id_or_key);
+        let downloaded_file = self.0.download_file(params).await?;
         Ok(downloaded_file.bytes.to_vec())
     }
 

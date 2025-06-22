@@ -4,7 +4,6 @@ use crate::requests::{
     DownloadAttachmentParams, GetDocumentParams, GetDocumentTreeParams, ListDocumentsParams,
 };
 use backlog_api_core::Result;
-use backlog_core::identifier::Identifier;
 use client::{Client, DownloadedFile};
 
 pub struct DocumentApi(Client);
@@ -41,12 +40,7 @@ impl DocumentApi {
         &self,
         params: DownloadAttachmentParams,
     ) -> Result<DownloadedFile> {
-        let path = format!(
-            "/api/v2/documents/{}/attachments/{}",
-            params.document_id.value(),
-            params.attachment_id.value()
-        );
-        self.0.download_file_raw(&path).await
+        self.0.download_file(params).await
     }
 }
 

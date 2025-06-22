@@ -142,11 +142,6 @@ impl Client {
             .await
     }
 
-    pub async fn download_file_raw(&self, path: &str) -> Result<DownloadedFile> {
-        let request = self.prepare_request(reqwest::Method::GET, path, &())?;
-        self.execute_unified(request, FileResponse).await
-    }
-
     /// Downloads a file using the IntoDownloadRequest trait
     pub async fn download_file<P>(&self, params: P) -> Result<DownloadedFile>
     where
@@ -213,38 +208,5 @@ impl Client {
         }
 
         response_handler.from_response(response).await
-    }
-
-    // Helper methods
-
-    fn prepare_request<P: serde::Serialize>(
-        &self,
-        method: reqwest::Method,
-        path: &str,
-        params: &P,
-    ) -> Result<reqwest::Request> {
-        let url = self.base_url.join(path)?;
-        let mut builder = self.client.request(method.clone(), url);
-        builder = builder.header("Accept", "application/json");
-        builder = match method {
-            reqwest::Method::GET => builder.query(params),
-            reqwest::Method::POST | reqwest::Method::PATCH | reqwest::Method::DELETE => {
-                builder.form(params)
-            }
-            _ => builder,
-        };
-
-        if let Some(token) = &self.auth_token {
-            builder = builder.bearer_auth(token);
-        }
-
-        let mut req = builder.build()?;
-
-        if let Some(key) = &self.api_key {
-            let url = req.url_mut();
-            url.query_pairs_mut().append_pair("apiKey", key);
-        }
-
-        Ok(req)
     }
 }

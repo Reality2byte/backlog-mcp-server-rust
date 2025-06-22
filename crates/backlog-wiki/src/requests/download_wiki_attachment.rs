@@ -1,4 +1,4 @@
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::{HttpMethod, IntoDownloadRequest, IntoRequest};
 use backlog_core::identifier::{Identifier, WikiAttachmentId, WikiId};
 use derive_builder::Builder;
 
@@ -29,6 +29,16 @@ impl IntoRequest for DownloadWikiAttachmentParams {
         HttpMethod::Get
     }
 
+    fn path(&self) -> String {
+        format!(
+            "/api/v2/wikis/{}/attachments/{}",
+            self.wiki_id.value(),
+            self.attachment_id.value()
+        )
+    }
+}
+
+impl IntoDownloadRequest for DownloadWikiAttachmentParams {
     fn path(&self) -> String {
         format!(
             "/api/v2/wikis/{}/attachments/{}",
