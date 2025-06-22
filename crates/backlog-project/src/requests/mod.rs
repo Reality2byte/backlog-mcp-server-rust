@@ -280,7 +280,10 @@ impl IntoRequest for UpdateCategoryParams {
     }
 
     fn path(&self) -> String {
-        format!("/api/v2/projects/{}/categories/{}", self.project_id_or_key, self.category_id)
+        format!(
+            "/api/v2/projects/{}/categories/{}",
+            self.project_id_or_key, self.category_id
+        )
     }
 
     fn to_form(&self) -> impl Serialize {
@@ -315,7 +318,10 @@ impl IntoRequest for DeleteCategoryParams {
     }
 
     fn path(&self) -> String {
-        format!("/api/v2/projects/{}/categories/{}", self.project_id_or_key, self.category_id)
+        format!(
+            "/api/v2/projects/{}/categories/{}",
+            self.project_id_or_key, self.category_id
+        )
     }
 }
 
@@ -424,7 +430,10 @@ impl IntoRequest for DeleteIssueTypeParams {
     }
 
     fn path(&self) -> String {
-        format!("/api/v2/projects/{}/issueTypes/{}", self.project_id_or_key, self.issue_type_id)
+        format!(
+            "/api/v2/projects/{}/issueTypes/{}",
+            self.project_id_or_key, self.issue_type_id
+        )
     }
 
     fn to_form(&self) -> impl Serialize {
@@ -495,7 +504,10 @@ impl IntoRequest for UpdateIssueTypeParams {
     }
 
     fn path(&self) -> String {
-        format!("/api/v2/projects/{}/issueTypes/{}", self.project_id_or_key, self.issue_type_id)
+        format!(
+            "/api/v2/projects/{}/issueTypes/{}",
+            self.project_id_or_key, self.issue_type_id
+        )
     }
 
     fn to_form(&self) -> impl Serialize {
