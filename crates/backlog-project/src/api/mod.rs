@@ -4,7 +4,11 @@ use backlog_core::ProjectIdOrKey;
 use backlog_core::identifier::CategoryId;
 use client::Client;
 
-use crate::requests::{GetProjectListResponse, GetProjectParams, GetProjectResponse};
+use crate::requests::{
+    GetCategoryListParams, GetIssueTypeListParams, GetPriorityListParams, GetProjectDetailParams,
+    GetProjectListParams, GetProjectListResponse, GetProjectResponse, GetResolutionListParams,
+    GetStatusListParams, GetVersionMilestoneListParams, GetVersionMilestoneListResponse,
+};
 use backlog_domain_models::{Category, IssueType, Milestone, Priority, Resolution, Status};
 
 pub struct ProjectApi(Client);
@@ -18,30 +22,21 @@ impl ProjectApi {
     /// Corresponds to `GET /api/v2/projects`.
     pub async fn get_project_list(
         &self,
-        params: GetProjectParams,
+        params: GetProjectListParams,
     ) -> Result<GetProjectListResponse> {
-        self.0.get_with_params("/api/v2/projects", &params).await
+        self.0.execute(params).await
     }
 
     /// Gets a project by its ID or key.
     /// Corresponds to `GET /api/v2/projects/:projectIdOrKey`.
-    pub async fn get_project(
-        &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-    ) -> Result<GetProjectResponse> {
-        self.0
-            .get(&format!("/api/v2/projects/{}", project_id_or_key.into()))
-            .await
+    pub async fn get_project(&self, params: GetProjectDetailParams) -> Result<GetProjectResponse> {
+        self.0.execute(params).await
     }
 
     /// Gets the list of statuses for a project.
     /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/statuses`.
-    pub async fn get_status_list(
-        &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-    ) -> Result<Vec<Status>> {
-        let path = format!("/api/v2/projects/{}/statuses", project_id_or_key.into());
-        self.0.get(&path).await
+    pub async fn get_status_list(&self, params: GetStatusListParams) -> Result<Vec<Status>> {
+        self.0.execute(params).await
     }
 
     /// Gets the list of issue types for a project.
@@ -49,10 +44,9 @@ impl ProjectApi {
     /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/issueTypes`.
     pub async fn get_issue_type_list(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
+        params: GetIssueTypeListParams,
     ) -> Result<Vec<IssueType>> {
-        let path = format!("/api/v2/projects/{}/issueTypes", project_id_or_key.into());
-        self.0.get(&path).await
+        self.0.execute(params).await
     }
 
     /// Gets the list of version milestones for a project.
@@ -60,41 +54,30 @@ impl ProjectApi {
     /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/versions`.
     pub async fn get_version_milestone_list(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
+        params: GetVersionMilestoneListParams,
     ) -> Result<GetVersionMilestoneListResponse> {
-        let project_id_or_key_val = project_id_or_key.into();
-        let project_id_or_key_str: String = project_id_or_key_val.to_string();
-        self.0
-            .get(&format!(
-                "/api/v2/projects/{}/versions",
-                project_id_or_key_str
-            ))
-            .await
+        self.0.execute(params).await
     }
 
     /// Gets the list of categories for a project.
     ///
     /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/categories`.
-    pub async fn get_category_list(
-        &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-    ) -> Result<Vec<Category>> {
-        let path = format!("/api/v2/projects/{}/categories", project_id_or_key.into());
-        self.0.get(&path).await
+    pub async fn get_category_list(&self, params: GetCategoryListParams) -> Result<Vec<Category>> {
+        self.0.execute(params).await
     }
 
     /// Gets the list of priorities.
     ///
     /// Corresponds to `GET /api/v2/priorities`.
     pub async fn get_priority_list(&self) -> Result<Vec<Priority>> {
-        self.0.get("/api/v2/priorities").await
+        self.0.execute(GetPriorityListParams).await
     }
 
     /// Gets the list of resolutions.
     ///
     /// Corresponds to `GET /api/v2/resolutions`.
     pub async fn get_resolution_list(&self) -> Result<Vec<Resolution>> {
-        self.0.get("/api/v2/resolutions").await
+        self.0.execute(GetResolutionListParams).await
     }
 
     /// Gets the project icon image data.
@@ -330,8 +313,6 @@ impl ProjectApi {
     }
 }
 
-type GetVersionMilestoneListResponse = Vec<Milestone>;
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -339,6 +320,7 @@ mod tests {
     use backlog_core::identifier::{
         CategoryId, IssueTypeId, MilestoneId, PriorityId, ProjectId, ResolutionId, StatusId,
     };
+    use backlog_domain_models::Milestone;
     use chrono::TimeZone;
     use client::test_utils::setup_client;
     use std::str::FromStr;
@@ -385,9 +367,8 @@ mod tests {
             .respond_with(ResponseTemplate::new(200).set_body_json(&expected_versions))
             .mount(&mock_server)
             .await;
-        let result = issue_api
-            .get_version_milestone_list(project_id_or_key.clone())
-            .await;
+        let params = GetVersionMilestoneListParams::new(project_id_or_key.clone());
+        let result = issue_api.get_version_milestone_list(params).await;
         assert!(result.is_ok());
         let versions = result.unwrap();
         assert_eq!(versions.len(), 2);
@@ -409,9 +390,8 @@ mod tests {
             .respond_with(ResponseTemplate::new(500))
             .mount(&mock_server)
             .await;
-        let result = issue_api
-            .get_version_milestone_list(project_id_or_key.clone())
-            .await;
+        let params = GetVersionMilestoneListParams::new(project_id_or_key.clone());
+        let result = issue_api.get_version_milestone_list(params).await;
         assert!(result.is_err());
     }
 
@@ -445,7 +425,8 @@ mod tests {
             .mount(&server)
             .await;
 
-        let result = project_api.get_status_list(project_id).await;
+        let params = GetStatusListParams::new(project_id);
+        let result = project_api.get_status_list(params).await;
         assert!(result.is_ok());
         let statuses = result.unwrap();
         assert_eq!(statuses.len(), 2);
@@ -469,7 +450,9 @@ mod tests {
             .await;
 
         let result = project_api
-            .get_status_list(ProjectIdOrKey::from_str(project_key).unwrap())
+            .get_status_list(GetStatusListParams::new(
+                ProjectIdOrKey::from_str(project_key).unwrap(),
+            ))
             .await;
         assert!(result.is_ok());
         assert!(result.unwrap().is_empty());
@@ -500,7 +483,7 @@ mod tests {
             .await;
 
         let result = project_api
-            .get_status_list(ProjectId::new(project_id))
+            .get_status_list(GetStatusListParams::new(ProjectId::new(project_id)))
             .await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
@@ -549,7 +532,8 @@ mod tests {
             .mount(&server)
             .await;
 
-        let result = project_api.get_issue_type_list(project_id).await;
+        let params = GetIssueTypeListParams::new(project_id);
+        let result = project_api.get_issue_type_list(params).await;
         assert!(result.is_ok(), "Result was: {:?}", result);
         let issue_types = result.unwrap();
         assert_eq!(issue_types.len(), 2);
@@ -573,7 +557,9 @@ mod tests {
             .await;
 
         let result = project_api
-            .get_issue_type_list(ProjectIdOrKey::from_str(project_key).unwrap())
+            .get_issue_type_list(GetIssueTypeListParams::new(
+                ProjectIdOrKey::from_str(project_key).unwrap(),
+            ))
             .await;
         assert!(result.is_ok());
         assert!(result.unwrap().is_empty());
@@ -603,7 +589,7 @@ mod tests {
             .await;
 
         let result = project_api
-            .get_issue_type_list(ProjectId::new(project_id))
+            .get_issue_type_list(GetIssueTypeListParams::new(ProjectId::new(project_id)))
             .await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
@@ -642,7 +628,8 @@ mod tests {
             .mount(&server)
             .await;
 
-        let result = project_api.get_category_list(project_id).await;
+        let params = GetCategoryListParams::new(project_id);
+        let result = project_api.get_category_list(params).await;
         assert!(result.is_ok());
         let categories = result.unwrap();
         assert_eq!(categories.len(), 2);
@@ -666,7 +653,9 @@ mod tests {
             .await;
 
         let result = project_api
-            .get_category_list(ProjectIdOrKey::from_str(project_key).unwrap())
+            .get_category_list(GetCategoryListParams::new(
+                ProjectIdOrKey::from_str(project_key).unwrap(),
+            ))
             .await;
         assert!(result.is_ok());
         assert!(result.unwrap().is_empty());
@@ -696,7 +685,7 @@ mod tests {
             .await;
 
         let result = project_api
-            .get_category_list(ProjectId::new(project_id))
+            .get_category_list(GetCategoryListParams::new(ProjectId::new(project_id)))
             .await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {

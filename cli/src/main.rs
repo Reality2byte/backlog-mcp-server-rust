@@ -29,7 +29,7 @@ use backlog_core::{
 use backlog_domain_models::{IssueTypeColor, StatusColor};
 #[cfg(feature = "issue_writable")]
 use backlog_issue::requests::{AddIssueParamsBuilder, UpdateIssueParamsBuilder};
-use backlog_project::requests::GetProjectParams;
+use backlog_project::requests::GetProjectListParams;
 #[cfg(feature = "project_writable")]
 use backlog_project::requests::{
     AddCategoryParams, AddIssueTypeParams, AddStatusParams, AddVersionParams,
@@ -1897,7 +1897,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             ProjectCommands::List => {
                 println!("Listing all projects");
 
-                let params = GetProjectParams {
+                let params = GetProjectListParams {
                     archived: None,
                     all: true,
                 };
@@ -1928,7 +1928,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Showing project: {}", project_id_or_key);
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
-                match client.project().get_project(proj_id_or_key).await {
+                let params = backlog_project::GetProjectDetailParams::new(proj_id_or_key);
+                match client.project().get_project(params).await {
                     Ok(project) => {
                         println!("Project ID: {}", project.id);
                         println!("Project Key: {}", project.project_key);
@@ -1960,7 +1961,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Listing statuses for project: {}", project_id_or_key);
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
-                match client.project().get_status_list(proj_id_or_key).await {
+                let params = backlog_project::GetStatusListParams::new(proj_id_or_key);
+                match client.project().get_status_list(params).await {
                     Ok(statuses) => {
                         if statuses.is_empty() {
                             println!("No statuses found");
@@ -1984,7 +1986,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 match client
                     .project()
-                    .get_version_milestone_list(proj_id_or_key)
+                    .get_version_milestone_list(
+                        backlog_project::GetVersionMilestoneListParams::new(proj_id_or_key),
+                    )
                     .await
                 {
                     Ok(milestones) => {
@@ -2020,7 +2024,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Listing issue types for project: {}", project_id_or_key);
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
-                match client.project().get_issue_type_list(proj_id_or_key).await {
+                let params = backlog_project::GetIssueTypeListParams::new(proj_id_or_key);
+                match client.project().get_issue_type_list(params).await {
                     Ok(issue_types) => {
                         if issue_types.is_empty() {
                             println!("No issue types found");
@@ -2042,7 +2047,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Listing categories for project: {}", project_id_or_key);
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
-                match client.project().get_category_list(proj_id_or_key).await {
+                let params = backlog_project::GetCategoryListParams::new(proj_id_or_key);
+                match client.project().get_category_list(params).await {
                     Ok(categories) => {
                         if categories.is_empty() {
                             println!("No categories found");

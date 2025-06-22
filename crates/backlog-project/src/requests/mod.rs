@@ -1,12 +1,207 @@
 use crate::models::Project;
+use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_core::ProjectIdOrKey;
+use serde::Serialize;
 
 pub type GetProjectListResponse = Vec<Project>;
 pub type GetProjectResponse = Project;
+pub type GetVersionMilestoneListResponse = Vec<backlog_domain_models::Milestone>;
 
+// GET /api/v2/projects/:projectIdOrKey
+#[derive(Debug, Clone, PartialEq)]
+pub struct GetProjectDetailParams {
+    pub project_id_or_key: ProjectIdOrKey,
+}
+
+impl GetProjectDetailParams {
+    pub fn new(project_id_or_key: impl Into<ProjectIdOrKey>) -> Self {
+        Self {
+            project_id_or_key: project_id_or_key.into(),
+        }
+    }
+}
+
+impl IntoRequest for GetProjectDetailParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Get
+    }
+
+    fn path(&self) -> String {
+        format!("/api/v2/projects/{}", self.project_id_or_key)
+    }
+
+    fn to_query(&self) -> impl Serialize {
+        Vec::<(String, String)>::new()
+    }
+}
+
+// GET /api/v2/projects
 #[derive(serde::Serialize, Debug, Default)]
-pub struct GetProjectParams {
+pub struct GetProjectListParams {
     pub archived: Option<bool>,
     pub all: bool,
+}
+
+impl IntoRequest for GetProjectListParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Get
+    }
+
+    fn path(&self) -> String {
+        "/api/v2/projects".to_string()
+    }
+
+    fn to_query(&self) -> impl Serialize {
+        self
+    }
+}
+
+// GET /api/v2/projects/:projectIdOrKey/statuses
+#[derive(Debug, Clone, PartialEq)]
+pub struct GetStatusListParams {
+    pub project_id_or_key: ProjectIdOrKey,
+}
+
+impl GetStatusListParams {
+    pub fn new(project_id_or_key: impl Into<ProjectIdOrKey>) -> Self {
+        Self {
+            project_id_or_key: project_id_or_key.into(),
+        }
+    }
+}
+
+impl IntoRequest for GetStatusListParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Get
+    }
+
+    fn path(&self) -> String {
+        format!("/api/v2/projects/{}/statuses", self.project_id_or_key)
+    }
+
+    fn to_query(&self) -> impl Serialize {
+        Vec::<(String, String)>::new()
+    }
+}
+
+// GET /api/v2/projects/:projectIdOrKey/issueTypes
+#[derive(Debug, Clone, PartialEq)]
+pub struct GetIssueTypeListParams {
+    pub project_id_or_key: ProjectIdOrKey,
+}
+
+impl GetIssueTypeListParams {
+    pub fn new(project_id_or_key: impl Into<ProjectIdOrKey>) -> Self {
+        Self {
+            project_id_or_key: project_id_or_key.into(),
+        }
+    }
+}
+
+impl IntoRequest for GetIssueTypeListParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Get
+    }
+
+    fn path(&self) -> String {
+        format!("/api/v2/projects/{}/issueTypes", self.project_id_or_key)
+    }
+
+    fn to_query(&self) -> impl Serialize {
+        Vec::<(String, String)>::new()
+    }
+}
+
+// GET /api/v2/projects/:projectIdOrKey/versions
+#[derive(Debug, Clone, PartialEq)]
+pub struct GetVersionMilestoneListParams {
+    pub project_id_or_key: ProjectIdOrKey,
+}
+
+impl GetVersionMilestoneListParams {
+    pub fn new(project_id_or_key: impl Into<ProjectIdOrKey>) -> Self {
+        Self {
+            project_id_or_key: project_id_or_key.into(),
+        }
+    }
+}
+
+impl IntoRequest for GetVersionMilestoneListParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Get
+    }
+
+    fn path(&self) -> String {
+        format!("/api/v2/projects/{}/versions", self.project_id_or_key)
+    }
+
+    fn to_query(&self) -> impl Serialize {
+        Vec::<(String, String)>::new()
+    }
+}
+
+// GET /api/v2/projects/:projectIdOrKey/categories
+#[derive(Debug, Clone, PartialEq)]
+pub struct GetCategoryListParams {
+    pub project_id_or_key: ProjectIdOrKey,
+}
+
+impl GetCategoryListParams {
+    pub fn new(project_id_or_key: impl Into<ProjectIdOrKey>) -> Self {
+        Self {
+            project_id_or_key: project_id_or_key.into(),
+        }
+    }
+}
+
+impl IntoRequest for GetCategoryListParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Get
+    }
+
+    fn path(&self) -> String {
+        format!("/api/v2/projects/{}/categories", self.project_id_or_key)
+    }
+
+    fn to_query(&self) -> impl Serialize {
+        Vec::<(String, String)>::new()
+    }
+}
+
+// GET /api/v2/priorities
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct GetPriorityListParams;
+
+impl IntoRequest for GetPriorityListParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Get
+    }
+
+    fn path(&self) -> String {
+        "/api/v2/priorities".to_string()
+    }
+
+    fn to_query(&self) -> impl Serialize {
+        Vec::<(String, String)>::new()
+    }
+}
+
+// GET /api/v2/resolutions
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct GetResolutionListParams;
+
+impl IntoRequest for GetResolutionListParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Get
+    }
+
+    fn path(&self) -> String {
+        "/api/v2/resolutions".to_string()
+    }
+
+    fn to_query(&self) -> impl Serialize {
+        Vec::<(String, String)>::new()
+    }
 }
 
 #[cfg(feature = "writable")]

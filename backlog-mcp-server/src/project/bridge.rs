@@ -17,6 +17,7 @@ pub(crate) async fn get_project_status_list_tool(
 
     let client_guard = client.lock().await;
     // This will use From<ApiError> for Error if the API call fails.
-    let statuses = client_guard.project().get_status_list(project_id).await?;
+    let params = backlog_project::GetStatusListParams::new(project_id);
+    let statuses = client_guard.project().get_status_list(params).await?;
     Ok(statuses)
 }
