@@ -33,8 +33,8 @@ use backlog_project::requests::GetProjectListParams;
 #[cfg(feature = "project_writable")]
 use backlog_project::requests::{
     AddCategoryParams, AddIssueTypeParams, AddStatusParams, AddVersionParams, DeleteCategoryParams,
-    DeleteIssueTypeParams, DeleteStatusParams, UpdateCategoryParams, UpdateIssueTypeParams,
-    UpdateStatusOrderParams, UpdateStatusParams, UpdateVersionParams,
+    DeleteIssueTypeParams, DeleteStatusParams, DeleteVersionParams, UpdateCategoryParams,
+    UpdateIssueTypeParams, UpdateStatusOrderParams, UpdateStatusParams, UpdateVersionParams,
 };
 use backlog_space::GetSpaceLogoParams;
 use backlog_user::GetOwnUserParams;
@@ -2318,14 +2318,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
-                let params = AddVersionParams {
-                    name: name.clone(),
-                    description: description.clone(),
-                    start_date: start_date.clone(),
-                    release_due_date: release_due_date.clone(),
-                };
+                let mut params = AddVersionParams::new(proj_id_or_key, &name);
+                params.description = description.clone();
+                params.start_date = start_date.clone();
+                params.release_due_date = release_due_date.clone();
 
-                match client.project().add_version(proj_id_or_key, &params).await {
+                match client.project().add_version(params).await {
                     Ok(milestone) => {
                         println!("Version/milestone added successfully:");
                         println!("[{}] {}", milestone.id, milestone.name);
@@ -2368,19 +2366,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let version_id_val = MilestoneId::new(version_id);
-                let params = UpdateVersionParams {
-                    name: name.clone(),
-                    description: description.clone(),
-                    start_date: start_date.clone(),
-                    release_due_date: release_due_date.clone(),
-                    archived,
-                };
+                let mut params = UpdateVersionParams::new(proj_id_or_key, version_id_val, &name);
+                params.description = description.clone();
+                params.start_date = start_date.clone();
+                params.release_due_date = release_due_date.clone();
+                params.archived = archived;
 
-                match client
-                    .project()
-                    .update_version(proj_id_or_key, version_id_val, &params)
-                    .await
-                {
+                match client.project().update_version(params).await {
                     Ok(milestone) => {
                         println!("Version/milestone updated successfully:");
                         println!("[{}] {}", milestone.id, milestone.name);
@@ -2418,12 +2410,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let version_id_val = MilestoneId::new(version_id);
+                let params = DeleteVersionParams::new(proj_id_or_key, version_id_val);
 
-                match client
-                    .project()
-                    .delete_version(proj_id_or_key, version_id_val)
-                    .await
-                {
+                match client.project().delete_version(params).await {
                     Ok(milestone) => {
                         println!("Version/milestone deleted successfully:");
                         println!("[{}] {}", milestone.id, milestone.name);
@@ -2460,12 +2449,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let parsed_color = StatusColor::from_str(&color)?;
 
-                let params = AddStatusParams {
-                    name: name.clone(),
-                    color: parsed_color,
-                };
+                let params = AddStatusParams::new(proj_id_or_key, &name, parsed_color);
 
-                match client.project().add_status(proj_id_or_key, &params).await {
+                match client.project().add_status(params).await {
                     Ok(status) => {
                         println!("✅ Status added successfully:");
                         println!("ID: {}", status.id);

@@ -14,6 +14,7 @@ pub use requests::{
 // Re-export request structs for writable features
 #[cfg(feature = "writable")]
 pub use requests::{
-    AddCategoryParams, AddIssueTypeParams, DeleteCategoryParams, DeleteIssueTypeParams,
-    UpdateCategoryParams, UpdateIssueTypeParams,
+    AddCategoryParams, AddIssueTypeParams, AddStatusParams, AddVersionParams, DeleteCategoryParams,
+    DeleteIssueTypeParams, DeleteVersionParams, UpdateCategoryParams, UpdateIssueTypeParams,
+    UpdateVersionParams,
 };

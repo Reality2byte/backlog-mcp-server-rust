@@ -518,6 +518,7 @@ impl IntoRequest for UpdateIssueTypeParams {
 #[cfg(feature = "writable")]
 #[derive(Debug, Clone)]
 pub struct AddVersionParams {
+    pub project_id_or_key: ProjectIdOrKey,
     pub name: String,
     pub description: Option<String>,
     pub start_date: Option<String>,
@@ -525,10 +526,22 @@ pub struct AddVersionParams {
 }
 
 #[cfg(feature = "writable")]
+impl AddVersionParams {
+    pub fn new(project_id_or_key: impl Into<ProjectIdOrKey>, name: impl Into<String>) -> Self {
+        Self {
+            project_id_or_key: project_id_or_key.into(),
+            name: name.into(),
+            description: None,
+            start_date: None,
+            release_due_date: None,
+        }
+    }
+}
+
+#[cfg(feature = "writable")]
 impl From<&AddVersionParams> for Vec<(String, String)> {
     fn from(params: &AddVersionParams) -> Self {
-        let mut seq = Vec::new();
-        seq.push(("name".to_string(), params.name.clone()));
+        let mut seq = vec![("name".to_string(), params.name.clone())];
 
         if let Some(description) = &params.description {
             seq.push(("description".to_string(), description.clone()));
@@ -547,8 +560,25 @@ impl From<&AddVersionParams> for Vec<(String, String)> {
 }
 
 #[cfg(feature = "writable")]
+impl IntoRequest for AddVersionParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Post
+    }
+
+    fn path(&self) -> String {
+        format!("/api/v2/projects/{}/versions", self.project_id_or_key)
+    }
+
+    fn to_form(&self) -> impl Serialize {
+        Vec::<(String, String)>::from(self)
+    }
+}
+
+#[cfg(feature = "writable")]
 #[derive(Debug, Clone)]
 pub struct UpdateVersionParams {
+    pub project_id_or_key: ProjectIdOrKey,
+    pub version_id: backlog_core::identifier::MilestoneId,
     pub name: String,
     pub description: Option<String>,
     pub start_date: Option<String>,
@@ -557,10 +587,28 @@ pub struct UpdateVersionParams {
 }
 
 #[cfg(feature = "writable")]
+impl UpdateVersionParams {
+    pub fn new(
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        version_id: impl Into<backlog_core::identifier::MilestoneId>,
+        name: impl Into<String>,
+    ) -> Self {
+        Self {
+            project_id_or_key: project_id_or_key.into(),
+            version_id: version_id.into(),
+            name: name.into(),
+            description: None,
+            start_date: None,
+            release_due_date: None,
+            archived: None,
+        }
+    }
+}
+
+#[cfg(feature = "writable")]
 impl From<&UpdateVersionParams> for Vec<(String, String)> {
     fn from(params: &UpdateVersionParams) -> Self {
-        let mut seq = Vec::new();
-        seq.push(("name".to_string(), params.name.clone()));
+        let mut seq = vec![("name".to_string(), params.name.clone())];
 
         if let Some(description) = &params.description {
             seq.push(("description".to_string(), description.clone()));
@@ -583,10 +631,78 @@ impl From<&UpdateVersionParams> for Vec<(String, String)> {
 }
 
 #[cfg(feature = "writable")]
+impl IntoRequest for UpdateVersionParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Patch
+    }
+
+    fn path(&self) -> String {
+        format!(
+            "/api/v2/projects/{}/versions/{}",
+            self.project_id_or_key, self.version_id
+        )
+    }
+
+    fn to_form(&self) -> impl Serialize {
+        Vec::<(String, String)>::from(self)
+    }
+}
+
+#[cfg(feature = "writable")]
+#[derive(Debug, Clone)]
+pub struct DeleteVersionParams {
+    pub project_id_or_key: ProjectIdOrKey,
+    pub version_id: backlog_core::identifier::MilestoneId,
+}
+
+#[cfg(feature = "writable")]
+impl DeleteVersionParams {
+    pub fn new(
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        version_id: impl Into<backlog_core::identifier::MilestoneId>,
+    ) -> Self {
+        Self {
+            project_id_or_key: project_id_or_key.into(),
+            version_id: version_id.into(),
+        }
+    }
+}
+
+#[cfg(feature = "writable")]
+impl IntoRequest for DeleteVersionParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Delete
+    }
+
+    fn path(&self) -> String {
+        format!(
+            "/api/v2/projects/{}/versions/{}",
+            self.project_id_or_key, self.version_id
+        )
+    }
+}
+
+#[cfg(feature = "writable")]
 #[derive(Debug, Clone)]
 pub struct AddStatusParams {
+    pub project_id_or_key: ProjectIdOrKey,
     pub name: String,
     pub color: backlog_domain_models::StatusColor,
+}
+
+#[cfg(feature = "writable")]
+impl AddStatusParams {
+    pub fn new(
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        name: impl Into<String>,
+        color: backlog_domain_models::StatusColor,
+    ) -> Self {
+        Self {
+            project_id_or_key: project_id_or_key.into(),
+            name: name.into(),
+            color,
+        }
+    }
 }
 
 #[cfg(feature = "writable")]
@@ -596,6 +712,21 @@ impl From<&AddStatusParams> for Vec<(String, String)> {
             ("name".to_string(), params.name.clone()),
             ("color".to_string(), params.color.as_hex().to_string()),
         ]
+    }
+}
+
+#[cfg(feature = "writable")]
+impl IntoRequest for AddStatusParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Post
+    }
+
+    fn path(&self) -> String {
+        format!("/api/v2/projects/{}/statuses", self.project_id_or_key)
+    }
+
+    fn to_form(&self) -> impl Serialize {
+        Vec::<(String, String)>::from(self)
     }
 }
 

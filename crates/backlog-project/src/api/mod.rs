@@ -161,12 +161,9 @@ impl ProjectApi {
     #[cfg(feature = "writable")]
     pub async fn add_version(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        params: &crate::requests::AddVersionParams,
+        params: crate::requests::AddVersionParams,
     ) -> Result<Milestone> {
-        let path = format!("/api/v2/projects/{}/versions", project_id_or_key.into());
-        let params_vec: Vec<(String, String)> = params.into();
-        self.0.post(&path, &params_vec).await
+        self.0.execute(params).await
     }
 
     /// Updates a version/milestone in a project.
@@ -175,17 +172,9 @@ impl ProjectApi {
     #[cfg(feature = "writable")]
     pub async fn update_version(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        version_id: impl Into<backlog_core::identifier::MilestoneId>,
-        params: &crate::requests::UpdateVersionParams,
+        params: crate::requests::UpdateVersionParams,
     ) -> Result<Milestone> {
-        let path = format!(
-            "/api/v2/projects/{}/versions/{}",
-            project_id_or_key.into(),
-            version_id.into()
-        );
-        let params_vec: Vec<(String, String)> = params.into();
-        self.0.patch(&path, &params_vec).await
+        self.0.execute(params).await
     }
 
     /// Deletes a version/milestone from a project.
@@ -194,29 +183,17 @@ impl ProjectApi {
     #[cfg(feature = "writable")]
     pub async fn delete_version(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        version_id: impl Into<backlog_core::identifier::MilestoneId>,
+        params: crate::requests::DeleteVersionParams,
     ) -> Result<Milestone> {
-        let path = format!(
-            "/api/v2/projects/{}/versions/{}",
-            project_id_or_key.into(),
-            version_id.into()
-        );
-        self.0.delete(&path).await
+        self.0.execute(params).await
     }
 
     /// Adds a status to a project.
     ///
     /// Corresponds to `POST /api/v2/projects/:projectIdOrKey/statuses`.
     #[cfg(feature = "writable")]
-    pub async fn add_status(
-        &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        params: &crate::requests::AddStatusParams,
-    ) -> Result<Status> {
-        let path = format!("/api/v2/projects/{}/statuses", project_id_or_key.into());
-        let params_vec: Vec<(String, String)> = params.into();
-        self.0.post(&path, &params_vec).await
+    pub async fn add_status(&self, params: crate::requests::AddStatusParams) -> Result<Status> {
+        self.0.execute(params).await
     }
 
     /// Updates a status in a project.
@@ -1696,13 +1673,11 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::AddVersionParams {
-            name: "Version 1.0".to_string(),
-            description: Some("Initial release".to_string()),
-            start_date: Some("2023-01-01".to_string()),
-            release_due_date: Some("2023-01-31".to_string()),
-        };
-        let result = project_api.add_version(project_id, &params).await;
+        let mut params = crate::requests::AddVersionParams::new(project_id, "Version 1.0");
+        params.description = Some("Initial release".to_string());
+        params.start_date = Some("2023-01-01".to_string());
+        params.release_due_date = Some("2023-01-31".to_string());
+        let result = project_api.add_version(params).await;
         assert!(result.is_ok());
         let milestone = result.unwrap();
         assert_eq!(milestone.name, "Version 1.0");
@@ -1735,15 +1710,11 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::AddVersionParams {
-            name: "Simple Version".to_string(),
-            description: None,
-            start_date: None,
-            release_due_date: None,
-        };
-        let result = project_api
-            .add_version(ProjectIdOrKey::from_str(project_key).unwrap(), &params)
-            .await;
+        let params = crate::requests::AddVersionParams::new(
+            ProjectIdOrKey::from_str(project_key).unwrap(),
+            "Simple Version",
+        );
+        let result = project_api.add_version(params).await;
         assert!(result.is_ok());
         let milestone = result.unwrap();
         assert_eq!(milestone.name, "Simple Version");
@@ -1776,15 +1747,11 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::AddVersionParams {
-            name: "Existing Version".to_string(),
-            description: None,
-            start_date: None,
-            release_due_date: None,
-        };
-        let result = project_api
-            .add_version(ProjectIdOrKey::from_str(project_key).unwrap(), &params)
-            .await;
+        let params = crate::requests::AddVersionParams::new(
+            ProjectIdOrKey::from_str(project_key).unwrap(),
+            "Existing Version",
+        );
+        let result = project_api.add_version(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 400);
@@ -1818,13 +1785,9 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::AddVersionParams {
-            name: "New Version".to_string(),
-            description: Some("Description".to_string()),
-            start_date: None,
-            release_due_date: None,
-        };
-        let result = project_api.add_version(project_id, &params).await;
+        let mut params = crate::requests::AddVersionParams::new(project_id, "New Version");
+        params.description = Some("Description".to_string());
+        let result = project_api.add_version(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
@@ -1860,17 +1823,14 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateVersionParams {
-            name: "Updated Version".to_string(),
-            description: Some("Updated description".to_string()),
-            start_date: Some("2025-01-01".to_string()),
-            release_due_date: Some("2025-01-31".to_string()),
-            archived: Some(true),
-        };
+        let mut params =
+            crate::requests::UpdateVersionParams::new(project_id, version_id, "Updated Version");
+        params.description = Some("Updated description".to_string());
+        params.start_date = Some("2025-01-01".to_string());
+        params.release_due_date = Some("2025-01-31".to_string());
+        params.archived = Some(true);
 
-        let result = project_api
-            .update_version(project_id, version_id, &params)
-            .await;
+        let result = project_api.update_version(params).await;
         assert!(result.is_ok(), "Result was: {:?}", result);
         let milestone = result.unwrap();
         assert_eq!(milestone.id, version_id);
@@ -1910,21 +1870,13 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateVersionParams {
-            name: "Name Only Update".to_string(),
-            description: None,
-            start_date: None,
-            release_due_date: None,
-            archived: None,
-        };
+        let params = crate::requests::UpdateVersionParams::new(
+            ProjectIdOrKey::from_str(project_key).unwrap(),
+            version_id,
+            "Name Only Update",
+        );
 
-        let result = project_api
-            .update_version(
-                ProjectIdOrKey::from_str(project_key).unwrap(),
-                version_id,
-                &params,
-            )
-            .await;
+        let result = project_api.update_version(params).await;
         assert!(result.is_ok());
         let milestone = result.unwrap();
         assert_eq!(milestone.name, "Name Only Update");
@@ -1960,17 +1912,12 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateVersionParams {
-            name: "Archived Version".to_string(),
-            description: Some("This version is now archived".to_string()),
-            start_date: None,
-            release_due_date: None,
-            archived: Some(true),
-        };
+        let mut params =
+            crate::requests::UpdateVersionParams::new(project_id, version_id, "Archived Version");
+        params.description = Some("This version is now archived".to_string());
+        params.archived = Some(true);
 
-        let result = project_api
-            .update_version(project_id, version_id, &params)
-            .await;
+        let result = project_api.update_version(params).await;
         assert!(result.is_ok());
         let milestone = result.unwrap();
         assert_eq!(milestone.name, "Archived Version");
@@ -2002,17 +1949,13 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateVersionParams {
-            name: "Non-existent Version".to_string(),
-            description: None,
-            start_date: None,
-            release_due_date: None,
-            archived: None,
-        };
+        let params = crate::requests::UpdateVersionParams::new(
+            project_id,
+            version_id,
+            "Non-existent Version",
+        );
 
-        let result = project_api
-            .update_version(project_id, version_id, &params)
-            .await;
+        let result = project_api.update_version(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
@@ -2047,17 +1990,10 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateVersionParams {
-            name: "Test Version".to_string(),
-            description: None,
-            start_date: None,
-            release_due_date: None,
-            archived: None,
-        };
+        let params =
+            crate::requests::UpdateVersionParams::new(project_id, version_id, "Test Version");
 
-        let result = project_api
-            .update_version(project_id, version_id, &params)
-            .await;
+        let result = project_api.update_version(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
@@ -2093,7 +2029,8 @@ mod tests {
             .mount(&server)
             .await;
 
-        let result = project_api.delete_version(project_id, version_id).await;
+        let params = crate::requests::DeleteVersionParams::new(project_id, version_id);
+        let result = project_api.delete_version(params).await;
         assert!(result.is_ok());
         let milestone = result.unwrap();
         assert_eq!(milestone.name, "Version 1.0");
@@ -2127,9 +2064,11 @@ mod tests {
             .mount(&server)
             .await;
 
-        let result = project_api
-            .delete_version(ProjectIdOrKey::from_str(project_key).unwrap(), version_id)
-            .await;
+        let params = crate::requests::DeleteVersionParams::new(
+            ProjectIdOrKey::from_str(project_key).unwrap(),
+            version_id,
+        );
+        let result = project_api.delete_version(params).await;
         assert!(result.is_ok());
         let milestone = result.unwrap();
         assert_eq!(milestone.name, "Version 2.0");
@@ -2162,7 +2101,8 @@ mod tests {
             .mount(&server)
             .await;
 
-        let result = project_api.delete_version(project_id, version_id).await;
+        let params = crate::requests::DeleteVersionParams::new(project_id, version_id);
+        let result = project_api.delete_version(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
@@ -2197,7 +2137,8 @@ mod tests {
             .mount(&server)
             .await;
 
-        let result = project_api.delete_version(project_id, version_id).await;
+        let params = crate::requests::DeleteVersionParams::new(project_id, version_id);
+        let result = project_api.delete_version(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
@@ -2229,11 +2170,12 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::AddStatusParams {
-            name: "レビュー待ち".to_string(),
-            color: backlog_domain_models::StatusColor::Coral,
-        };
-        let result = project_api.add_status(project_id, &params).await;
+        let params = crate::requests::AddStatusParams::new(
+            project_id,
+            "レビュー待ち",
+            backlog_domain_models::StatusColor::Coral,
+        );
+        let result = project_api.add_status(params).await;
         assert!(result.is_ok());
         let status = result.unwrap();
         assert_eq!(status.name, "レビュー待ち");
@@ -2265,13 +2207,12 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::AddStatusParams {
-            name: "処理中".to_string(),
-            color: backlog_domain_models::StatusColor::Blue,
-        };
-        let result = project_api
-            .add_status(ProjectIdOrKey::from_str(project_key).unwrap(), &params)
-            .await;
+        let params = crate::requests::AddStatusParams::new(
+            ProjectIdOrKey::from_str(project_key).unwrap(),
+            "処理中",
+            backlog_domain_models::StatusColor::Blue,
+        );
+        let result = project_api.add_status(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 400);
@@ -2305,12 +2246,13 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::AddStatusParams {
-            name: "テスト状態".to_string(),
-            color: backlog_domain_models::StatusColor::Green,
-        };
+        let params = crate::requests::AddStatusParams::new(
+            project_id,
+            "テスト状態",
+            backlog_domain_models::StatusColor::Green,
+        );
 
-        let result = project_api.add_status(project_id, &params).await;
+        let result = project_api.add_status(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
@@ -2344,12 +2286,13 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::AddStatusParams {
-            name: "追加状態".to_string(),
-            color: backlog_domain_models::StatusColor::Orange,
-        };
+        let params = crate::requests::AddStatusParams::new(
+            project_id,
+            "追加状態",
+            backlog_domain_models::StatusColor::Orange,
+        );
 
-        let result = project_api.add_status(project_id, &params).await;
+        let result = project_api.add_status(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 400);
