@@ -32,4 +32,3 @@ impl IntoRequest for GetProjectDetailParams {
         Vec::<(String, String)>::new()
     }
 }
-

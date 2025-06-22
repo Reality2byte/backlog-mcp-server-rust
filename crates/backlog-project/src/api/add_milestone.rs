@@ -2,11 +2,11 @@ use backlog_api_core::{HttpMethod, IntoRequest};
 use backlog_core::ProjectIdOrKey;
 use serde::Serialize;
 
-pub type AddVersionResponse = backlog_domain_models::Milestone;
+pub type AddMilestoneResponse = backlog_domain_models::Milestone;
 
 #[cfg(feature = "writable")]
 #[derive(Debug, Clone)]
-pub struct AddVersionParams {
+pub struct AddMilestoneParams {
     pub project_id_or_key: ProjectIdOrKey,
     pub name: String,
     pub description: Option<String>,
@@ -15,7 +15,7 @@ pub struct AddVersionParams {
 }
 
 #[cfg(feature = "writable")]
-impl AddVersionParams {
+impl AddMilestoneParams {
     pub fn new(project_id_or_key: impl Into<ProjectIdOrKey>, name: impl Into<String>) -> Self {
         Self {
             project_id_or_key: project_id_or_key.into(),
@@ -28,8 +28,8 @@ impl AddVersionParams {
 }
 
 #[cfg(feature = "writable")]
-impl From<&AddVersionParams> for Vec<(String, String)> {
-    fn from(params: &AddVersionParams) -> Self {
+impl From<&AddMilestoneParams> for Vec<(String, String)> {
+    fn from(params: &AddMilestoneParams) -> Self {
         let mut seq = vec![("name".to_string(), params.name.clone())];
 
         if let Some(description) = &params.description {
@@ -49,7 +49,7 @@ impl From<&AddVersionParams> for Vec<(String, String)> {
 }
 
 #[cfg(feature = "writable")]
-impl IntoRequest for AddVersionParams {
+impl IntoRequest for AddMilestoneParams {
     fn method(&self) -> HttpMethod {
         HttpMethod::Post
     }

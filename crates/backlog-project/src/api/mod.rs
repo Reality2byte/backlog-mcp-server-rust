@@ -1,95 +1,89 @@
-mod api;
 mod add_category;
-mod update_category;
-mod delete_category;
 mod add_issue_type;
-mod delete_issue_type;
-mod update_issue_type;
-mod add_version;
-mod update_version;
-mod delete_version;
+mod add_milestone;
 mod add_status;
-mod update_status;
+mod delete_category;
+mod delete_issue_type;
 mod delete_status;
-mod update_status_order;
-mod get_project_icon;
+mod delete_version;
 mod get_category_list;
 mod get_issue_type_list;
-mod get_project_detail;
-mod get_project_list;
-mod get_status_list;
-mod get_version_milestone_list;
+mod get_milestone_list;
 mod get_priority_list;
+mod get_project_detail;
+mod get_project_icon;
+mod get_project_list;
 mod get_resolution_list;
+mod get_status_list;
+mod project_api;
+mod update_category;
+mod update_issue_type;
+mod update_status;
+mod update_status_order;
+mod update_version;
 
-pub use add_category::{
-    AddCategoryParams, AddCategoryResponse,
-};
-pub use update_category::{
-    UpdateCategoryParams, UpdateCategoryResponse,
-};
-pub use delete_category::{
-    DeleteCategoryParams, DeleteCategoryResponse,
-};
-pub use add_issue_type::{
-    AddIssueTypeParams, AddIssueTypeResponse,
-};
-pub use delete_issue_type::{
-    DeleteIssueTypeParams, DeleteIssueTypeResponse,
-};
-pub use update_issue_type::{
-    UpdateIssueTypeParams, UpdateIssueTypeResponse,
-};
-pub use add_version::{
-    AddVersionParams, AddVersionResponse,
-};
-pub use update_version::{
-    UpdateVersionParams, UpdateVersionResponse,
-};
-pub use delete_version::{
-    DeleteVersionParams, DeleteVersionResponse,
-};
-pub use add_status::{
-    AddStatusParams, AddStatusResponse,
-};
-pub use update_status::{
-    UpdateStatusParams, UpdateStatusResponse,
-};
-pub use delete_status::{
-    DeleteStatusParams, DeleteStatusResponse,
-};
-pub use update_status_order::{
-    UpdateStatusOrderParams, UpdateStatusOrderResponse,
-};
-pub use get_project_icon::{
-    GetProjectIconParams,
-};
-pub use get_priority_list::{
-    GetPriorityListParams, GetPriorityListResponse,
-};
-pub use api::ProjectApi;
+#[cfg(feature = "writable")]
+pub use add_category::AddCategoryParams;
+pub use add_category::AddCategoryResponse;
 
-pub use get_project_detail::{
-    GetProjectDetailParams, GetProjectDetailResponse,
-};
+#[cfg(feature = "writable")]
+pub use update_category::UpdateCategoryParams;
+pub use update_category::UpdateCategoryResponse;
 
-pub use get_project_list::{
-    GetProjectListParams, GetProjectListResponse,
-};
+#[cfg(feature = "writable")]
+pub use delete_category::DeleteCategoryParams;
+pub use delete_category::DeleteCategoryResponse;
 
-pub use     get_issue_type_list::{
-        GetIssueTypeListParams, GetIssueTypeListResponse,
-    };
-pub use     get_status_list::{
-        GetStatusListParams, GetStatusListResponse,
-    };
-pub use     get_version_milestone_list::{
-        GetVersionMilestoneListParams, GetVersionMilestoneListResponse,
-    };
+#[cfg(feature = "writable")]
+pub use add_issue_type::AddIssueTypeParams;
+pub use add_issue_type::AddIssueTypeResponse;
 
-pub use get_category_list::{
-    GetCategoryListParams, GetCategoryListResponse,
-};
-pub use get_resolution_list::{
-    GetResolutionListParams, GetResolutionListResponse,
-};
+#[cfg(feature = "writable")]
+pub use delete_issue_type::DeleteIssueTypeParams;
+pub use delete_issue_type::DeleteIssueTypeResponse;
+
+#[cfg(feature = "writable")]
+pub use update_issue_type::UpdateIssueTypeParams;
+pub use update_issue_type::UpdateIssueTypeResponse;
+
+#[cfg(feature = "writable")]
+pub use add_milestone::AddMilestoneParams;
+pub use add_milestone::AddMilestoneResponse;
+
+#[cfg(feature = "writable")]
+pub use update_version::UpdateVersionParams;
+pub use update_version::UpdateVersionResponse;
+
+#[cfg(feature = "writable")]
+pub use delete_version::DeleteVersionParams;
+pub use delete_version::DeleteVersionResponse;
+
+#[cfg(feature = "writable")]
+pub use add_status::AddStatusParams;
+pub use add_status::AddStatusResponse;
+
+#[cfg(feature = "writable")]
+pub use update_status::UpdateStatusParams;
+pub use update_status::UpdateStatusResponse;
+
+#[cfg(feature = "writable")]
+pub use delete_status::DeleteStatusParams;
+pub use delete_status::DeleteStatusResponse;
+
+pub use get_priority_list::{GetPriorityListParams, GetPriorityListResponse};
+pub use get_project_icon::GetProjectIconParams;
+pub use project_api::ProjectApi;
+#[cfg(feature = "writable")]
+pub use update_status_order::UpdateStatusOrderParams;
+pub use update_status_order::UpdateStatusOrderResponse;
+
+pub use get_project_detail::{GetProjectDetailParams, GetProjectDetailResponse};
+
+pub use get_project_list::{GetProjectListParams, GetProjectListResponse};
+
+pub use get_issue_type_list::{GetIssueTypeListParams, GetIssueTypeListResponse};
+pub use get_milestone_list::{GetMilestoneListParams, GetMilestoneListResponse};
+pub use get_status_list::{GetStatusListParams, GetStatusListResponse};
+
+pub use get_category_list::{GetCategoryListParams, GetCategoryListResponse};
+pub use get_resolution_list::{GetResolutionListParams, GetResolutionListResponse};

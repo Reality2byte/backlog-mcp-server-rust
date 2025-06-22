@@ -1,5 +1,5 @@
-use backlog_domain_models::Project;
 use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_domain_models::Project;
 use serde::Serialize;
 
 pub type GetProjectListResponse = Vec<Project>;
@@ -24,4 +24,3 @@ impl IntoRequest for GetProjectListParams {
         self
     }
 }
-

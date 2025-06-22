@@ -36,9 +36,7 @@ pub(crate) async fn get_version_milestone_list(
     let proj_id_or_key = ProjectIdOrKey::from_str(req.project_id_or_key.trim())?;
     let versions = client_guard
         .project()
-        .get_version_milestone_list(backlog_project::GetVersionMilestoneListParams::new(
-            proj_id_or_key,
-        ))
+        .get_version_milestone_list(backlog_project::GetMilestoneListParams::new(proj_id_or_key))
         .await?;
     Ok(versions)
 }
@@ -53,7 +51,7 @@ pub(crate) async fn get_issues_by_milestone_name(
 
     let all_project_milestones = client_guard
         .project()
-        .get_version_milestone_list(backlog_project::GetVersionMilestoneListParams::new(
+        .get_version_milestone_list(backlog_project::GetMilestoneListParams::new(
             proj_id_or_key.clone(),
         ))
         .await?;

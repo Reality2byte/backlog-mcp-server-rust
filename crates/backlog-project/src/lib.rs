@@ -3,36 +3,26 @@ pub mod models;
 //pub mod tests;
 
 // re-export domain models
-pub use backlog_domain_models::{Category, IssueType, Milestone, Priority, Resolution, Status, Project};
-
-pub use api::{
-    ProjectApi,
-    GetProjectDetailParams, GetProjectDetailResponse,
-    GetProjectListParams, GetProjectListResponse,
-    GetCategoryListParams, GetCategoryListResponse,
-    GetIssueTypeListParams, GetIssueTypeListResponse,
-    GetStatusListParams, GetStatusListResponse,
-    GetVersionMilestoneListParams, GetVersionMilestoneListResponse,
-    GetPriorityListParams, GetPriorityListResponse,
-    GetResolutionListParams, GetResolutionListResponse,
-    GetProjectIconParams,
+pub use backlog_domain_models::{
+    Category, IssueType, Milestone, Priority, Project, Resolution, Status,
 };
 
-
+pub use api::{
+    GetCategoryListParams, GetCategoryListResponse, GetIssueTypeListParams,
+    GetIssueTypeListResponse, GetMilestoneListParams, GetMilestoneListResponse,
+    GetPriorityListParams, GetPriorityListResponse, GetProjectDetailParams,
+    GetProjectDetailResponse, GetProjectIconParams, GetProjectListParams, GetProjectListResponse,
+    GetResolutionListParams, GetResolutionListResponse, GetStatusListParams, GetStatusListResponse,
+    ProjectApi,
+};
 
 #[cfg(feature = "writable")]
 pub use api::{
-    AddCategoryParams, AddCategoryResponse,
-    UpdateCategoryParams, UpdateCategoryResponse,
-    DeleteCategoryParams, DeleteCategoryResponse,
-    AddIssueTypeParams, AddIssueTypeResponse,
-    UpdateIssueTypeParams, UpdateIssueTypeResponse,
-    DeleteIssueTypeParams, DeleteIssueTypeResponse,
-    AddVersionParams, AddVersionResponse,
+    AddCategoryParams, AddCategoryResponse, AddIssueTypeParams, AddIssueTypeResponse,
+    AddMilestoneParams, AddMilestoneResponse, AddStatusParams, AddStatusResponse,
+    DeleteCategoryParams, DeleteCategoryResponse, DeleteIssueTypeParams, DeleteIssueTypeResponse,
+    DeleteStatusParams, DeleteStatusResponse, DeleteVersionParams, DeleteVersionResponse,
+    UpdateCategoryParams, UpdateCategoryResponse, UpdateIssueTypeParams, UpdateIssueTypeResponse,
+    UpdateStatusOrderParams, UpdateStatusOrderResponse, UpdateStatusParams, UpdateStatusResponse,
     UpdateVersionParams, UpdateVersionResponse,
-    DeleteVersionParams, DeleteVersionResponse,
-    AddStatusParams, AddStatusResponse,
-    UpdateStatusParams, UpdateStatusResponse,
-    DeleteStatusParams, DeleteStatusResponse,
-    UpdateStatusOrderParams, UpdateStatusOrderResponse,
 };

@@ -2,15 +2,15 @@ use backlog_api_core::{HttpMethod, IntoRequest};
 use backlog_core::ProjectIdOrKey;
 use serde::Serialize;
 
-pub type GetVersionMilestoneListResponse = Vec<backlog_domain_models::Status>;
+pub type GetMilestoneListResponse = Vec<backlog_domain_models::Milestone>;
 
 // GET /api/v2/projects/:projectIdOrKey/versions
 #[derive(Debug, Clone, PartialEq)]
-pub struct GetVersionMilestoneListParams {
+pub struct GetMilestoneListParams {
     pub project_id_or_key: ProjectIdOrKey,
 }
 
-impl GetVersionMilestoneListParams {
+impl GetMilestoneListParams {
     pub fn new(project_id_or_key: impl Into<ProjectIdOrKey>) -> Self {
         Self {
             project_id_or_key: project_id_or_key.into(),
@@ -18,7 +18,7 @@ impl GetVersionMilestoneListParams {
     }
 }
 
-impl IntoRequest for GetVersionMilestoneListParams {
+impl IntoRequest for GetMilestoneListParams {
     fn method(&self) -> HttpMethod {
         HttpMethod::Get
     }

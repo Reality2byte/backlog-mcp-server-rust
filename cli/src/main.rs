@@ -29,12 +29,13 @@ use backlog_core::{
 use backlog_domain_models::{IssueTypeColor, StatusColor};
 #[cfg(feature = "issue_writable")]
 use backlog_issue::requests::{AddIssueParamsBuilder, UpdateIssueParamsBuilder};
-use backlog_project::requests::GetProjectListParams;
+use backlog_project::GetProjectListParams;
 #[cfg(feature = "project_writable")]
-use backlog_project::requests::{
-    AddCategoryParams, AddIssueTypeParams, AddStatusParams, AddVersionParams, DeleteCategoryParams,
-    DeleteIssueTypeParams, DeleteStatusParams, DeleteVersionParams, UpdateCategoryParams,
-    UpdateIssueTypeParams, UpdateStatusOrderParams, UpdateStatusParams, UpdateVersionParams,
+use backlog_project::{
+    AddCategoryParams, AddIssueTypeParams, AddMilestoneParams, AddStatusParams,
+    DeleteCategoryParams, DeleteIssueTypeParams, DeleteStatusParams, DeleteVersionParams,
+    UpdateCategoryParams, UpdateIssueTypeParams, UpdateStatusOrderParams, UpdateStatusParams,
+    UpdateVersionParams,
 };
 use backlog_space::GetSpaceLogoParams;
 use backlog_user::GetOwnUserParams;
@@ -1996,9 +1997,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 match client
                     .project()
-                    .get_version_milestone_list(
-                        backlog_project::GetVersionMilestoneListParams::new(proj_id_or_key),
-                    )
+                    .get_version_milestone_list(backlog_project::GetMilestoneListParams::new(
+                        proj_id_or_key,
+                    ))
                     .await
                 {
                     Ok(milestones) => {
@@ -2318,7 +2319,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
-                let mut params = AddVersionParams::new(proj_id_or_key, &name);
+                let mut params = AddMilestoneParams::new(proj_id_or_key, &name);
                 params.description = description.clone();
                 params.start_date = start_date.clone();
                 params.release_due_date = release_due_date.clone();

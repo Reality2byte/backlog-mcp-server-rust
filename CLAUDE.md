@@ -123,6 +123,193 @@ pub async fn add_comment(&self, params: &AddCommentParams) -> Result<Comment> {
 - Manual serialization provides precise control over parameter formatting
 - Consistent with existing patterns in `backlog-issue` and other domain crates
 
+### Standard Domain Crate Structure
+
+The `backlog-project` crate serves as the standard template for all domain API crates. Follow this structure when implementing new domain crates or refactoring existing ones:
+
+#### Directory Structure
+```
+crates/backlog-{domain}/
+├── src/
+│   ├── lib.rs                    # Public API exports and feature gates
+│   ├── models.rs                 # Domain-specific model re-exports
+│   └── api/
+│       ├── mod.rs                # Module declarations and exports
+│       ├── {domain}_api.rs       # Main API implementation struct
+│       ├── get_*.rs              # Read-only API parameter structs
+│       ├── add_*.rs              # Create operation parameters (feature-gated)
+│       ├── update_*.rs           # Update operation parameters (feature-gated)
+│       └── delete_*.rs           # Delete operation parameters (feature-gated)
+└── tests/
+    ├── common/
+    │   └── mod.rs                # Shared test utilities and imports
+    ├── {domain}_api_test.rs      # Read-only API integration tests
+    └── {domain}_writable_test.rs # Write operation tests (feature-gated)
+```
+
+#### Implementation Patterns
+
+**1. Parameter File Structure (`api/get_*.rs`, `api/add_*.rs`, etc.)**
+```rust
+// Type alias for API response
+pub type GetEntityListResponse = Vec<Entity>;
+
+// Parameter struct for the operation
+#[derive(Debug, Clone)]
+pub struct GetEntityListParams {
+    pub project_id: ProjectId,
+    pub archived: Option<bool>,
+}
+
+// Constructor and builder methods
+impl GetEntityListParams {
+    pub fn new(project_id: ProjectId) -> Self {
+        Self {
+            project_id,
+            archived: None,
+        }
+    }
+    
+    pub fn archived(mut self, archived: bool) -> Self {
+        self.archived = Some(archived);
+        self
+    }
+}
+
+// Form serialization for write operations
+#[cfg(feature = "writable")]
+impl From<&AddEntityParams> for Vec<(String, String)> {
+    fn from(params: &AddEntityParams) -> Self {
+        // Implementation following form encoding pattern
+    }
+}
+```
+
+**2. Main API Struct (`api/{domain}_api.rs`)**
+```rust
+pub struct ProjectApi {
+    client: Arc<BacklogClient>,
+}
+
+impl ProjectApi {
+    pub fn new(client: Arc<BacklogClient>) -> Self {
+        Self { client }
+    }
+
+    // Read operations (always available)
+    pub async fn get_entity_list(&self, params: GetEntityListParams) -> Result<GetEntityListResponse> {
+        // Implementation
+    }
+
+    // Write operations (feature-gated)
+    #[cfg(feature = "writable")]
+    pub async fn add_entity(&self, params: AddEntityParams) -> Result<AddEntityResponse> {
+        let params_vec: Vec<(String, String)> = (&params).into();
+        self.client.post("/api/v2/path", &params_vec).await
+    }
+}
+```
+
+**3. Module Exports (`api/mod.rs`)**
+```rust
+mod {domain}_api;
+mod get_entity_list;
+
+#[cfg(feature = "writable")]
+mod add_entity;
+
+// Export response types (always available)
+pub use get_entity_list::{GetEntityListParams, GetEntityListResponse};
+
+// Export writable types with feature gates
+#[cfg(feature = "writable")]
+pub use add_entity::AddEntityParams;
+pub use add_entity::AddEntityResponse;
+
+pub use {domain}_api::{ProjectApi};
+```
+
+**4. Crate-level Exports (`lib.rs`)**
+```rust
+// Re-export API components
+pub use api::*;
+
+// Re-export domain models
+pub use models::*;
+```
+
+**5. Test Organization**
+
+**Common Test Utilities (`tests/common/mod.rs`)**
+```rust
+use {domain}_project::api::{ProjectApi};
+use client::test_utils::setup_client;
+use wiremock::MockServer;
+
+/// Common test setup function
+pub async fn setup_{domain}_api(mock_server: &MockServer) -> {ProjectApi} {
+    let client = setup_client(mock_server).await;
+    {ProjectApi}::new(client)
+}
+
+/// Common imports for tests
+pub use backlog_core::identifier::{/* relevant IDs */};
+pub use wiremock::matchers::{method, path};
+pub use wiremock::{Mock, ResponseTemplate};
+```
+
+**Read-only Tests (`tests/{domain}_api_test.rs`)**
+```rust
+mod common;
+use common::*;
+
+#[tokio::test]
+async fn test_get_entity_success() {
+    let mock_server = MockServer::start().await;
+    let api = setup_{domain}_api(&mock_server).await;
+    
+    // Mock setup and test implementation
+}
+```
+
+**Write Operation Tests (`tests/{domain}_writable_test.rs`)**
+```rust
+#[cfg(feature = "writable")]
+mod writable_tests {
+    use {domain}_project::api::{/* writable params */};
+    use client::test_utils::setup_client;
+    // Other imports...
+
+    #[tokio::test]
+    async fn test_add_entity_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let api = {ProjectApi}::new(client);
+        
+        // Test implementation
+    }
+}
+```
+
+#### Key Benefits of This Structure
+
+1. **Consistent Organization**: All domain crates follow the same pattern
+2. **Feature Separation**: Read-only operations always available, write operations feature-gated
+3. **Type Safety**: Response types clearly defined with `XxxResponse` pattern
+4. **Test Isolation**: Separate test files for read/write operations with shared utilities
+5. **Maintainability**: Clear separation of concerns and modular file organization
+6. **Token Efficiency**: AI can easily navigate and understand the structure
+
+#### Migration Guidelines
+
+When refactoring existing domain crates to follow this standard:
+
+1. **Create Parameter Files**: Extract parameter structs to individual files
+2. **Implement Response Types**: Add `XxxResponse` type aliases
+3. **Reorganize Tests**: Split tests into read/write files with common utilities
+4. **Update Exports**: Ensure proper feature gating in module exports
+5. **Verify Build**: Test with both default and `--features writable` builds
+
 ### MCP Server Organization
 - Tools organized by domain modules (`issue/`, `git/`, `document/`, `project/`, `file/`)
 - Each module contains:
