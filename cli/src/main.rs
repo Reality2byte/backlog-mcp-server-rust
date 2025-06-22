@@ -2486,16 +2486,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     None
                 };
 
-                let params = UpdateStatusParams {
-                    name: name.clone(),
-                    color: parsed_color,
-                };
+                let mut params = UpdateStatusParams::new(proj_id_or_key, status_id_val);
 
-                match client
-                    .project()
-                    .update_status(proj_id_or_key, status_id_val, &params)
-                    .await
-                {
+                if let Some(name) = name {
+                    params = params.name(name);
+                }
+
+                if let Some(color) = parsed_color {
+                    params = params.color(color);
+                }
+
+                match client.project().update_status(params).await {
                     Ok(status) => {
                         println!("✅ Status updated successfully:");
                         println!("ID: {}", status.id);
@@ -2524,15 +2525,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let status_id_val = StatusId::new(status_id);
                 let substitute_id = StatusId::new(substitute_status_id);
 
-                let params = DeleteStatusParams {
-                    substitute_status_id: substitute_id,
-                };
+                let params = DeleteStatusParams::new(proj_id_or_key, status_id_val, substitute_id);
 
-                match client
-                    .project()
-                    .delete_status(proj_id_or_key, status_id_val, &params)
-                    .await
-                {
+                match client.project().delete_status(params).await {
                     Ok(status) => {
                         println!("✅ Status deleted successfully:");
                         println!("ID: {}", status.id);
@@ -2572,15 +2567,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 };
 
-                let params = UpdateStatusOrderParams {
-                    status_ids: status_id_vec,
-                };
+                let params = UpdateStatusOrderParams::new(proj_id_or_key, status_id_vec);
 
-                match client
-                    .project()
-                    .update_status_order(proj_id_or_key, &params)
-                    .await
-                {
+                match client.project().update_status_order(params).await {
                     Ok(statuses) => {
                         println!("✅ Status order updated successfully:");
                         for (index, status) in statuses.iter().enumerate() {

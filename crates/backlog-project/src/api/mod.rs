@@ -202,17 +202,9 @@ impl ProjectApi {
     #[cfg(feature = "writable")]
     pub async fn update_status(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        status_id: impl Into<backlog_core::identifier::StatusId>,
-        params: &crate::requests::UpdateStatusParams,
+        params: crate::requests::UpdateStatusParams,
     ) -> Result<Status> {
-        let path = format!(
-            "/api/v2/projects/{}/statuses/{}",
-            project_id_or_key.into(),
-            status_id.into()
-        );
-        let params_vec: Vec<(String, String)> = params.into();
-        self.0.patch(&path, &params_vec).await
+        self.0.execute(params).await
     }
 
     /// Deletes a status from a project.
@@ -221,17 +213,9 @@ impl ProjectApi {
     #[cfg(feature = "writable")]
     pub async fn delete_status(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        status_id: impl Into<backlog_core::identifier::StatusId>,
-        params: &crate::requests::DeleteStatusParams,
+        params: crate::requests::DeleteStatusParams,
     ) -> Result<Status> {
-        let path = format!(
-            "/api/v2/projects/{}/statuses/{}",
-            project_id_or_key.into(),
-            status_id.into()
-        );
-        let params_vec: Vec<(String, String)> = params.into();
-        self.0.delete_with_params(&path, &params_vec).await
+        self.0.execute(params).await
     }
 
     /// Updates the display order of statuses in a project.
@@ -240,15 +224,9 @@ impl ProjectApi {
     #[cfg(feature = "writable")]
     pub async fn update_status_order(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        params: &crate::requests::UpdateStatusOrderParams,
+        params: crate::requests::UpdateStatusOrderParams,
     ) -> Result<Vec<Status>> {
-        let path = format!(
-            "/api/v2/projects/{}/statuses/updateDisplayOrder",
-            project_id_or_key.into()
-        );
-        let params_vec: Vec<(String, String)> = params.into();
-        self.0.patch(&path, &params_vec).await
+        self.0.execute(params).await
     }
 }
 
@@ -2328,13 +2306,10 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateStatusParams {
-            name: Some("更新されたレビュー".to_string()),
-            color: Some(backlog_domain_models::StatusColor::Blue),
-        };
-        let result = project_api
-            .update_status(project_id, status_id, &params)
-            .await;
+        let params = crate::requests::UpdateStatusParams::new(project_id, status_id)
+            .name("更新されたレビュー")
+            .color(backlog_domain_models::StatusColor::Blue);
+        let result = project_api.update_status(params).await;
         assert!(result.is_ok());
         let status = result.unwrap();
         assert_eq!(status.name, "更新されたレビュー");
@@ -2368,17 +2343,12 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateStatusParams {
-            name: Some("名前のみ更新".to_string()),
-            color: None,
-        };
-        let result = project_api
-            .update_status(
-                ProjectIdOrKey::from_str(project_key).unwrap(),
-                status_id,
-                &params,
-            )
-            .await;
+        let params = crate::requests::UpdateStatusParams::new(
+            ProjectIdOrKey::from_str(project_key).unwrap(),
+            status_id,
+        )
+        .name("名前のみ更新");
+        let result = project_api.update_status(params).await;
         assert!(result.is_ok());
         let status = result.unwrap();
         assert_eq!(status.name, "名前のみ更新");
@@ -2408,13 +2378,9 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateStatusParams {
-            name: None,
-            color: Some(backlog_domain_models::StatusColor::Green),
-        };
-        let result = project_api
-            .update_status(project_id, status_id, &params)
-            .await;
+        let params = crate::requests::UpdateStatusParams::new(project_id, status_id)
+            .color(backlog_domain_models::StatusColor::Green);
+        let result = project_api.update_status(params).await;
         assert!(result.is_ok());
         let status = result.unwrap();
         assert_eq!(status.name, "レビュー待ち");
@@ -2446,14 +2412,11 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateStatusParams {
-            name: Some("存在しないステータス".to_string()),
-            color: Some(backlog_domain_models::StatusColor::Red),
-        };
+        let params = crate::requests::UpdateStatusParams::new(project_id, status_id)
+            .name("存在しないステータス")
+            .color(backlog_domain_models::StatusColor::Red);
 
-        let result = project_api
-            .update_status(project_id, status_id, &params)
-            .await;
+        let result = project_api.update_status(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
@@ -2488,14 +2451,10 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateStatusParams {
-            name: Some("プロジェクトなし".to_string()),
-            color: None,
-        };
+        let params = crate::requests::UpdateStatusParams::new(project_id, status_id)
+            .name("プロジェクトなし");
 
-        let result = project_api
-            .update_status(project_id, status_id, &params)
-            .await;
+        let result = project_api.update_status(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
@@ -2529,12 +2488,9 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::DeleteStatusParams {
-            substitute_status_id,
-        };
-        let result = project_api
-            .delete_status(project_id, status_id, &params)
-            .await;
+        let params =
+            crate::requests::DeleteStatusParams::new(project_id, status_id, substitute_status_id);
+        let result = project_api.delete_status(params).await;
         assert!(result.is_ok());
         let status = result.unwrap();
         assert_eq!(status.name, "削除されたステータス");
@@ -2568,12 +2524,9 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::DeleteStatusParams {
-            substitute_status_id,
-        };
-        let result = project_api
-            .delete_status(project_id, status_id, &params)
-            .await;
+        let params =
+            crate::requests::DeleteStatusParams::new(project_id, status_id, substitute_status_id);
+        let result = project_api.delete_status(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
@@ -2609,12 +2562,9 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::DeleteStatusParams {
-            substitute_status_id,
-        };
-        let result = project_api
-            .delete_status(project_id, status_id, &params)
-            .await;
+        let params =
+            crate::requests::DeleteStatusParams::new(project_id, status_id, substitute_status_id);
+        let result = project_api.delete_status(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
@@ -2650,12 +2600,9 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::DeleteStatusParams {
-            substitute_status_id,
-        };
-        let result = project_api
-            .delete_status(project_id, status_id, &params)
-            .await;
+        let params =
+            crate::requests::DeleteStatusParams::new(project_id, status_id, substitute_status_id);
+        let result = project_api.delete_status(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 400);
@@ -2710,15 +2657,16 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateStatusOrderParams {
-            status_ids: vec![
+        let params = crate::requests::UpdateStatusOrderParams::new(
+            project_id,
+            vec![
                 StatusId::new(1),
                 StatusId::new(3),
                 StatusId::new(2),
                 StatusId::new(4),
             ],
-        };
-        let result = project_api.update_status_order(project_id, &params).await;
+        );
+        let result = project_api.update_status_order(params).await;
         assert!(result.is_ok());
         let statuses = result.unwrap();
         assert_eq!(statuses.len(), 4);
@@ -2752,14 +2700,15 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateStatusOrderParams {
-            status_ids: vec![
+        let params = crate::requests::UpdateStatusOrderParams::new(
+            project_id,
+            vec![
                 StatusId::new(1),
                 StatusId::new(2),
                 // Missing status IDs 3 and 4
             ],
-        };
-        let result = project_api.update_status_order(project_id, &params).await;
+        );
+        let result = project_api.update_status_order(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 400);
@@ -2796,15 +2745,16 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = crate::requests::UpdateStatusOrderParams {
-            status_ids: vec![
+        let params = crate::requests::UpdateStatusOrderParams::new(
+            project_id,
+            vec![
                 StatusId::new(1),
                 StatusId::new(2),
                 StatusId::new(3),
                 StatusId::new(4),
             ],
-        };
-        let result = project_api.update_status_order(project_id, &params).await;
+        );
+        let result = project_api.update_status_order(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
