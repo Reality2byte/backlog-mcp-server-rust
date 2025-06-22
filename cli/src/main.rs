@@ -42,7 +42,7 @@ use backlog_user::GetUserIconParams;
 use backlog_user::GetUserListParams;
 use backlog_user::GetUserParams;
 #[cfg(feature = "wiki_writable")]
-use backlog_wiki::UpdateWikiParams;
+use backlog_wiki::UpdateWikiRequestParamsBuilder;
 use clap::{Args, Parser};
 use std::env;
 use std::path::PathBuf;
@@ -2862,25 +2862,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Updating wiki ID: {}", wiki_id);
 
                 // Create params with provided options
-                let mut params = UpdateWikiParams::new();
+                let mut builder = UpdateWikiRequestParamsBuilder::default();
+                builder.wiki_id(WikiId::new(wiki_id));
 
                 if let Some(name) = name {
-                    params = params.name(name);
+                    builder.name(name);
                 }
 
                 if let Some(content) = content {
-                    params = params.content(content);
+                    builder.content(content);
                 }
 
                 if let Some(mail_notify) = mail_notify {
-                    params = params.mail_notify(mail_notify);
+                    builder.mail_notify(mail_notify);
                 }
 
-                match client
-                    .wiki()
-                    .update_wiki(WikiId::new(wiki_id), &params)
-                    .await
-                {
+                let params = builder.build().unwrap();
+
+                match client.wiki().update_wiki_request(params).await {
                     Ok(wiki_detail) => {
                         println!("✅ Wiki updated successfully");
                         println!("ID: {}", wiki_detail.id.value());

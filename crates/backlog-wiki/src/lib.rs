@@ -12,7 +12,7 @@ pub use requests::{
 };
 
 #[cfg(feature = "writable")]
-pub use requests::{UpdateWikiParams, UpdateWikiRequestParams, UpdateWikiRequestParamsBuilder};
+pub use requests::{UpdateWikiRequestParams, UpdateWikiRequestParamsBuilder};
 pub use responses::{
     GetWikiAttachmentListResponse, GetWikiCountResponse, GetWikiDetailResponse, GetWikiListResponse,
 };

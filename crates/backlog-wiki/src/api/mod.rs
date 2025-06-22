@@ -10,11 +10,9 @@ use crate::{
 };
 
 #[cfg(feature = "writable")]
-use crate::requests::{UpdateWikiParams, UpdateWikiRequestParams};
+use crate::requests::UpdateWikiRequestParams;
 use backlog_api_core::Result;
 use backlog_core::identifier::Identifier;
-#[cfg(feature = "writable")]
-use backlog_core::identifier::WikiId;
 use client::Client;
 
 pub struct WikiApi(Client);
@@ -68,21 +66,6 @@ impl WikiApi {
         self.0.download_file_raw(&path).await
     }
 
-    /// Update wiki page
-    /// Corresponds to `PATCH /api/v2/wikis/:wikiId`.
-    #[cfg(feature = "writable")]
-    pub async fn update_wiki(
-        &self,
-        wiki_id: impl Into<WikiId>,
-        params: &UpdateWikiParams,
-    ) -> Result<GetWikiDetailResponse> {
-        let wiki_id = wiki_id.into();
-        let params_vec: Vec<(String, String)> = params.into();
-        self.0
-            .patch(&format!("/api/v2/wikis/{}", wiki_id.value()), &params_vec)
-            .await
-    }
-
     /// Update wiki page using the new IntoRequest pattern
     /// Corresponds to `PATCH /api/v2/wikis/:wikiId`.
     #[cfg(feature = "writable")]
@@ -103,7 +86,7 @@ mod tests {
     };
 
     #[cfg(feature = "writable")]
-    use crate::requests::UpdateWikiParams;
+    use crate::requests::UpdateWikiRequestParamsBuilder;
     use backlog_core::identifier::SharedFileId;
     use backlog_core::{
         Language, ProjectKey, Role, Star, User,
@@ -974,12 +957,15 @@ mod tests {
                 .mount(&mock_server)
                 .await;
 
-            let params = UpdateWikiParams::new()
+            let params = UpdateWikiRequestParamsBuilder::default()
+                .wiki_id(WikiId::new(123))
                 .name("Updated Wiki Title")
                 .content("Updated wiki content")
-                .mail_notify(true);
+                .mail_notify(true)
+                .build()
+                .unwrap();
 
-            let result = wiki_api.update_wiki(WikiId::new(123), &params).await;
+            let result = wiki_api.update_wiki_request(params).await;
             assert!(result.is_ok());
             let detail = result.unwrap();
             assert_eq!(detail.name, "Updated Wiki Title");
@@ -1002,9 +988,13 @@ mod tests {
                 .mount(&mock_server)
                 .await;
 
-            let params = UpdateWikiParams::new().name("New Title Only");
+            let params = UpdateWikiRequestParamsBuilder::default()
+                .wiki_id(WikiId::new(456))
+                .name("New Title Only")
+                .build()
+                .unwrap();
 
-            let result = wiki_api.update_wiki(WikiId::new(456), &params).await;
+            let result = wiki_api.update_wiki_request(params).await;
             assert!(result.is_ok());
             let detail = result.unwrap();
             assert_eq!(detail.name, "New Title Only");
@@ -1026,9 +1016,13 @@ mod tests {
                 .mount(&mock_server)
                 .await;
 
-            let params = UpdateWikiParams::new().content("New content here");
+            let params = UpdateWikiRequestParamsBuilder::default()
+                .wiki_id(WikiId::new(789))
+                .content("New content here")
+                .build()
+                .unwrap();
 
-            let result = wiki_api.update_wiki(789u32, &params).await;
+            let result = wiki_api.update_wiki_request(params).await;
             assert!(result.is_ok());
         }
 
@@ -1048,9 +1042,13 @@ mod tests {
                 .mount(&mock_server)
                 .await;
 
-            let params = UpdateWikiParams::new().mail_notify(false);
+            let params = UpdateWikiRequestParamsBuilder::default()
+                .wiki_id(WikiId::new(111))
+                .mail_notify(false)
+                .build()
+                .unwrap();
 
-            let result = wiki_api.update_wiki(111u32, &params).await;
+            let result = wiki_api.update_wiki_request(params).await;
             assert!(result.is_ok());
         }
 
@@ -1069,11 +1067,14 @@ mod tests {
                 .mount(&mock_server)
                 .await;
 
-            let params = UpdateWikiParams::new()
+            let params = UpdateWikiRequestParamsBuilder::default()
+                .wiki_id(WikiId::new(333))
                 .name("Title & <Special>")
-                .content("Content with \"quotes\" and symbols: @#$%");
+                .content("Content with \"quotes\" and symbols: @#$%")
+                .build()
+                .unwrap();
 
-            let result = wiki_api.update_wiki(333u32, &params).await;
+            let result = wiki_api.update_wiki_request(params).await;
             assert!(result.is_ok());
         }
 
@@ -1089,9 +1090,13 @@ mod tests {
                 .mount(&mock_server)
                 .await;
 
-            let params = UpdateWikiParams::new().name("Does not exist");
+            let params = UpdateWikiRequestParamsBuilder::default()
+                .wiki_id(WikiId::new(404))
+                .name("Does not exist")
+                .build()
+                .unwrap();
 
-            let result = wiki_api.update_wiki(404u32, &params).await;
+            let result = wiki_api.update_wiki_request(params).await;
             assert!(result.is_err());
         }
 
@@ -1107,9 +1112,13 @@ mod tests {
                 .mount(&mock_server)
                 .await;
 
-            let params = UpdateWikiParams::new().name("Unauthorized");
+            let params = UpdateWikiRequestParamsBuilder::default()
+                .wiki_id(WikiId::new(403))
+                .name("Unauthorized")
+                .build()
+                .unwrap();
 
-            let result = wiki_api.update_wiki(403u32, &params).await;
+            let result = wiki_api.update_wiki_request(params).await;
             assert!(result.is_err());
         }
 
@@ -1125,9 +1134,13 @@ mod tests {
                 .mount(&mock_server)
                 .await;
 
-            let params = UpdateWikiParams::new().content("Server error content");
+            let params = UpdateWikiRequestParamsBuilder::default()
+                .wiki_id(WikiId::new(500))
+                .content("Server error content")
+                .build()
+                .unwrap();
 
-            let result = wiki_api.update_wiki(500u32, &params).await;
+            let result = wiki_api.update_wiki_request(params).await;
             assert!(result.is_err());
         }
 
@@ -1146,9 +1159,12 @@ mod tests {
                 .mount(&mock_server)
                 .await;
 
-            let params = UpdateWikiParams::new(); // No parameters set
+            let params = UpdateWikiRequestParamsBuilder::default()
+                .wiki_id(WikiId::new(555))
+                .build()
+                .unwrap(); // No parameters set
 
-            let result = wiki_api.update_wiki(555u32, &params).await;
+            let result = wiki_api.update_wiki_request(params).await;
             assert!(result.is_ok());
         }
     }

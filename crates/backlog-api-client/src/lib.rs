@@ -124,4 +124,4 @@ pub use backlog_wiki::{
 };
 
 #[cfg(all(feature = "wiki", feature = "wiki_writable"))]
-pub use backlog_wiki::UpdateWikiParams;
+pub use backlog_wiki::{UpdateWikiRequestParams, UpdateWikiRequestParamsBuilder};
