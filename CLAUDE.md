@@ -187,13 +187,12 @@ impl From<&AddEntityParams> for Vec<(String, String)> {
 
 **2. Main API Struct (`api/{domain}_api.rs`)**
 ```rust
-pub struct ProjectApi {
-    client: Arc<BacklogClient>,
-}
+pub struct ProjectApi(Client);
 
+// You should use `XxxxResponse` structs for the response types instead of models directly.
 impl ProjectApi {
-    pub fn new(client: Arc<BacklogClient>) -> Self {
-        Self { client }
+    pub fn new(client: Client) -> Self {
+        Self(client)
     }
 
     // Read operations (always available)
@@ -205,7 +204,7 @@ impl ProjectApi {
     #[cfg(feature = "writable")]
     pub async fn add_entity(&self, params: AddEntityParams) -> Result<AddEntityResponse> {
         let params_vec: Vec<(String, String)> = (&params).into();
-        self.client.post("/api/v2/path", &params_vec).await
+        self.0.post("/api/v2/path", &params_vec).await
     }
 }
 ```
