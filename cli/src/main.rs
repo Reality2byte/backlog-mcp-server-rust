@@ -2793,7 +2793,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 match client
                     .wiki()
-                    .get_wiki_attachment_list(WikiId::new(wiki_id))
+                    .get_wiki_attachment_list(backlog_wiki::GetWikiAttachmentListParams::new(
+                        WikiId::new(wiki_id),
+                    ))
                     .await
                 {
                     Ok(attachments) => {
@@ -2834,10 +2836,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 match client
                     .wiki()
-                    .download_wiki_attachment(
+                    .download_wiki_attachment(backlog_wiki::DownloadWikiAttachmentParams::new(
                         WikiId::new(wiki_id),
                         WikiAttachmentId::new(attachment_id),
-                    )
+                    ))
                     .await
                 {
                     Ok(downloaded_file) => {

@@ -1,8 +1,10 @@
+use backlog_api_core::{HttpMethod, IntoRequest};
 use backlog_core::ProjectIdOrKey;
 use derive_builder::Builder;
+use serde::Serialize;
 
 #[derive(Debug, Builder, Clone, PartialEq)]
-#[builder(setter(strip_option))]
+#[builder(build_fn(error = "backlog_api_core::Error"), setter(strip_option))]
 pub struct GetWikiListParams {
     #[builder(default, setter(into))]
     pub project_id_or_key: Option<ProjectIdOrKey>,
@@ -23,5 +25,20 @@ impl From<GetWikiListParams> for Vec<(String, String)> {
         }
 
         query_params
+    }
+}
+
+impl IntoRequest for GetWikiListParams {
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Get
+    }
+
+    fn path(&self) -> String {
+        "/api/v2/wikis".to_string()
+    }
+
+    fn to_query(&self) -> impl Serialize {
+        let params: Vec<(String, String)> = self.clone().into();
+        params
     }
 }

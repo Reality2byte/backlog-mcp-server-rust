@@ -9,6 +9,9 @@ use crate::wiki::request::UpdateWikiRequest;
 use backlog_api_client::{
     DownloadedFile, GetWikiListParamsBuilder, ProjectIdOrKey, client::BacklogApiClient,
 };
+use backlog_wiki::{
+    DownloadWikiAttachmentParams, GetWikiAttachmentListParams, GetWikiDetailParams,
+};
 
 use backlog_core::{
     ProjectKey,
@@ -60,7 +63,9 @@ pub(crate) async fn get_wiki_detail(
     let wiki_api = client.wiki();
     let wiki_id = WikiId::new(request.wiki_id);
 
-    let wiki_detail = wiki_api.get_wiki_detail(wiki_id).await?;
+    let wiki_detail = wiki_api
+        .get_wiki_detail(GetWikiDetailParams::new(wiki_id))
+        .await?;
 
     Ok(serde_json::to_value(wiki_detail)?)
 }
@@ -72,7 +77,9 @@ pub(crate) async fn get_wiki_attachment_list(
     let wiki_api = client.wiki();
     let wiki_id = WikiId::new(request.wiki_id);
 
-    let attachments = wiki_api.get_wiki_attachment_list(wiki_id).await?;
+    let attachments = wiki_api
+        .get_wiki_attachment_list(GetWikiAttachmentListParams::new(wiki_id))
+        .await?;
 
     Ok(serde_json::to_value(attachments)?)
 }
@@ -86,7 +93,7 @@ pub(crate) async fn download_wiki_attachment(
     let attachment_id = WikiAttachmentId::new(request.attachment_id);
 
     let downloaded_file = wiki_api
-        .download_wiki_attachment(wiki_id, attachment_id)
+        .download_wiki_attachment(DownloadWikiAttachmentParams::new(wiki_id, attachment_id))
         .await?;
 
     Ok(downloaded_file)

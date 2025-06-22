@@ -1,5 +1,8 @@
 use crate::{
-    requests::{GetWikiCountParams, GetWikiListParams},
+    requests::{
+        DownloadWikiAttachmentParams, GetWikiAttachmentListParams, GetWikiCountParams,
+        GetWikiDetailParams, GetWikiListParams,
+    },
     responses::{
         GetWikiAttachmentListResponse, GetWikiCountResponse, GetWikiDetailResponse,
         GetWikiListResponse,
@@ -7,9 +10,11 @@ use crate::{
 };
 
 #[cfg(feature = "writable")]
-use crate::requests::UpdateWikiParams;
+use crate::requests::{UpdateWikiParams, UpdateWikiRequestParams};
 use backlog_api_core::Result;
-use backlog_core::identifier::{Identifier, WikiAttachmentId, WikiId};
+use backlog_core::identifier::Identifier;
+#[cfg(feature = "writable")]
+use backlog_core::identifier::WikiId;
 use client::Client;
 
 pub struct WikiApi(Client);
@@ -22,59 +27,45 @@ impl WikiApi {
     /// Get wiki page count
     /// Corresponds to `GET /api/v2/wikis/count`.
     pub async fn get_wiki_count(&self, params: GetWikiCountParams) -> Result<GetWikiCountResponse> {
-        let query_params: Vec<(String, String)> = params.into();
-        self.0
-            .get_with_params("/api/v2/wikis/count", &query_params)
-            .await
+        self.0.execute(params).await
     }
 
     /// Get wiki page details
     /// Corresponds to `GET /api/v2/wikis/:wikiId`.
     pub async fn get_wiki_detail(
         &self,
-        wiki_id: impl Into<WikiId>,
+        params: GetWikiDetailParams,
     ) -> Result<GetWikiDetailResponse> {
-        let wiki_id = wiki_id.into();
-        self.0
-            .get(&format!("/api/v2/wikis/{}", wiki_id.value()))
-            .await
+        self.0.execute(params).await
     }
 
     /// Get wiki page list
     /// Corresponds to `GET /api/v2/wikis`.
     pub async fn get_wiki_list(&self, params: GetWikiListParams) -> Result<GetWikiListResponse> {
-        let query_params: Vec<(String, String)> = params.into();
-        self.0.get_with_params("/api/v2/wikis", &query_params).await
+        self.0.execute(params).await
     }
 
     /// Get wiki attachment list
     /// Corresponds to `GET /api/v2/wikis/:wikiId/attachments`.
     pub async fn get_wiki_attachment_list(
         &self,
-        wiki_id: impl Into<WikiId>,
+        params: GetWikiAttachmentListParams,
     ) -> Result<GetWikiAttachmentListResponse> {
-        let wiki_id = wiki_id.into();
-        self.0
-            .get(&format!("/api/v2/wikis/{}/attachments", wiki_id.value()))
-            .await
+        self.0.execute(params).await
     }
 
     /// Download wiki attachment
     /// Corresponds to `GET /api/v2/wikis/:wikiId/attachments/:attachmentId`.
     pub async fn download_wiki_attachment(
         &self,
-        wiki_id: impl Into<WikiId>,
-        attachment_id: impl Into<WikiAttachmentId>,
+        params: DownloadWikiAttachmentParams,
     ) -> Result<client::DownloadedFile> {
-        let wiki_id = wiki_id.into();
-        let attachment_id = attachment_id.into();
-        self.0
-            .download_file_raw(&format!(
-                "/api/v2/wikis/{}/attachments/{}",
-                wiki_id.value(),
-                attachment_id.value()
-            ))
-            .await
+        let path = format!(
+            "/api/v2/wikis/{}/attachments/{}",
+            params.wiki_id.value(),
+            params.attachment_id.value()
+        );
+        self.0.download_file_raw(&path).await
     }
 
     /// Update wiki page
@@ -90,6 +81,16 @@ impl WikiApi {
         self.0
             .patch(&format!("/api/v2/wikis/{}", wiki_id.value()), &params_vec)
             .await
+    }
+
+    /// Update wiki page using the new IntoRequest pattern
+    /// Corresponds to `PATCH /api/v2/wikis/:wikiId`.
+    #[cfg(feature = "writable")]
+    pub async fn update_wiki_request(
+        &self,
+        params: UpdateWikiRequestParams,
+    ) -> Result<GetWikiDetailResponse> {
+        self.0.execute(params).await
     }
 }
 
@@ -484,7 +485,9 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let result = wiki_api.get_wiki_detail(WikiId::new(123)).await;
+        let result = wiki_api
+            .get_wiki_detail(GetWikiDetailParams::new(WikiId::new(123)))
+            .await;
         assert!(result.is_ok());
         let detail = result.unwrap();
         assert_eq!(detail.id.value(), 123);
@@ -512,7 +515,9 @@ mod tests {
             .await;
 
         // Test using u32 directly (Into<WikiId> conversion)
-        let result = wiki_api.get_wiki_detail(789u32).await;
+        let result = wiki_api
+            .get_wiki_detail(GetWikiDetailParams::new(789u32))
+            .await;
         assert!(result.is_ok());
         let detail = result.unwrap();
         assert_eq!(detail.id.value(), 789);
@@ -546,7 +551,9 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let result = wiki_api.get_wiki_detail(WikiId::new(999)).await;
+        let result = wiki_api
+            .get_wiki_detail(GetWikiDetailParams::new(WikiId::new(999)))
+            .await;
         assert!(result.is_ok());
         let detail = result.unwrap();
         assert_eq!(detail.id.value(), 999);
@@ -569,7 +576,9 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let result = wiki_api.get_wiki_detail(WikiId::new(404)).await;
+        let result = wiki_api
+            .get_wiki_detail(GetWikiDetailParams::new(WikiId::new(404)))
+            .await;
         assert!(result.is_err());
     }
 
@@ -585,7 +594,9 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let result = wiki_api.get_wiki_detail(WikiId::new(500)).await;
+        let result = wiki_api
+            .get_wiki_detail(GetWikiDetailParams::new(WikiId::new(500)))
+            .await;
         assert!(result.is_err());
     }
 
@@ -601,7 +612,9 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let result = wiki_api.get_wiki_detail(WikiId::new(403)).await;
+        let result = wiki_api
+            .get_wiki_detail(GetWikiDetailParams::new(WikiId::new(403)))
+            .await;
         assert!(result.is_err());
     }
 
@@ -642,7 +655,9 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let result = wiki_api.get_wiki_attachment_list(WikiId::new(123)).await;
+        let result = wiki_api
+            .get_wiki_attachment_list(GetWikiAttachmentListParams::new(WikiId::new(123)))
+            .await;
         assert!(result.is_ok());
         let attachments = result.unwrap();
         assert_eq!(attachments.len(), 3);
@@ -670,7 +685,9 @@ mod tests {
             .await;
 
         // Test using u32 directly (Into<WikiId> conversion)
-        let result = wiki_api.get_wiki_attachment_list(456u32).await;
+        let result = wiki_api
+            .get_wiki_attachment_list(GetWikiAttachmentListParams::new(456u32))
+            .await;
         assert!(result.is_ok());
         let attachments = result.unwrap();
         assert_eq!(attachments.len(), 1);
@@ -692,7 +709,9 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let result = wiki_api.get_wiki_attachment_list(WikiId::new(789)).await;
+        let result = wiki_api
+            .get_wiki_attachment_list(GetWikiAttachmentListParams::new(WikiId::new(789)))
+            .await;
         assert!(result.is_ok());
         let attachments = result.unwrap();
         assert!(attachments.is_empty());
@@ -710,7 +729,9 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let result = wiki_api.get_wiki_attachment_list(WikiId::new(404)).await;
+        let result = wiki_api
+            .get_wiki_attachment_list(GetWikiAttachmentListParams::new(WikiId::new(404)))
+            .await;
         assert!(result.is_err());
     }
 
@@ -726,7 +747,9 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let result = wiki_api.get_wiki_attachment_list(WikiId::new(500)).await;
+        let result = wiki_api
+            .get_wiki_attachment_list(GetWikiAttachmentListParams::new(WikiId::new(500)))
+            .await;
         assert!(result.is_err());
     }
 
@@ -742,7 +765,9 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let result = wiki_api.get_wiki_attachment_list(WikiId::new(403)).await;
+        let result = wiki_api
+            .get_wiki_attachment_list(GetWikiAttachmentListParams::new(WikiId::new(403)))
+            .await;
         assert!(result.is_err());
     }
 
@@ -767,7 +792,10 @@ mod tests {
             .await;
 
         let result = wiki_api
-            .download_wiki_attachment(WikiId::new(123), WikiAttachmentId::new(456))
+            .download_wiki_attachment(DownloadWikiAttachmentParams::new(
+                WikiId::new(123),
+                WikiAttachmentId::new(456),
+            ))
             .await;
         assert!(result.is_ok());
         let downloaded_file = result.unwrap();
@@ -796,7 +824,9 @@ mod tests {
             .await;
 
         // Test using u32 directly (Into<WikiId> and Into<WikiAttachmentId> conversions)
-        let result = wiki_api.download_wiki_attachment(789u32, 101u32).await;
+        let result = wiki_api
+            .download_wiki_attachment(DownloadWikiAttachmentParams::new(789u32, 101u32))
+            .await;
         assert!(result.is_ok());
         let downloaded_file = result.unwrap();
         assert_eq!(downloaded_file.filename, "image.png");
@@ -824,7 +854,10 @@ mod tests {
             .await;
 
         let result = wiki_api
-            .download_wiki_attachment(WikiId::new(555), WikiAttachmentId::new(777))
+            .download_wiki_attachment(DownloadWikiAttachmentParams::new(
+                WikiId::new(555),
+                WikiAttachmentId::new(777),
+            ))
             .await;
         assert!(result.is_ok());
         let downloaded_file = result.unwrap();
@@ -846,7 +879,10 @@ mod tests {
             .await;
 
         let result = wiki_api
-            .download_wiki_attachment(WikiId::new(999), WikiAttachmentId::new(999))
+            .download_wiki_attachment(DownloadWikiAttachmentParams::new(
+                WikiId::new(999),
+                WikiAttachmentId::new(999),
+            ))
             .await;
         assert!(result.is_err());
     }
@@ -864,7 +900,10 @@ mod tests {
             .await;
 
         let result = wiki_api
-            .download_wiki_attachment(WikiId::new(404), WikiAttachmentId::new(1))
+            .download_wiki_attachment(DownloadWikiAttachmentParams::new(
+                WikiId::new(404),
+                WikiAttachmentId::new(1),
+            ))
             .await;
         assert!(result.is_err());
     }
@@ -882,7 +921,10 @@ mod tests {
             .await;
 
         let result = wiki_api
-            .download_wiki_attachment(WikiId::new(123), WikiAttachmentId::new(456))
+            .download_wiki_attachment(DownloadWikiAttachmentParams::new(
+                WikiId::new(123),
+                WikiAttachmentId::new(456),
+            ))
             .await;
         assert!(result.is_err());
     }
@@ -900,7 +942,10 @@ mod tests {
             .await;
 
         let result = wiki_api
-            .download_wiki_attachment(WikiId::new(123), WikiAttachmentId::new(456))
+            .download_wiki_attachment(DownloadWikiAttachmentParams::new(
+                WikiId::new(123),
+                WikiAttachmentId::new(456),
+            ))
             .await;
         assert!(result.is_err());
     }

@@ -119,9 +119,3 @@ impl From<serde_json::Error> for Error {
         Error::Server(format!("JSON serialization/deserialization error: {}", err))
     }
 }
-
-impl From<backlog_wiki::requests::GetWikiListParamsBuilderError> for Error {
-    fn from(err: backlog_wiki::requests::GetWikiListParamsBuilderError) -> Self {
-        Error::Parameter(format!("Failed to build wiki list parameters: {}", err))
-    }
-}
