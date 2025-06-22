@@ -211,6 +211,7 @@ dependencies = [
  "chrono",
  "client",
  "derive_builder",
+ "reqwest",
  "schemars 0.9.0",
  "serde",
  "serde_json",

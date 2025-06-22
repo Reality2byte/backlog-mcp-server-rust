@@ -19,17 +19,9 @@ impl FileApi {
     /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/files/metadata/:path`.
     pub async fn get_shared_files_list(
         &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-        path: impl AsRef<str>,
         params: GetSharedFilesListParams,
     ) -> Result<GetSharedFilesListResponse> {
-        let project_id_or_key_val = project_id_or_key.into();
-        let path_str = path.as_ref();
-        let url = format!(
-            "/api/v2/projects/{}/files/metadata/{}",
-            project_id_or_key_val, path_str
-        );
-        self.0.get_with_params(&url, &params).await
+        self.0.execute(params).await
     }
 
     /// Downloads a shared file by its ID.
@@ -105,14 +97,14 @@ mod tests {
             .await;
 
         let params = GetSharedFilesListParams {
+            project_id_or_key: project_id.into(),
+            path: dir_path.to_string(),
             order: Some("desc".to_string()),
             offset: Some(0),
             count: Some(20),
         };
 
-        let result = file_api
-            .get_shared_files_list(project_id, dir_path, params)
-            .await;
+        let result = file_api.get_shared_files_list(params).await;
         assert!(result.is_ok());
         let files = result.unwrap();
         assert_eq!(files.len(), 1);
@@ -143,14 +135,14 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = GetSharedFilesListParams::default();
-        let result = file_api
-            .get_shared_files_list(
-                ProjectIdOrKey::from_str(project_key).unwrap(),
-                dir_path,
-                params,
-            )
-            .await;
+        let params = GetSharedFilesListParams {
+            project_id_or_key: ProjectIdOrKey::from_str(project_key).unwrap(),
+            path: dir_path.to_string(),
+            order: None,
+            offset: None,
+            count: None,
+        };
+        let result = file_api.get_shared_files_list(params).await;
         assert!(result.is_ok());
         assert!(result.unwrap().is_empty());
     }
@@ -182,10 +174,14 @@ mod tests {
             .mount(&server)
             .await;
 
-        let params = GetSharedFilesListParams::default();
-        let result = file_api
-            .get_shared_files_list(ProjectId::new(project_id), dir_path, params)
-            .await;
+        let params = GetSharedFilesListParams {
+            project_id_or_key: ProjectId::new(project_id).into(),
+            path: dir_path.to_string(),
+            order: None,
+            offset: None,
+            count: None,
+        };
+        let result = file_api.get_shared_files_list(params).await;
         assert!(result.is_err());
         if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
             assert_eq!(status, 404);
@@ -218,14 +214,14 @@ mod tests {
             .await;
 
         let params = GetSharedFilesListParams {
+            project_id_or_key: project_id.into(),
+            path: dir_path.to_string(),
             order: Some("asc".to_string()),
             offset: Some(10),
             count: Some(50),
         };
 
-        let result = file_api
-            .get_shared_files_list(project_id, dir_path, params)
-            .await;
+        let result = file_api.get_shared_files_list(params).await;
         assert!(result.is_ok());
         assert!(result.unwrap().is_empty());
     }

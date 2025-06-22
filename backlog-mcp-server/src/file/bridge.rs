@@ -18,6 +18,8 @@ pub(crate) async fn get_shared_files_list_tool(
     })?;
 
     let params = GetSharedFilesListParams {
+        project_id_or_key,
+        path: request.path,
         order: request.order,
         offset: request.offset,
         count: request.count,
@@ -25,7 +27,7 @@ pub(crate) async fn get_shared_files_list_tool(
 
     client_guard
         .file()
-        .get_shared_files_list(project_id_or_key, request.path, params)
+        .get_shared_files_list(params)
         .await
         .map_err(|e| {
             McpError::internal_error(format!("Failed to get shared files list: {}", e), None)
