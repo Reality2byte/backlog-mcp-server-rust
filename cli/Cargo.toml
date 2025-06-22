@@ -15,6 +15,7 @@ backlog-domain-models = { path = "../crates/backlog-domain-models" }
 backlog-project = { path = "../crates/backlog-project" }
 backlog-issue = { path = "../crates/backlog-issue" }
 backlog-wiki = { path = "../crates/backlog-wiki" }
+backlog-user = { path = "../crates/backlog-user" }
 clap = { version = "4.5", features = ["derive"] }
 tokio = { workspace = true, features = ["full", "macros", "rt-multi-thread"] }
 

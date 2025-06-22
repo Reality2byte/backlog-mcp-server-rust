@@ -1,6 +1,6 @@
 use crate::requests::{GetOwnUserParams, GetUserIconParams, GetUserListParams, GetUserParams};
 use backlog_api_core::{IntoRequest, Result};
-use backlog_core::{User, identifier::UserId};
+use backlog_core::User;
 use client::{Client, DownloadedFile};
 
 pub struct UserApi(Client);
@@ -10,64 +10,33 @@ impl UserApi {
         Self(client)
     }
 
-    /// Get the details of the authenticated user.
-    pub async fn get_own_user(&self) -> Result<GetUserResponse> {
-        self.0.get("/api/v2/users/myself").await
-    }
-
-    /// Get the list of users in the space.
-    /// Corresponds to `GET /api/v2/users`.
-    pub async fn get_user_list(&self) -> Result<Vec<User>> {
-        self.0.get("/api/v2/users").await
-    }
-
-    /// Gets information about a specific user.
-    ///
-    /// Corresponds to `GET /api/v2/users/:userId`.
-    pub async fn get_user(&self, user_id: impl Into<UserId>) -> Result<User> {
-        let path = format!("/api/v2/users/{}", user_id.into());
-        self.0.get(&path).await
-    }
-
-    /// Gets the user icon image data.
-    ///
-    /// Corresponds to `GET /api/v2/users/:userId/icon`.
-    pub async fn get_user_icon(&self, user_id: impl Into<UserId>) -> Result<Vec<u8>> {
-        let path = format!("/api/v2/users/{}/icon", user_id.into());
-        let downloaded_file = self.0.download_file_raw(&path).await?;
-        Ok(downloaded_file.bytes.to_vec())
-    }
-
-    // New IntoRequest-based methods
-
     /// Get the list of users in the space using IntoRequest pattern.
     /// Corresponds to `GET /api/v2/users`.
-    pub async fn get_user_list_v2(&self, params: GetUserListParams) -> Result<Vec<User>> {
+    pub async fn get_user_list(&self, params: GetUserListParams) -> Result<Vec<User>> {
         self.0.execute(params).await
     }
 
     /// Gets information about a specific user using IntoRequest pattern.
     ///
     /// Corresponds to `GET /api/v2/users/:userId`.
-    pub async fn get_user_v2(&self, params: GetUserParams) -> Result<User> {
+    pub async fn get_user(&self, params: GetUserParams) -> Result<User> {
         self.0.execute(params).await
     }
 
     /// Get the details of the authenticated user using IntoRequest pattern.
-    pub async fn get_own_user_v2(&self, params: GetOwnUserParams) -> Result<User> {
+    pub async fn get_own_user(&self, params: GetOwnUserParams) -> Result<User> {
         self.0.execute(params).await
     }
 
     /// Gets the user icon image data using IntoRequest pattern.
     ///
     /// Corresponds to `GET /api/v2/users/:userId/icon`.
-    pub async fn get_user_icon_v2(&self, params: GetUserIconParams) -> Result<DownloadedFile> {
+    pub async fn get_user_icon(&self, params: GetUserIconParams) -> Result<DownloadedFile> {
         let path = params.path();
         self.0.download_file_raw(&path).await
     }
 }
 
-type GetUserResponse = User;
 // No specific response type needed for get_user_list as it returns Vec<User> directly.
 
 #[cfg(test)]
@@ -101,7 +70,7 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let result = api.get_user(user_id).await;
+        let result = api.get_user(GetUserParams::new(user_id)).await;
         assert!(result.is_ok());
         let user = result.unwrap();
         assert_eq!(user.id.value(), 123);
@@ -125,7 +94,7 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let result = api.get_user(user_id).await;
+        let result = api.get_user(GetUserParams::new(user_id)).await;
         assert!(result.is_err());
     }
 
@@ -155,7 +124,7 @@ mod tests {
             .await;
 
         let params = GetUserParams::new(user_id);
-        let result = api.get_user_v2(params).await;
+        let result = api.get_user(params).await;
         assert!(result.is_ok());
         let user = result.unwrap();
         assert_eq!(user.id.value(), 123);
@@ -198,7 +167,7 @@ mod tests {
             .await;
 
         let params = GetUserListParams::new();
-        let result = api.get_user_list_v2(params).await;
+        let result = api.get_user_list(params).await;
         assert!(result.is_ok());
         let users = result.unwrap();
         assert_eq!(users.len(), 2);
@@ -229,7 +198,7 @@ mod tests {
             .await;
 
         let params = GetOwnUserParams::new();
-        let result = api.get_own_user_v2(params).await;
+        let result = api.get_own_user(params).await;
         assert!(result.is_ok());
         let user = result.unwrap();
         assert_eq!(user.id.value(), 123);
@@ -258,7 +227,7 @@ mod tests {
             .await;
 
         let params = GetUserIconParams::new(user_id);
-        let result = api.get_user_icon_v2(params).await;
+        let result = api.get_user_icon(params).await;
         assert!(result.is_ok());
         let downloaded_file = result.unwrap();
         assert_eq!(downloaded_file.filename, "icon.png");

@@ -36,6 +36,10 @@ use backlog_project::requests::{
     DeleteIssueTypeParams, DeleteStatusParams, UpdateCategoryParams, UpdateIssueTypeParams,
     UpdateStatusOrderParams, UpdateStatusParams, UpdateVersionParams,
 };
+use backlog_user::GetOwnUserParams;
+use backlog_user::GetUserIconParams;
+use backlog_user::GetUserListParams;
+use backlog_user::GetUserParams;
 #[cfg(feature = "wiki_writable")]
 use backlog_wiki::UpdateWikiParams;
 use clap::{Args, Parser};
@@ -2688,7 +2692,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             UserCommands::List => {
                 println!("Listing all users:");
 
-                match client.user().get_user_list().await {
+                match client.user().get_user_list(GetUserListParams::new()).await {
                     Ok(users) => {
                         if users.is_empty() {
                             println!("No users found");
@@ -2710,7 +2714,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             UserCommands::Me => {
                 println!("Getting current user info:");
 
-                match client.user().get_own_user().await {
+                match client.user().get_own_user(GetOwnUserParams::new()).await {
                     Ok(user) => {
                         println!("User ID: {}", user.id);
                         if let Some(login_id) = &user.user_id {
@@ -2735,7 +2739,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             UserCommands::Show { user_id } => {
                 println!("Getting user info for user ID: {}", user_id);
 
-                match client.user().get_user(user_id).await {
+                match client.user().get_user(GetUserParams::new(user_id)).await {
                     Ok(user) => {
                         println!("✅ User found");
                         println!("ID: {}", user.id);
@@ -2763,8 +2767,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             UserCommands::Icon { user_id, output } => {
                 println!("Downloading user icon to {}", output.display());
 
-                match client.user().get_user_icon(user_id).await {
-                    Ok(icon_bytes) => {
+                match client
+                    .user()
+                    .get_user_icon(GetUserIconParams::new(user_id))
+                    .await
+                {
+                    Ok(file) => {
+                        let icon_bytes = file.bytes;
                         if let Err(e) = fs::write(&output, &icon_bytes).await {
                             eprintln!("Error writing icon to {}: {}", output.display(), e);
                         } else {
