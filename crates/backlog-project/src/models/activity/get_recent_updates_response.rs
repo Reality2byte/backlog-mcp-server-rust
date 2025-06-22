@@ -1,7 +1,7 @@
+use backlog_core::User;
+use backlog_domain_models::Project;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-
-use crate::types::{Project, User};
 
 pub type GetRecentUpdatesResponse = Vec<Activity>;
 

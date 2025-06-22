@@ -1,20 +1,38 @@
 pub mod api;
 pub mod models;
-pub mod requests;
+//pub mod tests;
 
-pub use api::ProjectApi;
-pub use backlog_domain_models::{Category, IssueType, Milestone, Priority, Resolution, Status};
-pub use models::Project;
-pub use requests::{
-    GetCategoryListParams, GetIssueTypeListParams, GetPriorityListParams, GetProjectDetailParams,
-    GetProjectListParams, GetResolutionListParams, GetStatusListParams,
-    GetVersionMilestoneListParams,
+// re-export domain models
+pub use backlog_domain_models::{Category, IssueType, Milestone, Priority, Resolution, Status, Project};
+
+pub use api::{
+    ProjectApi,
+    GetProjectDetailParams, GetProjectDetailResponse,
+    GetProjectListParams, GetProjectListResponse,
+    GetCategoryListParams, GetCategoryListResponse,
+    GetIssueTypeListParams, GetIssueTypeListResponse,
+    GetStatusListParams, GetStatusListResponse,
+    GetVersionMilestoneListParams, GetVersionMilestoneListResponse,
+    GetPriorityListParams, GetPriorityListResponse,
+    GetResolutionListParams, GetResolutionListResponse,
+    GetProjectIconParams,
 };
 
-// Re-export request structs for writable features
+
+
 #[cfg(feature = "writable")]
-pub use requests::{
-    AddCategoryParams, AddIssueTypeParams, AddStatusParams, AddVersionParams, DeleteCategoryParams,
-    DeleteIssueTypeParams, DeleteVersionParams, UpdateCategoryParams, UpdateIssueTypeParams,
-    UpdateVersionParams,
+pub use api::{
+    AddCategoryParams, AddCategoryResponse,
+    UpdateCategoryParams, UpdateCategoryResponse,
+    DeleteCategoryParams, DeleteCategoryResponse,
+    AddIssueTypeParams, AddIssueTypeResponse,
+    UpdateIssueTypeParams, UpdateIssueTypeResponse,
+    DeleteIssueTypeParams, DeleteIssueTypeResponse,
+    AddVersionParams, AddVersionResponse,
+    UpdateVersionParams, UpdateVersionResponse,
+    DeleteVersionParams, DeleteVersionResponse,
+    AddStatusParams, AddStatusResponse,
+    UpdateStatusParams, UpdateStatusResponse,
+    DeleteStatusParams, DeleteStatusResponse,
+    UpdateStatusOrderParams, UpdateStatusOrderResponse,
 };

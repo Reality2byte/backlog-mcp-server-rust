@@ -1,2 +1,0 @@
-pub mod get_recent_updates_response;
-pub use get_recent_updates_response::GetRecentUpdatesResponse;
