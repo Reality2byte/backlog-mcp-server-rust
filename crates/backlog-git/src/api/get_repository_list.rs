@@ -1,5 +1,5 @@
 use crate::models::Repository;
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_core::ProjectIdOrKey;
 
 pub type GetRepositoryListResponse = Vec<Repository>;
@@ -18,10 +18,6 @@ impl GetRepositoryListParams {
 }
 
 impl IntoRequest for GetRepositoryListParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         format!(
             "/api/v2/projects/{}/git/repositories",

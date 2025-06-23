@@ -1,4 +1,4 @@
-use backlog_api_core::{HttpMethod, IntoDownloadRequest, IntoRequest};
+use backlog_api_core::{IntoDownloadRequest, IntoRequest};
 use serde::Serialize;
 
 /// Parameters for downloading document attachment
@@ -23,10 +23,6 @@ impl DownloadAttachmentParams {
 }
 
 impl IntoRequest for DownloadAttachmentParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         format!(
             "/api/v2/documents/{}/attachments/{}",

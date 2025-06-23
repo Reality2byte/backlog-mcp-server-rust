@@ -1,5 +1,5 @@
 use crate::models::WikiCount;
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_core::ProjectIdOrKey;
 use serde::Serialize;
 
@@ -30,10 +30,6 @@ impl Default for GetWikiCountParams {
 }
 
 impl IntoRequest for GetWikiCountParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         "/api/v2/wikis/count".to_string()
     }

@@ -1,5 +1,5 @@
 use crate::models::Document;
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_core::identifier::ProjectId;
 use derive_builder::Builder;
 use serde::Serialize;
@@ -99,10 +99,6 @@ impl From<ListDocumentsParams> for Vec<(String, String)> {
 
 // IntoRequest implementations for unified access control
 impl IntoRequest for ListDocumentsParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         "/api/v2/documents".to_string()
     }

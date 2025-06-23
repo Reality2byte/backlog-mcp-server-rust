@@ -57,9 +57,6 @@ pub struct DownloadedFile {
 #[derive(Debug)]
 pub struct FileResponse;
 
-unsafe impl Send for FileResponse {}
-unsafe impl Sync for FileResponse {}
-
 impl IntoResponse for FileResponse {
     type Output = DownloadedFile;
 

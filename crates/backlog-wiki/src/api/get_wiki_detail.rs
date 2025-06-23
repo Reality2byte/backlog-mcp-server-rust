@@ -1,5 +1,5 @@
 use crate::models::WikiDetail;
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_core::identifier::{Identifier, WikiId};
 
 pub type GetWikiDetailResponse = WikiDetail;
@@ -18,10 +18,6 @@ impl GetWikiDetailParams {
 }
 
 impl IntoRequest for GetWikiDetailParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         format!("/api/v2/wikis/{}", self.wiki_id.value())
     }

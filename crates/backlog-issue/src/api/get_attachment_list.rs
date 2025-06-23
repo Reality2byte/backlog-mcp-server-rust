@@ -1,5 +1,5 @@
 use crate::models::Attachment;
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_core::IssueIdOrKey;
 use serde::Serialize;
 
@@ -22,10 +22,6 @@ impl GetAttachmentListParams {
 }
 
 impl IntoRequest for GetAttachmentListParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         format!("/api/v2/issues/{}/attachments", self.issue_id_or_key)
     }

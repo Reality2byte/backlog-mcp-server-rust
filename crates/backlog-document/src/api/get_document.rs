@@ -1,5 +1,5 @@
 use crate::models::DocumentDetail;
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use serde::Serialize;
 
 /// Response type for getting a specific document
@@ -22,10 +22,6 @@ impl GetDocumentParams {
 }
 
 impl IntoRequest for GetDocumentParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         format!("/api/v2/documents/{}", self.document_id)
     }

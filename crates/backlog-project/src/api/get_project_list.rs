@@ -1,4 +1,4 @@
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_domain_models::Project;
 use serde::Serialize;
 
@@ -12,10 +12,6 @@ pub struct GetProjectListParams {
 }
 
 impl IntoRequest for GetProjectListParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         "/api/v2/projects".to_string()
     }

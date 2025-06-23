@@ -1,5 +1,5 @@
 use crate::models::PullRequestCommentCount;
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_core::{ProjectIdOrKey, RepositoryIdOrName, identifier::PullRequestNumber};
 
 pub type GetPullRequestCommentCountResponse = PullRequestCommentCount;
@@ -26,10 +26,6 @@ impl GetPullRequestCommentCountParams {
 }
 
 impl IntoRequest for GetPullRequestCommentCountParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments/count",

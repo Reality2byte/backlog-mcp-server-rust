@@ -1,4 +1,4 @@
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_core::{Language, SpaceKey, TextFormattingRule, identifier::UserId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -35,10 +35,6 @@ impl GetSpaceParams {
 }
 
 impl IntoRequest for GetSpaceParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         "/api/v2/space".to_string()
     }

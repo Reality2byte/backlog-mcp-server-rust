@@ -1,4 +1,4 @@
-use backlog_api_core::{HttpMethod, IntoDownloadRequest, IntoRequest};
+use backlog_api_core::{IntoDownloadRequest, IntoRequest};
 use client::DownloadedFile;
 use serde::Serialize;
 
@@ -19,10 +19,6 @@ impl GetSpaceLogoParams {
 }
 
 impl IntoRequest for GetSpaceLogoParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         "/api/v2/space/image".to_string()
     }

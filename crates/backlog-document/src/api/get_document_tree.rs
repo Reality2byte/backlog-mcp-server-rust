@@ -1,5 +1,5 @@
 use crate::models::DocumentTreeRootNode;
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_core::{ProjectIdOrKey, identifier::ProjectId};
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
@@ -38,10 +38,6 @@ impl From<GetDocumentTreeParams> for Vec<(String, String)> {
 }
 
 impl IntoRequest for GetDocumentTreeParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         "/api/v2/documents/tree".to_string()
     }

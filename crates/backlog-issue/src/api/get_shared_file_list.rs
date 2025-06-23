@@ -1,5 +1,5 @@
 use crate::models::SharedFile;
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_core::IssueIdOrKey;
 use serde::Serialize;
 
@@ -22,10 +22,6 @@ impl GetSharedFileListParams {
 }
 
 impl IntoRequest for GetSharedFileListParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         format!("/api/v2/issues/{}/sharedFiles", self.issue_id_or_key)
     }

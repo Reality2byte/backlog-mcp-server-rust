@@ -1,4 +1,4 @@
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_core::User;
 use serde::Serialize;
 
@@ -19,10 +19,6 @@ impl GetUserListParams {
 }
 
 impl IntoRequest for GetUserListParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         "/api/v2/users".to_string()
     }

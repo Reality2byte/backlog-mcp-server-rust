@@ -1,5 +1,5 @@
 use crate::models::PullRequestAttachment;
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_core::{ProjectIdOrKey, RepositoryIdOrName, identifier::PullRequestNumber};
 
 pub type GetPullRequestAttachmentListResponse = Vec<PullRequestAttachment>;
@@ -26,10 +26,6 @@ impl GetPullRequestAttachmentListParams {
 }
 
 impl IntoRequest for GetPullRequestAttachmentListParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments",

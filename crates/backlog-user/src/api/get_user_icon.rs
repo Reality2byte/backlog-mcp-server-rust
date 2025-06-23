@@ -1,4 +1,4 @@
-use backlog_api_core::{Error as ApiError, HttpMethod, IntoDownloadRequest, IntoRequest};
+use backlog_api_core::{Error as ApiError, IntoDownloadRequest, IntoRequest};
 use backlog_core::identifier::UserId;
 use client::DownloadedFile;
 use derive_builder::Builder;
@@ -28,10 +28,6 @@ impl GetUserIconParams {
 }
 
 impl IntoRequest for GetUserIconParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         format!("/api/v2/users/{}/icon", self.user_id)
     }

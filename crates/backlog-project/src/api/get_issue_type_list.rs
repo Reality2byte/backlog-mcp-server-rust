@@ -1,4 +1,4 @@
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_core::ProjectIdOrKey;
 use serde::Serialize;
 
@@ -19,10 +19,6 @@ impl GetIssueTypeListParams {
 }
 
 impl IntoRequest for GetIssueTypeListParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         format!("/api/v2/projects/{}/issueTypes", self.project_id_or_key)
     }

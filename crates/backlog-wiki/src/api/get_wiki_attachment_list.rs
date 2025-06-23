@@ -1,5 +1,5 @@
 use crate::models::WikiAttachment;
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_core::identifier::{Identifier, WikiId};
 
 pub type GetWikiAttachmentListResponse = Vec<WikiAttachment>;
@@ -18,10 +18,6 @@ impl GetWikiAttachmentListParams {
 }
 
 impl IntoRequest for GetWikiAttachmentListParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         format!("/api/v2/wikis/{}/attachments", self.wiki_id.value())
     }

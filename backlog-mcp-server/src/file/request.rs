@@ -6,7 +6,9 @@ pub(crate) struct GetSharedFilesListRequest {
         description = "The project ID or project key to retrieve shared files for. Examples: 'MYPROJECTKEY', '123'."
     )]
     pub project_id_or_key: String,
-    #[schemars(description = "The path to retrieve shared files from.")]
+    #[schemars(
+        description = "The path to retrieve shared files from. Root directory is '', not '/'."
+    )]
     pub path: String,
     #[schemars(description = "Sort order: 'asc' or 'desc'.")]
     #[serde(skip_serializing_if = "Option::is_none")]

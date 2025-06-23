@@ -1,5 +1,5 @@
 use crate::models::{Issue, ParentChildCondition};
-use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
+use backlog_api_core::{Error as ApiError, IntoRequest};
 use backlog_core::identifier::{
     CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ProjectId, ResolutionId, StatusId,
     UserId,
@@ -64,10 +64,6 @@ pub struct GetIssueListParams {
 }
 
 impl IntoRequest for GetIssueListParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         "/api/v2/issues".to_string()
     }

@@ -1,5 +1,5 @@
 use crate::models::Wiki;
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_core::ProjectIdOrKey;
 use serde::Serialize;
 
@@ -37,10 +37,6 @@ impl Default for GetWikiListParams {
 }
 
 impl IntoRequest for GetWikiListParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         "/api/v2/wikis".to_string()
     }

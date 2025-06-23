@@ -1,5 +1,5 @@
 use crate::models::{PrCommentOrder, PullRequestComment};
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_core::{ProjectIdOrKey, RepositoryIdOrName, identifier::PullRequestNumber};
 use serde::Serialize;
 
@@ -55,10 +55,6 @@ impl GetPullRequestCommentListParams {
 }
 
 impl IntoRequest for GetPullRequestCommentListParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/comments",

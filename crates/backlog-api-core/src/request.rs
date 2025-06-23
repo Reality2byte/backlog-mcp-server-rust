@@ -11,7 +11,9 @@ use url::Url;
 ///
 pub trait IntoRequest {
     /// Returns the HTTP method for this request.
-    fn method(&self) -> HttpMethod;
+    fn method(&self) -> HttpMethod {
+        HttpMethod::Get
+    }
 
     /// Returns the URL path for this request.
     fn path(&self) -> String;
@@ -104,10 +106,6 @@ mod tests {
         struct TestParams;
 
         impl IntoRequest for TestParams {
-            fn method(&self) -> HttpMethod {
-                HttpMethod::Get
-            }
-
             fn path(&self) -> String {
                 "/test".to_string()
             }

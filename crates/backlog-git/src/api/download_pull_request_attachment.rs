@@ -1,4 +1,4 @@
-use backlog_api_core::{HttpMethod, IntoDownloadRequest, IntoRequest};
+use backlog_api_core::{IntoDownloadRequest, IntoRequest};
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
     identifier::{PullRequestAttachmentId, PullRequestNumber},
@@ -32,10 +32,6 @@ impl DownloadPullRequestAttachmentParams {
 }
 
 impl IntoRequest for DownloadPullRequestAttachmentParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/{}/attachments/{}",

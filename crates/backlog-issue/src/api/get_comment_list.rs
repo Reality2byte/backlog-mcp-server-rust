@@ -1,5 +1,5 @@
 use crate::models::Comment;
-use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
+use backlog_api_core::{Error as ApiError, IntoRequest};
 use backlog_core::{Error as CoreError, IssueIdOrKey};
 use derive_builder::Builder;
 use serde::Serialize;
@@ -55,10 +55,6 @@ pub struct GetCommentListParams {
 }
 
 impl IntoRequest for GetCommentListParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         format!("/api/v2/issues/{}/comments", self.issue_id_or_key)
     }

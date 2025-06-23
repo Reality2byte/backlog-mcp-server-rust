@@ -1,5 +1,5 @@
 use crate::models::PullRequestCount;
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
     identifier::{Identifier, IssueId, StatusId, UserId},
@@ -55,10 +55,6 @@ impl GetPullRequestCountParams {
 }
 
 impl IntoRequest for GetPullRequestCountParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         format!(
             "/api/v2/projects/{}/git/repositories/{}/pullRequests/count",

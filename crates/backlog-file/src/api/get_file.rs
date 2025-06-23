@@ -1,4 +1,4 @@
-use backlog_api_core::{HttpMethod, IntoDownloadRequest, IntoRequest};
+use backlog_api_core::{IntoDownloadRequest, IntoRequest};
 use backlog_core::{
     ProjectIdOrKey,
     identifier::{Identifier, SharedFileId},
@@ -27,10 +27,6 @@ impl GetFileParams {
 }
 
 impl IntoRequest for GetFileParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         format!(
             "/api/v2/projects/{}/files/{}",

@@ -1,5 +1,5 @@
 use crate::models::Issue;
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_core::IssueIdOrKey;
 use serde::Serialize;
 
@@ -22,10 +22,6 @@ impl GetIssueParams {
 }
 
 impl IntoRequest for GetIssueParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         format!("/api/v2/issues/{}", self.issue_id_or_key)
     }
@@ -53,7 +49,6 @@ mod tests {
         let issue_id_or_key = IssueIdOrKey::Key(IssueKey::from_str("TEST-123").unwrap());
         let params = GetIssueParams::new(issue_id_or_key);
 
-        assert_eq!(params.method(), HttpMethod::Get);
         assert_eq!(params.path(), "/api/v2/issues/TEST-123");
     }
 }

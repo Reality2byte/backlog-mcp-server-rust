@@ -1,4 +1,4 @@
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_core::IssueIdOrKey;
 use serde::{Deserialize, Serialize};
 
@@ -24,10 +24,6 @@ impl CountCommentParams {
 }
 
 impl IntoRequest for CountCommentParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         format!("/api/v2/issues/{}/comments/count", self.issue_id_or_key)
     }

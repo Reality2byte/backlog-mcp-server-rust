@@ -1,5 +1,5 @@
 use crate::models::Comment;
-use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_core::IntoRequest;
 use backlog_core::{IssueIdOrKey, identifier::CommentId};
 use serde::Serialize;
 
@@ -24,10 +24,6 @@ impl GetCommentParams {
 }
 
 impl IntoRequest for GetCommentParams {
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Get
-    }
-
     fn path(&self) -> String {
         format!(
             "/api/v2/issues/{}/comments/{}",
