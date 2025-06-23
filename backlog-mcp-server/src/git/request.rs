@@ -1,9 +1,6 @@
 #[cfg(feature = "git_writable")]
-use backlog_api_client::{AddPullRequestCommentParams, AddPullRequestCommentParamsBuilder};
-use backlog_api_client::{
-    ApiError, GetPullRequestCommentListParams, GetPullRequestCommentListParamsBuilder,
-    PrCommentOrder,
-};
+use backlog_api_client::AddPullRequestCommentParams;
+use backlog_api_client::{ApiError, GetPullRequestCommentListParams, PrCommentOrder};
 #[cfg(feature = "git_writable")]
 use backlog_core::identifier::UserId;
 use rmcp::schemars::{self, JsonSchema}; // rmcp::schemars を使用
@@ -110,15 +107,23 @@ impl TryFrom<GetPullRequestCommentListRequest> for GetPullRequestCommentListPara
             .map(PrCommentOrder::from_str)
             .transpose()?;
 
-        GetPullRequestCommentListParamsBuilder::default()
-            .project_id_or_key(project_id_or_key)
-            .repo_id_or_name(repo_id_or_name)
-            .pr_number(pr_number)
-            .min_id(req.min_id)
-            .max_id(req.max_id)
-            .count(req.count)
-            .order(order)
-            .build()
+        let mut params =
+            GetPullRequestCommentListParams::new(project_id_or_key, repo_id_or_name, pr_number);
+
+        if let Some(min_id) = req.min_id {
+            params = params.min_id(min_id);
+        }
+        if let Some(max_id) = req.max_id {
+            params = params.max_id(max_id);
+        }
+        if let Some(count) = req.count {
+            params = params.count(count);
+        }
+        if let Some(order) = order {
+            params = params.order(order);
+        }
+
+        Ok(params)
     }
 }
 
@@ -155,12 +160,17 @@ impl TryFrom<AddPullRequestCommentRequest> for AddPullRequestCommentParams {
             .notified_user_ids
             .map(|ids| ids.into_iter().map(UserId::new).collect());
 
-        AddPullRequestCommentParamsBuilder::default()
-            .project_id_or_key(project_id_or_key)
-            .repo_id_or_name(repo_id_or_name)
-            .pr_number(pr_number)
-            .content(req.content)
-            .notified_user_ids(notified_user_ids)
-            .build()
+        let mut params = AddPullRequestCommentParams::new(
+            project_id_or_key,
+            repo_id_or_name,
+            pr_number,
+            req.content,
+        );
+
+        if let Some(user_ids) = notified_user_ids {
+            params = params.notified_user_ids(user_ids);
+        }
+
+        Ok(params)
     }
 }

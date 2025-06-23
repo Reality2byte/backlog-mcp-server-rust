@@ -1,21 +1,16 @@
-use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
+use crate::models::Repository;
+use backlog_api_core::{HttpMethod, IntoRequest};
 use backlog_core::{ProjectIdOrKey, RepositoryIdOrName};
-use derive_builder::Builder;
 
-/// Parameters for getting a single repository.
-///
-/// Corresponds to `GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName`.
-#[derive(Builder, Debug, Clone)]
-#[builder(build_fn(error = "ApiError"))]
+pub type GetRepositoryResponse = Repository;
+
+#[derive(Debug, Clone)]
 pub struct GetRepositoryParams {
-    /// The project ID or key.
     pub project_id_or_key: ProjectIdOrKey,
-    /// The repository ID or name.
     pub repo_id_or_name: RepositoryIdOrName,
 }
 
 impl GetRepositoryParams {
-    /// Creates a new instance with the required parameters.
     pub fn new(
         project_id_or_key: impl Into<ProjectIdOrKey>,
         repo_id_or_name: impl Into<RepositoryIdOrName>,

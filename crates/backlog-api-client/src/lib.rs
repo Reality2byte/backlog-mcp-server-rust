@@ -56,48 +56,24 @@ pub use backlog_issue::requests::{
 // Git module (from backlog_git)
 #[cfg(feature = "git")]
 pub use backlog_git::{
-    api::GitApi,
-    models::{
-        ChangeLog, Notification, PrCommentOrder, PullRequest, PullRequestAttachment,
-        PullRequestComment, PullRequestCommentCount, PullRequestCount, Repository, Star,
-    },
-    requests::{
-        download_pull_request_attachment::DownloadPullRequestAttachmentParams,
-        get_pull_request::GetPullRequestParams,
-        get_pull_request_attachment_list::GetPullRequestAttachmentListParams,
-        get_pull_request_comment_count::GetPullRequestCommentCountParams,
-        get_pull_request_comment_list::{
-            GetPullRequestCommentListParams, GetPullRequestCommentListParamsBuilder,
-        },
-        get_pull_request_count::{GetPullRequestCountParams, GetPullRequestCountParamsBuilder},
-        get_pull_request_list::{GetPullRequestListParams, GetPullRequestListParamsBuilder},
-        get_repository::GetRepositoryParams,
-        get_repository_list::GetRepositoryListParams,
-    },
+    ChangeLog, DownloadPullRequestAttachmentParams, DownloadPullRequestAttachmentResponse,
+    GetPullRequestAttachmentListParams, GetPullRequestAttachmentListResponse,
+    GetPullRequestCommentCountParams, GetPullRequestCommentCountResponse,
+    GetPullRequestCommentListParams, GetPullRequestCommentListResponse, GetPullRequestCountParams,
+    GetPullRequestCountResponse, GetPullRequestListParams, GetPullRequestListResponse,
+    GetPullRequestParams, GetPullRequestResponse, GetRepositoryListParams,
+    GetRepositoryListResponse, GetRepositoryParams, GetRepositoryResponse, GitApi, Notification,
+    PrCommentOrder, PullRequest, PullRequestAttachment, PullRequestComment,
+    PullRequestCommentCount, PullRequestCount, Repository, Star,
 };
 
 #[cfg(all(feature = "git", feature = "git_writable"))]
-pub use backlog_git::requests::add_pull_request::{
-    AddPullRequestParams, AddPullRequestParamsBuilder,
+pub use backlog_git::{
+    AddPullRequestCommentParams, AddPullRequestCommentResponse, AddPullRequestParams,
+    AddPullRequestResponse, DeletePullRequestAttachmentParams, DeletePullRequestAttachmentResponse,
+    UpdatePullRequestCommentParams, UpdatePullRequestCommentResponse, UpdatePullRequestParams,
+    UpdatePullRequestResponse,
 };
-
-#[cfg(all(feature = "git", feature = "git_writable"))]
-pub use backlog_git::requests::add_pull_request_comment::{
-    AddPullRequestCommentParams, AddPullRequestCommentParamsBuilder,
-};
-
-#[cfg(all(feature = "git", feature = "git_writable"))]
-pub use backlog_git::requests::update_pull_request::{
-    UpdatePullRequestParams, UpdatePullRequestParamsBuilder,
-};
-
-#[cfg(all(feature = "git", feature = "git_writable"))]
-pub use backlog_git::requests::update_pull_request_comment::{
-    UpdatePullRequestCommentParams, UpdatePullRequestCommentParamsBuilder,
-};
-
-#[cfg(all(feature = "git", feature = "git_writable"))]
-pub use backlog_git::requests::delete_pull_request_attachment::DeletePullRequestAttachmentParams;
 
 // Project module (from backlog_project)
 #[cfg(feature = "project")]

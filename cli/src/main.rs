@@ -1,5 +1,5 @@
 #[cfg(feature = "git_writable")]
-use backlog_api_client::AddPullRequestParamsBuilder;
+use backlog_api_client::AddPullRequestParams;
 #[cfg(feature = "issue_writable")]
 use backlog_api_client::LinkSharedFilesToIssueParamsBuilder;
 #[cfg(feature = "git_writable")]
@@ -7,11 +7,12 @@ use backlog_api_client::LinkSharedFilesToIssueParamsBuilder;
 use backlog_api_client::UpdatePullRequestCommentParams;
 #[cfg(feature = "git_writable")]
 #[allow(unused_imports)]
-use backlog_api_client::UpdatePullRequestParamsBuilder;
+use backlog_api_client::UpdatePullRequestParams;
 use backlog_api_client::{
-    AddCommentParamsBuilder, AttachmentId, GetIssueListParamsBuilder, IssueIdOrKey, ProjectId,
-    ProjectIdOrKey, PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber,
-    RepositoryIdOrName, StatusId, UserId, WikiId, backlog_issue, client::BacklogApiClient,
+    AddCommentParamsBuilder, AttachmentId, GetIssueListParamsBuilder, GetPullRequestCountParams,
+    IssueIdOrKey, ProjectId, ProjectIdOrKey, PullRequestAttachmentId, PullRequestCommentId,
+    PullRequestNumber, RepositoryIdOrName, StatusId, UserId, WikiId, backlog_issue,
+    client::BacklogApiClient,
 };
 #[cfg(feature = "git_writable")]
 use backlog_core::identifier::IssueId;
@@ -1029,42 +1030,37 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .map_err(|e| format!("Failed to parse repo_id '{}': {}", repo_id, e))?;
                 let parsed_pr_number = PullRequestNumber::from(pr_number);
 
-                let mut params_builder =
-                    backlog_api_client::UpdatePullRequestParamsBuilder::default();
-                params_builder
-                    .project_id_or_key(parsed_project_id)
-                    .repo_id_or_name(parsed_repo_id)
-                    .pr_number(parsed_pr_number);
+                let mut params = UpdatePullRequestParams::new(
+                    parsed_project_id,
+                    parsed_repo_id,
+                    parsed_pr_number,
+                );
 
                 if let Some(summary) = summary {
-                    params_builder.summary(Some(summary.clone()));
+                    params = params.summary(summary.clone());
                 }
 
                 if let Some(description) = description {
-                    params_builder.description(Some(description.clone()));
+                    params = params.description(description.clone());
                 }
 
                 if let Some(issue_id) = issue_id {
-                    params_builder.issue_id(Some(IssueId::new(issue_id)));
+                    params = params.issue_id(IssueId::new(issue_id));
                 }
 
                 if let Some(assignee_id) = assignee_id {
-                    params_builder.assignee_id(Some(UserId::new(assignee_id)));
+                    params = params.assignee_id(UserId::new(assignee_id));
                 }
 
                 if let Some(notify_user_ids) = notify_user_ids {
                     let user_ids: Vec<UserId> =
                         notify_user_ids.iter().map(|&id| UserId::new(id)).collect();
-                    params_builder.notified_user_ids(Some(user_ids));
+                    params = params.notified_user_ids(user_ids);
                 }
 
                 if let Some(comment) = comment {
-                    params_builder.comment(Some(comment.clone()));
+                    params = params.comment(comment.clone());
                 }
-
-                let params = params_builder
-                    .build()
-                    .map_err(|e| format!("Failed to build parameters: {}", e))?;
 
                 match client.git().update_pull_request(params).await {
                     Ok(pull_request) => {
@@ -1188,20 +1184,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .map_err(|e| format!("Failed to parse repo_id '{}': {}", repo_id, e))?;
 
                 // Parse filter parameters
-                let mut params_builder =
-                    backlog_api_client::GetPullRequestCountParamsBuilder::default();
-                params_builder
-                    .project_id_or_key(parsed_project_id)
-                    .repo_id_or_name(parsed_repo_id);
+                let mut params = GetPullRequestCountParams::new(parsed_project_id, parsed_repo_id);
 
                 // Parse status IDs
                 if let Some(status_ids_str) = status_ids {
-                    let status_ids: Result<Vec<u32>, _> = status_ids_str
+                    let status_ids: Result<Vec<StatusId>, _> = status_ids_str
                         .split(',')
-                        .map(|s| s.trim().parse::<u32>())
+                        .map(|s| s.trim().parse::<u32>().map(StatusId::new))
                         .collect();
                     match status_ids {
-                        Ok(ids) => params_builder.status_ids(Some(ids)),
+                        Ok(ids) => params = params.status_ids(ids),
                         Err(e) => {
                             eprintln!("❌ Failed to parse status_ids: {}", e);
                             std::process::exit(1);
@@ -1211,12 +1203,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 // Parse assignee IDs
                 if let Some(assignee_ids_str) = assignee_ids {
-                    let assignee_ids: Result<Vec<u32>, _> = assignee_ids_str
+                    let assignee_ids: Result<Vec<UserId>, _> = assignee_ids_str
                         .split(',')
-                        .map(|s| s.trim().parse::<u32>())
+                        .map(|s| s.trim().parse::<u32>().map(UserId::new))
                         .collect();
                     match assignee_ids {
-                        Ok(ids) => params_builder.assignee_ids(Some(ids)),
+                        Ok(ids) => params = params.assignee_ids(ids),
                         Err(e) => {
                             eprintln!("❌ Failed to parse assignee_ids: {}", e);
                             std::process::exit(1);
@@ -1226,12 +1218,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 // Parse issue IDs
                 if let Some(issue_ids_str) = issue_ids {
-                    let issue_ids: Result<Vec<u32>, _> = issue_ids_str
+                    let issue_ids: Result<Vec<IssueId>, _> = issue_ids_str
                         .split(',')
-                        .map(|s| s.trim().parse::<u32>())
+                        .map(|s| s.trim().parse::<u32>().map(IssueId::new))
                         .collect();
                     match issue_ids {
-                        Ok(ids) => params_builder.issue_ids(Some(ids)),
+                        Ok(ids) => params = params.issue_ids(ids),
                         Err(e) => {
                             eprintln!("❌ Failed to parse issue_ids: {}", e);
                             std::process::exit(1);
@@ -1241,24 +1233,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 // Parse created user IDs
                 if let Some(created_user_ids_str) = created_user_ids {
-                    let created_user_ids: Result<Vec<u32>, _> = created_user_ids_str
+                    let created_user_ids: Result<Vec<UserId>, _> = created_user_ids_str
                         .split(',')
-                        .map(|s| s.trim().parse::<u32>())
+                        .map(|s| s.trim().parse::<u32>().map(UserId::new))
                         .collect();
                     match created_user_ids {
-                        Ok(ids) => params_builder.created_user_ids(Some(ids)),
+                        Ok(ids) => params = params.created_user_ids(ids),
                         Err(e) => {
                             eprintln!("❌ Failed to parse created_user_ids: {}", e);
                             std::process::exit(1);
                         }
                     };
                 }
-
-                // Note: offset and count are not supported for pull request count
-
-                let params = params_builder
-                    .build()
-                    .map_err(|e| format!("Failed to build parameters: {}", e))?;
 
                 match client.git().get_pull_request_count(params).await {
                     Ok(count_response) => {
@@ -1295,23 +1281,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .map_err(|e| format!("Failed to parse repo_id '{}': {}", repo_id, e))?;
 
                 // Build parameters
-                let mut params_builder = AddPullRequestParamsBuilder::default();
-                params_builder
-                    .project_id_or_key(parsed_project_id)
-                    .repo_id_or_name(parsed_repo_id)
-                    .summary(summary.clone())
-                    .description(description.clone())
-                    .base(base.clone())
-                    .branch(branch.clone());
+                let mut params = AddPullRequestParams::new(
+                    parsed_project_id,
+                    parsed_repo_id,
+                    summary.clone(),
+                    description.clone(),
+                    base.clone(),
+                    branch.clone(),
+                );
 
                 // Parse optional issue ID
                 if let Some(issue_id) = issue_id {
-                    params_builder.issue_id(backlog_core::identifier::IssueId::new(issue_id));
+                    params = params.issue_id(backlog_core::identifier::IssueId::new(issue_id));
                 }
 
                 // Parse optional assignee ID
                 if let Some(assignee_id) = assignee_id {
-                    params_builder.assignee_id(UserId::new(assignee_id));
+                    params = params.assignee_id(UserId::new(assignee_id));
                 }
 
                 // Parse notify user IDs
@@ -1321,7 +1307,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         .map(|s| s.trim().parse::<u32>().map(UserId::new))
                         .collect();
                     match notify_user_ids {
-                        Ok(ids) => params_builder.notified_user_ids(ids),
+                        Ok(ids) => params = params.notified_user_ids(ids),
                         Err(e) => {
                             eprintln!("❌ Failed to parse notify_user_ids: {}", e);
                             std::process::exit(1);
@@ -1336,17 +1322,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         .map(|s| s.trim().parse::<u32>().map(AttachmentId::new))
                         .collect();
                     match attachment_ids {
-                        Ok(ids) => params_builder.attachment_ids(ids),
+                        Ok(ids) => params = params.attachment_ids(ids),
                         Err(e) => {
                             eprintln!("❌ Failed to parse attachment_ids: {}", e);
                             std::process::exit(1);
                         }
                     };
                 }
-
-                let params = params_builder
-                    .build()
-                    .map_err(|e| format!("Failed to build parameters: {}", e))?;
 
                 match client.git().add_pull_request(params).await {
                     Ok(pull_request) => {
