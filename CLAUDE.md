@@ -310,7 +310,7 @@ When refactoring existing domain crates to follow this standard:
 5. **Verify Build**: Test with both default and `--features writable` builds
 
 ### MCP Server Organization
-- Tools organized by domain modules (`issue/`, `git/`, `document/`, `project/`, `file/`)
+- Tools organized by domain modules (`issue/`, `git/`, `document/`, `project/`, `file/`, `user/`, `wiki/`)
 - Each module contains:
   - `request.rs`: Input structs with JSON schema derivation
   - `bridge.rs`: Core logic functions
@@ -408,6 +408,10 @@ The system now includes comprehensive shared file support:
   - Added `issue list-shared-files` command to CLI
   - Added `get_issue_shared_files` tool to MCP server
   - Re-exported `IssueSharedFile` type from `backlog-api-client` for proper type resolution
+- **User Management Support**: Added user management capabilities to MCP server
+  - Implemented `user/` module with request/bridge pattern
+  - Added `get_user_list` tool for retrieving users in the space
+  - Integration with `backlog-user` domain crate
 
 ### TDD Development Process
 When implementing new API features, follow Test-Driven Development:
