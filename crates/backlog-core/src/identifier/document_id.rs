@@ -15,7 +15,7 @@ static DOCUMENT_ID_REGEXP: LazyLock<Regex> =
 pub struct DocumentId(pub String);
 
 impl DocumentId {
-    pub fn new(value: String) -> Self {
+    pub fn unsafe_new(value: String) -> Self {
         Self(value)
     }
 }

@@ -31,7 +31,7 @@ async fn test_download_attachment_success() {
         .mount(&server)
         .await;
 
-    let document_id = DocumentId::new(document_id_val.to_string());
+    let document_id = DocumentId::unsafe_new(document_id_val.to_string());
     let attachment_id = DocumentAttachmentId::new(attachment_id_val);
 
     let params = DownloadAttachmentParams::new(document_id, attachment_id);
@@ -64,7 +64,7 @@ async fn test_download_attachment_error_404() {
         .mount(&server)
         .await;
 
-    let document_id = DocumentId::new(document_id_val.to_string());
+    let document_id = DocumentId::unsafe_new(document_id_val.to_string());
     let attachment_id = DocumentAttachmentId::new(attachment_id_val);
 
     let params = DownloadAttachmentParams::new(document_id, attachment_id);
