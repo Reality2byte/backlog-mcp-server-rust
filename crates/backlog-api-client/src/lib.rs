@@ -118,10 +118,11 @@ pub use backlog_user::UserApi;
 // Wiki module (from backlog_wiki)
 #[cfg(feature = "wiki")]
 pub use backlog_wiki::{
-    GetWikiAttachmentListResponse, GetWikiCountParams, GetWikiCountParamsBuilder,
-    GetWikiCountResponse, GetWikiDetailResponse, GetWikiListParams, GetWikiListParamsBuilder,
-    GetWikiListResponse, Wiki, WikiApi, WikiAttachment, WikiCount, WikiDetail, WikiTag,
+    DownloadWikiAttachmentParams, GetWikiAttachmentListParams, GetWikiAttachmentListResponse,
+    GetWikiCountParams, GetWikiCountResponse, GetWikiDetailParams, GetWikiDetailResponse,
+    GetWikiListParams, GetWikiListResponse, Wiki, WikiApi, WikiAttachment, WikiCount, WikiDetail,
+    WikiTag,
 };
 
 #[cfg(all(feature = "wiki", feature = "wiki_writable"))]
-pub use backlog_wiki::{UpdateWikiRequestParams, UpdateWikiRequestParamsBuilder};
+pub use backlog_wiki::{UpdateWikiParams, UpdateWikiResponse};

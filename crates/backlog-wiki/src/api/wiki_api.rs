@@ -1,0 +1,63 @@
+use crate::api::{
+    DownloadWikiAttachmentParams, GetWikiAttachmentListParams, GetWikiAttachmentListResponse,
+    GetWikiCountParams, GetWikiCountResponse, GetWikiDetailParams, GetWikiDetailResponse,
+    GetWikiListParams, GetWikiListResponse,
+};
+#[cfg(feature = "writable")]
+use crate::api::{UpdateWikiParams, UpdateWikiResponse};
+use backlog_api_core::Result;
+use client::Client;
+
+pub struct WikiApi(Client);
+
+impl WikiApi {
+    pub fn new(client: Client) -> Self {
+        Self(client)
+    }
+
+    /// Get wiki page count
+    /// Corresponds to `GET /api/v2/wikis/count`.
+    pub async fn get_wiki_count(&self, params: GetWikiCountParams) -> Result<GetWikiCountResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Get wiki page details
+    /// Corresponds to `GET /api/v2/wikis/:wikiId`.
+    pub async fn get_wiki_detail(
+        &self,
+        params: GetWikiDetailParams,
+    ) -> Result<GetWikiDetailResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Get wiki page list
+    /// Corresponds to `GET /api/v2/wikis`.
+    pub async fn get_wiki_list(&self, params: GetWikiListParams) -> Result<GetWikiListResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Get wiki attachment list
+    /// Corresponds to `GET /api/v2/wikis/:wikiId/attachments`.
+    pub async fn get_wiki_attachment_list(
+        &self,
+        params: GetWikiAttachmentListParams,
+    ) -> Result<GetWikiAttachmentListResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Download wiki attachment
+    /// Corresponds to `GET /api/v2/wikis/:wikiId/attachments/:attachmentId`.
+    pub async fn download_wiki_attachment(
+        &self,
+        params: DownloadWikiAttachmentParams,
+    ) -> Result<client::DownloadedFile> {
+        self.0.download_file(params).await
+    }
+
+    /// Update wiki page
+    /// Corresponds to `PATCH /api/v2/wikis/:wikiId`.
+    #[cfg(feature = "writable")]
+    pub async fn update_wiki(&self, params: UpdateWikiParams) -> Result<UpdateWikiResponse> {
+        self.0.execute(params).await
+    }
+}

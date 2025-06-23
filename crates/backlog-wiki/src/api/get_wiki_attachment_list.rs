@@ -1,19 +1,15 @@
+use crate::models::WikiAttachment;
 use backlog_api_core::{HttpMethod, IntoRequest};
 use backlog_core::identifier::{Identifier, WikiId};
-use derive_builder::Builder;
 
-/// Parameters for getting a wiki attachment list.
-///
-/// Corresponds to `GET /api/v2/wikis/:wikiId/attachments`.
-#[derive(Builder, Debug, Clone)]
-#[builder(build_fn(error = "backlog_api_core::Error"))]
+pub type GetWikiAttachmentListResponse = Vec<WikiAttachment>;
+
+#[derive(Debug, Clone)]
 pub struct GetWikiAttachmentListParams {
-    /// The wiki ID.
     pub wiki_id: WikiId,
 }
 
 impl GetWikiAttachmentListParams {
-    /// Creates a new instance with the required parameters.
     pub fn new(wiki_id: impl Into<WikiId>) -> Self {
         Self {
             wiki_id: wiki_id.into(),

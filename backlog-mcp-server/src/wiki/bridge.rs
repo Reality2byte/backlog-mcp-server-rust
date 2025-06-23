@@ -7,7 +7,7 @@ use crate::wiki::request::{
 #[cfg(feature = "wiki_writable")]
 use crate::wiki::request::UpdateWikiRequest;
 use backlog_api_client::{
-    DownloadedFile, GetWikiListParamsBuilder, ProjectIdOrKey, client::BacklogApiClient,
+    DownloadedFile, GetWikiListParams, ProjectIdOrKey, client::BacklogApiClient,
 };
 use backlog_wiki::{
     DownloadWikiAttachmentParams, GetWikiAttachmentListParams, GetWikiDetailParams,
@@ -18,7 +18,7 @@ use backlog_core::{
     identifier::{ProjectId, WikiAttachmentId, WikiId},
 };
 #[cfg(feature = "wiki_writable")]
-use backlog_wiki::UpdateWikiRequestParamsBuilder;
+use backlog_wiki::UpdateWikiParams;
 use std::str::FromStr;
 
 pub(crate) async fn get_wiki_list(
@@ -27,7 +27,7 @@ pub(crate) async fn get_wiki_list(
 ) -> Result<serde_json::Value> {
     let wiki_api = client.wiki();
 
-    let mut params_builder = GetWikiListParamsBuilder::default();
+    let mut params = GetWikiListParams::new();
 
     // Handle project_id_or_key parameter
     if let Some(project_str) = request.project_id_or_key {
@@ -41,15 +41,13 @@ pub(crate) async fn get_wiki_list(
                 project_str
             )));
         };
-        params_builder.project_id_or_key(project_id_or_key);
+        params = params.project_id_or_key(project_id_or_key);
     }
 
     // Handle keyword parameter
     if let Some(keyword) = request.keyword {
-        params_builder.keyword(keyword);
+        params = params.keyword(keyword);
     }
-
-    let params = params_builder.build()?;
 
     let wikis = wiki_api.get_wiki_list(params).await?;
 
@@ -107,24 +105,22 @@ pub(crate) async fn update_wiki(
     let wiki_api = client.wiki();
     let wiki_id = WikiId::new(request.wiki_id);
 
-    // Build UpdateWikiRequestParams from request
-    let mut builder = UpdateWikiRequestParamsBuilder::default();
-    builder.wiki_id(wiki_id);
+    // Build UpdateWikiParams from request
+    let mut params = UpdateWikiParams::new(wiki_id);
 
     if let Some(name) = request.name {
-        builder.name(name);
+        params = params.name(name);
     }
 
     if let Some(content) = request.content {
-        builder.content(content);
+        params = params.content(content);
     }
 
     if let Some(mail_notify) = request.mail_notify {
-        builder.mail_notify(mail_notify);
+        params = params.mail_notify(mail_notify);
     }
 
-    let params = builder.build().unwrap();
-    let wiki_detail = wiki_api.update_wiki_request(params).await?;
+    let wiki_detail = wiki_api.update_wiki(params).await?;
 
     Ok(serde_json::to_value(wiki_detail)?)
 }
