@@ -1,17 +1,21 @@
 use backlog_api_core::{HttpMethod, IntoRequest};
 use backlog_core::IssueIdOrKey;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-/// Parameters for counting comments for an issue.
-///
+/// Response type for counting comments
+#[derive(Debug, Deserialize)]
+pub struct CountCommentResponse {
+    pub count: u32,
+}
+
+/// Parameters for counting comments for a specific issue.
 /// Corresponds to `GET /api/v2/issues/:issueIdOrKey/comments/count`.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct CountCommentParams {
     pub issue_id_or_key: IssueIdOrKey,
 }
 
 impl CountCommentParams {
-    /// Creates a new instance.
     pub fn new(issue_id_or_key: impl Into<IssueIdOrKey>) -> Self {
         Self {
             issue_id_or_key: issue_id_or_key.into(),
@@ -29,7 +33,6 @@ impl IntoRequest for CountCommentParams {
     }
 
     fn to_query(&self) -> impl Serialize {
-        // No query parameters needed for this endpoint
         Vec::<(String, String)>::new()
     }
 }

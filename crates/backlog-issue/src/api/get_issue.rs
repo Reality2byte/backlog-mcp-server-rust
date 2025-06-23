@@ -1,15 +1,19 @@
+use crate::models::Issue;
 use backlog_api_core::{HttpMethod, IntoRequest};
 use backlog_core::IssueIdOrKey;
 use serde::Serialize;
 
-/// Parameters for getting the shared file list of an issue.
-/// Corresponds to `GET /api/v2/issues/:issueIdOrKey/sharedFiles`.
+/// Response type for getting a specific issue
+pub type GetIssueResponse = Issue;
+
+/// Parameters for getting a specific issue.
+/// Corresponds to `GET /api/v2/issues/:issueIdOrKey`.
 #[derive(Debug, Clone, PartialEq)]
-pub struct GetSharedFileListParams {
+pub struct GetIssueParams {
     pub issue_id_or_key: IssueIdOrKey,
 }
 
-impl GetSharedFileListParams {
+impl GetIssueParams {
     pub fn new(issue_id_or_key: impl Into<IssueIdOrKey>) -> Self {
         Self {
             issue_id_or_key: issue_id_or_key.into(),
@@ -17,13 +21,13 @@ impl GetSharedFileListParams {
     }
 }
 
-impl IntoRequest for GetSharedFileListParams {
+impl IntoRequest for GetIssueParams {
     fn method(&self) -> HttpMethod {
         HttpMethod::Get
     }
 
     fn path(&self) -> String {
-        format!("/api/v2/issues/{}/sharedFiles", self.issue_id_or_key)
+        format!("/api/v2/issues/{}", self.issue_id_or_key)
     }
 
     fn to_query(&self) -> impl Serialize {
@@ -38,18 +42,18 @@ mod tests {
     use std::str::FromStr;
 
     #[test]
-    fn test_get_shared_file_list_params_new() {
+    fn test_get_issue_params_new() {
         let issue_id_or_key = IssueIdOrKey::Key(IssueKey::from_str("TEST-123").unwrap());
-        let params = GetSharedFileListParams::new(issue_id_or_key.clone());
+        let params = GetIssueParams::new(issue_id_or_key.clone());
         assert_eq!(params.issue_id_or_key, issue_id_or_key);
     }
 
     #[test]
-    fn test_get_shared_file_list_params_into_request() {
+    fn test_get_issue_params_into_request() {
         let issue_id_or_key = IssueIdOrKey::Key(IssueKey::from_str("TEST-123").unwrap());
-        let params = GetSharedFileListParams::new(issue_id_or_key);
+        let params = GetIssueParams::new(issue_id_or_key);
 
         assert_eq!(params.method(), HttpMethod::Get);
-        assert_eq!(params.path(), "/api/v2/issues/TEST-123/sharedFiles");
+        assert_eq!(params.path(), "/api/v2/issues/TEST-123");
     }
 }

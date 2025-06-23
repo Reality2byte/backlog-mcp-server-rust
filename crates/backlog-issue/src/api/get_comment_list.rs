@@ -1,8 +1,12 @@
+use crate::models::Comment;
 use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
 use backlog_core::{Error as CoreError, IssueIdOrKey};
 use derive_builder::Builder;
 use serde::Serialize;
 use std::{fmt, str::FromStr};
+
+/// Response type for getting a list of comments
+pub type GetCommentListResponse = Vec<Comment>;
 
 /// Specifies the sort order for listing comments.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -30,49 +34,24 @@ impl FromStr for CommentOrder {
         match s.to_lowercase().as_str() {
             "asc" => Ok(CommentOrder::Asc),
             "desc" => Ok(CommentOrder::Desc),
-            _ => Err(CoreError::InvalidParameter(format!(
-                "Invalid comment order: '{}'. Must be 'asc' or 'desc'.",
-                s
-            ))),
+            _ => Err(CoreError::InvalidParameter("CommentOrder".to_string())),
         }
     }
 }
 
-/// Parameters for [IssueApi::get_comment_list](crate::api::IssueApi::get_comment_list).
-///
-/// Allows filtering and pagination when retrieving comments for an issue.
-/// Use the associated builder `GetCommentListParamsBuilder` to construct an instance.
-///
-/// # Example
-///
-/// ```
-/// use backlog_issue::requests::get_comment_list::{GetCommentListParamsBuilder, CommentOrder};
-///
-/// let params = GetCommentListParamsBuilder::default()
-///     .min_id(100u64)
-///     .count(20u8)
-///     .order(CommentOrder::Asc)
-///     .build()
-///     .unwrap();
-/// ```
 #[derive(Debug, Clone, Builder)]
-#[builder(setter(strip_option, into), build_fn(error = "ApiError"))]
+#[builder(build_fn(error = "ApiError"))]
 pub struct GetCommentListParams {
-    /// The issue ID or key to get comments from.
     #[builder(setter(into))]
     pub issue_id_or_key: IssueIdOrKey,
-    /// The minimum comment ID to include in the results.
-    #[builder(default)]
-    min_id: Option<u64>,
-    /// The maximum comment ID to include in the results.
-    #[builder(default)]
-    max_id: Option<u64>,
-    /// The number of comments to retrieve (default: 20, max: 100).
-    #[builder(default)]
-    count: Option<u8>,
-    /// The sort order for the comments.
-    #[builder(default)]
-    order: Option<CommentOrder>,
+    #[builder(default, setter(into, strip_option))]
+    pub min_id: Option<u64>,
+    #[builder(default, setter(into, strip_option))]
+    pub max_id: Option<u64>,
+    #[builder(default, setter(into, strip_option))]
+    pub count: Option<u8>,
+    #[builder(default, setter(into, strip_option))]
+    pub order: Option<CommentOrder>,
 }
 
 impl IntoRequest for GetCommentListParams {
@@ -85,27 +64,24 @@ impl IntoRequest for GetCommentListParams {
     }
 
     fn to_query(&self) -> impl Serialize {
-        self.to_query_params()
-    }
-}
-
-impl GetCommentListParams {
-    /// Converts the parameters to a vector of (key, value) string pairs
-    /// suitable for use as URL query parameters.
-    pub fn to_query_params(&self) -> Vec<(String, String)> {
         let mut params = Vec::new();
+
         if let Some(min_id) = self.min_id {
             params.push(("minId".to_string(), min_id.to_string()));
         }
+
         if let Some(max_id) = self.max_id {
             params.push(("maxId".to_string(), max_id.to_string()));
         }
+
         if let Some(count) = self.count {
             params.push(("count".to_string(), count.to_string()));
         }
-        if let Some(order) = self.order {
+
+        if let Some(order) = &self.order {
             params.push(("order".to_string(), order.to_string()));
         }
+
         params
     }
 }

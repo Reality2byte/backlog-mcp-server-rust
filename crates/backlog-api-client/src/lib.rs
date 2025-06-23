@@ -23,8 +23,8 @@ pub use backlog_core::{
 // Document module (from backlog_document)
 #[cfg(feature = "document")]
 pub use backlog_document::{
-    DocumentApi, DocumentDetail, DocumentTreeResponse, DocumentTreeRootNode,
-    DownloadAttachmentParams, GetDocumentParams, GetDocumentTreeParams,
+    DocumentApi, DocumentDetail, DocumentTreeRootNode, DownloadAttachmentParams, GetDocumentParams,
+    GetDocumentTreeParams, GetDocumentTreeResponse,
 };
 
 // File module (from backlog_file)
@@ -34,13 +34,10 @@ pub use backlog_file::{FileApi, GetSharedFilesListParams, GetSharedFilesListResp
 // Issue module (from backlog_issue)
 #[cfg(feature = "issue")]
 pub use backlog_issue::{
-    IssueApi,
-    models::{Attachment, ChangeLogEntry, Comment, Issue, SharedFile as IssueSharedFile},
-    requests::{
-        AddCommentParams, AddCommentParamsBuilder, GetIssueListParams, GetIssueListParamsBuilder,
-        UpdateIssueParams, UpdateIssueParamsBuilder,
-        get_comment_list::{CommentOrder, GetCommentListParams, GetCommentListParamsBuilder},
-    },
+    AddCommentParams, AddCommentParamsBuilder, Attachment, ChangeLogEntry, Comment, CommentOrder,
+    GetCommentListParams, GetCommentListParamsBuilder, GetIssueListParams,
+    GetIssueListParamsBuilder, Issue, IssueApi, SharedFile as IssueSharedFile, UpdateIssueParams,
+    UpdateIssueParamsBuilder,
 };
 
 // Re-export backlog_issue module for parameter access
@@ -49,9 +46,7 @@ pub use backlog_issue;
 
 // Issue writable operations (from backlog_issue)
 #[cfg(all(feature = "issue", feature = "issue_writable"))]
-pub use backlog_issue::requests::{
-    LinkSharedFilesToIssueParams, LinkSharedFilesToIssueParamsBuilder,
-};
+pub use backlog_issue::{LinkSharedFilesToIssueParams, LinkSharedFilesToIssueParamsBuilder};
 
 // Git module (from backlog_git)
 #[cfg(feature = "git")]

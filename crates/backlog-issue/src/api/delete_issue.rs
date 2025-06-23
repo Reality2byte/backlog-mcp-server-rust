@@ -1,14 +1,25 @@
+#[cfg(feature = "writable")]
+use crate::models::Issue;
+#[cfg(feature = "writable")]
 use backlog_api_core::{HttpMethod, IntoRequest};
+#[cfg(feature = "writable")]
 use backlog_core::IssueKey;
+#[cfg(feature = "writable")]
 use serde::Serialize;
+
+/// Response type for deleting an issue
+#[cfg(feature = "writable")]
+pub type DeleteIssueResponse = Issue;
 
 /// Parameters for deleting a specific issue.
 /// Corresponds to `DELETE /api/v2/issues/:issueKey`.
+#[cfg(feature = "writable")]
 #[derive(Debug, Clone, PartialEq)]
 pub struct DeleteIssueParams {
     pub issue_key: IssueKey,
 }
 
+#[cfg(feature = "writable")]
 impl DeleteIssueParams {
     pub fn new(issue_key: impl Into<IssueKey>) -> Self {
         Self {
@@ -17,6 +28,7 @@ impl DeleteIssueParams {
     }
 }
 
+#[cfg(feature = "writable")]
 impl IntoRequest for DeleteIssueParams {
     fn method(&self) -> HttpMethod {
         HttpMethod::Delete
@@ -31,7 +43,7 @@ impl IntoRequest for DeleteIssueParams {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "writable"))]
 mod tests {
     use super::*;
     use std::str::FromStr;

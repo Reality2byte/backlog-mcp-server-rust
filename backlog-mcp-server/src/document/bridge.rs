@@ -5,8 +5,8 @@ use tokio::sync::Mutex;
 
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
-    DocumentDetail, DocumentTreeResponse, DownloadAttachmentParams, DownloadedFile,
-    GetDocumentParams, GetDocumentTreeParams,
+    DocumentDetail, DownloadAttachmentParams, DownloadedFile, GetDocumentParams,
+    GetDocumentTreeParams, GetDocumentTreeResponse,
 };
 use backlog_core::{
     ProjectIdOrKey,
@@ -48,7 +48,7 @@ pub(crate) async fn download_document_attachment_bridge(
 pub(crate) async fn get_document_tree_tool(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetDocumentTreeRequest,
-) -> Result<DocumentTreeResponse> {
+) -> Result<GetDocumentTreeResponse> {
     let client_guard = client.lock().await;
     let project_id_or_key_val = ProjectIdOrKey::from_str(req.project_id_or_key.trim())?;
     // Construct directly instead of using the builder, to sidestep the E0599 error for now.

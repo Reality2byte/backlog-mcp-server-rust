@@ -1,7 +1,7 @@
 use crate::file::request::{DownloadSharedFileRequest, GetSharedFilesListRequest};
 use backlog_api_client::{DownloadedFile, client::BacklogApiClient};
 use backlog_core::{ProjectIdOrKey, identifier::SharedFileId};
-use backlog_file::{models::SharedFile, requests::GetSharedFilesListParams};
+use backlog_file::{GetSharedFilesListParams, SharedFile};
 use rmcp::Error as McpError;
 use std::str::FromStr;
 use std::sync::Arc;
