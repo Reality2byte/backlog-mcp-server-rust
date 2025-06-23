@@ -1,11 +1,23 @@
+#[cfg(feature = "writable")]
+use crate::models::Issue;
+#[cfg(feature = "writable")]
 use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
+#[cfg(feature = "writable")]
 use backlog_core::identifier::{
     AttachmentId, CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ProjectId, UserId,
 };
+#[cfg(feature = "writable")]
 use chrono::{DateTime, Utc};
+#[cfg(feature = "writable")]
 use derive_builder::Builder;
+#[cfg(feature = "writable")]
 use serde::Serialize;
 
+/// Response type for adding a new issue
+#[cfg(feature = "writable")]
+pub type AddIssueResponse = Issue;
+
+#[cfg(feature = "writable")]
 #[derive(Debug, Builder)]
 #[builder(build_fn(error = "ApiError"))]
 pub struct AddIssueParams {
@@ -43,6 +55,7 @@ pub struct AddIssueParams {
     pub attachment_id: Option<Vec<AttachmentId>>,
 }
 
+#[cfg(feature = "writable")]
 impl IntoRequest for AddIssueParams {
     fn method(&self) -> HttpMethod {
         HttpMethod::Post

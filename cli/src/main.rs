@@ -28,7 +28,7 @@ use backlog_core::{
 #[cfg(feature = "project_writable")]
 use backlog_domain_models::{IssueTypeColor, StatusColor};
 #[cfg(feature = "issue_writable")]
-use backlog_issue::requests::{AddIssueParamsBuilder, UpdateIssueParamsBuilder};
+use backlog_issue::{AddIssueParamsBuilder, UpdateIssueParamsBuilder};
 use backlog_project::GetProjectListParams;
 #[cfg(feature = "project_writable")]
 use backlog_project::{
@@ -1437,7 +1437,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 let parsed_attachment_id = AttachmentId::new(dl_args.attachment_id);
 
-                let params = backlog_issue::requests::GetAttachmentFileParams::new(
+                let params = backlog_issue::GetAttachmentFileParams::new(
                     parsed_issue_id_or_key,
                     parsed_attachment_id,
                 );
@@ -1689,7 +1689,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 match client
                     .issue()
-                    .count_comment(backlog_issue::requests::CountCommentParams::new(
+                    .count_comment(backlog_issue::CountCommentParams::new(
                         parsed_issue_id_or_key,
                     ))
                     .await
@@ -1723,7 +1723,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 match client
                     .issue()
-                    .get_comment(backlog_issue::requests::GetCommentParams::new(
+                    .get_comment(backlog_issue::GetCommentParams::new(
                         parsed_issue_id_or_key,
                         comment_id,
                     ))

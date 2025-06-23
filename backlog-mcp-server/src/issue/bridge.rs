@@ -147,10 +147,8 @@ pub(crate) async fn download_issue_attachment_file(
     let parsed_attachment_id = AttachmentId::new(req.attachment_id);
 
     let client_guard = client.lock().await;
-    let params = backlog_issue::requests::GetAttachmentFileParams::new(
-        parsed_issue_id_or_key,
-        parsed_attachment_id,
-    );
+    let params =
+        backlog_issue::GetAttachmentFileParams::new(parsed_issue_id_or_key, parsed_attachment_id);
     let attachment = client_guard.issue().get_attachment_file(params).await?;
     Ok(attachment)
 }

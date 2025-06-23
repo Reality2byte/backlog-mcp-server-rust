@@ -5,7 +5,7 @@ mod writable_tests {
     use backlog_core::{IssueIdOrKey, IssueKey, Language, Role, User};
     use backlog_issue::api::IssueApi;
     use backlog_issue::models::{Comment, FileContent, SharedFile};
-    use backlog_issue::requests::{
+    use backlog_issue::{
         AddCommentParamsBuilder, GetAttachmentFileParams, LinkSharedFilesToIssueParamsBuilder,
     };
     use chrono::{TimeZone, Utc};

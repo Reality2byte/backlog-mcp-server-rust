@@ -2,26 +2,23 @@ use backlog_api_core::Result;
 use client::{Client, DownloadedFile};
 
 #[cfg(feature = "writable")]
-use crate::requests::{
+use super::{
     AddCommentParams, AddIssueParams, DeleteIssueParams, LinkSharedFilesToIssueParams,
     UpdateIssueParams,
 };
 #[cfg(feature = "writable")]
-use crate::responses::{
+use super::{
     AddCommentResponse, AddIssueResponse, DeleteIssueResponse, LinkSharedFilesToIssueResponse,
     UpdateIssueResponse,
 };
-use crate::{
-    requests::{
-        CountCommentParams, CountIssueParams, GetAttachmentFileParams, GetAttachmentListParams,
-        GetCommentListParams, GetCommentParams, GetIssueListParams, GetIssueParams,
-        GetSharedFileListParams,
-    },
-    responses::{
-        CountCommentResponse, CountIssueResponse, GetAttachmentListResponse,
-        GetCommentListResponse, GetCommentResponse, GetIssueListResponse, GetIssueResponse,
-        GetSharedFileListResponse,
-    },
+use super::{
+    CountCommentParams, CountIssueParams, GetAttachmentFileParams, GetAttachmentListParams,
+    GetCommentListParams, GetCommentParams, GetIssueListParams, GetIssueParams,
+    GetSharedFileListParams,
+};
+use super::{
+    CountCommentResponse, CountIssueResponse, GetAttachmentListResponse, GetCommentListResponse,
+    GetCommentResponse, GetIssueListResponse, GetIssueResponse, GetSharedFileListResponse,
 };
 
 pub struct IssueApi(Client);

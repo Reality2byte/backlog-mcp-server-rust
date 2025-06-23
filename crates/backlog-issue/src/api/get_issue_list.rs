@@ -1,4 +1,4 @@
-use crate::models::ParentChildCondition;
+use crate::models::{Issue, ParentChildCondition};
 use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
 use backlog_core::identifier::{
     CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ProjectId, ResolutionId, StatusId,
@@ -6,6 +6,9 @@ use backlog_core::identifier::{
 };
 use derive_builder::Builder;
 use serde::Serialize;
+
+/// Response type for getting a list of issues
+pub type GetIssueListResponse = Vec<Issue>;
 
 #[derive(Debug, Clone, Builder)]
 #[builder(build_fn(error = "ApiError"))]

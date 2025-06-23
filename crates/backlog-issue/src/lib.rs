@@ -1,13 +1,11 @@
 pub mod api;
 pub mod models;
-pub mod requests;
-pub mod responses;
 
-pub use api::IssueApi;
-pub use requests::{GetAttachmentListParams, GetIssueParams, GetSharedFileListParams};
+// Re-export API components
+pub use api::*;
 
-#[cfg(feature = "writable")]
-pub use requests::DeleteIssueParams;
+// Re-export domain models
+pub use models::*;
 
 #[cfg(test)]
 mod tests {

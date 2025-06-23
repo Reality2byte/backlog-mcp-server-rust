@@ -1,9 +1,9 @@
 mod common;
 use common::*;
 
-use backlog_issue::requests::{
-    CountCommentParams, GetAttachmentListParams, GetCommentListParamsBuilder, GetCommentParams,
-    GetIssueListParamsBuilder, GetSharedFileListParams, get_comment_list::CommentOrder,
+use backlog_issue::{
+    CommentOrder, CountCommentParams, GetAttachmentListParams, GetCommentListParamsBuilder,
+    GetCommentParams, GetIssueListParamsBuilder, GetSharedFileListParams,
 };
 
 fn create_mock_user(id: u32, name: &str) -> User {

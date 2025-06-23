@@ -1,4 +1,8 @@
+#[cfg(feature = "writable")]
+use crate::models::Issue;
+#[cfg(feature = "writable")]
 use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
+#[cfg(feature = "writable")]
 use backlog_core::{
     IssueIdOrKey,
     identifier::{
@@ -6,9 +10,16 @@ use backlog_core::{
         UserId,
     },
 };
+#[cfg(feature = "writable")]
 use derive_builder::Builder;
+#[cfg(feature = "writable")]
 use serde::Serialize;
 
+/// Response type for updating an issue
+#[cfg(feature = "writable")]
+pub type UpdateIssueResponse = Issue;
+
+#[cfg(feature = "writable")]
 #[derive(Debug, Clone, Builder)]
 #[builder(setter(strip_option, into))]
 #[builder(build_fn(error = "ApiError"))]
@@ -34,7 +45,7 @@ pub struct UpdateIssueParams {
     #[builder(default, setter(into, strip_option))]
     pub category_id: Option<Vec<CategoryId>>,
     #[builder(default, setter(into, strip_option))]
-    pub version_id: Option<Vec<MilestoneId>>, // Note: API doc says versionId, but existing AddIssueParams uses MilestoneId for version_id. Assuming MilestoneId is correct for consistency or if it's a typo in AddIssueParams. For now, using MilestoneId as per existing code.
+    pub version_id: Option<Vec<MilestoneId>>,
     #[builder(default, setter(into, strip_option))]
     pub milestone_id: Option<Vec<MilestoneId>>,
     #[builder(default, setter(into, strip_option))]
@@ -46,7 +57,7 @@ pub struct UpdateIssueParams {
     #[builder(default, setter(into, strip_option))]
     pub attachment_id: Option<Vec<AttachmentId>>,
     #[builder(default, setter(into, strip_option))]
-    pub status_id: Option<String>, // API doc says Number, but existing GetIssueListParams uses String for status_id. Assuming String for flexibility, or it might be an ID of a status. Let's use String for now and clarify if needed. The response shows status as an object, but request is often just ID.
+    pub status_id: Option<String>,
     #[builder(default, setter(into, strip_option))]
     pub resolution_id: Option<ResolutionId>,
     #[builder(default, setter(into, strip_option))]
@@ -56,6 +67,7 @@ pub struct UpdateIssueParams {
     // customField_{id}_otherValue
 }
 
+#[cfg(feature = "writable")]
 impl IntoRequest for UpdateIssueParams {
     fn method(&self) -> HttpMethod {
         HttpMethod::Patch
