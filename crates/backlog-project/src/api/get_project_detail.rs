@@ -1,7 +1,6 @@
 use backlog_api_core::IntoRequest;
 use backlog_core::ProjectIdOrKey;
 use backlog_domain_models::Project;
-use serde::Serialize;
 
 pub type GetProjectDetailResponse = Project;
 
@@ -22,9 +21,5 @@ impl GetProjectDetailParams {
 impl IntoRequest for GetProjectDetailParams {
     fn path(&self) -> String {
         format!("/api/v2/projects/{}", self.project_id_or_key)
-    }
-
-    fn to_query(&self) -> impl Serialize {
-        Vec::<(String, String)>::new()
     }
 }

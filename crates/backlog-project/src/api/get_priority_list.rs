@@ -1,5 +1,4 @@
 use backlog_api_core::IntoRequest;
-use serde::Serialize;
 
 pub type GetPriorityListResponse = Vec<backlog_domain_models::Priority>;
 
@@ -10,9 +9,5 @@ pub struct GetPriorityListParams;
 impl IntoRequest for GetPriorityListParams {
     fn path(&self) -> String {
         "/api/v2/priorities".to_string()
-    }
-
-    fn to_query(&self) -> impl Serialize {
-        Vec::<(String, String)>::new()
     }
 }

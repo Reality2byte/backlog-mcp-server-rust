@@ -1,6 +1,6 @@
 use backlog_api_core::IntoRequest;
 use backlog_core::IssueIdOrKey;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 /// Response type for counting comments
 #[derive(Debug, Deserialize)]
@@ -26,9 +26,5 @@ impl CountCommentParams {
 impl IntoRequest for CountCommentParams {
     fn path(&self) -> String {
         format!("/api/v2/issues/{}/comments/count", self.issue_id_or_key)
-    }
-
-    fn to_query(&self) -> impl Serialize {
-        Vec::<(String, String)>::new()
     }
 }

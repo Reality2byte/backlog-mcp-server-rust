@@ -1,7 +1,6 @@
 use crate::models::SharedFile;
 use backlog_api_core::IntoRequest;
 use backlog_core::IssueIdOrKey;
-use serde::Serialize;
 
 /// Response type for getting a list of shared files linked to an issue
 pub type GetSharedFileListResponse = Vec<SharedFile>;
@@ -24,9 +23,5 @@ impl GetSharedFileListParams {
 impl IntoRequest for GetSharedFileListParams {
     fn path(&self) -> String {
         format!("/api/v2/issues/{}/sharedFiles", self.issue_id_or_key)
-    }
-
-    fn to_query(&self) -> impl Serialize {
-        Vec::<(String, String)>::new()
     }
 }

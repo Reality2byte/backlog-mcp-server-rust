@@ -1,7 +1,6 @@
 use crate::models::Issue;
 use backlog_api_core::IntoRequest;
 use backlog_core::IssueIdOrKey;
-use serde::Serialize;
 
 /// Response type for getting a specific issue
 pub type GetIssueResponse = Issue;
@@ -24,10 +23,6 @@ impl GetIssueParams {
 impl IntoRequest for GetIssueParams {
     fn path(&self) -> String {
         format!("/api/v2/issues/{}", self.issue_id_or_key)
-    }
-
-    fn to_query(&self) -> impl Serialize {
-        Vec::<(String, String)>::new()
     }
 }
 

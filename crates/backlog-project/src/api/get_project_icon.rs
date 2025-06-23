@@ -1,6 +1,5 @@
 use backlog_api_core::{IntoDownloadRequest, IntoRequest};
 use backlog_core::ProjectIdOrKey;
-use serde::Serialize;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct GetProjectIconParams {
@@ -18,10 +17,6 @@ impl GetProjectIconParams {
 impl IntoRequest for GetProjectIconParams {
     fn path(&self) -> String {
         format!("/api/v2/projects/{}/image", self.project_id_or_key)
-    }
-
-    fn to_query(&self) -> impl Serialize {
-        Vec::<(String, String)>::new()
     }
 }
 

@@ -1,6 +1,5 @@
 use backlog_api_core::IntoRequest;
 use backlog_core::ProjectIdOrKey;
-use serde::Serialize;
 
 pub type GetMilestoneListResponse = Vec<backlog_domain_models::Milestone>;
 
@@ -21,9 +20,5 @@ impl GetMilestoneListParams {
 impl IntoRequest for GetMilestoneListParams {
     fn path(&self) -> String {
         format!("/api/v2/projects/{}/versions", self.project_id_or_key)
-    }
-
-    fn to_query(&self) -> impl Serialize {
-        Vec::<(String, String)>::new()
     }
 }

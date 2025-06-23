@@ -1,7 +1,6 @@
 use crate::models::Attachment;
 use backlog_api_core::IntoRequest;
 use backlog_core::IssueIdOrKey;
-use serde::Serialize;
 
 /// Response type for getting a list of attachments
 pub type GetAttachmentListResponse = Vec<Attachment>;
@@ -24,9 +23,5 @@ impl GetAttachmentListParams {
 impl IntoRequest for GetAttachmentListParams {
     fn path(&self) -> String {
         format!("/api/v2/issues/{}/attachments", self.issue_id_or_key)
-    }
-
-    fn to_query(&self) -> impl Serialize {
-        Vec::<(String, String)>::new()
     }
 }

@@ -1,6 +1,5 @@
 use backlog_api_core::IntoRequest;
 use backlog_core::ProjectIdOrKey;
-use serde::Serialize;
 
 pub type GetCategoryListResponse = Vec<backlog_domain_models::Category>;
 
@@ -21,9 +20,5 @@ impl GetCategoryListParams {
 impl IntoRequest for GetCategoryListParams {
     fn path(&self) -> String {
         format!("/api/v2/projects/{}/categories", self.project_id_or_key)
-    }
-
-    fn to_query(&self) -> impl Serialize {
-        Vec::<(String, String)>::new()
     }
 }

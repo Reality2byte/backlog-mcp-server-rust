@@ -1,7 +1,6 @@
 use crate::models::Comment;
 use backlog_api_core::IntoRequest;
 use backlog_core::{IssueIdOrKey, identifier::CommentId};
-use serde::Serialize;
 
 /// Response type for getting a specific comment
 pub type GetCommentResponse = Comment;
@@ -29,9 +28,5 @@ impl IntoRequest for GetCommentParams {
             "/api/v2/issues/{}/comments/{}",
             self.issue_id_or_key, self.comment_id
         )
-    }
-
-    fn to_query(&self) -> impl Serialize {
-        Vec::<(String, String)>::new()
     }
 }

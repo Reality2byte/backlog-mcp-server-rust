@@ -1,6 +1,5 @@
 use crate::models::DocumentDetail;
 use backlog_api_core::IntoRequest;
-use serde::Serialize;
 
 /// Response type for getting a specific document
 pub type GetDocumentResponse = DocumentDetail;
@@ -24,9 +23,5 @@ impl GetDocumentParams {
 impl IntoRequest for GetDocumentParams {
     fn path(&self) -> String {
         format!("/api/v2/documents/{}", self.document_id)
-    }
-
-    fn to_query(&self) -> impl Serialize {
-        Vec::<(String, String)>::new()
     }
 }

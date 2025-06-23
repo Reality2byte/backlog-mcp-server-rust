@@ -4,8 +4,6 @@ use crate::models::Issue;
 use backlog_api_core::{HttpMethod, IntoRequest};
 #[cfg(feature = "writable")]
 use backlog_core::IssueKey;
-#[cfg(feature = "writable")]
-use serde::Serialize;
 
 /// Response type for deleting an issue
 #[cfg(feature = "writable")]
@@ -36,10 +34,6 @@ impl IntoRequest for DeleteIssueParams {
 
     fn path(&self) -> String {
         format!("/api/v2/issues/{}", self.issue_key)
-    }
-
-    fn to_query(&self) -> impl Serialize {
-        Vec::<(String, String)>::new()
     }
 }
 

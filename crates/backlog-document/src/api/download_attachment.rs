@@ -1,5 +1,4 @@
 use backlog_api_core::{IntoDownloadRequest, IntoRequest};
-use serde::Serialize;
 
 /// Parameters for downloading document attachment
 ///
@@ -28,10 +27,6 @@ impl IntoRequest for DownloadAttachmentParams {
             "/api/v2/documents/{}/attachments/{}",
             self.document_id, self.attachment_id
         )
-    }
-
-    fn to_query(&self) -> impl Serialize {
-        Vec::<(String, String)>::new()
     }
 }
 
