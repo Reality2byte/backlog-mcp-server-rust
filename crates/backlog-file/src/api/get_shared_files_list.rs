@@ -3,9 +3,12 @@ use backlog_api_core::{HttpMethod, IntoRequest};
 use backlog_core::ProjectIdOrKey;
 use derive_builder::Builder;
 
+/// Response type for getting shared files list
 pub type GetSharedFilesListResponse = Vec<SharedFile>;
 
 /// Parameters for getting shared files list
+///
+/// Corresponds to `GET /api/v2/projects/:projectIdOrKey/files/metadata/:path`.
 #[derive(Debug, Clone, PartialEq, Builder)]
 #[builder(setter(strip_option))]
 pub struct GetSharedFilesListParams {
