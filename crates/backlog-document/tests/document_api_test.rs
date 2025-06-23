@@ -2,6 +2,7 @@ mod common;
 use common::*;
 
 use backlog_api_core::bytes;
+use backlog_core::identifier::{DocumentAttachmentId, DocumentId};
 use backlog_document::DownloadAttachmentParams;
 
 #[tokio::test]

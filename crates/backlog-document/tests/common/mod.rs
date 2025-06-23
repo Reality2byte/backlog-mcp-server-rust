@@ -9,6 +9,5 @@ pub async fn setup_document_api(mock_server: &MockServer) -> DocumentApi {
 }
 
 /// Common imports for tests
-pub use backlog_core::identifier::{DocumentAttachmentId, DocumentId};
 pub use wiremock::matchers::{method, path};
 pub use wiremock::{Mock, ResponseTemplate};

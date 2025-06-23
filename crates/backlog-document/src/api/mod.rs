@@ -12,4 +12,7 @@ mod list_documents;
 pub use download_attachment::DownloadAttachmentParams;
 pub use get_document::{GetDocumentParams, GetDocumentResponse};
 pub use get_document_tree::{GetDocumentTreeParams, GetDocumentTreeResponse};
-pub use list_documents::{DocumentSortKey, ListDocumentsParams, ListDocumentsResponse};
+pub use list_documents::{
+    DocumentOrder, DocumentSortKey, ListDocumentsParams, ListDocumentsParamsBuilder,
+    ListDocumentsResponse,
+};

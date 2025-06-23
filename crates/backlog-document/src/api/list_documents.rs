@@ -18,29 +18,50 @@ pub struct ListDocumentsParams {
     // Based on OpenAPI: /api/v2/:projectKey/list?keyword=X&sort=Y
     // User confirmed routing definition /api/v2/documents is primary.
     // So, projectId is a query param.
-    pub project_id: ProjectId, // Assuming this is mandatory based on curl
+    #[builder(default, setter(into))]
+    pub project_ids: Option<Vec<ProjectId>>, // Array of project IDs (optional)
     #[builder(default, setter(into))]
     pub keyword: Option<String>,
     #[builder(default, setter(into))]
     pub sort: Option<DocumentSortKey>, // Enum to be defined
+    #[builder(default, setter(into))]
+    pub order: Option<DocumentOrder>, // Sort order
     #[builder(default)]
-    pub offset: u32,
+    pub offset: Option<u32>,
+    #[builder(default)]
     pub count: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 pub enum DocumentSortKey {
-    #[serde(rename = "name")]
-    Name,
-    #[serde(rename = "date")]
-    Date,
+    #[serde(rename = "created")]
+    Created,
+    #[serde(rename = "updated")]
+    Updated,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq)]
+pub enum DocumentOrder {
+    #[serde(rename = "asc")]
+    Asc,
+    #[serde(rename = "desc")]
+    Desc,
 }
 
 impl fmt::Display for DocumentSortKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            DocumentSortKey::Name => write!(f, "name"),
-            DocumentSortKey::Date => write!(f, "date"),
+            DocumentSortKey::Created => write!(f, "created"),
+            DocumentSortKey::Updated => write!(f, "updated"),
+        }
+    }
+}
+
+impl fmt::Display for DocumentOrder {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            DocumentOrder::Asc => write!(f, "asc"),
+            DocumentOrder::Desc => write!(f, "desc"),
         }
     }
 }
@@ -49,7 +70,13 @@ impl fmt::Display for DocumentSortKey {
 impl From<ListDocumentsParams> for Vec<(String, String)> {
     fn from(params: ListDocumentsParams) -> Self {
         let mut query_params = Vec::new();
-        query_params.push(("projectId".to_string(), params.project_id.to_string()));
+
+        // Handle array of project IDs
+        if let Some(project_ids) = params.project_ids {
+            for project_id in project_ids {
+                query_params.push(("projectId[]".to_string(), project_id.to_string()));
+            }
+        }
 
         if let Some(keyword) = params.keyword {
             query_params.push(("keyword".to_string(), keyword));
@@ -57,7 +84,12 @@ impl From<ListDocumentsParams> for Vec<(String, String)> {
         if let Some(sort) = params.sort {
             query_params.push(("sort".to_string(), sort.to_string()));
         }
-        query_params.push(("offset".to_string(), params.offset.to_string()));
+        if let Some(order) = params.order {
+            query_params.push(("order".to_string(), order.to_string()));
+        }
+        if let Some(offset) = params.offset {
+            query_params.push(("offset".to_string(), offset.to_string()));
+        }
         if let Some(count) = params.count {
             query_params.push(("count".to_string(), count.to_string()));
         }
