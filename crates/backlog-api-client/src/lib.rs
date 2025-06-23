@@ -23,8 +23,8 @@ pub use backlog_core::{
 // Document module (from backlog_document)
 #[cfg(feature = "document")]
 pub use backlog_document::{
-    DocumentApi, DocumentDetail, DocumentTreeResponse, DocumentTreeRootNode,
-    DownloadAttachmentParams, GetDocumentParams, GetDocumentTreeParams,
+    DocumentApi, DocumentDetail, DocumentTreeRootNode, DownloadAttachmentParams, GetDocumentParams,
+    GetDocumentTreeParams, GetDocumentTreeResponse,
 };
 
 // File module (from backlog_file)
