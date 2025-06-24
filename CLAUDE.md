@@ -61,6 +61,72 @@ export BACKLOG_API_KEY="your_api_key"
 
 ## Key Design Patterns
 
+### API Parameter Date Handling Guidelines
+
+The Backlog API uses different date formats for request parameters versus response data. Follow these guidelines for consistent date handling:
+
+#### Date Type Selection Rules
+
+**For Request Parameters (API Input):**
+- **Use `ApiDate`** for date-only parameters (start dates, due dates, date filters)
+- **Format**: Automatically converts to "yyyy-MM-dd" via Display trait
+- **Examples**: `created_since`, `created_until`, `start_date`, `due_date`
+- **Benefits**: Type-safe, automatic formatting, prevents invalid date strings
+
+**For Response Data (API Output):**
+- **Use `DateTime<Utc>`** for timestamp fields in models
+- **Format**: Parses ISO 8601 format "2013-08-05T06:15:06Z"
+- **Examples**: `created`, `updated`, `pushed_at`, `merge_at`
+- **Benefits**: Full timestamp precision, timezone awareness
+
+**Legacy String Fields:**
+- Some existing model fields use `String` for dates (e.g., Issue.start_date, Issue.due_date)
+- These remain as String to maintain API compatibility
+- Do not convert response String date fields to ApiDate
+
+#### Implementation Patterns
+
+**Parameter Struct Pattern:**
+```rust
+#[derive(Debug, Clone)]
+pub struct UpdateIssueParams {
+    // Use ApiDate for date parameters
+    pub start_date: Option<ApiDate>,
+    pub due_date: Option<ApiDate>,
+}
+```
+
+**Model Pattern:**
+```rust
+pub struct Issue {
+    // Legacy String fields remain unchanged
+    pub start_date: Option<String>,
+    pub due_date: Option<String>,
+    // Timestamp fields use DateTime<Utc>
+    pub created: DateTime<Utc>,
+    pub updated: DateTime<Utc>,
+}
+```
+
+**CLI Integration:**
+```rust
+// Convert CLI string input to ApiDate
+params.start_date = start_date.as_ref().map(|d| {
+    DateTime::parse_from_str(&format!("{}T00:00:00Z", d), "%Y-%m-%dT%H:%M:%SZ")
+        .map(|dt| ApiDate::from(dt.with_timezone(&Utc)))
+        .unwrap_or_else(|_| panic!("Invalid date format: {}", d))
+});
+```
+
+#### Decision Matrix
+
+| Use Case | Type | Format | Direction | Example |
+|----------|------|--------|-----------|---------|
+| Date filter parameters | `ApiDate` | yyyy-MM-dd | Request → API | `created_since`, `updated_until` |
+| Date input parameters | `ApiDate` | yyyy-MM-dd | Request → API | `start_date`, `due_date` |
+| Timestamp responses | `DateTime<Utc>` | ISO 8601 | API → Response | `created`, `updated` |
+| Legacy model dates | `String` | varies | API → Response | `Issue.start_date` |
+
 ### Modular API Structure
 - Each API domain has its own crate (e.g., `backlog-issue`, `backlog-project`)
 - Domain crates depend on `client` for HTTP operations, `backlog-core` for shared types, and `backlog-domain-models` for shared domain models
