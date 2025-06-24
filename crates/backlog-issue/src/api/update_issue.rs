@@ -6,7 +6,7 @@ use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
 use backlog_api_macros::ToFormParams;
 #[cfg(feature = "writable")]
 use backlog_core::{
-    IssueIdOrKey,
+    ApiDate, IssueIdOrKey,
     identifier::{
         AttachmentId, CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ResolutionId,
         UserId,
@@ -39,10 +39,10 @@ pub struct UpdateIssueParams {
     pub description: Option<String>,
     #[builder(default, setter(into, strip_option))]
     #[cfg_attr(feature = "macros", form(name = "startDate"))]
-    pub start_date: Option<String>, // API expects "yyyy-MM-dd"
+    pub start_date: Option<ApiDate>,
     #[builder(default, setter(into, strip_option))]
     #[cfg_attr(feature = "macros", form(name = "dueDate"))]
-    pub due_date: Option<String>, // API expects "yyyy-MM-dd"
+    pub due_date: Option<ApiDate>,
     #[builder(default, setter(into, strip_option))]
     #[cfg_attr(feature = "macros", form(name = "estimatedHours"))]
     pub estimated_hours: Option<f32>,
@@ -120,11 +120,11 @@ impl IntoRequest for UpdateIssueParams {
             }
 
             if let Some(start_date) = &self.start_date {
-                params.push(("startDate".to_string(), start_date.clone()));
+                params.push(("startDate".to_string(), start_date.to_string()));
             }
 
             if let Some(due_date) = &self.due_date {
-                params.push(("dueDate".to_string(), due_date.clone()));
+                params.push(("dueDate".to_string(), due_date.to_string()));
             }
 
             if let Some(estimated_hours) = self.estimated_hours {

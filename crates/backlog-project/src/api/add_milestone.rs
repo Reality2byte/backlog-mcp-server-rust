@@ -1,5 +1,5 @@
 use backlog_api_core::{HttpMethod, IntoRequest};
-use backlog_core::ProjectIdOrKey;
+use backlog_core::{ApiDate, ProjectIdOrKey};
 use serde::Serialize;
 
 pub type AddMilestoneResponse = backlog_domain_models::Milestone;
@@ -14,9 +14,9 @@ pub struct AddMilestoneParams {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub start_date: Option<String>,
+    pub start_date: Option<ApiDate>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub release_due_date: Option<String>,
+    pub release_due_date: Option<ApiDate>,
 }
 
 #[cfg(feature = "writable")]

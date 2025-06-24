@@ -23,7 +23,7 @@ use backlog_core::identifier::WikiAttachmentId;
 use backlog_core::identifier::{CommentId, Identifier};
 #[cfg(any(feature = "issue_writable", feature = "project_writable"))]
 use backlog_core::{
-    IssueKey,
+    ApiDate, IssueKey,
     identifier::{CategoryId, IssueTypeId, MilestoneId, PriorityId, ResolutionId},
 };
 #[cfg(feature = "project_writable")]
@@ -45,6 +45,8 @@ use backlog_user::GetUserListParams;
 use backlog_user::GetUserParams;
 #[cfg(feature = "wiki_writable")]
 use backlog_wiki::UpdateWikiParams;
+#[cfg(feature = "project_writable")]
+use chrono::{DateTime, Utc};
 use clap::{Args, Parser};
 use std::env;
 use std::path::PathBuf;
@@ -2347,8 +2349,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let mut params = AddMilestoneParams::new(proj_id_or_key, &name);
                 params.description = description.clone();
-                params.start_date = start_date.clone();
-                params.release_due_date = release_due_date.clone();
+                params.start_date = start_date.as_ref().map(|d| {
+                    DateTime::parse_from_str(&format!("{}T00:00:00Z", d), "%Y-%m-%dT%H:%M:%SZ")
+                        .map(|dt| ApiDate::from(dt.with_timezone(&Utc)))
+                        .unwrap_or_else(|_| panic!("Invalid date format: {}", d))
+                });
+                params.release_due_date = release_due_date.as_ref().map(|d| {
+                    DateTime::parse_from_str(&format!("{}T00:00:00Z", d), "%Y-%m-%dT%H:%M:%SZ")
+                        .map(|dt| ApiDate::from(dt.with_timezone(&Utc)))
+                        .unwrap_or_else(|_| panic!("Invalid date format: {}", d))
+                });
 
                 match client.project().add_version(params).await {
                     Ok(milestone) => {
@@ -2395,8 +2405,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let version_id_val = MilestoneId::new(version_id);
                 let mut params = UpdateVersionParams::new(proj_id_or_key, version_id_val, &name);
                 params.description = description.clone();
-                params.start_date = start_date.clone();
-                params.release_due_date = release_due_date.clone();
+                params.start_date = start_date.as_ref().map(|d| {
+                    DateTime::parse_from_str(&format!("{}T00:00:00Z", d), "%Y-%m-%dT%H:%M:%SZ")
+                        .map(|dt| ApiDate::from(dt.with_timezone(&Utc)))
+                        .unwrap_or_else(|_| panic!("Invalid date format: {}", d))
+                });
+                params.release_due_date = release_due_date.as_ref().map(|d| {
+                    DateTime::parse_from_str(&format!("{}T00:00:00Z", d), "%Y-%m-%dT%H:%M:%SZ")
+                        .map(|dt| ApiDate::from(dt.with_timezone(&Utc)))
+                        .unwrap_or_else(|_| panic!("Invalid date format: {}", d))
+                });
                 params.archived = archived;
 
                 match client.project().update_version(params).await {

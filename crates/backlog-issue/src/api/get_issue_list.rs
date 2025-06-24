@@ -2,6 +2,7 @@ use crate::models::{Issue, ParentChildCondition};
 use backlog_api_core::{Error as ApiError, IntoRequest};
 #[cfg(feature = "macros")]
 use backlog_api_macros::ToFormParams;
+use backlog_core::ApiDate;
 use backlog_core::identifier::{
     CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ProjectId, ResolutionId, StatusId,
     UserId,
@@ -64,16 +65,16 @@ pub struct GetIssueListParams {
     pub count: Option<u32>, // (1-100)
     #[builder(default, setter(into, strip_option))]
     #[cfg_attr(feature = "macros", form(name = "createdSince"))]
-    pub created_since: Option<String>, // (yyyy-MM-dd)
+    pub created_since: Option<ApiDate>,
     #[builder(default, setter(into, strip_option))]
     #[cfg_attr(feature = "macros", form(name = "createdUntil"))]
-    pub created_until: Option<String>, // (yyyy-MM-dd)
+    pub created_until: Option<ApiDate>,
     #[builder(default, setter(into, strip_option))]
     #[cfg_attr(feature = "macros", form(name = "updatedSince"))]
-    pub updated_since: Option<String>, // (yyyy-MM-dd)
+    pub updated_since: Option<ApiDate>,
     #[builder(default, setter(into, strip_option))]
     #[cfg_attr(feature = "macros", form(name = "updatedUntil"))]
-    pub updated_until: Option<String>, // (yyyy-MM-dd)
+    pub updated_until: Option<ApiDate>,
     #[builder(default, setter(into, strip_option))]
     #[cfg_attr(feature = "macros", form(array, name = "parentIssueId"))]
     pub parent_issue_id: Option<Vec<IssueId>>, // (Note: different from single parentIssueId in Add/Update)
@@ -153,10 +154,18 @@ impl From<&GetIssueListParams> for Vec<(String, String)> {
         push_val!(&params.order, "order");
         push_val!(&params.offset, "offset");
         push_val!(&params.count, "count");
-        push_val!(&params.created_since, "createdSince");
-        push_val!(&params.created_until, "createdUntil");
-        push_val!(&params.updated_since, "updatedSince");
-        push_val!(&params.updated_until, "updatedUntil");
+        if let Some(created_since) = &params.created_since {
+            seq.push(("createdSince".to_string(), created_since.to_string()));
+        }
+        if let Some(created_until) = &params.created_until {
+            seq.push(("createdUntil".to_string(), created_until.to_string()));
+        }
+        if let Some(updated_since) = &params.updated_since {
+            seq.push(("updatedSince".to_string(), updated_since.to_string()));
+        }
+        if let Some(updated_until) = &params.updated_until {
+            seq.push(("updatedUntil".to_string(), updated_until.to_string()));
+        }
         push_val!(&params.keyword, "keyword");
         push_val!(&params.parent_child_condition, "parentChild");
 
