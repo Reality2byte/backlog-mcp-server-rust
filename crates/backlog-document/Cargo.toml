@@ -8,6 +8,7 @@ license.workspace = true
 client = { path = "../client" }
 backlog-core = { path = "../backlog-core" }
 backlog-api-core = { path = "../backlog-api-core" }
+backlog-api-macros = { path = "../backlog-api-macros", optional = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
@@ -23,4 +24,5 @@ tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 
 [features]
 default = []
+macros = ["dep:backlog-api-macros"]
 schemars = ["dep:schemars", "backlog-core/schemars"]
