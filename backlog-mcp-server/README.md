@@ -3,18 +3,50 @@
 `mcp-backlog-server` is a Model Context Protocol (MCP) server for interacting with the Backlog API.
 This server allows MCP-compatible clients (such as AI assistants) to utilize Backlog functionalities.
 
-## Key Features
+## Example Configuration for MCP Client
 
-- **Comprehensive API Coverage**: 30+ tools covering documents, issues, pull requests, projects, users, shared files, and wikis
-- **Write Operations Enabled**: Create, update, and manage Backlog resources with AI assistance
-- **Unified File Download**: Intelligent format detection for all file types (images, text, raw binary)
-- **Shared File Integration**: Browse and download project shared files with type-safe operations
-- **Wiki Management**: Complete wiki operations including content updates and attachment management
-- **Flexible Format Control**: Override automatic detection with explicit format specification
+### Claude Desktop Configuration
+
+Add the following to your Claude Desktop MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "backlog_mcp_server": {
+      "autoApprove": [],
+      "disabled": false,
+      "timeout": 60,
+      "command": "/path/to/target/release/mcp-backlog-server",
+      "args": [],
+      "env": {
+        "BACKLOG_BASE_URL": "https://your-space.backlog.com",
+        "BACKLOG_API_KEY": "YOUR_BACKLOG_API_KEY"
+      },
+      "transportType": "stdio"
+    }
+  }
+}
+```
+
+Note: make sure your domain name: `backlog.com`, `backlog.jp` or `backlogtool.com`
 
 ## Available Tools
 
 The following tools are grouped by their respective modules:
+
+### Tool Summary
+
+With the default configuration, you'll have access to **30+ tools** for comprehensive Backlog automation:
+
+- **Documents** (3 tools): View document trees, get details, download attachments
+- **Git/Pull Requests** (8 tools): Manage repositories, PRs, comments, and attachments
+- **Issues** (8 tools): View, update issues, manage comments, attachments, and shared files
+- **Projects** (1 tool): Get project status information
+- **Shared Files** (2 tools): Browse and download project shared files
+- **Users** (1 tool): List space users
+- **Wikis** (5 tools): Manage wiki pages, attachments, and content updates
+
+The server includes both **read operations** for information gathering and **write operations** for taking actions, making it ideal for AI-powered Backlog automation workflows.
 
 ### Document Tools
 -   **`get_document_details`**
@@ -203,7 +235,14 @@ The system uses multiple strategies to determine if a file is text:
 - UTF-8 validity checking
 - Character composition analysis (graphic, whitespace, and valid UTF-8 characters)
 
-## Feature Flags
+## How to Build
+
+```bash
+# Default build (includes all writable features)
+cargo build --package mcp-backlog-server
+```
+
+### Feature Flags
 
 The MCP server supports multiple feature flags to enable different write operations:
 
@@ -222,9 +261,6 @@ The MCP server supports multiple feature flags to enable different write operati
 ### Build Configuration
 
 ```bash
-# Default build (includes all writable features)
-cargo build --package mcp-backlog-server
-
 # Read-only mode (no write operations)
 cargo build --package mcp-backlog-server --no-default-features
 
@@ -238,36 +274,10 @@ cargo build --package mcp-backlog-server --features "issue_writable,git_writable
 
 To run this server, the following environment variables must be set:
 
--   `BACKLOG_BASE_URL`: The URL of your Backlog space (e.g., `https://your-space.backlog.jp`)
+-   `BACKLOG_BASE_URL`: The URL of your Backlog space (e.g., `https://your-space.backlog.com`)
 -   `BACKLOG_API_KEY`: Your Backlog API key. You can issue one from your personal settings page in Backlog.
 
 These environment variables are expected to be passed by the MCP client system when launching the server.
-
-## Building and Running
-
-### Build
-
-Run the following command in the project root directory:
-
-```bash
-# Default build with all features (recommended for AI agents)
-cargo build --package mcp-backlog-server
-
-# Release build for production
-cargo build --package mcp-backlog-server --release
-```
-
-To build with specific features:
-
-```bash
-# Read-only mode
-cargo build --package mcp-backlog-server --no-default-features
-
-# Selective writable features
-cargo build --package mcp-backlog-server --features issue_writable
-cargo build --package mcp-backlog-server --features "issue_writable,git_writable"
-cargo build --package mcp-backlog-server --features "issue_writable,git_writable,wiki_writable"
-```
 
 ### Run (for local testing)
 
@@ -275,62 +285,7 @@ After setting the environment variables, you can run the server directly with th
 
 ```bash
 # Default run with all features (recommended)
-BACKLOG_BASE_URL="https://your-space.backlog.jp" \
+BACKLOG_BASE_URL="https://your-space.backlog.com" \
 BACKLOG_API_KEY="your_backlog_api_key" \
 cargo run --package mcp-backlog-server
 ```
-
-To run with specific features:
-
-```bash
-# Read-only mode
-BACKLOG_BASE_URL="https://your-space.backlog.jp" \
-BACKLOG_API_KEY="your_backlog_api_key" \
-cargo run --package mcp-backlog-server --no-default-features
-
-# With specific writable features
-BACKLOG_BASE_URL="https://your-space.backlog.jp" \
-BACKLOG_API_KEY="your_backlog_api_key" \
-cargo run --package mcp-backlog-server --features "issue_writable,git_writable,wiki_writable"
-```
-
-The server will listen for MCP client requests on standard input/output.
-
-## Example Configuration for MCP Client
-
-### Claude Desktop Configuration
-
-Add the following to your Claude Desktop MCP configuration:
-
-```json
-{
-  "mcpServers": {
-    "backlog_mcp_server": {
-      "autoApprove": [],
-      "disabled": false,
-      "timeout": 60,
-      "command": "/path/to/target/release/mcp-backlog-server",
-      "args": [],
-      "env": {
-        "BACKLOG_BASE_URL": "https://your-space.backlog.jp",
-        "BACKLOG_API_KEY": "YOUR_BACKLOG_API_KEY"
-      },
-      "transportType": "stdio"
-    }
-  }
-}
-```
-
-### Tool Summary
-
-With the default configuration, you'll have access to **30+ tools** for comprehensive Backlog automation:
-
-- **Documents** (3 tools): View document trees, get details, download attachments
-- **Git/Pull Requests** (8 tools): Manage repositories, PRs, comments, and attachments
-- **Issues** (8 tools): View, update issues, manage comments, attachments, and shared files
-- **Projects** (1 tool): Get project status information
-- **Shared Files** (2 tools): Browse and download project shared files
-- **Users** (1 tool): List space users
-- **Wikis** (5 tools): Manage wiki pages, attachments, and content updates
-
-The server includes both **read operations** for information gathering and **write operations** for taking actions, making it ideal for AI-powered Backlog automation workflows.

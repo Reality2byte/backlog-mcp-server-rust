@@ -23,6 +23,7 @@ crates/                     # Internal library crates
 ├── backlog-api-client/     # Main library facade (aggregates all API modules)
 ├── backlog-core/           # Core types and identifiers shared across all modules
 ├── backlog-api-core/       # Common API utilities and error types
+├── backlog-api-macros/     # Procedural macros for API parameter serialization
 ├── backlog-domain-models/  # Shared domain models (Priority, Status, Category, etc.)
 ├── backlog-issue/          # Issue management API
 ├── backlog-project/        # Project management API
@@ -53,6 +54,7 @@ Model Context Protocol server that exposes Backlog API functionalities as AI-fri
 - **`backlog-api-core/`**: Provides core utilities shared across API client modules, such as common error types and result aliases.
 - **`backlog-domain-models/`**: Contains shared domain models (e.g., `Priority`, `Resolution`, `Status`, `Category`, `IssueType`, `Milestone`).
 - **`client/`**: A foundational crate providing a generic HTTP client wrapper (around `reqwest`) and shared test utilities.
+- **`backlog-api-macros/`**: Procedural macros for API parameter serialization
 
 #### API Domain Modules
 - **`backlog-document/`**: Document API endpoints (4 endpoints) - document tree navigation and attachment downloads.
@@ -102,9 +104,9 @@ The project implements **78+ API endpoints** across 8 domain modules with varyin
 | **Git/PR** | 16 | ✅ Complete | ✅ Full CRUD | 🟢 Complete |
 | **Issue** | 14 | ✅ Complete | ✅ Full CRUD | 🟢 Complete |
 | **Wiki** | 6 | ✅ Complete | ✅ Update only | 🟡 Partial |
-| **Document** | 4 | ✅ Complete | ❌ Planned | 🟡 Read-only |
+| **Document** | 4 | ✅ Complete | (Read-only API) | 🟢 Read-only |
 | **User** | 4 | ✅ Complete | ❌ Planned | 🟡 Read-only |
-| **File** | 2 | ✅ Complete | ❌ Read-only API | 🟢 Complete |
+| **File** | 2 | ✅ Complete | (Read-only API) | 🟢 Complete |
 | **Space** | 2 | ✅ Complete | ❌ Planned | 🟡 Read-only |
 
 ### Advanced Features
