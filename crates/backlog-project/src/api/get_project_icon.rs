@@ -1,4 +1,4 @@
-use backlog_api_core::{IntoDownloadRequest, IntoRequest};
+use backlog_api_core::IntoDownloadRequest;
 use backlog_core::ProjectIdOrKey;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -11,12 +11,6 @@ impl GetProjectIconParams {
         Self {
             project_id_or_key: project_id_or_key.into(),
         }
-    }
-}
-
-impl IntoRequest for GetProjectIconParams {
-    fn path(&self) -> String {
-        format!("/api/v2/projects/{}/image", self.project_id_or_key)
     }
 }
 

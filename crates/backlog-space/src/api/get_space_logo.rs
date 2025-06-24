@@ -1,4 +1,4 @@
-use backlog_api_core::{IntoDownloadRequest, IntoRequest};
+use backlog_api_core::IntoDownloadRequest;
 use client::DownloadedFile;
 use serde::Serialize;
 
@@ -15,16 +15,6 @@ impl GetSpaceLogoParams {
     /// Creates a new instance.
     pub fn new() -> Self {
         Self
-    }
-}
-
-impl IntoRequest for GetSpaceLogoParams {
-    fn path(&self) -> String {
-        "/api/v2/space/image".to_string()
-    }
-
-    fn to_query(&self) -> impl Serialize {
-        self
     }
 }
 

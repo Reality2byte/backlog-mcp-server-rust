@@ -1,4 +1,4 @@
-use backlog_api_core::{IntoDownloadRequest, IntoRequest};
+use backlog_api_core::IntoDownloadRequest;
 
 /// Parameters for downloading document attachment
 ///
@@ -18,15 +18,6 @@ impl DownloadAttachmentParams {
             document_id: document_id.into(),
             attachment_id: attachment_id.into(),
         }
-    }
-}
-
-impl IntoRequest for DownloadAttachmentParams {
-    fn path(&self) -> String {
-        format!(
-            "/api/v2/documents/{}/attachments/{}",
-            self.document_id, self.attachment_id
-        )
     }
 }
 

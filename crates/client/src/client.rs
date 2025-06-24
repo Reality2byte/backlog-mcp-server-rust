@@ -144,7 +144,7 @@ impl Client {
     where
         P: IntoDownloadRequest,
     {
-        let request = params.into_download_request(&self.client, &self.base_url)?;
+        let request = params.into_request(&self.client, &self.base_url)?;
         self.execute_unified(request, FileResponse).await
     }
 

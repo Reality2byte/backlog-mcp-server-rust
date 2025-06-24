@@ -78,11 +78,7 @@ pub trait IntoDownloadRequest {
     /// * `base_url` - The base URL for the API (e.g., "https://example.backlog.jp")
     ///
     /// Returns a ready-to-execute reqwest::Request object for file download.
-    fn into_download_request(
-        self,
-        client: &ReqwestClient,
-        base_url: &Url,
-    ) -> Result<reqwest::Request>
+    fn into_request(self, client: &ReqwestClient, base_url: &Url) -> Result<reqwest::Request>
     where
         Self: Sized,
     {
