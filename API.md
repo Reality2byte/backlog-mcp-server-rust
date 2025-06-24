@@ -33,7 +33,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Read operations**: get_own_user(), get_user_list(), get_user(), get_user_icon()
 
 ### backlog-document (DocumentApi)
-- **Implemented**: 4/? endpoints (Document-specific API is not fully documented in the official API)
+- **Implemented**: 4/4 endpoints (100%) ✨ COMPLETE
 - **Read operations**: list_documents(), get_document_tree(), get_document(), download_attachment()
 
 ### backlog-wiki (WikiApi)
@@ -233,6 +233,12 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ❌ GetWikiPageStar: Returns list of stars received on the Wiki page: GET /api/v2/wikis/:wikiId/stars
 - ❌ CountUserReceivedStars: Returns number of stars that user received: GET /api/v2/users/:userId/stars/count
 - ❌ GetReceivedStarList: Returns the list of stars that user received: GET /api/v2/users/:userId/stars
+
+### Document
+- ✅ GetDocumentList: Returns list of document pages: GET /api/v2/documents
+- ✅ GetDocumentTree: Retrieves the document tree: GET /api/v2/documents/tree
+- ✅ GetDocument: Returns information about document page: GET /api/v2/documents/:documentId
+- ✅ DownloadDocumentAttachment: Downloads document attachments: GET /api/v2/documents/:documentId/attachments/:attachmentId
 
 ### Users
 - ✅ GetOwnUser: Returns own information about user: GET /api/v2/users/myself
