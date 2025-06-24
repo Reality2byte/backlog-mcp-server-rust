@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-// #[serde(untagged)] might be useful if serializing/deserializing from a plain string or number
+#[serde(untagged)]
 pub enum ProjectIdOrKey {
     Id(ProjectId),
     Key(ProjectKey),

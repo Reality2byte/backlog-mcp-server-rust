@@ -39,18 +39,24 @@ impl FromStr for CommentOrder {
     }
 }
 
-#[derive(Debug, Clone, Builder)]
+#[derive(Debug, Clone, Builder, Serialize)]
+#[serde(rename_all = "camelCase")]
 #[builder(build_fn(error = "ApiError"))]
 pub struct GetCommentListParams {
     #[builder(setter(into))]
+    #[serde(skip)]
     pub issue_id_or_key: IssueIdOrKey,
     #[builder(default, setter(into, strip_option))]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub min_id: Option<u64>,
     #[builder(default, setter(into, strip_option))]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub max_id: Option<u64>,
     #[builder(default, setter(into, strip_option))]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub count: Option<u8>,
     #[builder(default, setter(into, strip_option))]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub order: Option<CommentOrder>,
 }
 
@@ -60,24 +66,6 @@ impl IntoRequest for GetCommentListParams {
     }
 
     fn to_query(&self) -> impl Serialize {
-        let mut params = Vec::new();
-
-        if let Some(min_id) = self.min_id {
-            params.push(("minId".to_string(), min_id.to_string()));
-        }
-
-        if let Some(max_id) = self.max_id {
-            params.push(("maxId".to_string(), max_id.to_string()));
-        }
-
-        if let Some(count) = self.count {
-            params.push(("count".to_string(), count.to_string()));
-        }
-
-        if let Some(order) = &self.order {
-            params.push(("order".to_string(), order.to_string()));
-        }
-
-        params
+        self
     }
 }

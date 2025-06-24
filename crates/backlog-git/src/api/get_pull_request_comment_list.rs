@@ -5,14 +5,22 @@ use serde::Serialize;
 
 pub type GetPullRequestCommentListResponse = Vec<PullRequestComment>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GetPullRequestCommentListParams {
+    #[serde(skip)]
     pub project_id_or_key: ProjectIdOrKey,
+    #[serde(skip)]
     pub repo_id_or_name: RepositoryIdOrName,
+    #[serde(skip)]
     pub number: PullRequestNumber,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub min_id: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub max_id: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub count: Option<u8>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub order: Option<PrCommentOrder>,
 }
 
@@ -63,24 +71,6 @@ impl IntoRequest for GetPullRequestCommentListParams {
     }
 
     fn to_query(&self) -> impl Serialize {
-        let mut params = Vec::new();
-
-        if let Some(min_id) = self.min_id {
-            params.push(("minId".to_string(), min_id.to_string()));
-        }
-
-        if let Some(max_id) = self.max_id {
-            params.push(("maxId".to_string(), max_id.to_string()));
-        }
-
-        if let Some(count) = self.count {
-            params.push(("count".to_string(), count.to_string()));
-        }
-
-        if let Some(order) = &self.order {
-            params.push(("order".to_string(), order.to_string()));
-        }
-
-        params
+        self
     }
 }

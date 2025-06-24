@@ -5,8 +5,10 @@ use serde::Serialize;
 
 pub type GetWikiCountResponse = WikiCount;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GetWikiCountParams {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub project_id_or_key: Option<ProjectIdOrKey>,
 }
 
@@ -35,10 +37,6 @@ impl IntoRequest for GetWikiCountParams {
     }
 
     fn to_query(&self) -> impl Serialize {
-        let mut query_params = Vec::new();
-        if let Some(project_id_or_key) = &self.project_id_or_key {
-            query_params.push(("projectIdOrKey".to_string(), project_id_or_key.to_string()));
-        }
-        query_params
+        self
     }
 }

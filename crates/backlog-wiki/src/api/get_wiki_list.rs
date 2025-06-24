@@ -5,9 +5,12 @@ use serde::Serialize;
 
 pub type GetWikiListResponse = Vec<Wiki>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GetWikiListParams {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub project_id_or_key: Option<ProjectIdOrKey>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub keyword: Option<String>,
 }
 
@@ -42,13 +45,6 @@ impl IntoRequest for GetWikiListParams {
     }
 
     fn to_query(&self) -> impl Serialize {
-        let mut query_params = Vec::new();
-        if let Some(project_id_or_key) = &self.project_id_or_key {
-            query_params.push(("projectIdOrKey".to_string(), project_id_or_key.to_string()));
-        }
-        if let Some(keyword) = &self.keyword {
-            query_params.push(("keyword".to_string(), keyword.clone()));
-        }
-        query_params
+        self
     }
 }

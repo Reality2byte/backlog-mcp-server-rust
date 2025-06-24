@@ -150,15 +150,20 @@ crates/backlog-{domain}/
 #### Implementation Patterns
 
 **1. Parameter File Structure (`api/get_*.rs`, `api/add_*.rs`, etc.)**
+
+For read operations with automatic serialization:
 ```rust
 // Type alias for API response
 pub type GetEntityListResponse = Vec<Entity>;
 
-// Parameter struct for the operation
-#[derive(Debug, Clone)]
+// Parameter struct for the operation with automatic camelCase serialization
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GetEntityListParams {
-    pub project_id: ProjectId,
-    pub archived: Option<bool>,
+    #[serde(skip)]
+    pub project_id: ProjectId,  // Path parameter
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub archived: Option<bool>, // Query parameter
 }
 
 // Constructor and builder methods
@@ -176,6 +181,19 @@ impl GetEntityListParams {
     }
 }
 
+impl IntoRequest for GetEntityListParams {
+    fn path(&self) -> String {
+        format!("/api/v2/projects/{}/entities", self.project_id)
+    }
+    
+    fn to_query(&self) -> impl Serialize {
+        self  // Automatic serialization with camelCase
+    }
+}
+```
+
+For write operations with manual serialization:
+```rust
 // Form serialization for write operations
 #[cfg(feature = "writable")]
 impl From<&AddEntityParams> for Vec<(String, String)> {
@@ -390,6 +408,12 @@ The system now includes comprehensive shared file support:
 --all-features
 ```
 
+### API Parameter Patterns to Recognize
+When optimizing parameter structures, first analyze the parameter types:
+- **Array parameters with special syntax**: If parameters use array syntax like `foo[]` in the serialized form, manual serialization is required. The `#[serde(skip)]` optimization pattern cannot be applied.
+- **Simple scalar parameters**: Parameters that map directly to API fields (strings, numbers, booleans) can use automatic serialization. Since all Backlog API parameters use camelCase, add `#[serde(rename_all = "camelCase")]` to the struct level instead of individual field annotations.
+- **Before optimizing**: Always check the `to_query()` implementation to understand the serialization requirements.
+
 ### Recent Major Updates
 - **Import Organization Fix**: Fixed missing imports in `backlog-issue` and `backlog-project` crates
   - Added `CategoryId` import to `backlog-project/src/api/mod.rs`
@@ -430,6 +454,13 @@ When implementing new API features, follow Test-Driven Development:
 - Mock different HTTP status codes and API responses
 - Test both minimal and maximal parameter sets
 - Include integration tests with real API when possible
+
+### Refactoring Guidelines
+Before applying any optimization pattern across multiple structures:
+1. **Analyze all target structures first**: Review the implementation details of each structure to identify any special cases
+2. **Group by compatibility**: Separate structures that can use the same optimization approach from those that need special handling
+3. **Test one representative first**: If optimizing multiple similar structures, fully test one before proceeding to others
+4. **Document limitations discovered**: When an optimization can't be applied, explain why for future reference
 
 ### Todo Management Guidelines
 When working on complex tasks (3+ steps or multi-file changes):
@@ -701,3 +732,10 @@ cargo run --package blg -- pr delete-attachment -p PROJECT -r REPO -n PR_NUMBER 
 # 4. Verify changes
 curl -s "https://api.url/endpoint?apiKey=${BACKLOG_API_KEY}" | jq .
 ```
+
+### Reporting Partial Completions
+When completing tasks that involve multiple items where some succeed and others don't:
+- Clearly separate successful items from unsuccessful ones
+- Explain the specific reason for each unsuccessful item
+- Provide a summary count (e.g., "Optimized 3 out of 5 structures")
+- If patterns emerge (e.g., all array parameters failed), summarize the pattern

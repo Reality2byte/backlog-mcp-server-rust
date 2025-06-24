@@ -79,40 +79,34 @@ impl IntoRequest for GetPullRequestListParams {
     fn to_query(&self) -> impl Serialize {
         let mut params = Vec::new();
 
-        // Handle status ID array parameters
         if let Some(status_ids) = &self.status_ids {
-            status_ids.iter().for_each(|id| {
+            for id in status_ids {
                 params.push(("statusId[]".to_string(), id.value().to_string()));
-            });
+            }
         }
 
-        // Handle assignee ID array parameters
         if let Some(assignee_ids) = &self.assignee_ids {
-            assignee_ids.iter().for_each(|id| {
+            for id in assignee_ids {
                 params.push(("assigneeId[]".to_string(), id.value().to_string()));
-            });
+            }
         }
 
-        // Handle issue ID array parameters
         if let Some(issue_ids) = &self.issue_ids {
-            issue_ids.iter().for_each(|id| {
+            for id in issue_ids {
                 params.push(("issueId[]".to_string(), id.value().to_string()));
-            });
+            }
         }
 
-        // Handle created user ID array parameters
         if let Some(created_user_ids) = &self.created_user_ids {
-            created_user_ids.iter().for_each(|id| {
+            for id in created_user_ids {
                 params.push(("createdUserId[]".to_string(), id.value().to_string()));
-            });
+            }
         }
 
-        // Handle offset parameter
         if let Some(offset) = self.offset {
             params.push(("offset".to_string(), offset.to_string()));
         }
 
-        // Handle count parameter
         if let Some(count) = self.count {
             params.push(("count".to_string(), count.to_string()));
         }
