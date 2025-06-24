@@ -177,14 +177,12 @@ mod tests {
             .parent_child_condition(ParentChildCondition::ChildIssue)
             .build()
             .unwrap();
-        
+
         let form_params: Vec<(String, String)> = (&params).into();
-        
+
         // Check that parent_child_condition is properly serialized
-        let parent_child_param = form_params
-            .iter()
-            .find(|(key, _)| key == "parentChild");
-        
+        let parent_child_param = form_params.iter().find(|(key, _)| key == "parentChild");
+
         assert!(parent_child_param.is_some());
         assert_eq!(parent_child_param.unwrap().1, "2");
     }
@@ -196,15 +194,15 @@ mod tests {
                 .parent_child_condition(*condition)
                 .build()
                 .unwrap();
-            
+
             let form_params: Vec<(String, String)> = (&params).into();
-            let parent_child_param = form_params
-                .iter()
-                .find(|(key, _)| key == "parentChild");
-            
+            let parent_child_param = form_params.iter().find(|(key, _)| key == "parentChild");
+
             assert!(parent_child_param.is_some());
-            assert_eq!(parent_child_param.unwrap().1, (*condition as u8).to_string());
+            assert_eq!(
+                parent_child_param.unwrap().1,
+                (*condition as u8).to_string()
+            );
         }
     }
 }
-

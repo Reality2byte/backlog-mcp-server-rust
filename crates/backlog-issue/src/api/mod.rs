@@ -19,6 +19,8 @@ mod add_comment;
 #[cfg(feature = "writable")]
 mod add_issue;
 #[cfg(feature = "writable")]
+mod add_issue_with_api_date;
+#[cfg(feature = "writable")]
 mod delete_issue;
 #[cfg(feature = "writable")]
 mod link_shared_files;
@@ -47,6 +49,10 @@ pub use get_shared_file_list::{GetSharedFileListParams, GetSharedFileListRespons
 pub use add_comment::{AddCommentParams, AddCommentParamsBuilder, AddCommentResponse};
 #[cfg(feature = "writable")]
 pub use add_issue::{AddIssueParams, AddIssueParamsBuilder, AddIssueResponse};
+#[cfg(feature = "writable")]
+pub use add_issue_with_api_date::{
+    AddIssueWithApiDateParams, AddIssueWithApiDateParamsBuilder, AddIssueWithApiDateResponse,
+};
 #[cfg(feature = "writable")]
 pub use delete_issue::{DeleteIssueParams, DeleteIssueResponse};
 #[cfg(feature = "writable")]

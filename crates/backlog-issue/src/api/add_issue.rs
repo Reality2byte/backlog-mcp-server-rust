@@ -35,10 +35,10 @@ pub struct AddIssueParams {
     #[builder(default, setter(into, strip_option))]
     pub description: Option<String>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(skip))]
+    #[cfg_attr(feature = "macros", form(name = "startDate", date_format = "%Y-%m-%d"))]
     pub start_date: Option<DateTime<Utc>>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(skip))]
+    #[cfg_attr(feature = "macros", form(name = "dueDate", date_format = "%Y-%m-%d"))]
     pub due_date: Option<DateTime<Utc>>,
     #[builder(default, setter(into, strip_option))]
     #[cfg_attr(feature = "macros", form(name = "estimatedHours"))]
@@ -85,7 +85,8 @@ impl IntoRequest for AddIssueParams {
     fn to_form(&self) -> impl Serialize {
         #[cfg(feature = "macros")]
         {
-            self.to_form_params()
+            let params: Vec<(String, String)> = self.into();
+            params
         }
 
         #[cfg(not(feature = "macros"))]
@@ -166,27 +167,40 @@ impl IntoRequest for AddIssueParams {
     }
 }
 
-// Extension method to handle date fields when using macros
-#[cfg(all(feature = "writable", feature = "macros"))]
-impl AddIssueParams {
-    fn to_form_params(&self) -> Vec<(String, String)> {
-        let mut params: Vec<(String, String)> = self.into();
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::TimeZone;
 
-        // Handle date fields with special formatting
-        if let Some(start_date) = &self.start_date {
-            params.push((
-                "startDate".to_string(),
-                start_date.format("%Y-%m-%d").to_string(),
-            ));
-        }
+    #[test]
+    fn test_datetime_formatting_with_macros() {
+        let params = AddIssueParamsBuilder::default()
+            .project_id(ProjectId::new(1))
+            .summary("Test Issue".to_string())
+            .issue_type_id(IssueTypeId::new(1))
+            .priority_id(PriorityId::new(1))
+            .start_date(
+                chrono::Utc
+                    .with_ymd_and_hms(2024, 6, 24, 12, 30, 45)
+                    .unwrap(),
+            )
+            .due_date(
+                chrono::Utc
+                    .with_ymd_and_hms(2024, 12, 31, 23, 59, 59)
+                    .unwrap(),
+            )
+            .build()
+            .unwrap();
 
-        if let Some(due_date) = &self.due_date {
-            params.push((
-                "dueDate".to_string(),
-                due_date.format("%Y-%m-%d").to_string(),
-            ));
-        }
+        let form_params: Vec<(String, String)> = (&params).into();
 
-        params
+        // Check that dates are properly formatted
+        let start_date_param = form_params.iter().find(|(key, _)| key == "startDate");
+        assert!(start_date_param.is_some());
+        assert_eq!(start_date_param.unwrap().1, "2024-06-24");
+
+        let due_date_param = form_params.iter().find(|(key, _)| key == "dueDate");
+        assert!(due_date_param.is_some());
+        assert_eq!(due_date_param.unwrap().1, "2024-12-31");
     }
 }

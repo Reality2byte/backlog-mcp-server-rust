@@ -16,6 +16,8 @@ struct FieldConfig {
     is_array: bool,
     /// Flatten nested struct fields
     flatten: bool,
+    /// Date format specification for DateTime<Utc> fields
+    date_format: Option<String>,
 }
 
 /// Main entry point for the ToFormParams derive macro
@@ -77,16 +79,17 @@ fn generate_field_serialization(field: &Field) -> Result<TokenStream> {
 
     let api_field_name = config
         .name
+        .clone()
         .unwrap_or_else(|| snake_to_camel_case(&field_name.to_string()));
 
     let field_type = &field.ty;
 
     if config.is_array {
-        generate_array_field_serialization(field_name, &api_field_name, field_type)
+        generate_array_field_serialization(field_name, &api_field_name, field_type, &config)
     } else if is_option_type(field_type) {
-        generate_optional_field_serialization(field_name, &api_field_name, field_type)
+        generate_optional_field_serialization(field_name, &api_field_name, field_type, &config)
     } else {
-        generate_required_field_serialization(field_name, &api_field_name, field_type)
+        generate_required_field_serialization(field_name, &api_field_name, field_type, &config)
     }
 }
 
@@ -95,10 +98,18 @@ fn generate_required_field_serialization(
     field_name: &Ident,
     api_name: &str,
     _field_type: &Type,
+    config: &FieldConfig,
 ) -> Result<TokenStream> {
-    Ok(quote! {
-        __form_params.push((#api_name.to_string(), params.#field_name.to_string()));
-    })
+    if let Some(date_format) = &config.date_format {
+        // Special handling for DateTime<Utc> fields with custom format
+        Ok(quote! {
+            __form_params.push((#api_name.to_string(), params.#field_name.format(#date_format).to_string()));
+        })
+    } else {
+        Ok(quote! {
+            __form_params.push((#api_name.to_string(), params.#field_name.to_string()));
+        })
+    }
 }
 
 /// Generate serialization for optional fields
@@ -106,12 +117,22 @@ fn generate_optional_field_serialization(
     field_name: &Ident,
     api_name: &str,
     _field_type: &Type,
+    config: &FieldConfig,
 ) -> Result<TokenStream> {
-    Ok(quote! {
-        if let Some(ref __value) = params.#field_name {
-            __form_params.push((#api_name.to_string(), __value.to_string()));
-        }
-    })
+    if let Some(date_format) = &config.date_format {
+        // Special handling for Option<DateTime<Utc>> fields with custom format
+        Ok(quote! {
+            if let Some(ref __value) = params.#field_name {
+                __form_params.push((#api_name.to_string(), __value.format(#date_format).to_string()));
+            }
+        })
+    } else {
+        Ok(quote! {
+            if let Some(ref __value) = params.#field_name {
+                __form_params.push((#api_name.to_string(), __value.to_string()));
+            }
+        })
+    }
 }
 
 /// Generate serialization for array fields
@@ -119,6 +140,7 @@ fn generate_array_field_serialization(
     field_name: &Ident,
     api_name: &str,
     field_type: &Type,
+    _config: &FieldConfig,
 ) -> Result<TokenStream> {
     let array_key = format!("{}[]", api_name);
 
@@ -174,6 +196,15 @@ fn parse_field_attributes(attrs: &[Attribute]) -> Result<FieldConfig> {
                                 Ok(())
                             }
                             _ => Err(meta.error("name attribute must be a string literal")),
+                        }
+                    } else if meta.path.is_ident("date_format") {
+                        let value = meta.value()?;
+                        match value.parse::<Lit>()? {
+                            Lit::Str(lit_str) => {
+                                config.date_format = Some(lit_str.value());
+                                Ok(())
+                            }
+                            _ => Err(meta.error("date_format attribute must be a string literal")),
                         }
                     } else {
                         Err(meta.error("unsupported form attribute"))
