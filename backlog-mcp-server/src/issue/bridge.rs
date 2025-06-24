@@ -4,15 +4,19 @@ use super::request::{
     GetIssuesByMilestoneNameRequest, GetVersionMilestoneListRequest, UpdateIssueRequest,
 };
 #[cfg(feature = "issue_writable")]
-use super::request::UpdateCommentRequest;
+use super::request::{AddIssueRequest, UpdateCommentRequest};
 use crate::error::{Error as McpError, Result};
 use crate::util::{MatchResult, find_by_name_from_array};
+#[cfg(feature = "issue_writable")]
+use backlog_api_client::backlog_issue::AddIssueParamsBuilder;
 use backlog_api_client::client::BacklogApiClient;
 use backlog_api_client::{
     AddCommentParams, Attachment, AttachmentId, Comment, DownloadedFile, GetCommentListParams,
     GetIssueListParamsBuilder, Issue, IssueIdOrKey, IssueKey, IssueSharedFile, Milestone,
     ProjectIdOrKey, UpdateIssueParams, backlog_issue, backlog_project,
 };
+#[cfg(feature = "issue_writable")]
+use backlog_core::identifier::{IssueTypeId, PriorityId, ProjectId};
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -174,16 +178,16 @@ pub(crate) async fn update_comment_impl(
 ) -> Result<Comment> {
     use backlog_api_client::backlog_issue::UpdateCommentParams;
     use backlog_core::identifier::CommentId;
-    
+
     let parsed_issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
     let comment_id = CommentId::new(req.comment_id);
-    
+
     let params = UpdateCommentParams {
         issue_id_or_key: parsed_issue_id_or_key,
         comment_id,
         content: req.content,
     };
-    
+
     let client_guard = client.lock().await;
     let comment = client_guard.issue().update_comment(params).await?;
     Ok(comment)
@@ -203,4 +207,31 @@ pub(crate) async fn get_issue_shared_files_impl(
         ))
         .await?;
     Ok(shared_files)
+}
+
+#[cfg(feature = "issue_writable")]
+pub(crate) async fn add_issue_impl(
+    client: Arc<Mutex<BacklogApiClient>>,
+    req: AddIssueRequest,
+) -> Result<Issue> {
+    let project_id = ProjectId::from_str(req.project_id.trim())?;
+    let issue_type_id = IssueTypeId::new(req.issue_type_id);
+    let priority_id = PriorityId::new(req.priority_id);
+
+    let mut builder = AddIssueParamsBuilder::default();
+    builder
+        .project_id(project_id)
+        .summary(req.summary)
+        .issue_type_id(issue_type_id)
+        .priority_id(priority_id);
+
+    if let Some(description) = req.description {
+        builder.description(description);
+    }
+
+    let params = builder.build()?;
+
+    let client_guard = client.lock().await;
+    let issue = client_guard.issue().add_issue(params).await?;
+    Ok(issue)
 }

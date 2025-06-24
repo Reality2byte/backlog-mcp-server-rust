@@ -189,3 +189,24 @@ pub(crate) struct GetIssueSharedFilesRequest {
     )]
     pub issue_id_or_key: String,
 }
+
+#[cfg(feature = "issue_writable")]
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct AddIssueRequest {
+    #[schemars(
+        description = "The project ID or project key to create the issue in. Examples: 'MYPROJECTKEY', '123'."
+    )]
+    pub project_id: String,
+    #[schemars(description = "The title/summary of the issue.")]
+    pub summary: String,
+    #[schemars(
+        description = "The ID of the issue type. get_project_issue_types tool can be used to retrieve valid IDs."
+    )]
+    pub issue_type_id: u32,
+    #[schemars(
+        description = "The ID of the priority. get_priorities tool can be used to retrieve valid IDs."
+    )]
+    pub priority_id: u32,
+    #[schemars(description = "Optional description of the issue.")]
+    pub description: Option<String>,
+}

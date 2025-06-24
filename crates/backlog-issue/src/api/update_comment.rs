@@ -1,8 +1,8 @@
 #[cfg(feature = "writable")]
 use crate::models::Comment;
 use backlog_api_core::{HttpMethod, IntoRequest};
-use backlog_core::identifier::CommentId;
 use backlog_core::IssueIdOrKey;
+use backlog_core::identifier::CommentId;
 use serde::Serialize;
 
 #[cfg(feature = "writable")]
@@ -47,9 +47,8 @@ impl IntoRequest for UpdateCommentParams {
 
     fn path(&self) -> String {
         format!(
-            "/api/v2/issues/{}/comments/{}", 
-            self.issue_id_or_key, 
-            self.comment_id
+            "/api/v2/issues/{}/comments/{}",
+            self.issue_id_or_key, self.comment_id
         )
     }
 

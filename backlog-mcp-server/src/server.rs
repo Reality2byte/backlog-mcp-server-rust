@@ -1,9 +1,9 @@
 use crate::file_utils::{FileFormat, SerializableFile};
+#[cfg(feature = "issue_writable")]
+use crate::issue::request::{AddIssueRequest, UpdateCommentRequest};
 use crate::issue::request::{
     GetIssueCommentsRequest, GetIssueSharedFilesRequest, UpdateIssueRequest,
 };
-#[cfg(feature = "issue_writable")]
-use crate::issue::request::UpdateCommentRequest;
 use crate::{
     document::{
         self,
@@ -31,7 +31,10 @@ use crate::{
             GetVersionMilestoneListRequest,
         },
     },
-    project::{self, request::GetProjectStatusListRequest},
+    project::{
+        self,
+        request::{GetPrioritiesRequest, GetProjectIssueTypesRequest, GetProjectStatusListRequest},
+    },
     user::{self, request::GetUserListRequest},
     wiki::{
         self,
@@ -199,6 +202,13 @@ impl Server {
         Ok(CallToolResult::success(vec![Content::json(comment)?]))
     }
 
+    #[cfg(feature = "issue_writable")]
+    #[tool(description = "Create a new issue in a Backlog project.")]
+    async fn add_issue_to_project(&self, #[tool(aggr)] request: AddIssueRequest) -> McpResult {
+        let issue = issue::bridge::add_issue_impl(self.client.clone(), request).await?;
+        Ok(CallToolResult::success(vec![Content::json(issue)?]))
+    }
+
     #[tool(
         name = "get_issue_comments",
         description = "Gets comments for a specific issue. Takes 'issue_id_or_key' (string, required) and optional 'min_id', 'max_id', 'count', 'order' parameters."
@@ -271,6 +281,22 @@ impl Server {
         let statuses =
             project::bridge::get_project_status_list_tool(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(statuses)?]))
+    }
+
+    #[tool(description = "Get a list of issue types for a specified project.")]
+    async fn get_project_issue_types(
+        &self,
+        #[tool(aggr)] request: GetProjectIssueTypesRequest,
+    ) -> McpResult {
+        let issue_types =
+            project::bridge::get_project_issue_types_tool(self.client.clone(), request).await?;
+        Ok(CallToolResult::success(vec![Content::json(issue_types)?]))
+    }
+
+    #[tool(description = "Get a list of priorities available in Backlog.")]
+    async fn get_priorities(&self, #[tool(aggr)] request: GetPrioritiesRequest) -> McpResult {
+        let priorities = project::bridge::get_priorities_tool(self.client.clone(), request).await?;
+        Ok(CallToolResult::success(vec![Content::json(priorities)?]))
     }
 
     #[tool(description = "Get a list of shared files for a specified project directory.")]

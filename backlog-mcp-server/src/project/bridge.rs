@@ -1,7 +1,11 @@
 use crate::error::Result;
-use crate::project::request::GetProjectStatusListRequest;
+use crate::project::request::{
+    GetPrioritiesRequest, GetProjectIssueTypesRequest, GetProjectStatusListRequest,
+};
+use backlog_api_client::IssueType;
 use backlog_api_client::ProjectIdOrKey; // From backlog-core, re-exported by backlog-api-client
 use backlog_api_client::client::BacklogApiClient;
+use backlog_project::Priority;
 use backlog_project::Status; // Specific model from backlog-project
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -20,4 +24,27 @@ pub(crate) async fn get_project_status_list_tool(
     let params = backlog_project::GetStatusListParams::new(project_id);
     let statuses = client_guard.project().get_status_list(params).await?;
     Ok(statuses)
+}
+
+/// Helper function to implement the get_project_issue_types tool.
+pub(crate) async fn get_project_issue_types_tool(
+    client: Arc<Mutex<BacklogApiClient>>,
+    req: GetProjectIssueTypesRequest,
+) -> Result<Vec<IssueType>> {
+    let project_id = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+
+    let client_guard = client.lock().await;
+    let params = backlog_project::GetIssueTypeListParams::new(project_id);
+    let issue_types = client_guard.project().get_issue_type_list(params).await?;
+    Ok(issue_types)
+}
+
+/// Helper function to implement the get_priorities tool.
+pub(crate) async fn get_priorities_tool(
+    client: Arc<Mutex<BacklogApiClient>>,
+    _req: GetPrioritiesRequest,
+) -> Result<Vec<Priority>> {
+    let client_guard = client.lock().await;
+    let priorities = client_guard.project().get_priority_list().await?;
+    Ok(priorities)
 }
