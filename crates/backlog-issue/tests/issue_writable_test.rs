@@ -44,7 +44,13 @@ mod writable_tests {
         }
     }
 
-    fn create_mock_comment_with_updated_time(id: u32, content: &str, user_id: u32, user_name: &str, updated_time: chrono::DateTime<Utc>) -> Comment {
+    fn create_mock_comment_with_updated_time(
+        id: u32,
+        content: &str,
+        user_id: u32,
+        user_name: &str,
+        updated_time: chrono::DateTime<Utc>,
+    ) -> Comment {
         let created_time = Utc.with_ymd_and_hms(2024, 1, 1, 12, 0, 0).unwrap();
         Comment {
             id: CommentId::new(id),
@@ -351,10 +357,7 @@ mod writable_tests {
                 "/api/v2/issues/{}/comments/{}",
                 issue_id_or_key, comment_id
             )))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .set_body_json(&expected_comment)
-            )
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_comment))
             .mount(&mock_server)
             .await;
 
@@ -387,12 +390,9 @@ mod writable_tests {
                 "/api/v2/issues/{}/comments/{}",
                 issue_id_or_key, comment_id
             )))
-            .respond_with(
-                ResponseTemplate::new(404)
-                    .set_body_json(serde_json::json!({
-                        "errors": [{"message": "Issue not found"}]
-                    }))
-            )
+            .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
+                "errors": [{"message": "Issue not found"}]
+            })))
             .mount(&mock_server)
             .await;
 
@@ -420,12 +420,9 @@ mod writable_tests {
                 "/api/v2/issues/{}/comments/{}",
                 issue_id_or_key, comment_id
             )))
-            .respond_with(
-                ResponseTemplate::new(404)
-                    .set_body_json(serde_json::json!({
-                        "errors": [{"message": "Comment not found"}]
-                    }))
-            )
+            .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
+                "errors": [{"message": "Comment not found"}]
+            })))
             .mount(&mock_server)
             .await;
 
@@ -453,12 +450,9 @@ mod writable_tests {
                 "/api/v2/issues/{}/comments/{}",
                 issue_id_or_key, comment_id
             )))
-            .respond_with(
-                ResponseTemplate::new(403)
-                    .set_body_json(serde_json::json!({
-                        "errors": [{"message": "You do not have permission to update this comment"}]
-                    }))
-            )
+            .respond_with(ResponseTemplate::new(403).set_body_json(serde_json::json!({
+                "errors": [{"message": "You do not have permission to update this comment"}]
+            })))
             .mount(&mock_server)
             .await;
 
@@ -481,7 +475,7 @@ mod writable_tests {
         };
 
         let form_data: Vec<(String, String)> = (&params).into();
-        
+
         assert_eq!(form_data.len(), 1);
         assert_eq!(form_data[0].0, "content");
         assert_eq!(form_data[0].1, "New comment content with 日本語");

@@ -71,7 +71,10 @@ impl IssueApi {
     ///
     /// Corresponds to `PATCH /api/v2/issues/:issueIdOrKey/comments/:commentId`.
     #[cfg(feature = "writable")]
-    pub async fn update_comment(&self, params: UpdateCommentParams) -> Result<UpdateCommentResponse> {
+    pub async fn update_comment(
+        &self,
+        params: UpdateCommentParams,
+    ) -> Result<UpdateCommentResponse> {
         self.0.execute(params).await
     }
 

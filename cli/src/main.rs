@@ -400,11 +400,11 @@ struct UpdateCommentArgs {
     /// Issue ID or key (e.g., 'PROJECT-123')
     #[clap(short, long)]
     issue_id: String,
-    
+
     /// Comment ID to update
     #[clap(short = 'c', long)]
     comment_id: u32,
-    
+
     /// New content for the comment
     #[clap(short = 'n', long)]
     content: String,
@@ -1530,15 +1530,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             #[cfg(feature = "issue_writable")]
             IssueCommands::UpdateComment(args) => {
-                use backlog_issue::UpdateCommentParams;
                 use backlog_core::identifier::CommentId;
-                
+                use backlog_issue::UpdateCommentParams;
+
                 let params = UpdateCommentParams {
                     issue_id_or_key: args.issue_id.parse::<IssueKey>()?.into(),
                     comment_id: CommentId::new(args.comment_id),
                     content: args.content,
                 };
-                
+
                 match client.issue().update_comment(params).await {
                     Ok(comment) => {
                         println!("✅ Comment updated successfully");

@@ -1,9 +1,9 @@
 use crate::file_utils::{FileFormat, SerializableFile};
+#[cfg(feature = "issue_writable")]
+use crate::issue::request::UpdateCommentRequest;
 use crate::issue::request::{
     GetIssueCommentsRequest, GetIssueSharedFilesRequest, UpdateIssueRequest,
 };
-#[cfg(feature = "issue_writable")]
-use crate::issue::request::UpdateCommentRequest;
 use crate::{
     document::{
         self,
