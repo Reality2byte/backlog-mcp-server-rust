@@ -20,21 +20,13 @@ pub struct GetDocumentTreeResponse {
 /// Parameters for getting document tree
 ///
 /// Corresponds to `GET /api/v2/documents/tree`.
-#[derive(Debug, Builder, Clone, PartialEq)]
+#[derive(Debug, Builder, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
 #[builder(setter(strip_option), build_fn(error = "backlog_api_core::Error"))]
 pub struct GetDocumentTreeParams {
     // Based on curl: /api/v2/documents/tree?apiKey=xxx&projectIdOrKey=MSSP
     #[builder(setter(into))]
     pub project_id_or_key: ProjectIdOrKey,
-}
-
-impl From<GetDocumentTreeParams> for Vec<(String, String)> {
-    fn from(params: GetDocumentTreeParams) -> Self {
-        vec![(
-            "projectIdOrKey".to_string(),
-            params.project_id_or_key.to_string(),
-        )]
-    }
 }
 
 impl IntoRequest for GetDocumentTreeParams {
@@ -43,6 +35,6 @@ impl IntoRequest for GetDocumentTreeParams {
     }
 
     fn to_query(&self) -> impl Serialize {
-        Vec::<(String, String)>::from(self.clone())
+        self
     }
 }

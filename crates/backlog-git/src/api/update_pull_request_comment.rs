@@ -8,11 +8,15 @@ use serde::Serialize;
 
 pub type UpdatePullRequestCommentResponse = PullRequestComment;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct UpdatePullRequestCommentParams {
+    #[serde(skip)]
     pub project_id_or_key: ProjectIdOrKey,
+    #[serde(skip)]
     pub repo_id_or_name: RepositoryIdOrName,
+    #[serde(skip)]
     pub number: PullRequestNumber,
+    #[serde(skip)]
     pub comment_id: PullRequestCommentId,
     pub content: String,
 }
@@ -35,12 +39,6 @@ impl UpdatePullRequestCommentParams {
     }
 }
 
-impl From<&UpdatePullRequestCommentParams> for Vec<(String, String)> {
-    fn from(params: &UpdatePullRequestCommentParams) -> Self {
-        vec![("content".to_string(), params.content.clone())]
-    }
-}
-
 impl IntoRequest for UpdatePullRequestCommentParams {
     fn method(&self) -> HttpMethod {
         HttpMethod::Patch
@@ -54,6 +52,6 @@ impl IntoRequest for UpdatePullRequestCommentParams {
     }
 
     fn to_form(&self) -> impl Serialize {
-        Vec::<(String, String)>::from(self)
+        self
     }
 }

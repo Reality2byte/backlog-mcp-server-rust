@@ -1,5 +1,4 @@
 use backlog_api_core::Result;
-use backlog_core::ProjectIdOrKey;
 use backlog_domain_models::Milestone;
 use client::Client;
 
@@ -106,11 +105,7 @@ impl ProjectApi {
     /// Gets the project icon image data.
     ///
     /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/image`.
-    pub async fn get_project_icon(
-        &self,
-        project_id_or_key: impl Into<ProjectIdOrKey>,
-    ) -> Result<Vec<u8>> {
-        let params = GetProjectIconParams::new(project_id_or_key);
+    pub async fn get_project_icon(&self, params: GetProjectIconParams) -> Result<Vec<u8>> {
         let downloaded_file = self.0.download_file(params).await?;
         Ok(downloaded_file.bytes.to_vec())
     }

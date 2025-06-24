@@ -5,11 +5,15 @@ use serde::Serialize;
 pub type UpdateStatusResponse = backlog_domain_models::Status;
 
 #[cfg(feature = "writable")]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct UpdateStatusParams {
+    #[serde(skip)]
     pub project_id_or_key: ProjectIdOrKey,
+    #[serde(skip)]
     pub status_id: backlog_core::identifier::StatusId,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub color: Option<backlog_domain_models::StatusColor>,
 }
 
@@ -52,23 +56,6 @@ impl IntoRequest for UpdateStatusParams {
     }
 
     fn to_form(&self) -> impl Serialize {
-        Vec::<(String, String)>::from(self)
-    }
-}
-
-#[cfg(feature = "writable")]
-impl From<&UpdateStatusParams> for Vec<(String, String)> {
-    fn from(params: &UpdateStatusParams) -> Self {
-        let mut seq = Vec::new();
-
-        if let Some(name) = &params.name {
-            seq.push(("name".to_string(), name.clone()));
-        }
-
-        if let Some(color) = &params.color {
-            seq.push(("color".to_string(), color.as_hex().to_string()));
-        }
-
-        seq
+        self
     }
 }

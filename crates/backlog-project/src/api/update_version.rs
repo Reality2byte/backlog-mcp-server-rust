@@ -5,14 +5,21 @@ use serde::Serialize;
 pub type UpdateVersionResponse = backlog_domain_models::Milestone;
 
 #[cfg(feature = "writable")]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateVersionParams {
+    #[serde(skip)]
     pub project_id_or_key: ProjectIdOrKey,
+    #[serde(skip)]
     pub version_id: backlog_core::identifier::MilestoneId,
     pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub start_date: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub release_due_date: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub archived: Option<bool>,
 }
 
@@ -36,31 +43,6 @@ impl UpdateVersionParams {
 }
 
 #[cfg(feature = "writable")]
-impl From<&UpdateVersionParams> for Vec<(String, String)> {
-    fn from(params: &UpdateVersionParams) -> Self {
-        let mut seq = vec![("name".to_string(), params.name.clone())];
-
-        if let Some(description) = &params.description {
-            seq.push(("description".to_string(), description.clone()));
-        }
-
-        if let Some(start_date) = &params.start_date {
-            seq.push(("startDate".to_string(), start_date.clone()));
-        }
-
-        if let Some(release_due_date) = &params.release_due_date {
-            seq.push(("releaseDueDate".to_string(), release_due_date.clone()));
-        }
-
-        if let Some(archived) = params.archived {
-            seq.push(("archived".to_string(), archived.to_string()));
-        }
-
-        seq
-    }
-}
-
-#[cfg(feature = "writable")]
 impl IntoRequest for UpdateVersionParams {
     fn method(&self) -> HttpMethod {
         HttpMethod::Patch
@@ -74,6 +56,6 @@ impl IntoRequest for UpdateVersionParams {
     }
 
     fn to_form(&self) -> impl Serialize {
-        Vec::<(String, String)>::from(self)
+        self
     }
 }

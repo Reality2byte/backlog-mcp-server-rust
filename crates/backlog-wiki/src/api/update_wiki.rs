@@ -11,11 +11,16 @@ use serde::Serialize;
 pub type UpdateWikiResponse = WikiDetail;
 
 #[cfg(feature = "writable")]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateWikiParams {
+    #[serde(skip)]
     pub wiki_id: WikiId,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub content: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub mail_notify: Option<bool>,
 }
 
@@ -47,27 +52,6 @@ impl UpdateWikiParams {
 }
 
 #[cfg(feature = "writable")]
-impl From<&UpdateWikiParams> for Vec<(String, String)> {
-    fn from(params: &UpdateWikiParams) -> Self {
-        let mut seq = Vec::new();
-
-        if let Some(name) = &params.name {
-            seq.push(("name".to_string(), name.clone()));
-        }
-
-        if let Some(content) = &params.content {
-            seq.push(("content".to_string(), content.clone()));
-        }
-
-        if let Some(mail_notify) = params.mail_notify {
-            seq.push(("mailNotify".to_string(), mail_notify.to_string()));
-        }
-
-        seq
-    }
-}
-
-#[cfg(feature = "writable")]
 impl IntoRequest for UpdateWikiParams {
     fn method(&self) -> HttpMethod {
         HttpMethod::Patch
@@ -78,7 +62,6 @@ impl IntoRequest for UpdateWikiParams {
     }
 
     fn to_form(&self) -> impl Serialize {
-        let params: Vec<(String, String)> = self.into();
-        params
+        self
     }
 }

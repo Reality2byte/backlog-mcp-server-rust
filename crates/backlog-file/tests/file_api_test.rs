@@ -2,7 +2,7 @@ mod common;
 use common::*;
 
 use backlog_api_core::Error as ApiError;
-use backlog_file::{GetSharedFilesListParams, SharedFile};
+use backlog_file::{GetFileParams, GetSharedFilesListParams, SharedFile};
 use std::str::FromStr;
 
 fn create_mock_user(id: u32, name: &str) -> User {
@@ -200,7 +200,8 @@ async fn test_get_file_success() {
         .mount(&server)
         .await;
 
-    let result = file_api.get_file(project_id, shared_file_id).await;
+    let params = GetFileParams::new(project_id, shared_file_id);
+    let result = file_api.get_file(params).await;
     assert!(result.is_ok());
     let downloaded_file = result.unwrap();
     assert_eq!(downloaded_file.filename, "test.txt");
@@ -235,7 +236,8 @@ async fn test_get_file_not_found() {
         .mount(&server)
         .await;
 
-    let result = file_api.get_file(project_id, shared_file_id).await;
+    let params = GetFileParams::new(project_id, shared_file_id);
+    let result = file_api.get_file(params).await;
     assert!(result.is_err());
     if let Err(ApiError::HttpStatus { status, errors, .. }) = result {
         assert_eq!(status, 404);

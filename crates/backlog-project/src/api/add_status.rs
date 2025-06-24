@@ -5,8 +5,9 @@ use serde::Serialize;
 pub type AddStatusResponse = backlog_domain_models::Status;
 
 #[cfg(feature = "writable")]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct AddStatusParams {
+    #[serde(skip)]
     pub project_id_or_key: ProjectIdOrKey,
     pub name: String,
     pub color: backlog_domain_models::StatusColor,
@@ -28,16 +29,6 @@ impl AddStatusParams {
 }
 
 #[cfg(feature = "writable")]
-impl From<&AddStatusParams> for Vec<(String, String)> {
-    fn from(params: &AddStatusParams) -> Self {
-        vec![
-            ("name".to_string(), params.name.clone()),
-            ("color".to_string(), params.color.as_hex().to_string()),
-        ]
-    }
-}
-
-#[cfg(feature = "writable")]
 impl IntoRequest for AddStatusParams {
     fn method(&self) -> HttpMethod {
         HttpMethod::Post
@@ -48,6 +39,6 @@ impl IntoRequest for AddStatusParams {
     }
 
     fn to_form(&self) -> impl Serialize {
-        Vec::<(String, String)>::from(self)
+        self
     }
 }

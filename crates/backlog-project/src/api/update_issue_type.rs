@@ -5,13 +5,20 @@ use serde::Serialize;
 pub type UpdateIssueTypeResponse = backlog_domain_models::IssueType;
 
 #[cfg(feature = "writable")]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateIssueTypeParams {
+    #[serde(skip)]
     pub project_id_or_key: ProjectIdOrKey,
+    #[serde(skip)]
     pub issue_type_id: backlog_core::identifier::IssueTypeId,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub color: Option<backlog_domain_models::IssueTypeColor>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub template_summary: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub template_description: Option<String>,
 }
 
@@ -33,34 +40,6 @@ impl UpdateIssueTypeParams {
 }
 
 #[cfg(feature = "writable")]
-impl From<&UpdateIssueTypeParams> for Vec<(String, String)> {
-    fn from(params: &UpdateIssueTypeParams) -> Self {
-        let mut seq = Vec::new();
-
-        if let Some(name) = &params.name {
-            seq.push(("name".to_string(), name.clone()));
-        }
-
-        if let Some(color) = &params.color {
-            seq.push(("color".to_string(), color.as_hex().to_string()));
-        }
-
-        if let Some(template_summary) = &params.template_summary {
-            seq.push(("templateSummary".to_string(), template_summary.clone()));
-        }
-
-        if let Some(template_description) = &params.template_description {
-            seq.push((
-                "templateDescription".to_string(),
-                template_description.clone(),
-            ));
-        }
-
-        seq
-    }
-}
-
-#[cfg(feature = "writable")]
 impl IntoRequest for UpdateIssueTypeParams {
     fn method(&self) -> HttpMethod {
         HttpMethod::Patch
@@ -74,6 +53,6 @@ impl IntoRequest for UpdateIssueTypeParams {
     }
 
     fn to_form(&self) -> impl Serialize {
-        Vec::<(String, String)>::from(self)
+        self
     }
 }

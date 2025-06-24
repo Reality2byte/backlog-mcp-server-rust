@@ -5,12 +5,17 @@ use serde::Serialize;
 pub type AddMilestoneResponse = backlog_domain_models::Milestone;
 
 #[cfg(feature = "writable")]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AddMilestoneParams {
+    #[serde(skip)]
     pub project_id_or_key: ProjectIdOrKey,
     pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub start_date: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub release_due_date: Option<String>,
 }
 
@@ -28,27 +33,6 @@ impl AddMilestoneParams {
 }
 
 #[cfg(feature = "writable")]
-impl From<&AddMilestoneParams> for Vec<(String, String)> {
-    fn from(params: &AddMilestoneParams) -> Self {
-        let mut seq = vec![("name".to_string(), params.name.clone())];
-
-        if let Some(description) = &params.description {
-            seq.push(("description".to_string(), description.clone()));
-        }
-
-        if let Some(start_date) = &params.start_date {
-            seq.push(("startDate".to_string(), start_date.clone()));
-        }
-
-        if let Some(release_due_date) = &params.release_due_date {
-            seq.push(("releaseDueDate".to_string(), release_due_date.clone()));
-        }
-
-        seq
-    }
-}
-
-#[cfg(feature = "writable")]
 impl IntoRequest for AddMilestoneParams {
     fn method(&self) -> HttpMethod {
         HttpMethod::Post
@@ -59,6 +43,6 @@ impl IntoRequest for AddMilestoneParams {
     }
 
     fn to_form(&self) -> impl Serialize {
-        Vec::<(String, String)>::from(self)
+        self
     }
 }

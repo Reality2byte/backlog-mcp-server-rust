@@ -5,12 +5,16 @@ use serde::Serialize;
 pub type AddIssueTypeResponse = backlog_domain_models::IssueType;
 
 #[cfg(feature = "writable")]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AddIssueTypeParams {
+    #[serde(skip)]
     pub project_id_or_key: ProjectIdOrKey,
     pub name: String,
     pub color: backlog_domain_models::IssueTypeColor,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub template_summary: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub template_description: Option<String>,
 }
 
@@ -32,29 +36,6 @@ impl AddIssueTypeParams {
 }
 
 #[cfg(feature = "writable")]
-impl From<&AddIssueTypeParams> for Vec<(String, String)> {
-    fn from(params: &AddIssueTypeParams) -> Self {
-        let mut seq = vec![
-            ("name".to_string(), params.name.clone()),
-            ("color".to_string(), params.color.as_hex().to_string()),
-        ];
-
-        if let Some(template_summary) = &params.template_summary {
-            seq.push(("templateSummary".to_string(), template_summary.clone()));
-        }
-
-        if let Some(template_description) = &params.template_description {
-            seq.push((
-                "templateDescription".to_string(),
-                template_description.clone(),
-            ));
-        }
-
-        seq
-    }
-}
-
-#[cfg(feature = "writable")]
 impl IntoRequest for AddIssueTypeParams {
     fn method(&self) -> HttpMethod {
         HttpMethod::Post
@@ -65,6 +46,6 @@ impl IntoRequest for AddIssueTypeParams {
     }
 
     fn to_form(&self) -> impl Serialize {
-        Vec::<(String, String)>::from(self)
+        self
     }
 }

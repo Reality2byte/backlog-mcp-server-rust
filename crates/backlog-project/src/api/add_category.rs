@@ -5,8 +5,9 @@ use serde::Serialize;
 pub type AddCategoryResponse = backlog_domain_models::Category;
 
 #[cfg(feature = "writable")]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct AddCategoryParams {
+    #[serde(skip)]
     pub project_id_or_key: ProjectIdOrKey,
     pub name: String,
 }
@@ -22,13 +23,6 @@ impl AddCategoryParams {
 }
 
 #[cfg(feature = "writable")]
-impl From<&AddCategoryParams> for Vec<(String, String)> {
-    fn from(params: &AddCategoryParams) -> Self {
-        vec![("name".to_string(), params.name.clone())]
-    }
-}
-
-#[cfg(feature = "writable")]
 impl IntoRequest for AddCategoryParams {
     fn method(&self) -> HttpMethod {
         HttpMethod::Post
@@ -39,6 +33,6 @@ impl IntoRequest for AddCategoryParams {
     }
 
     fn to_form(&self) -> impl Serialize {
-        Vec::<(String, String)>::from(self)
+        self
     }
 }

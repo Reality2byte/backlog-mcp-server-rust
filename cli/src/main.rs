@@ -2632,7 +2632,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Downloading project icon to {}", output.display());
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
-                match client.project().get_project_icon(proj_id_or_key).await {
+                let params = backlog_project::GetProjectIconParams::new(proj_id_or_key);
+                match client.project().get_project_icon(params).await {
                     Ok(icon_bytes) => {
                         if let Err(e) = fs::write(&output, &icon_bytes).await {
                             eprintln!("Error writing icon to {}: {}", output.display(), e);

@@ -5,9 +5,12 @@ use serde::Serialize;
 pub type DeleteIssueTypeResponse = backlog_domain_models::IssueType;
 
 #[cfg(feature = "writable")]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DeleteIssueTypeParams {
+    #[serde(skip)]
     pub project_id_or_key: ProjectIdOrKey,
+    #[serde(skip)]
     pub issue_type_id: backlog_core::identifier::IssueTypeId,
     pub substitute_issue_type_id: backlog_core::identifier::IssueTypeId,
 }
@@ -28,16 +31,6 @@ impl DeleteIssueTypeParams {
 }
 
 #[cfg(feature = "writable")]
-impl From<&DeleteIssueTypeParams> for Vec<(String, String)> {
-    fn from(params: &DeleteIssueTypeParams) -> Self {
-        vec![(
-            "substituteIssueTypeId".to_string(),
-            params.substitute_issue_type_id.to_string(),
-        )]
-    }
-}
-
-#[cfg(feature = "writable")]
 impl IntoRequest for DeleteIssueTypeParams {
     fn method(&self) -> HttpMethod {
         HttpMethod::Delete
@@ -51,6 +44,6 @@ impl IntoRequest for DeleteIssueTypeParams {
     }
 
     fn to_form(&self) -> impl Serialize {
-        Vec::<(String, String)>::from(self)
+        self
     }
 }

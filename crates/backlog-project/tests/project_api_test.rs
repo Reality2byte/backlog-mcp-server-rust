@@ -3,7 +3,7 @@ mod common;
 use backlog_core::{ProjectIdOrKey, ProjectKey, TextFormattingRule};
 use backlog_project::api::{
     GetCategoryListParams, GetIssueTypeListParams, GetMilestoneListParams, GetProjectDetailParams,
-    GetProjectListParams, GetStatusListParams,
+    GetProjectIconParams, GetProjectListParams, GetStatusListParams,
 };
 use backlog_project::{Category, IssueType, Priority, Project, Resolution, Status};
 use common::*;
@@ -469,9 +469,8 @@ async fn test_get_project_icon_success() {
         .mount(&mock_server)
         .await;
 
-    let result = project_api
-        .get_project_icon(ProjectKey::from_str("TESTPROJ").unwrap())
-        .await;
+    let params = GetProjectIconParams::new(ProjectKey::from_str("TESTPROJ").unwrap());
+    let result = project_api.get_project_icon(params).await;
     assert!(result.is_ok());
     let image_data = result.unwrap();
     assert_eq!(image_data, expected_image_data);
@@ -488,8 +487,7 @@ async fn test_get_project_icon_not_found() {
         .mount(&mock_server)
         .await;
 
-    let result = project_api
-        .get_project_icon(ProjectKey::from_str("NONEXISTENT").unwrap())
-        .await;
+    let params = GetProjectIconParams::new(ProjectKey::from_str("NONEXISTENT").unwrap());
+    let result = project_api.get_project_icon(params).await;
     assert!(result.is_err());
 }

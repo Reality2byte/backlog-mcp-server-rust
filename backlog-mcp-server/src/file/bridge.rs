@@ -1,7 +1,7 @@
 use crate::file::request::{DownloadSharedFileRequest, GetSharedFilesListRequest};
 use backlog_api_client::{DownloadedFile, client::BacklogApiClient};
 use backlog_core::{ProjectIdOrKey, identifier::SharedFileId};
-use backlog_file::{GetSharedFilesListParams, SharedFile};
+use backlog_file::{GetFileParams, GetSharedFilesListParams, SharedFile};
 use rmcp::Error as McpError;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -45,12 +45,9 @@ pub(crate) async fn download_shared_file_bridge(
     })?;
 
     let shared_file_id = SharedFileId::new(request.shared_file_id);
+    let params = GetFileParams::new(project_id_or_key, shared_file_id);
 
-    client_guard
-        .file()
-        .get_file(project_id_or_key, shared_file_id)
-        .await
-        .map_err(|e| {
-            McpError::internal_error(format!("Failed to download shared file: {}", e), None)
-        })
+    client_guard.file().get_file(params).await.map_err(|e| {
+        McpError::internal_error(format!("Failed to download shared file: {}", e), None)
+    })
 }
