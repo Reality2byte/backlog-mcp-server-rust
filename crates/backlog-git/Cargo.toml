@@ -11,6 +11,7 @@ thiserror = { workspace = true }
 chrono = { workspace = true }
 backlog-core = { path = "../backlog-core", features = ["schemars"] }
 backlog-api-core = { path = "../backlog-api-core" }
+backlog-api-macros = { path = "../backlog-api-macros", optional = true }
 client = { path = "../client" }
 derive_builder = { workspace = true }
 reqwest = { workspace = true }
@@ -19,6 +20,7 @@ url = { workspace = true }
 [features]
 default = []
 writable = ["client/writable"]
+macros = ["dep:backlog-api-macros"]
 schemars = ["dep:schemars", "backlog-core/schemars"]
 
 [dependencies.schemars]

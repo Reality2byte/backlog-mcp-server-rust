@@ -5,13 +5,19 @@ use backlog_core::IssueIdOrKey;
 use backlog_core::identifier::CommentId;
 use serde::Serialize;
 
+#[cfg(all(feature = "writable", feature = "macros"))]
+use backlog_api_macros::ToFormParams;
+
 #[cfg(feature = "writable")]
 pub type UpdateCommentResponse = Comment;
 
 #[cfg(feature = "writable")]
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "macros", derive(ToFormParams))]
 pub struct UpdateCommentParams {
+    #[cfg_attr(feature = "macros", form(skip))]
     pub issue_id_or_key: IssueIdOrKey,
+    #[cfg_attr(feature = "macros", form(skip))]
     pub comment_id: CommentId,
     pub content: String,
 }
@@ -31,8 +37,8 @@ impl UpdateCommentParams {
     }
 }
 
-// Manual form serialization for PATCH method
-#[cfg(feature = "writable")]
+// Manual form serialization for PATCH method (when macros feature is disabled)
+#[cfg(all(feature = "writable", not(feature = "macros")))]
 impl From<&UpdateCommentParams> for Vec<(String, String)> {
     fn from(params: &UpdateCommentParams) -> Self {
         vec![("content".to_string(), params.content.clone())]

@@ -1,5 +1,7 @@
 use crate::models::Document;
 use backlog_api_core::IntoRequest;
+#[cfg(feature = "macros")]
+use backlog_api_macros::ToFormParams;
 use backlog_core::identifier::ProjectId;
 use derive_builder::Builder;
 use serde::Serialize;
@@ -12,6 +14,7 @@ pub type ListDocumentsResponse = Vec<Document>;
 ///
 /// Corresponds to `GET /api/v2/documents`.
 #[derive(Debug, Builder, Clone, PartialEq)]
+#[cfg_attr(feature = "macros", derive(ToFormParams))]
 #[builder(setter(strip_option))]
 pub struct ListDocumentsParams {
     // Based on curl: /api/v2/documents?apiKey=xxx&projectId=601486&offset=0&count=1
@@ -19,6 +22,7 @@ pub struct ListDocumentsParams {
     // User confirmed routing definition /api/v2/documents is primary.
     // So, projectId is a query param.
     #[builder(default, setter(into))]
+    #[cfg_attr(feature = "macros", form(array, name = "projectId"))]
     pub project_ids: Option<Vec<ProjectId>>, // Array of project IDs (optional)
     #[builder(default, setter(into))]
     pub keyword: Option<String>,
@@ -69,22 +73,30 @@ impl fmt::Display for DocumentOrder {
 // This From implementation is crucial for client.get_with_params
 impl From<ListDocumentsParams> for Vec<(String, String)> {
     fn from(params: ListDocumentsParams) -> Self {
+        (&params).into()
+    }
+}
+
+// Support reference conversion
+#[cfg(not(feature = "macros"))]
+impl From<&ListDocumentsParams> for Vec<(String, String)> {
+    fn from(params: &ListDocumentsParams) -> Self {
         let mut query_params = Vec::new();
 
         // Handle array of project IDs
-        if let Some(project_ids) = params.project_ids {
+        if let Some(project_ids) = &params.project_ids {
             for project_id in project_ids {
                 query_params.push(("projectId[]".to_string(), project_id.to_string()));
             }
         }
 
-        if let Some(keyword) = params.keyword {
-            query_params.push(("keyword".to_string(), keyword));
+        if let Some(keyword) = &params.keyword {
+            query_params.push(("keyword".to_string(), keyword.clone()));
         }
-        if let Some(sort) = params.sort {
+        if let Some(sort) = &params.sort {
             query_params.push(("sort".to_string(), sort.to_string()));
         }
-        if let Some(order) = params.order {
+        if let Some(order) = &params.order {
             query_params.push(("order".to_string(), order.to_string()));
         }
         if let Some(offset) = params.offset {
@@ -104,6 +116,7 @@ impl IntoRequest for ListDocumentsParams {
     }
 
     fn to_query(&self) -> impl Serialize {
-        Vec::<(String, String)>::from(self.clone())
+        let params: Vec<(String, String)> = self.into();
+        params
     }
 }

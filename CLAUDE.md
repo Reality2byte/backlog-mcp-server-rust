@@ -16,6 +16,7 @@ cli/                        # CLI binary application
 backlog-mcp-server/         # MCP server implementation
 crates/                     # Internal library crates
 ├── backlog-api-client/     # Main library facade (aggregates all API modules)
+├── backlog-api-macros/     # Procedural macros for API parameter serialization
 ├── backlog-core/           # Core types and identifiers shared across all modules
 ├── backlog-api-core/       # Common API utilities and error types
 ├── backlog-domain-models/  # Shared domain models (Priority, Status, Category, etc.)
@@ -122,6 +123,108 @@ pub async fn add_comment(&self, params: &AddCommentParams) -> Result<Comment> {
 - Array parameters require special `foo[]` syntax that serde cannot handle automatically
 - Manual serialization provides precise control over parameter formatting
 - Consistent with existing patterns in `backlog-issue` and other domain crates
+
+### Automated Form Parameter Serialization (ToFormParams Macro)
+
+The `backlog-api-macros` crate provides the `ToFormParams` derive macro to automatically generate `From<&T> for Vec<(String, String)>` implementations for API parameter structs. This eliminates boilerplate and ensures consistency across all form parameter serialization.
+
+#### Usage
+
+```rust
+use backlog_api_macros::ToFormParams;
+
+#[derive(ToFormParams)]
+struct AddCommentParams {
+    content: String,                           // Required field → "content"
+    #[form(array, name = "notifiedUserId")]
+    notified_user_ids: Option<Vec<u32>>,      // Optional array → "notifiedUserId[]"
+    #[form(skip)]
+    issue_id_or_key: IssueIdOrKey,            // Skipped (used for URL path)
+}
+```
+
+#### Supported Attributes
+
+- `#[form(skip)]` - Skip this field during serialization
+- `#[form(name = "customName")]` - Use custom field name in API
+- `#[form(array)]` - Treat as array parameter (adds `[]` suffix)
+- `#[form(flatten)]` - Flatten nested struct fields (reserved for future use)
+
+#### Automatic Transformations
+
+- **Field Names**: `snake_case` → `camelCase` (e.g., `user_id` → `userId`)
+- **Optional Fields**: `Option<T>` fields are only included if `Some(value)`
+- **Array Fields**: `Vec<T>` or `Option<Vec<T>>` with `#[form(array)]` generate multiple entries with `[]` suffix
+- **Type Conversion**: All values converted via `.to_string()`
+- **Enum Support**: Enums with `Display` trait (including `serde_repr` enums) are automatically supported
+
+#### Migration Strategy
+
+The macro is designed for **seamless adoption**:
+
+1. **Backward Compatible**: Existing manual implementations continue to work
+2. **Gradual Migration**: Replace manual implementations one at a time
+3. **No Breaking Changes**: API consumers see no difference
+4. **Feature-Gated**: Optional dependency that doesn't affect default builds
+
+#### Implementation Benefits
+
+- **Code Reduction**: 20+ manual implementations → declarative attributes
+- **Consistency**: Eliminates human error in field name mapping
+- **Maintainability**: Add new fields without touching serialization logic
+- **Type Safety**: Compile-time validation of attribute usage
+
+#### Special Processing Patterns for ToFormParams Macro
+
+For the rare cases where the ToFormParams macro cannot handle certain field types or transformations automatically, use these established patterns:
+
+**Date Field Processing**
+For date fields requiring custom formatting (e.g., DateTime<Utc> to "yyyy-MM-dd"):
+
+```rust
+#[cfg_attr(feature = "macros", form(skip))] // Skip in macro
+pub start_date: Option<DateTime<Utc>>,
+
+// Extension method for macro users
+#[cfg(all(feature = "writable", feature = "macros"))]
+impl AddIssueParams {
+    fn to_form_params(&self) -> Vec<(String, String)> {
+        let mut params: Vec<(String, String)> = self.into();
+        
+        if let Some(start_date) = &self.start_date {
+            params.push((
+                "startDate".to_string(),
+                start_date.format("%Y-%m-%d").to_string(),
+            ));
+        }
+        
+        params
+    }
+}
+
+// Use extension method in to_form()
+fn to_form(&self) -> impl Serialize {
+    #[cfg(feature = "macros")]
+    { self.to_form_params() }
+    #[cfg(not(feature = "macros"))]
+    { /* manual implementation */ }
+}
+```
+
+**Note on Enum Processing**: Most enums (especially those using `serde_repr` with `Display` trait) are handled automatically by the macro and do not require special processing. Only implement custom processing for enums with complex serialization requirements.
+
+**Conditional Import Management**
+For backward compatibility with manual implementations:
+
+```rust
+#[cfg(feature = "macros")]
+use backlog_api_macros::ToFormParams;
+#[cfg(not(feature = "macros"))]
+use backlog_core::identifier::Identifier; // Needed for .value() method
+```
+
+**Extension Method Naming Convention**
+Use `to_form_params()` (not `into_form_params()`) to avoid clippy::wrong_self_convention warnings when methods take `&self` by reference.
 
 ### Standard Domain Crate Structure
 

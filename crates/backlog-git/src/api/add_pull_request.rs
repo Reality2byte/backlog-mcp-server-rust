@@ -2,23 +2,33 @@ use crate::models::PullRequest;
 use backlog_api_core::{HttpMethod, IntoRequest};
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
-    identifier::{AttachmentId, Identifier, IssueId, UserId},
+    identifier::{AttachmentId, IssueId, UserId},
 };
 use serde::Serialize;
+
+#[cfg(feature = "macros")]
+use backlog_api_macros::ToFormParams;
 
 pub type AddPullRequestResponse = PullRequest;
 
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "macros", derive(ToFormParams))]
 pub struct AddPullRequestParams {
+    #[cfg_attr(feature = "macros", form(skip))]
     pub project_id_or_key: ProjectIdOrKey,
+    #[cfg_attr(feature = "macros", form(skip))]
     pub repo_id_or_name: RepositoryIdOrName,
     pub summary: String,
     pub description: String,
     pub base: String,
     pub branch: String,
+    #[cfg_attr(feature = "macros", form(name = "issueId"))]
     pub issue_id: Option<IssueId>,
+    #[cfg_attr(feature = "macros", form(name = "assigneeId"))]
     pub assignee_id: Option<UserId>,
+    #[cfg_attr(feature = "macros", form(array, name = "notifiedUserId"))]
     pub notified_user_ids: Option<Vec<UserId>>,
+    #[cfg_attr(feature = "macros", form(array, name = "attachmentId"))]
     pub attachment_ids: Option<Vec<AttachmentId>>,
 }
 
@@ -66,6 +76,8 @@ impl AddPullRequestParams {
     }
 }
 
+// Form serialization: macro when available, manual fallback
+#[cfg(not(feature = "macros"))]
 impl From<&AddPullRequestParams> for Vec<(String, String)> {
     fn from(params: &AddPullRequestParams) -> Self {
         let mut seq = vec![

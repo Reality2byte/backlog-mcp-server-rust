@@ -4,6 +4,7 @@ members = [
     "cli",
     "backlog-mcp-server",
     "crates/backlog-api-client",
+    "crates/backlog-api-macros",
     "crates/client",
     "crates/backlog-core",
     "crates/backlog-api-core",

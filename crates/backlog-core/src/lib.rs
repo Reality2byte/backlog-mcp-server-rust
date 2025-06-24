@@ -1,4 +1,5 @@
 mod active_type_id;
+mod api_date;
 pub mod date;
 mod error;
 mod file_type;
@@ -17,6 +18,7 @@ mod text_formatting_rule;
 mod user;
 
 pub use active_type_id::ActiveTypeId;
+pub use api_date::ApiDate;
 pub use date::Date;
 pub use error::{Error, Result};
 pub use file_type::FileType;

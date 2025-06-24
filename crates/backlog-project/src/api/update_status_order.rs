@@ -2,12 +2,18 @@ use backlog_api_core::{HttpMethod, IntoRequest};
 use backlog_core::ProjectIdOrKey;
 use serde::Serialize;
 
+#[cfg(all(feature = "writable", feature = "macros"))]
+use backlog_api_macros::ToFormParams;
+
 pub type UpdateStatusOrderResponse = Vec<backlog_domain_models::Status>;
 
 #[cfg(feature = "writable")]
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "macros", derive(ToFormParams))]
 pub struct UpdateStatusOrderParams {
+    #[cfg_attr(feature = "macros", form(skip))]
     pub project_id_or_key: ProjectIdOrKey,
+    #[cfg_attr(feature = "macros", form(array, name = "statusId"))]
     pub status_ids: Vec<backlog_core::identifier::StatusId>,
 }
 
@@ -42,7 +48,8 @@ impl IntoRequest for UpdateStatusOrderParams {
     }
 }
 
-#[cfg(feature = "writable")]
+// Form serialization: macro when available, manual fallback
+#[cfg(all(feature = "writable", not(feature = "macros")))]
 impl From<&UpdateStatusOrderParams> for Vec<(String, String)> {
     fn from(params: &UpdateStatusOrderParams) -> Self {
         let mut seq = Vec::new();
