@@ -6,6 +6,9 @@ use backlog_core::{
 };
 use serde::Serialize;
 
+#[cfg(feature = "macros")]
+use backlog_api_macros::ToFormParams;
+
 pub type AddPullRequestResponse = PullRequest;
 
 #[derive(Debug, Clone)]
@@ -66,6 +69,7 @@ impl AddPullRequestParams {
     }
 }
 
+// Manual form serialization (complex field handling makes macro impractical for now)
 impl From<&AddPullRequestParams> for Vec<(String, String)> {
     fn from(params: &AddPullRequestParams) -> Self {
         let mut seq = vec![

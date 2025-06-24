@@ -6,6 +6,7 @@ license.workspace = true
 
 [features]
 writable = [ "client/writable" ]
+macros = [ "dep:backlog-api-macros" ]
 schemars = ["dep:schemars", "backlog-domain-models/schemars", "backlog-core/schemars"]
 
 [dependencies]
@@ -13,6 +14,7 @@ client = { path = "../client" }
 backlog-core = { path = "../backlog-core" }
 backlog-api-core = { path = "../backlog-api-core" }
 backlog-domain-models = { path = "../backlog-domain-models" }
+backlog-api-macros = { path = "../backlog-api-macros", optional = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_repr = { workspace = true }
