@@ -156,6 +156,7 @@ struct AddCommentParams {
 - **Optional Fields**: `Option<T>` fields are only included if `Some(value)`
 - **Array Fields**: `Vec<T>` or `Option<Vec<T>>` with `#[form(array)]` generate multiple entries with `[]` suffix
 - **Type Conversion**: All values converted via `.to_string()`
+- **Enum Support**: Enums with `Display` trait (including `serde_repr` enums) are automatically supported
 
 #### Migration Strategy
 
@@ -175,7 +176,7 @@ The macro is designed for **seamless adoption**:
 
 #### Special Processing Patterns for ToFormParams Macro
 
-When the ToFormParams macro cannot handle certain field types or transformations automatically, use these established patterns:
+For the rare cases where the ToFormParams macro cannot handle certain field types or transformations automatically, use these established patterns:
 
 **Date Field Processing**
 For date fields requiring custom formatting (e.g., DateTime<Utc> to "yyyy-MM-dd"):
@@ -210,21 +211,7 @@ fn to_form(&self) -> impl Serialize {
 }
 ```
 
-**Enum Conversion Patterns**
-For enums requiring special casting (e.g., enum to u8):
-
-```rust
-#[cfg_attr(feature = "macros", form(skip))] // Skip complex enum
-pub parent_child_condition: Option<ParentChildCondition>,
-
-// Handle in extension method
-if let Some(condition) = &self.parent_child_condition {
-    params.push((
-        "parentChild".to_string(),
-        (condition.clone() as u8).to_string(),
-    ));
-}
-```
+**Note on Enum Processing**: Most enums (especially those using `serde_repr` with `Display` trait) are handled automatically by the macro and do not require special processing. Only implement custom processing for enums with complex serialization requirements.
 
 **Conditional Import Management**
 For backward compatibility with manual implementations:

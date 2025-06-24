@@ -47,7 +47,7 @@ pub struct GetIssueListParams {
     #[cfg_attr(feature = "macros", form(array, name = "resolutionId"))]
     pub resolution_id: Option<Vec<ResolutionId>>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(skip))] // Special handling needed for u8 cast
+    #[cfg_attr(feature = "macros", form(name = "parentChild"))]
     pub parent_child_condition: Option<ParentChildCondition>,
     #[builder(default, setter(into, strip_option))]
     pub attachment: Option<bool>,
@@ -90,9 +90,6 @@ impl IntoRequest for GetIssueListParams {
     }
 
     fn to_query(&self) -> impl Serialize {
-        #[cfg(feature = "macros")]
-        let params = self.to_form_params();
-        #[cfg(not(feature = "macros"))]
         let params: Vec<(String, String)> = self.into();
         params
     }
@@ -161,6 +158,7 @@ impl From<&GetIssueListParams> for Vec<(String, String)> {
         push_val!(&params.updated_since, "updatedSince");
         push_val!(&params.updated_until, "updatedUntil");
         push_val!(&params.keyword, "keyword");
+        push_val!(&params.parent_child_condition, "parentChild");
 
         // Custom fields would be handled here if implemented
         // e.g., params.custom_fields.iter().for_each(|(k,v)| seq.push((k.clone(), v.clone())));
@@ -169,20 +167,44 @@ impl From<&GetIssueListParams> for Vec<(String, String)> {
     }
 }
 
-// Extension method to handle special parent_child_condition field when using macros
-#[cfg(feature = "macros")]
-impl GetIssueListParams {
-    fn to_form_params(&self) -> Vec<(String, String)> {
-        let mut seq: Vec<(String, String)> = self.into();
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-        // Special handling for parent_child_condition
-        if let Some(parent_child_condition) = &self.parent_child_condition {
-            seq.push((
-                "parentChild".to_string(),
-                (parent_child_condition.clone() as u8).to_string(),
-            ));
+    #[test]
+    fn test_parent_child_condition_serialization() {
+        let params = GetIssueListParamsBuilder::default()
+            .parent_child_condition(ParentChildCondition::ChildIssue)
+            .build()
+            .unwrap();
+        
+        let form_params: Vec<(String, String)> = (&params).into();
+        
+        // Check that parent_child_condition is properly serialized
+        let parent_child_param = form_params
+            .iter()
+            .find(|(key, _)| key == "parentChild");
+        
+        assert!(parent_child_param.is_some());
+        assert_eq!(parent_child_param.unwrap().1, "2");
+    }
+
+    #[test]
+    fn test_parent_child_condition_all_values() {
+        for condition in ParentChildCondition::all() {
+            let params = GetIssueListParamsBuilder::default()
+                .parent_child_condition(*condition)
+                .build()
+                .unwrap();
+            
+            let form_params: Vec<(String, String)> = (&params).into();
+            let parent_child_param = form_params
+                .iter()
+                .find(|(key, _)| key == "parentChild");
+            
+            assert!(parent_child_param.is_some());
+            assert_eq!(parent_child_param.unwrap().1, (*condition as u8).to_string());
         }
-
-        seq
     }
 }
+
