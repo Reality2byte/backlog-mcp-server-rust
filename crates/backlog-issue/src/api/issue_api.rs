@@ -3,13 +3,13 @@ use client::{Client, DownloadedFile};
 
 #[cfg(feature = "writable")]
 use super::{
-    AddCommentParams, AddIssueParams, DeleteIssueParams, LinkSharedFilesToIssueParams,
-    UpdateCommentParams, UpdateIssueParams,
+    AddCommentParams, AddIssueParams, DeleteCommentParams, DeleteIssueParams,
+    LinkSharedFilesToIssueParams, UpdateCommentParams, UpdateIssueParams,
 };
 #[cfg(feature = "writable")]
 use super::{
-    AddCommentResponse, AddIssueResponse, DeleteIssueResponse, LinkSharedFilesToIssueResponse,
-    UpdateCommentResponse, UpdateIssueResponse,
+    AddCommentResponse, AddIssueResponse, DeleteCommentResponse, DeleteIssueResponse,
+    LinkSharedFilesToIssueResponse, UpdateCommentResponse, UpdateIssueResponse,
 };
 use super::{
     CountCommentParams, CountIssueParams, GetAttachmentFileParams, GetAttachmentListParams,
@@ -75,6 +75,17 @@ impl IssueApi {
         &self,
         params: UpdateCommentParams,
     ) -> Result<UpdateCommentResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Delete a comment from an issue.
+    ///
+    /// Corresponds to `DELETE /api/v2/issues/:issueIdOrKey/comments/:commentId`.
+    #[cfg(feature = "writable")]
+    pub async fn delete_comment(
+        &self,
+        params: DeleteCommentParams,
+    ) -> Result<DeleteCommentResponse> {
         self.0.execute(params).await
     }
 

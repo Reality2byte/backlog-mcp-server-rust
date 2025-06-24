@@ -6,8 +6,8 @@ mod writable_tests {
     use backlog_issue::api::IssueApi;
     use backlog_issue::models::{Comment, FileContent, SharedFile};
     use backlog_issue::{
-        AddCommentParamsBuilder, GetAttachmentFileParams, LinkSharedFilesToIssueParamsBuilder,
-        UpdateCommentParams,
+        AddCommentParamsBuilder, DeleteCommentParams, GetAttachmentFileParams,
+        LinkSharedFilesToIssueParamsBuilder, UpdateCommentParams,
     };
     use chrono::{TimeZone, Utc};
     use client::test_utils::setup_client;
@@ -479,5 +479,157 @@ mod writable_tests {
         assert_eq!(form_data.len(), 1);
         assert_eq!(form_data[0].0, "content");
         assert_eq!(form_data[0].1, "New comment content with 日本語");
+    }
+
+    #[tokio::test]
+    async fn test_delete_comment_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+
+        let issue_id_or_key = "MFP-2";
+        let comment_id = CommentId::new(12345);
+
+        let expected_comment =
+            create_mock_comment(12345, "Deleted comment content", 100, "testuser");
+
+        Mock::given(method("DELETE"))
+            .and(path(format!(
+                "/api/v2/issues/{}/comments/{}",
+                issue_id_or_key, comment_id
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_comment))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteCommentParams {
+            issue_id_or_key: IssueIdOrKey::Key(issue_id_or_key.parse::<IssueKey>().unwrap()),
+            comment_id,
+        };
+
+        let result = issue_api.delete_comment(params).await;
+
+        assert!(result.is_ok());
+        let comment = result.unwrap();
+        assert_eq!(comment.id, CommentId::new(12345));
+        assert_eq!(comment.content.unwrap(), "Deleted comment content");
+    }
+
+    #[tokio::test]
+    async fn test_delete_comment_issue_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+
+        let issue_id_or_key = "INVALID-999";
+        let comment_id = CommentId::new(12345);
+
+        Mock::given(method("DELETE"))
+            .and(path(format!(
+                "/api/v2/issues/{}/comments/{}",
+                issue_id_or_key, comment_id
+            )))
+            .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
+                "errors": [{"message": "Issue not found"}]
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteCommentParams {
+            issue_id_or_key: IssueIdOrKey::Key(issue_id_or_key.parse::<IssueKey>().unwrap()),
+            comment_id,
+        };
+
+        let result = issue_api.delete_comment(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_delete_comment_comment_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+
+        let issue_id_or_key = "MFP-2";
+        let comment_id = CommentId::new(99999);
+
+        Mock::given(method("DELETE"))
+            .and(path(format!(
+                "/api/v2/issues/{}/comments/{}",
+                issue_id_or_key, comment_id
+            )))
+            .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
+                "errors": [{"message": "Comment not found"}]
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteCommentParams {
+            issue_id_or_key: IssueIdOrKey::Key(issue_id_or_key.parse::<IssueKey>().unwrap()),
+            comment_id,
+        };
+
+        let result = issue_api.delete_comment(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_delete_comment_forbidden() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+
+        let issue_id_or_key = "MFP-2";
+        let comment_id = CommentId::new(12345);
+
+        Mock::given(method("DELETE"))
+            .and(path(format!(
+                "/api/v2/issues/{}/comments/{}",
+                issue_id_or_key, comment_id
+            )))
+            .respond_with(ResponseTemplate::new(403).set_body_json(serde_json::json!({
+                "errors": [{"message": "You do not have permission to delete this comment"}]
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteCommentParams {
+            issue_id_or_key: IssueIdOrKey::Key(issue_id_or_key.parse::<IssueKey>().unwrap()),
+            comment_id,
+        };
+
+        let result = issue_api.delete_comment(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_delete_comment_minimal_params() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+
+        let issue_key = "ABC-123";
+        let comment_id = CommentId::new(1);
+
+        let expected_comment = create_mock_comment(1, "Minimal delete test", 200, "minuser");
+
+        Mock::given(method("DELETE"))
+            .and(path(format!(
+                "/api/v2/issues/{}/comments/{}",
+                issue_key, comment_id
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_comment))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteCommentParams {
+            issue_id_or_key: IssueIdOrKey::Key(issue_key.parse::<IssueKey>().unwrap()),
+            comment_id,
+        };
+
+        let result = issue_api.delete_comment(params).await;
+        assert!(result.is_ok());
+        let comment = result.unwrap();
+        assert_eq!(comment.id, CommentId::new(1));
     }
 }
