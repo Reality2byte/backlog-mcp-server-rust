@@ -324,6 +324,10 @@ enum IssueCommands {
     /// Add a comment to an issue
     #[command(about = "Add a comment to an issue")]
     AddComment(AddCommentArgs),
+    /// Update an existing comment
+    #[cfg(feature = "issue_writable")]
+    #[command(about = "Update an existing comment")]
+    UpdateComment(UpdateCommentArgs),
     /// Create a new issue
     #[command(about = "Create a new issue")]
     Create(CreateIssueArgs),
@@ -388,6 +392,22 @@ struct AddCommentArgs {
     /// Attachment IDs to include (comma-separated, e.g., "789,101112")
     #[arg(short, long)]
     attachments: Option<String>,
+}
+
+#[cfg(feature = "issue_writable")]
+#[derive(Args, Debug)]
+struct UpdateCommentArgs {
+    /// Issue ID or key (e.g., 'PROJECT-123')
+    #[clap(short, long)]
+    issue_id: String,
+    
+    /// Comment ID to update
+    #[clap(short = 'c', long)]
+    comment_id: u32,
+    
+    /// New content for the comment
+    #[clap(short = 'n', long)]
+    content: String,
 }
 
 #[derive(Args, Debug)]
@@ -1505,6 +1525,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error adding comment: {}", e);
+                    }
+                }
+            }
+            #[cfg(feature = "issue_writable")]
+            IssueCommands::UpdateComment(args) => {
+                use backlog_issue::UpdateCommentParams;
+                use backlog_core::identifier::CommentId;
+                
+                let params = UpdateCommentParams {
+                    issue_id_or_key: args.issue_id.parse::<IssueKey>()?.into(),
+                    comment_id: CommentId::new(args.comment_id),
+                    content: args.content,
+                };
+                
+                match client.issue().update_comment(params).await {
+                    Ok(comment) => {
+                        println!("✅ Comment updated successfully");
+                        println!("Comment ID: {}", comment.id);
+                        println!("Content: {}", comment.content.unwrap_or_default());
+                        println!("Updated: {}", comment.updated);
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to update comment: {}", e);
+                        std::process::exit(1);
                     }
                 }
             }

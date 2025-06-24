@@ -4,12 +4,12 @@ use client::{Client, DownloadedFile};
 #[cfg(feature = "writable")]
 use super::{
     AddCommentParams, AddIssueParams, DeleteIssueParams, LinkSharedFilesToIssueParams,
-    UpdateIssueParams,
+    UpdateCommentParams, UpdateIssueParams,
 };
 #[cfg(feature = "writable")]
 use super::{
     AddCommentResponse, AddIssueResponse, DeleteIssueResponse, LinkSharedFilesToIssueResponse,
-    UpdateIssueResponse,
+    UpdateCommentResponse, UpdateIssueResponse,
 };
 use super::{
     CountCommentParams, CountIssueParams, GetAttachmentFileParams, GetAttachmentListParams,
@@ -64,6 +64,14 @@ impl IssueApi {
     /// Add a new comment to an existing issue.
     #[cfg(feature = "writable")]
     pub async fn add_comment(&self, params: AddCommentParams) -> Result<AddCommentResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Update an existing comment on an issue.
+    ///
+    /// Corresponds to `PATCH /api/v2/issues/:issueIdOrKey/comments/:commentId`.
+    #[cfg(feature = "writable")]
+    pub async fn update_comment(&self, params: UpdateCommentParams) -> Result<UpdateCommentResponse> {
         self.0.execute(params).await
     }
 

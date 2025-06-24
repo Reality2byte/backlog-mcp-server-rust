@@ -436,6 +436,13 @@ When optimizing parameter structures, first analyze the parameter types:
   - Implemented `user/` module with request/bridge pattern
   - Added `get_user_list` tool for retrieving users in the space
   - Integration with `backlog-user` domain crate
+- **Issue Comment Update API**: Complete implementation of comment update functionality (TDD)
+  - Added `update_comment()` API method in `backlog-issue` crate with comprehensive test coverage
+  - Implemented `UpdateCommentParams` following standard parameter patterns
+  - Extended CLI with `issue update-comment` command (`--features issue_writable`)
+  - Added `update_issue_comment` tool to MCP server
+  - Full integration with real Backlog API testing on MFP-2 project
+  - Follows `PATCH /api/v2/issues/:issueIdOrKey/comments/:commentId` endpoint specification
 
 ### TDD Development Process
 When implementing new API features, follow Test-Driven Development:

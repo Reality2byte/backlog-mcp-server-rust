@@ -7,6 +7,7 @@ mod writable_tests {
     use backlog_issue::models::{Comment, FileContent, SharedFile};
     use backlog_issue::{
         AddCommentParamsBuilder, GetAttachmentFileParams, LinkSharedFilesToIssueParamsBuilder,
+        UpdateCommentParams,
     };
     use chrono::{TimeZone, Utc};
     use client::test_utils::setup_client;
@@ -38,6 +39,20 @@ mod writable_tests {
             created_user: create_mock_user(user_id, user_name),
             created: created_time,
             updated: created_time,
+            stars: vec![],
+            notifications: vec![],
+        }
+    }
+
+    fn create_mock_comment_with_updated_time(id: u32, content: &str, user_id: u32, user_name: &str, updated_time: chrono::DateTime<Utc>) -> Comment {
+        let created_time = Utc.with_ymd_and_hms(2024, 1, 1, 12, 0, 0).unwrap();
+        Comment {
+            id: CommentId::new(id),
+            content: Some(content.to_string()),
+            change_log: vec![],
+            created_user: create_mock_user(user_id, user_name),
+            created: created_time,
+            updated: updated_time,
             stars: vec![],
             notifications: vec![],
         }
@@ -310,5 +325,165 @@ mod writable_tests {
         let params = GetAttachmentFileParams::new(issue_id_or_key, attachment_id);
         let result = issue_api.get_attachment_file(params).await;
         assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_update_comment_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+
+        let issue_id_or_key = "MFP-2";
+        let comment_id = CommentId::new(12345);
+        let new_content = "Updated comment content";
+        let updated_time = Utc.with_ymd_and_hms(2024, 12, 24, 15, 30, 0).unwrap();
+
+        let expected_comment = create_mock_comment_with_updated_time(
+            12345,
+            new_content,
+            100,
+            "testuser",
+            updated_time,
+        );
+
+        Mock::given(method("PATCH"))
+            .and(path(format!(
+                "/api/v2/issues/{}/comments/{}",
+                issue_id_or_key, comment_id
+            )))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_json(&expected_comment)
+            )
+            .mount(&mock_server)
+            .await;
+
+        let params = UpdateCommentParams {
+            issue_id_or_key: IssueIdOrKey::Key(issue_id_or_key.parse::<IssueKey>().unwrap()),
+            comment_id,
+            content: new_content.to_string(),
+        };
+
+        let result = issue_api.update_comment(params).await;
+
+        assert!(result.is_ok());
+        let comment = result.unwrap();
+        assert_eq!(comment.id, CommentId::new(12345));
+        assert_eq!(comment.content.unwrap(), new_content);
+        assert_eq!(comment.updated, updated_time);
+    }
+
+    #[tokio::test]
+    async fn test_update_comment_issue_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+
+        let issue_id_or_key = "INVALID-999";
+        let comment_id = CommentId::new(12345);
+
+        Mock::given(method("PATCH"))
+            .and(path(format!(
+                "/api/v2/issues/{}/comments/{}",
+                issue_id_or_key, comment_id
+            )))
+            .respond_with(
+                ResponseTemplate::new(404)
+                    .set_body_json(serde_json::json!({
+                        "errors": [{"message": "Issue not found"}]
+                    }))
+            )
+            .mount(&mock_server)
+            .await;
+
+        let params = UpdateCommentParams {
+            issue_id_or_key: IssueIdOrKey::Key(issue_id_or_key.parse::<IssueKey>().unwrap()),
+            comment_id,
+            content: "Updated content".to_string(),
+        };
+
+        let result = issue_api.update_comment(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_update_comment_comment_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+
+        let issue_id_or_key = "MFP-2";
+        let comment_id = CommentId::new(99999);
+
+        Mock::given(method("PATCH"))
+            .and(path(format!(
+                "/api/v2/issues/{}/comments/{}",
+                issue_id_or_key, comment_id
+            )))
+            .respond_with(
+                ResponseTemplate::new(404)
+                    .set_body_json(serde_json::json!({
+                        "errors": [{"message": "Comment not found"}]
+                    }))
+            )
+            .mount(&mock_server)
+            .await;
+
+        let params = UpdateCommentParams {
+            issue_id_or_key: IssueIdOrKey::Key(issue_id_or_key.parse::<IssueKey>().unwrap()),
+            comment_id,
+            content: "Updated content".to_string(),
+        };
+
+        let result = issue_api.update_comment(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_update_comment_forbidden() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+
+        let issue_id_or_key = "MFP-2";
+        let comment_id = CommentId::new(12345);
+
+        Mock::given(method("PATCH"))
+            .and(path(format!(
+                "/api/v2/issues/{}/comments/{}",
+                issue_id_or_key, comment_id
+            )))
+            .respond_with(
+                ResponseTemplate::new(403)
+                    .set_body_json(serde_json::json!({
+                        "errors": [{"message": "You do not have permission to update this comment"}]
+                    }))
+            )
+            .mount(&mock_server)
+            .await;
+
+        let params = UpdateCommentParams {
+            issue_id_or_key: IssueIdOrKey::Key(issue_id_or_key.parse::<IssueKey>().unwrap()),
+            comment_id,
+            content: "Updated content".to_string(),
+        };
+
+        let result = issue_api.update_comment(params).await;
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_update_comment_params_to_form() {
+        let params = UpdateCommentParams {
+            issue_id_or_key: IssueIdOrKey::Key("MFP-2".parse::<IssueKey>().unwrap()),
+            comment_id: CommentId::new(12345),
+            content: "New comment content with 日本語".to_string(),
+        };
+
+        let form_data: Vec<(String, String)> = (&params).into();
+        
+        assert_eq!(form_data.len(), 1);
+        assert_eq!(form_data[0].0, "content");
+        assert_eq!(form_data[0].1, "New comment content with 日本語");
     }
 }

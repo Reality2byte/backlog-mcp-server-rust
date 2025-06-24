@@ -3,6 +3,8 @@ use super::request::{
     GetIssueCommentsRequest, GetIssueDetailsRequest, GetIssueSharedFilesRequest,
     GetIssuesByMilestoneNameRequest, GetVersionMilestoneListRequest, UpdateIssueRequest,
 };
+#[cfg(feature = "issue_writable")]
+use super::request::UpdateCommentRequest;
 use crate::error::{Error as McpError, Result};
 use crate::util::{MatchResult, find_by_name_from_array};
 use backlog_api_client::client::BacklogApiClient;
@@ -162,6 +164,28 @@ pub(crate) async fn add_comment_impl(
 
     let client_guard = client.lock().await;
     let comment = client_guard.issue().add_comment(add_comment_params).await?;
+    Ok(comment)
+}
+
+#[cfg(feature = "issue_writable")]
+pub(crate) async fn update_comment_impl(
+    client: Arc<Mutex<BacklogApiClient>>,
+    req: UpdateCommentRequest,
+) -> Result<Comment> {
+    use backlog_api_client::backlog_issue::UpdateCommentParams;
+    use backlog_core::identifier::CommentId;
+    
+    let parsed_issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
+    let comment_id = CommentId::new(req.comment_id);
+    
+    let params = UpdateCommentParams {
+        issue_id_or_key: parsed_issue_id_or_key,
+        comment_id,
+        content: req.content,
+    };
+    
+    let client_guard = client.lock().await;
+    let comment = client_guard.issue().update_comment(params).await?;
     Ok(comment)
 }
 

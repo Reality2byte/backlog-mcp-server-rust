@@ -169,6 +169,19 @@ impl TryFrom<AddCommentRequest> for AddCommentParams {
     }
 }
 
+#[cfg(feature = "issue_writable")]
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct UpdateCommentRequest {
+    #[schemars(
+        description = "The issue ID or issue key containing the comment. Examples: 'MYPROJECTKEY-123', '12345'."
+    )]
+    pub issue_id_or_key: String,
+    #[schemars(description = "The ID of the comment to update.")]
+    pub comment_id: u32,
+    #[schemars(description = "The new content for the comment.")]
+    pub content: String,
+}
+
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
 pub(crate) struct GetIssueSharedFilesRequest {
     #[schemars(

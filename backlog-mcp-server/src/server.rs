@@ -2,6 +2,8 @@ use crate::file_utils::{FileFormat, SerializableFile};
 use crate::issue::request::{
     GetIssueCommentsRequest, GetIssueSharedFilesRequest, UpdateIssueRequest,
 };
+#[cfg(feature = "issue_writable")]
+use crate::issue::request::UpdateCommentRequest;
 use crate::{
     document::{
         self,
@@ -187,6 +189,13 @@ impl Server {
     #[tool(description = "Add a comment to a Backlog issue.")]
     async fn add_comment_to_issue(&self, #[tool(aggr)] request: AddCommentRequest) -> McpResult {
         let comment = issue::bridge::add_comment_impl(self.client.clone(), request).await?;
+        Ok(CallToolResult::success(vec![Content::json(comment)?]))
+    }
+
+    #[cfg(feature = "issue_writable")]
+    #[tool(description = "Update an existing comment on a Backlog issue.")]
+    async fn update_issue_comment(&self, #[tool(aggr)] request: UpdateCommentRequest) -> McpResult {
+        let comment = issue::bridge::update_comment_impl(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(comment)?]))
     }
 

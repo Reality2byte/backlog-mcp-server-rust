@@ -23,6 +23,8 @@ mod delete_issue;
 #[cfg(feature = "writable")]
 mod link_shared_files;
 #[cfg(feature = "writable")]
+mod update_comment;
+#[cfg(feature = "writable")]
 mod update_issue;
 
 // Re-export all parameter types and response types
@@ -52,5 +54,7 @@ pub use link_shared_files::{
     LinkSharedFilesToIssueParams, LinkSharedFilesToIssueParamsBuilder,
     LinkSharedFilesToIssueResponse,
 };
+#[cfg(feature = "writable")]
+pub use update_comment::{UpdateCommentParams, UpdateCommentResponse};
 #[cfg(feature = "writable")]
 pub use update_issue::{UpdateIssueParams, UpdateIssueParamsBuilder, UpdateIssueResponse};
