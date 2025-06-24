@@ -14,9 +14,9 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Write operations** (requires `writable` feature): add_category(), update_category(), delete_category(), add_issue_type(), delete_issue_type(), update_issue_type(), add_version(), update_version(), delete_version(), add_status(), update_status(), delete_status(), update_status_order()
 
 ### backlog-issue (IssueApi)
-- **Implemented**: 14/26 endpoints (54%)
+- **Implemented**: 15/26 endpoints (58%)
 - **Read operations**: get_issue(), get_issue_list(), count_issue(), get_comment_list(), get_comment(), count_comment(), get_attachment_list(), get_attachment_file(), get_shared_file_list()
-- **Write operations** (requires `writable` feature): add_issue(), delete_issue(), update_issue(), add_comment(), link_shared_files_to_issue()
+- **Write operations** (requires `writable` feature): add_issue(), delete_issue(), update_issue(), add_comment(), delete_comment(), link_shared_files_to_issue()
 
 ### backlog-file (FileApi)
 - **Implemented**: 2/2 endpoints (100%)
@@ -104,10 +104,10 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ❌ DeleteIssueAttachment: Deletes an attachment of issue: DELETE /api/v2/issues/:issueIdOrKey/attachments/:attachmentId
 
 ### Comment
-- ❌ UpdateComment: Updates content of comment: PATCH /api/v2/issues/:issueIdOrKey/comments/:commentId
+- ✅ UpdateComment: Updates content of comment: PATCH /api/v2/issues/:issueIdOrKey/comments/:commentId
 - ✅ CountComment: Returns number of comments in issue: GET /api/v2/issues/:issueIdOrKey/comments/count
 - ✅ AddComment: Adds a comment to the issue: POST /api/v2/issues/:issueIdOrKey/comments
-- ❌ DeleteComment: Delete comment: DELETE /api/v2/issues/:issueIdOrKey/comments/:commentId
+- ✅ DeleteComment: Delete comment: DELETE /api/v2/issues/:issueIdOrKey/comments/:commentId
 - ✅ GetCommentList: Returns list of comments in issue: GET /api/v2/issues/:issueIdOrKey/comments
 - ✅ GetComment: Returns information about comment: GET /api/v2/issues/:issueIdOrKey/comments/:commentId
 - ❌ GetListOfCommentNotifications: Returns the list of comment notifications: GET /api/v2/issues/:issueIdOrKey/comments/:commentId/notifications

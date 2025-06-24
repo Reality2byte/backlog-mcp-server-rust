@@ -215,6 +215,8 @@ The `blg` CLI currently supports the following commands:
 - `issue list [OPTIONS]` - List issues with optional filters
 - `issue show <ISSUE_ID_OR_KEY>` - Show detailed information about a specific issue
 - `issue add-comment <ISSUE_ID_OR_KEY> --content <CONTENT>` - Add a comment to an issue
+- `issue update-comment --issue-id <ISSUE_ID_OR_KEY> --comment-id <COMMENT_ID> --content <NEW_CONTENT>` - Update an existing comment (requires `issue_writable` feature)
+- `issue delete-comment --issue-id <ISSUE_ID_OR_KEY> --comment-id <COMMENT_ID>` - Delete a comment from an issue (requires `issue_writable` feature)
 - `issue download-attachment <ISSUE_ID_OR_KEY> <ATTACHMENT_ID> --output <FILE_PATH>` - Download an issue attachment
 - `issue list-shared-files <ISSUE_ID_OR_KEY>` - List shared files linked to an issue
 - `issue link-shared-files <ISSUE_ID_OR_KEY> --file-ids <FILE_ID1,FILE_ID2>` - Link shared files to an issue (requires `issue_writable` feature)

@@ -14,7 +14,7 @@ use backlog_api_client::{
     PullRequestNumber, RepositoryIdOrName, StatusId, UserId, WikiId, backlog_issue,
     client::BacklogApiClient,
 };
-#[cfg(feature = "git_writable")]
+#[cfg(any(feature = "git_writable", feature = "issue_writable"))]
 use backlog_core::identifier::IssueId;
 #[cfg(feature = "issue_writable")]
 use backlog_core::identifier::SharedFileId;
@@ -28,6 +28,8 @@ use backlog_core::{
 };
 #[cfg(feature = "project_writable")]
 use backlog_domain_models::{IssueTypeColor, StatusColor};
+#[cfg(feature = "issue_writable")]
+use backlog_issue::DeleteCommentParams;
 #[cfg(feature = "issue_writable")]
 use backlog_issue::{AddIssueParamsBuilder, UpdateIssueParamsBuilder};
 use backlog_project::GetProjectListParams;
@@ -330,6 +332,10 @@ enum IssueCommands {
     #[cfg(feature = "issue_writable")]
     #[command(about = "Update an existing comment")]
     UpdateComment(UpdateCommentArgs),
+    /// Delete a comment from an issue
+    #[cfg(feature = "issue_writable")]
+    #[command(about = "Delete a comment from an issue")]
+    DeleteComment(DeleteCommentArgs),
     /// Create a new issue
     #[command(about = "Create a new issue")]
     Create(CreateIssueArgs),
@@ -410,6 +416,18 @@ struct UpdateCommentArgs {
     /// New content for the comment
     #[clap(short = 'n', long)]
     content: String,
+}
+
+#[cfg(feature = "issue_writable")]
+#[derive(Args, Debug)]
+struct DeleteCommentArgs {
+    /// Issue ID or key (e.g., 'PROJECT-123')
+    #[clap(short, long)]
+    issue_id: String,
+
+    /// Comment ID to delete
+    #[clap(short = 'c', long)]
+    comment_id: u32,
 }
 
 #[derive(Args, Debug)]
@@ -1550,6 +1568,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to update comment: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "issue_writable")]
+            IssueCommands::DeleteComment(args) => {
+                use backlog_core::identifier::CommentId;
+
+                let params = DeleteCommentParams {
+                    issue_id_or_key: args.issue_id.parse::<IssueKey>()?.into(),
+                    comment_id: CommentId::new(args.comment_id),
+                };
+
+                match client.issue().delete_comment(params).await {
+                    Ok(comment) => {
+                        println!("✅ Comment deleted successfully");
+                        println!("Deleted Comment ID: {}", comment.id);
+                        println!("Deleted Content: {}", comment.content.unwrap_or_default());
+                        println!("Originally Created: {}", comment.created);
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to delete comment: {}", e);
                         std::process::exit(1);
                     }
                 }
