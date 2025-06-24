@@ -173,6 +173,72 @@ The macro is designed for **seamless adoption**:
 - **Maintainability**: Add new fields without touching serialization logic
 - **Type Safety**: Compile-time validation of attribute usage
 
+#### Special Processing Patterns for ToFormParams Macro
+
+When the ToFormParams macro cannot handle certain field types or transformations automatically, use these established patterns:
+
+**Date Field Processing**
+For date fields requiring custom formatting (e.g., DateTime<Utc> to "yyyy-MM-dd"):
+
+```rust
+#[cfg_attr(feature = "macros", form(skip))] // Skip in macro
+pub start_date: Option<DateTime<Utc>>,
+
+// Extension method for macro users
+#[cfg(all(feature = "writable", feature = "macros"))]
+impl AddIssueParams {
+    fn to_form_params(&self) -> Vec<(String, String)> {
+        let mut params: Vec<(String, String)> = self.into();
+        
+        if let Some(start_date) = &self.start_date {
+            params.push((
+                "startDate".to_string(),
+                start_date.format("%Y-%m-%d").to_string(),
+            ));
+        }
+        
+        params
+    }
+}
+
+// Use extension method in to_form()
+fn to_form(&self) -> impl Serialize {
+    #[cfg(feature = "macros")]
+    { self.to_form_params() }
+    #[cfg(not(feature = "macros"))]
+    { /* manual implementation */ }
+}
+```
+
+**Enum Conversion Patterns**
+For enums requiring special casting (e.g., enum to u8):
+
+```rust
+#[cfg_attr(feature = "macros", form(skip))] // Skip complex enum
+pub parent_child_condition: Option<ParentChildCondition>,
+
+// Handle in extension method
+if let Some(condition) = &self.parent_child_condition {
+    params.push((
+        "parentChild".to_string(),
+        (condition.clone() as u8).to_string(),
+    ));
+}
+```
+
+**Conditional Import Management**
+For backward compatibility with manual implementations:
+
+```rust
+#[cfg(feature = "macros")]
+use backlog_api_macros::ToFormParams;
+#[cfg(not(feature = "macros"))]
+use backlog_core::identifier::Identifier; // Needed for .value() method
+```
+
+**Extension Method Naming Convention**
+Use `to_form_params()` (not `into_form_params()`) to avoid clippy::wrong_self_convention warnings when methods take `&self` by reference.
+
 ### Standard Domain Crate Structure
 
 The `backlog-project` crate serves as the standard template for all domain API crates. Follow this structure when implementing new domain crates or refactoring existing ones:
