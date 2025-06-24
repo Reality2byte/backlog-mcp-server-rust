@@ -2,18 +2,26 @@ use crate::models::PullRequestComment;
 use backlog_api_core::{HttpMethod, IntoRequest};
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
-    identifier::{Identifier, PullRequestNumber, UserId},
+    identifier::{PullRequestNumber, UserId},
 };
 use serde::Serialize;
+
+#[cfg(feature = "macros")]
+use backlog_api_macros::ToFormParams;
 
 pub type AddPullRequestCommentResponse = PullRequestComment;
 
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "macros", derive(ToFormParams))]
 pub struct AddPullRequestCommentParams {
+    #[cfg_attr(feature = "macros", form(skip))]
     pub project_id_or_key: ProjectIdOrKey,
+    #[cfg_attr(feature = "macros", form(skip))]
     pub repo_id_or_name: RepositoryIdOrName,
+    #[cfg_attr(feature = "macros", form(skip))]
     pub number: PullRequestNumber,
     pub content: String,
+    #[cfg_attr(feature = "macros", form(array, name = "notifiedUserId"))]
     pub notified_user_ids: Option<Vec<UserId>>,
 }
 
@@ -39,6 +47,8 @@ impl AddPullRequestCommentParams {
     }
 }
 
+// Form serialization: macro when available, manual fallback
+#[cfg(not(feature = "macros"))]
 impl From<&AddPullRequestCommentParams> for Vec<(String, String)> {
     fn from(params: &AddPullRequestCommentParams) -> Self {
         let mut seq = vec![("content".to_string(), params.content.clone())];
