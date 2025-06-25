@@ -12,8 +12,8 @@ pub use api::{
     GetIssueTypeListResponse, GetMilestoneListParams, GetMilestoneListResponse,
     GetPriorityListParams, GetPriorityListResponse, GetProjectDetailParams,
     GetProjectDetailResponse, GetProjectIconParams, GetProjectListParams, GetProjectListResponse,
-    GetResolutionListParams, GetResolutionListResponse, GetStatusListParams, GetStatusListResponse,
-    ProjectApi,
+    GetProjectUserListParams, GetResolutionListParams, GetResolutionListResponse,
+    GetStatusListParams, GetStatusListResponse, ProjectApi,
 };
 
 #[cfg(feature = "writable")]

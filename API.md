@@ -9,8 +9,8 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Read operations**: get_space(), get_space_logo()
 
 ### backlog-project (ProjectApi)
-- **Implemented**: 21/36 endpoints (58%)
-- **Read operations**: get_project_list(), get_project(), get_project_icon(), get_status_list(), get_issue_type_list(), get_version_milestone_list(), get_category_list(), get_priority_list(), get_resolution_list()
+- **Implemented**: 22/36 endpoints (61%)
+- **Read operations**: get_project_list(), get_project(), get_project_icon(), get_status_list(), get_issue_type_list(), get_version_milestone_list(), get_category_list(), get_priority_list(), get_resolution_list(), get_project_user_list()
 - **Write operations** (requires `writable` feature): add_category(), update_category(), delete_category(), add_issue_type(), delete_issue_type(), update_issue_type(), add_version(), update_version(), delete_version(), add_status(), update_status(), delete_status(), update_status_order()
 
 ### backlog-issue (IssueApi)
@@ -75,7 +75,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ❌ UpdateProject: Updates information about project: PATCH /api/v2/projects/:projectIdOrKey
 
 #### Users
-- ❌ GetProjectUserList: Returns list of project members: GET /api/v2/projects/:projectIdOrKey/users
+- ✅ GetProjectUserList: Returns list of project members: GET /api/v2/projects/:projectIdOrKey/users
 - ❌ AddProjectUser: Adds user to list of project members: POST /api/v2/projects/:projectIdOrKey/users
 - ❌ DeleteProjectUser: Removes user from list project members: DELETE /api/v2/projects/:projectIdOrKey/users
 

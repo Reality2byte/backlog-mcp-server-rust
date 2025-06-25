@@ -1,14 +1,157 @@
 mod common;
 
-use backlog_core::{ProjectIdOrKey, ProjectKey, TextFormattingRule};
+use backlog_core::{Language, ProjectIdOrKey, ProjectKey, Role, TextFormattingRule, User};
 use backlog_project::api::{
     GetCategoryListParams, GetIssueTypeListParams, GetMilestoneListParams, GetProjectDetailParams,
-    GetProjectIconParams, GetProjectListParams, GetStatusListParams,
+    GetProjectIconParams, GetProjectListParams, GetProjectUserListParams, GetStatusListParams,
 };
 use backlog_project::{Category, IssueType, Priority, Project, Resolution, Status};
 use common::*;
 use std::str::FromStr;
 use wiremock::MockServer;
+
+// Test cases for get_project_user_list
+#[tokio::test]
+async fn test_get_project_user_list_success() {
+    let mock_server = MockServer::start().await;
+    let project_api = setup_project_api(&mock_server).await;
+    let project_id = ProjectId::new(123);
+
+    let expected_users = vec![
+        User {
+            id: UserId::new(1),
+            user_id: Some("admin".to_string()),
+            name: "Administrator".to_string(),
+            role_type: Role::Admin,
+            lang: Some(Language::Japanese),
+            mail_address: "admin@example.com".to_string(),
+            last_login_time: Some("2022-09-01T06:35:39Z".parse().unwrap()),
+        },
+        User {
+            id: UserId::new(2),
+            user_id: Some("user1".to_string()),
+            name: "User One".to_string(),
+            role_type: Role::User,
+            lang: Some(Language::English),
+            mail_address: "user1@example.com".to_string(),
+            last_login_time: Some("2022-09-02T07:30:15Z".parse().unwrap()),
+        },
+        User {
+            id: UserId::new(3),
+            user_id: Some("reporter".to_string()),
+            name: "Reporter".to_string(),
+            role_type: Role::Reporter,
+            lang: None,
+            mail_address: "reporter@example.com".to_string(),
+            last_login_time: None,
+        },
+    ];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/projects/123/users"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_users))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetProjectUserListParams::new(project_id);
+    let result = project_api.get_project_user_list(params).await;
+    assert!(result.is_ok());
+    let users = result.unwrap();
+    assert_eq!(users.len(), 3);
+    assert_eq!(users[0].name, "Administrator");
+    assert_eq!(users[0].role_type, Role::Admin);
+    assert_eq!(users[1].name, "User One");
+    assert_eq!(users[1].role_type, Role::User);
+    assert_eq!(users[2].name, "Reporter");
+    assert_eq!(users[2].role_type, Role::Reporter);
+}
+
+#[tokio::test]
+async fn test_get_project_user_list_error() {
+    let mock_server = MockServer::start().await;
+    let project_api = setup_project_api(&mock_server).await;
+    let project_id = ProjectId::new(999);
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/projects/999/users"))
+        .respond_with(ResponseTemplate::new(404))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetProjectUserListParams::new(project_id);
+    let result = project_api.get_project_user_list(params).await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_project_user_list_forbidden() {
+    let mock_server = MockServer::start().await;
+    let project_api = setup_project_api(&mock_server).await;
+    let project_id = ProjectId::new(123);
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/projects/123/users"))
+        .respond_with(ResponseTemplate::new(403).set_body_json(serde_json::json!({
+            "errors": [{"message": "No permission to access this project."}]
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetProjectUserListParams::new(project_id);
+    let result = project_api.get_project_user_list(params).await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_project_user_list_by_project_key() {
+    let mock_server = MockServer::start().await;
+    let project_api = setup_project_api(&mock_server).await;
+    let project_key = ProjectKey::from_str("TESTPROJ").unwrap();
+
+    let expected_users = vec![User {
+        id: UserId::new(1),
+        user_id: Some("projectlead".to_string()),
+        name: "Project Leader".to_string(),
+        role_type: Role::Admin,
+        lang: Some(Language::Japanese),
+        mail_address: "lead@example.com".to_string(),
+        last_login_time: Some("2022-09-01T08:00:00Z".parse().unwrap()),
+    }];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/projects/TESTPROJ/users"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_users))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetProjectUserListParams::new(project_key);
+    let result = project_api.get_project_user_list(params).await;
+    assert!(result.is_ok());
+    let users = result.unwrap();
+    assert_eq!(users.len(), 1);
+    assert_eq!(users[0].name, "Project Leader");
+}
+
+#[tokio::test]
+async fn test_get_project_user_list_empty_project() {
+    let mock_server = MockServer::start().await;
+    let project_api = setup_project_api(&mock_server).await;
+    let project_id = ProjectId::new(456);
+
+    let expected_users: Vec<User> = vec![];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/projects/456/users"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_users))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetProjectUserListParams::new(project_id);
+    let result = project_api.get_project_user_list(params).await;
+    assert!(result.is_ok());
+    let users = result.unwrap();
+    assert_eq!(users.len(), 0);
+}
 
 #[tokio::test]
 async fn test_get_version_milestone_list_success() {

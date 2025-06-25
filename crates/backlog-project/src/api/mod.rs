@@ -13,6 +13,7 @@ mod get_priority_list;
 mod get_project_detail;
 mod get_project_icon;
 mod get_project_list;
+mod get_project_user_list;
 mod get_resolution_list;
 mod get_status_list;
 mod project_api;
@@ -80,6 +81,7 @@ pub use update_status_order::UpdateStatusOrderResponse;
 pub use get_project_detail::{GetProjectDetailParams, GetProjectDetailResponse};
 
 pub use get_project_list::{GetProjectListParams, GetProjectListResponse};
+pub use get_project_user_list::{GetProjectUserListParams, GetProjectUserListResponse};
 
 pub use get_issue_type_list::{GetIssueTypeListParams, GetIssueTypeListResponse};
 pub use get_milestone_list::{GetMilestoneListParams, GetMilestoneListResponse};

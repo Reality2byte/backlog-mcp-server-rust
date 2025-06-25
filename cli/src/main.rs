@@ -587,6 +587,12 @@ enum ProjectCommands {
         #[clap(name = "PROJECT_ID_OR_KEY")]
         project_id_or_key: String,
     },
+    /// List users for a project
+    UserList {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+    },
     /// Add a category to a project
     CategoryAdd {
         /// Project ID or Key
@@ -2142,6 +2148,39 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error listing categories: {}", e);
+                    }
+                }
+            }
+            ProjectCommands::UserList { project_id_or_key } => {
+                println!("Listing users for project: {}", project_id_or_key);
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let params = backlog_project::GetProjectUserListParams::new(proj_id_or_key);
+                match client.project().get_project_user_list(params).await {
+                    Ok(users) => {
+                        if users.is_empty() {
+                            println!("No users found in this project");
+                        } else {
+                            for user in users {
+                                let role_str = match user.role_type {
+                                    backlog_core::Role::Admin => "Admin",
+                                    backlog_core::Role::User => "User",
+                                    backlog_core::Role::Reporter => "Reporter",
+                                    backlog_core::Role::Viewer => "Viewer",
+                                };
+                                let last_login = match user.last_login_time {
+                                    Some(time) => time.format("%Y-%m-%d %H:%M:%S").to_string(),
+                                    None => "Never".to_string(),
+                                };
+                                println!(
+                                    "[{}] {} ({}) - {} - Last login: {}",
+                                    user.id, user.name, user.mail_address, role_str, last_login
+                                );
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error listing project users: {}", e);
                     }
                 }
             }
