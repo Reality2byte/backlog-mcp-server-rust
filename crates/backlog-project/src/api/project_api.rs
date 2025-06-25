@@ -3,11 +3,12 @@ use backlog_domain_models::Milestone;
 use client::Client;
 
 use crate::api::{
-    GetCategoryListParams, GetCategoryListResponse, GetIssueTypeListParams,
-    GetIssueTypeListResponse, GetMilestoneListParams, GetMilestoneListResponse,
-    GetPriorityListParams, GetPriorityListResponse, GetProjectDetailParams,
-    GetProjectDetailResponse, GetProjectIconParams, GetResolutionListParams,
-    GetResolutionListResponse, GetStatusListParams, GetStatusListResponse,
+    GetCategoryListParams, GetCategoryListResponse, GetCustomFieldListParams,
+    GetCustomFieldListResponse, GetIssueTypeListParams, GetIssueTypeListResponse,
+    GetMilestoneListParams, GetMilestoneListResponse, GetPriorityListParams,
+    GetPriorityListResponse, GetProjectDetailParams, GetProjectDetailResponse,
+    GetProjectIconParams, GetProjectUserListParams, GetProjectUserListResponse,
+    GetResolutionListParams, GetResolutionListResponse, GetStatusListParams, GetStatusListResponse,
     get_project_list::{GetProjectListParams, GetProjectListResponse},
 };
 #[cfg(feature = "writable")]
@@ -108,6 +109,26 @@ impl ProjectApi {
     pub async fn get_project_icon(&self, params: GetProjectIconParams) -> Result<Vec<u8>> {
         let downloaded_file = self.0.download_file(params).await?;
         Ok(downloaded_file.bytes.to_vec())
+    }
+
+    /// Gets the list of project members.
+    ///
+    /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/users`.
+    pub async fn get_project_user_list(
+        &self,
+        params: GetProjectUserListParams,
+    ) -> Result<GetProjectUserListResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Gets the list of custom fields for a project.
+    ///
+    /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/customFields`.
+    pub async fn get_custom_field_list(
+        &self,
+        params: GetCustomFieldListParams,
+    ) -> Result<GetCustomFieldListResponse> {
+        self.0.execute(params).await
     }
 
     /// Adds a category to a project.

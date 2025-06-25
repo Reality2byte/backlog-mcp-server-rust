@@ -1,14 +1,162 @@
 mod common;
 
-use backlog_core::{ProjectIdOrKey, ProjectKey, TextFormattingRule};
+use backlog_core::{Language, ProjectIdOrKey, ProjectKey, Role, TextFormattingRule, User};
+use backlog_issue::{
+    CustomFieldSettings, CustomFieldType, DateSettings, ListItem, ListSettings, NumericSettings,
+};
 use backlog_project::api::{
-    GetCategoryListParams, GetIssueTypeListParams, GetMilestoneListParams, GetProjectDetailParams,
-    GetProjectIconParams, GetProjectListParams, GetStatusListParams,
+    GetCategoryListParams, GetCustomFieldListParams, GetIssueTypeListParams,
+    GetMilestoneListParams, GetProjectDetailParams, GetProjectIconParams, GetProjectListParams,
+    GetProjectUserListParams, GetStatusListParams,
 };
 use backlog_project::{Category, IssueType, Priority, Project, Resolution, Status};
 use common::*;
+use serde::Serialize;
 use std::str::FromStr;
 use wiremock::MockServer;
+
+// Test cases for get_project_user_list
+#[tokio::test]
+async fn test_get_project_user_list_success() {
+    let mock_server = MockServer::start().await;
+    let project_api = setup_project_api(&mock_server).await;
+    let project_id = ProjectId::new(123);
+
+    let expected_users = vec![
+        User {
+            id: UserId::new(1),
+            user_id: Some("admin".to_string()),
+            name: "Administrator".to_string(),
+            role_type: Role::Admin,
+            lang: Some(Language::Japanese),
+            mail_address: "admin@example.com".to_string(),
+            last_login_time: Some("2022-09-01T06:35:39Z".parse().unwrap()),
+        },
+        User {
+            id: UserId::new(2),
+            user_id: Some("user1".to_string()),
+            name: "User One".to_string(),
+            role_type: Role::User,
+            lang: Some(Language::English),
+            mail_address: "user1@example.com".to_string(),
+            last_login_time: Some("2022-09-02T07:30:15Z".parse().unwrap()),
+        },
+        User {
+            id: UserId::new(3),
+            user_id: Some("reporter".to_string()),
+            name: "Reporter".to_string(),
+            role_type: Role::Reporter,
+            lang: None,
+            mail_address: "reporter@example.com".to_string(),
+            last_login_time: None,
+        },
+    ];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/projects/123/users"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_users))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetProjectUserListParams::new(project_id);
+    let result = project_api.get_project_user_list(params).await;
+    assert!(result.is_ok());
+    let users = result.unwrap();
+    assert_eq!(users.len(), 3);
+    assert_eq!(users[0].name, "Administrator");
+    assert_eq!(users[0].role_type, Role::Admin);
+    assert_eq!(users[1].name, "User One");
+    assert_eq!(users[1].role_type, Role::User);
+    assert_eq!(users[2].name, "Reporter");
+    assert_eq!(users[2].role_type, Role::Reporter);
+}
+
+#[tokio::test]
+async fn test_get_project_user_list_error() {
+    let mock_server = MockServer::start().await;
+    let project_api = setup_project_api(&mock_server).await;
+    let project_id = ProjectId::new(999);
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/projects/999/users"))
+        .respond_with(ResponseTemplate::new(404))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetProjectUserListParams::new(project_id);
+    let result = project_api.get_project_user_list(params).await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_project_user_list_forbidden() {
+    let mock_server = MockServer::start().await;
+    let project_api = setup_project_api(&mock_server).await;
+    let project_id = ProjectId::new(123);
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/projects/123/users"))
+        .respond_with(ResponseTemplate::new(403).set_body_json(serde_json::json!({
+            "errors": [{"message": "No permission to access this project."}]
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetProjectUserListParams::new(project_id);
+    let result = project_api.get_project_user_list(params).await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_project_user_list_by_project_key() {
+    let mock_server = MockServer::start().await;
+    let project_api = setup_project_api(&mock_server).await;
+    let project_key = ProjectKey::from_str("TESTPROJ").unwrap();
+
+    let expected_users = vec![User {
+        id: UserId::new(1),
+        user_id: Some("projectlead".to_string()),
+        name: "Project Leader".to_string(),
+        role_type: Role::Admin,
+        lang: Some(Language::Japanese),
+        mail_address: "lead@example.com".to_string(),
+        last_login_time: Some("2022-09-01T08:00:00Z".parse().unwrap()),
+    }];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/projects/TESTPROJ/users"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_users))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetProjectUserListParams::new(project_key);
+    let result = project_api.get_project_user_list(params).await;
+    assert!(result.is_ok());
+    let users = result.unwrap();
+    assert_eq!(users.len(), 1);
+    assert_eq!(users[0].name, "Project Leader");
+}
+
+#[tokio::test]
+async fn test_get_project_user_list_empty_project() {
+    let mock_server = MockServer::start().await;
+    let project_api = setup_project_api(&mock_server).await;
+    let project_id = ProjectId::new(456);
+
+    let expected_users: Vec<User> = vec![];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/projects/456/users"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_users))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetProjectUserListParams::new(project_id);
+    let result = project_api.get_project_user_list(params).await;
+    assert!(result.is_ok());
+    let users = result.unwrap();
+    assert_eq!(users.len(), 0);
+}
 
 #[tokio::test]
 async fn test_get_version_milestone_list_success() {
@@ -490,4 +638,238 @@ async fn test_get_project_icon_not_found() {
     let params = GetProjectIconParams::new(ProjectKey::from_str("NONEXISTENT").unwrap());
     let result = project_api.get_project_icon(params).await;
     assert!(result.is_err());
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RawCustomFieldType {
+    pub id: CustomFieldId,
+    pub project_id: ProjectId,
+    pub type_id: u8,
+    pub name: String,
+    pub description: String,
+    pub required: bool,
+    pub use_issue_type: bool,
+    pub applicable_issue_types: Vec<IssueTypeId>,
+    pub display_order: i64,
+    pub settings: CustomFieldSettings,
+}
+
+// Test cases for get_custom_field_list
+#[tokio::test]
+async fn test_get_custom_field_list_success() {
+    let mock_server = MockServer::start().await;
+    let project_api = setup_project_api(&mock_server).await;
+    let project_id = ProjectId::new(123);
+
+    let expected_fields = vec![
+        RawCustomFieldType {
+            id: CustomFieldId::new(1),
+            project_id,
+            type_id: 1,
+            name: "Text Field".to_string(),
+            description: "A simple text field".to_string(),
+            required: true,
+            use_issue_type: false,
+            applicable_issue_types: vec![],
+            display_order: 1,
+            settings: CustomFieldSettings::Text,
+        },
+        RawCustomFieldType {
+            id: CustomFieldId::new(2),
+            project_id,
+            type_id: 5,
+            name: "Priority Field".to_string(),
+            description: "Priority selection field".to_string(),
+            required: false,
+            use_issue_type: true,
+            applicable_issue_types: vec![IssueTypeId::new(1), IssueTypeId::new(2)],
+            display_order: 2,
+            settings: CustomFieldSettings::SingleList(ListSettings {
+                allow_input: false,
+                allow_add_item: true,
+                items: vec![
+                    ListItem {
+                        id: backlog_core::identifier::CustomListItemId::new(1),
+                        name: "High".to_string(),
+                        display_order: 1,
+                    },
+                    ListItem {
+                        id: backlog_core::identifier::CustomListItemId::new(2),
+                        name: "Medium".to_string(),
+                        display_order: 2,
+                    },
+                ],
+            }),
+        },
+    ];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/projects/123/customFields"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_fields))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetCustomFieldListParams::new(project_id);
+    let result = project_api.get_custom_field_list(params).await;
+    dbg!(&result);
+    assert!(result.is_ok());
+    let fields = result.unwrap();
+    assert_eq!(fields.len(), 2);
+    assert_eq!(fields[0].name, "Text Field");
+    assert!(fields[0].required);
+    assert_eq!(fields[1].name, "Priority Field");
+    assert!(!fields[1].required);
+    assert_eq!(fields[1].applicable_issue_types.as_ref().unwrap().len(), 2);
+}
+
+#[tokio::test]
+async fn test_get_custom_field_list_multiple_types() {
+    let mock_server = MockServer::start().await;
+    let project_api = setup_project_api(&mock_server).await;
+    let project_id = ProjectId::new(456);
+
+    let expected_fields = vec![
+        RawCustomFieldType {
+            id: CustomFieldId::new(10),
+            project_id,
+            type_id: 3,
+            name: "Number Field".to_string(),
+            description: "Numeric input field".to_string(),
+            required: false,
+            use_issue_type: false,
+            applicable_issue_types: vec![],
+            display_order: 1,
+            settings: CustomFieldSettings::Numeric(NumericSettings {
+                min: Some(0.0),
+                max: Some(100.0),
+                initial_value: Some(50.0),
+                unit: Some("percent".to_string()),
+            }),
+        },
+        RawCustomFieldType {
+            id: CustomFieldId::new(11),
+            project_id,
+            type_id: 4,
+            name: "Date Field".to_string(),
+            description: "Date selection field".to_string(),
+            required: true,
+            use_issue_type: false,
+            applicable_issue_types: vec![],
+            display_order: 2,
+            settings: CustomFieldSettings::Date(DateSettings {
+                min: None,
+                max: None,
+                initial_date: None,
+            }),
+        },
+    ];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/projects/456/customFields"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_fields))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetCustomFieldListParams::new(project_id);
+    let result = project_api.get_custom_field_list(params).await;
+    assert!(result.is_ok());
+    let fields = result.unwrap();
+    assert_eq!(fields.len(), 2);
+    assert!(matches!(
+        fields[0].settings,
+        CustomFieldSettings::Numeric(_)
+    ));
+    assert!(matches!(fields[1].settings, CustomFieldSettings::Date(_)));
+}
+
+#[tokio::test]
+async fn test_get_custom_field_list_empty_project() {
+    let mock_server = MockServer::start().await;
+    let project_api = setup_project_api(&mock_server).await;
+    let project_id = ProjectId::new(789);
+
+    let expected_fields: Vec<CustomFieldType> = vec![];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/projects/789/customFields"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_fields))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetCustomFieldListParams::new(project_id);
+    let result = project_api.get_custom_field_list(params).await;
+    assert!(result.is_ok());
+    let fields = result.unwrap();
+    assert_eq!(fields.len(), 0);
+}
+
+#[tokio::test]
+async fn test_get_custom_field_list_project_not_found() {
+    let mock_server = MockServer::start().await;
+    let project_api = setup_project_api(&mock_server).await;
+    let project_id = ProjectId::new(999);
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/projects/999/customFields"))
+        .respond_with(ResponseTemplate::new(404))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetCustomFieldListParams::new(project_id);
+    let result = project_api.get_custom_field_list(params).await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_custom_field_list_forbidden() {
+    let mock_server = MockServer::start().await;
+    let project_api = setup_project_api(&mock_server).await;
+    let project_id = ProjectId::new(123);
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/projects/123/customFields"))
+        .respond_with(ResponseTemplate::new(403).set_body_json(serde_json::json!({
+            "errors": [{"message": "No permission to access this project."}]
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetCustomFieldListParams::new(project_id);
+    let result = project_api.get_custom_field_list(params).await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_custom_field_list_by_project_key() {
+    let mock_server = MockServer::start().await;
+    let project_api = setup_project_api(&mock_server).await;
+    let project_key = ProjectKey::from_str("TESTPROJ").unwrap();
+
+    let expected_fields = vec![RawCustomFieldType {
+        id: CustomFieldId::new(5),
+        project_id: ProjectId::new(1),
+        type_id: 2,
+        name: "Description Field".to_string(),
+        description: "Multi-line text area".to_string(),
+        required: false,
+        use_issue_type: false,
+        applicable_issue_types: vec![],
+        display_order: 1,
+        settings: CustomFieldSettings::TextArea,
+    }];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/projects/TESTPROJ/customFields"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_fields))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetCustomFieldListParams::new(project_key);
+    let result = project_api.get_custom_field_list(params).await;
+    assert!(result.is_ok());
+    let fields = result.unwrap();
+    assert_eq!(fields.len(), 1);
+    assert_eq!(fields[0].name, "Description Field");
+    assert!(matches!(fields[0].settings, CustomFieldSettings::TextArea));
 }

@@ -299,6 +299,7 @@ dependencies = [
  "backlog-api-macros",
  "backlog-core",
  "backlog-domain-models",
+ "backlog-issue",
  "chrono",
  "client",
  "schemars 0.9.0",

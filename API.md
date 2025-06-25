@@ -9,8 +9,8 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Read operations**: get_space(), get_space_logo()
 
 ### backlog-project (ProjectApi)
-- **Implemented**: 21/36 endpoints (58%)
-- **Read operations**: get_project_list(), get_project(), get_project_icon(), get_status_list(), get_issue_type_list(), get_version_milestone_list(), get_category_list(), get_priority_list(), get_resolution_list()
+- **Implemented**: 23/36 endpoints (64%)
+- **Read operations**: get_project_list(), get_project(), get_project_icon(), get_status_list(), get_issue_type_list(), get_version_milestone_list(), get_category_list(), get_priority_list(), get_resolution_list(), get_project_user_list(), get_custom_field_list()
 - **Write operations** (requires `writable` feature): add_category(), update_category(), delete_category(), add_issue_type(), delete_issue_type(), update_issue_type(), add_version(), update_version(), delete_version(), add_status(), update_status(), delete_status(), update_status_order()
 
 ### backlog-issue (IssueApi)
@@ -33,7 +33,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Read operations**: get_own_user(), get_user_list(), get_user(), get_user_icon()
 
 ### backlog-document (DocumentApi)
-- **Implemented**: 4/? endpoints (Document-specific API is not fully documented in the official API)
+- **Implemented**: 4/4 endpoints (100%) ✨ COMPLETE
 - **Read operations**: list_documents(), get_document_tree(), get_document(), download_attachment()
 
 ### backlog-wiki (WikiApi)
@@ -75,7 +75,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ❌ UpdateProject: Updates information about project: PATCH /api/v2/projects/:projectIdOrKey
 
 #### Users
-- ❌ GetProjectUserList: Returns list of project members: GET /api/v2/projects/:projectIdOrKey/users
+- ✅ GetProjectUserList: Returns list of project members: GET /api/v2/projects/:projectIdOrKey/users
 - ❌ AddProjectUser: Adds user to list of project members: POST /api/v2/projects/:projectIdOrKey/users
 - ❌ DeleteProjectUser: Removes user from list project members: DELETE /api/v2/projects/:projectIdOrKey/users
 
@@ -110,6 +110,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ✅ DeleteComment: Delete comment: DELETE /api/v2/issues/:issueIdOrKey/comments/:commentId
 - ✅ GetCommentList: Returns list of comments in issue: GET /api/v2/issues/:issueIdOrKey/comments
 - ✅ GetComment: Returns information about comment: GET /api/v2/issues/:issueIdOrKey/comments/:commentId
+- ❌ GetIssueParticipantList: null: GET /api/v2/issues/:issueIdOrKey/participants
 - ❌ GetListOfCommentNotifications: Returns the list of comment notifications: GET /api/v2/issues/:issueIdOrKey/comments/:commentId/notifications
 - ❌ AddCommentNotification: Adds notifications to the comment. Only the user who added the comment can add notifications: POST /api/v2/issues/:issueIdOrKey/comments/:commentId/notifications
 
@@ -117,7 +118,6 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ✅ GetListOfLinkedSharedFiles: Returns the list of linked Shared Files to issues: GET /api/v2/issues/:issueIdOrKey/sharedFiles
 - ✅ LinkSharedFilesToIssue: Links shared files to issue: POST /api/v2/issues/:issueIdOrKey/sharedFiles
 - ❌ RemoveLinkToSharedFileFromIssue: Removes link to shared file from issue: DELETE /api/v2/issues/:issueIdOrKey/sharedFiles/:id
-- ❌ GetIssueParticipantList: null: GET /api/v2/issues/:issueIdOrKey/participants
 
 ### Priority
 - ✅ GetPriorityList: Returns list of priorities: GET /api/v2/priorities
@@ -233,6 +233,12 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ❌ GetWikiPageStar: Returns list of stars received on the Wiki page: GET /api/v2/wikis/:wikiId/stars
 - ❌ CountUserReceivedStars: Returns number of stars that user received: GET /api/v2/users/:userId/stars/count
 - ❌ GetReceivedStarList: Returns the list of stars that user received: GET /api/v2/users/:userId/stars
+
+### Document
+- ✅ GetDocumentList: Returns list of document pages: GET /api/v2/documents
+- ✅ GetDocumentTree: Retrieves the document tree: GET /api/v2/documents/tree
+- ✅ GetDocument: Returns information about document page: GET /api/v2/documents/:documentId
+- ✅ DownloadDocumentAttachment: Downloads document attachments: GET /api/v2/documents/:documentId/attachments/:attachmentId
 
 ### Users
 - ✅ GetOwnUser: Returns own information about user: GET /api/v2/users/myself

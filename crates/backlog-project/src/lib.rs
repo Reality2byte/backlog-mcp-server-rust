@@ -8,12 +8,13 @@ pub use backlog_domain_models::{
 };
 
 pub use api::{
-    GetCategoryListParams, GetCategoryListResponse, GetIssueTypeListParams,
-    GetIssueTypeListResponse, GetMilestoneListParams, GetMilestoneListResponse,
-    GetPriorityListParams, GetPriorityListResponse, GetProjectDetailParams,
-    GetProjectDetailResponse, GetProjectIconParams, GetProjectListParams, GetProjectListResponse,
-    GetResolutionListParams, GetResolutionListResponse, GetStatusListParams, GetStatusListResponse,
-    ProjectApi,
+    GetCategoryListParams, GetCategoryListResponse, GetCustomFieldListParams,
+    GetCustomFieldListResponse, GetIssueTypeListParams, GetIssueTypeListResponse,
+    GetMilestoneListParams, GetMilestoneListResponse, GetPriorityListParams,
+    GetPriorityListResponse, GetProjectDetailParams, GetProjectDetailResponse,
+    GetProjectIconParams, GetProjectListParams, GetProjectListResponse, GetProjectUserListParams,
+    GetProjectUserListResponse, GetResolutionListParams, GetResolutionListResponse,
+    GetStatusListParams, GetStatusListResponse, ProjectApi,
 };
 
 #[cfg(feature = "writable")]
