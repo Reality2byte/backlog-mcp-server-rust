@@ -11,6 +11,7 @@ use backlog_project::api::{
 };
 use backlog_project::{Category, IssueType, Priority, Project, Resolution, Status};
 use common::*;
+use serde::Serialize;
 use std::str::FromStr;
 use wiremock::MockServer;
 
@@ -639,6 +640,21 @@ async fn test_get_project_icon_not_found() {
     assert!(result.is_err());
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RawCustomFieldType {
+    pub id: CustomFieldId,
+    pub project_id: ProjectId,
+    pub type_id: u8,
+    pub name: String,
+    pub description: String,
+    pub required: bool,
+    pub use_issue_type: bool,
+    pub applicable_issue_types: Vec<IssueTypeId>,
+    pub display_order: i64,
+    pub settings: CustomFieldSettings,
+}
+
 // Test cases for get_custom_field_list
 #[tokio::test]
 async fn test_get_custom_field_list_success() {
@@ -647,9 +663,10 @@ async fn test_get_custom_field_list_success() {
     let project_id = ProjectId::new(123);
 
     let expected_fields = vec![
-        CustomFieldType {
+        RawCustomFieldType {
             id: CustomFieldId::new(1),
             project_id,
+            type_id: 1,
             name: "Text Field".to_string(),
             description: "A simple text field".to_string(),
             required: true,
@@ -658,9 +675,10 @@ async fn test_get_custom_field_list_success() {
             display_order: 1,
             settings: CustomFieldSettings::Text,
         },
-        CustomFieldType {
+        RawCustomFieldType {
             id: CustomFieldId::new(2),
             project_id,
+            type_id: 5,
             name: "Priority Field".to_string(),
             description: "Priority selection field".to_string(),
             required: false,
@@ -694,6 +712,7 @@ async fn test_get_custom_field_list_success() {
 
     let params = GetCustomFieldListParams::new(project_id);
     let result = project_api.get_custom_field_list(params).await;
+    dbg!(&result);
     assert!(result.is_ok());
     let fields = result.unwrap();
     assert_eq!(fields.len(), 2);
@@ -701,7 +720,7 @@ async fn test_get_custom_field_list_success() {
     assert!(fields[0].required);
     assert_eq!(fields[1].name, "Priority Field");
     assert!(!fields[1].required);
-    assert_eq!(fields[1].applicable_issue_types.len(), 2);
+    assert_eq!(fields[1].applicable_issue_types.as_ref().unwrap().len(), 2);
 }
 
 #[tokio::test]
@@ -711,9 +730,10 @@ async fn test_get_custom_field_list_multiple_types() {
     let project_id = ProjectId::new(456);
 
     let expected_fields = vec![
-        CustomFieldType {
+        RawCustomFieldType {
             id: CustomFieldId::new(10),
             project_id,
+            type_id: 3,
             name: "Number Field".to_string(),
             description: "Numeric input field".to_string(),
             required: false,
@@ -727,9 +747,10 @@ async fn test_get_custom_field_list_multiple_types() {
                 unit: Some("percent".to_string()),
             }),
         },
-        CustomFieldType {
+        RawCustomFieldType {
             id: CustomFieldId::new(11),
             project_id,
+            type_id: 4,
             name: "Date Field".to_string(),
             description: "Date selection field".to_string(),
             required: true,
@@ -825,9 +846,10 @@ async fn test_get_custom_field_list_by_project_key() {
     let project_api = setup_project_api(&mock_server).await;
     let project_key = ProjectKey::from_str("TESTPROJ").unwrap();
 
-    let expected_fields = vec![CustomFieldType {
+    let expected_fields = vec![RawCustomFieldType {
         id: CustomFieldId::new(5),
         project_id: ProjectId::new(1),
+        type_id: 2,
         name: "Description Field".to_string(),
         description: "Multi-line text area".to_string(),
         required: false,

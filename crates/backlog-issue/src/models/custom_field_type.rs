@@ -16,8 +16,7 @@ pub struct CustomFieldType {
     pub name: String,
     pub description: String,
     pub required: bool,
-    pub use_issue_type: bool,
-    pub applicable_issue_types: Vec<IssueTypeId>,
+    pub applicable_issue_types: Option<Vec<IssueTypeId>>,
     pub display_order: i64,
     pub settings: CustomFieldSettings,
 }
@@ -84,7 +83,6 @@ impl Serialize for CustomFieldType {
         map.serialize_entry("name", &self.name)?;
         map.serialize_entry("description", &self.description)?;
         map.serialize_entry("required", &self.required)?;
-        map.serialize_entry("useIssueType", &self.use_issue_type)?;
         map.serialize_entry("applicableIssueTypes", &self.applicable_issue_types)?;
         map.serialize_entry("displayOrder", &self.display_order)?;
         let type_id = match self.settings {
@@ -252,8 +250,11 @@ impl<'de> Deserialize<'de> for CustomFieldType {
             name: raw.name,
             description: raw.description,
             required: raw.required,
-            use_issue_type: raw.use_issue_type,
-            applicable_issue_types: raw.applicable_issue_types,
+            applicable_issue_types: if raw.use_issue_type {
+                Some(raw.applicable_issue_types)
+            } else {
+                None
+            },
             display_order: raw.display_order,
             settings,
         })
@@ -410,8 +411,7 @@ mod tests {
             name: "日付フィールド（全）".to_string(),
             description: "これは日付型のカスタムフィールドです。".to_string(),
             required: true,
-            use_issue_type: false,
-            applicable_issue_types: vec![],
+            applicable_issue_types: None,
             display_order: 2147483646,
             settings: CustomFieldSettings::Date(DateSettings {
                 min: Some(Date::from(NaiveDate::from_ymd_opt(2025, 1, 1).unwrap())),
@@ -424,7 +424,7 @@ mod tests {
             }),
         };
         let json = serde_json::to_string(&field).unwrap();
-        let expected = r#"{"id":978979,"projectId":615400,"name":"日付フィールド（全）","description":"これは日付型のカスタムフィールドです。","required":true,"useIssueType":false,"applicableIssueTypes":[],"displayOrder":2147483646,"typeId":4,"min":"2025-01-01T00:00:00Z","max":"2025-12-31T00:00:00Z","initialDate":{"id":1,"shift":null,"date":"2025-12-24T00:00:00Z"}}"#;
+        let expected = r#"{"id":978979,"projectId":615400,"name":"日付フィールド（全）","description":"これは日付型のカスタムフィールドです。","required":true,"applicableIssueTypes":null,"displayOrder":2147483646,"typeId":4,"min":"2025-01-01T00:00:00Z","max":"2025-12-31T00:00:00Z","initialDate":{"id":1,"shift":null,"date":"2025-12-24T00:00:00Z"}}"#;
         let expected_val: serde_json::Value = serde_json::from_str(expected).unwrap();
         let actual_val: serde_json::Value = serde_json::from_str(&json).unwrap();
         assert_eq!(actual_val, expected_val);
