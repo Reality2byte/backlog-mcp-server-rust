@@ -103,6 +103,11 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ✅ GetIssueAttachment: Downloads issue’s attachment file: GET /api/v2/issues/:issueIdOrKey/attachments/:attachmentId
 - ❌ DeleteIssueAttachment: Deletes an attachment of issue: DELETE /api/v2/issues/:issueIdOrKey/attachments/:attachmentId
 
+#### Shared files for issue
+- ✅ GetListOfLinkedSharedFiles: Returns the list of linked Shared Files to issues: GET /api/v2/issues/:issueIdOrKey/sharedFiles
+- ✅ LinkSharedFilesToIssue: Links shared files to issue: POST /api/v2/issues/:issueIdOrKey/sharedFiles
+- ❌ RemoveLinkToSharedFileFromIssue: Removes link to shared file from issue: DELETE /api/v2/issues/:issueIdOrKey/sharedFiles/:id
+
 ### Comment
 - ✅ UpdateComment: Updates content of comment: PATCH /api/v2/issues/:issueIdOrKey/comments/:commentId
 - ✅ CountComment: Returns number of comments in issue: GET /api/v2/issues/:issueIdOrKey/comments/count
@@ -113,11 +118,6 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ❌ GetIssueParticipantList: null: GET /api/v2/issues/:issueIdOrKey/participants
 - ❌ GetListOfCommentNotifications: Returns the list of comment notifications: GET /api/v2/issues/:issueIdOrKey/comments/:commentId/notifications
 - ❌ AddCommentNotification: Adds notifications to the comment. Only the user who added the comment can add notifications: POST /api/v2/issues/:issueIdOrKey/comments/:commentId/notifications
-
-### Shared files
-- ✅ GetListOfLinkedSharedFiles: Returns the list of linked Shared Files to issues: GET /api/v2/issues/:issueIdOrKey/sharedFiles
-- ✅ LinkSharedFilesToIssue: Links shared files to issue: POST /api/v2/issues/:issueIdOrKey/sharedFiles
-- ❌ RemoveLinkToSharedFileFromIssue: Removes link to shared file from issue: DELETE /api/v2/issues/:issueIdOrKey/sharedFiles/:id
 
 ### Priority
 - ✅ GetPriorityList: Returns list of priorities: GET /api/v2/priorities
@@ -178,15 +178,16 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ❌ GetWikiPageTagList: Returns list of tags that are used in the project: GET /api/v2/wikis/tags
 - ✅ GetWikiPage: Returns information about Wiki page: GET /api/v2/wikis/:wikiId
 - ✅ GetListOfWikiAttachments: Gets list of files attached to Wiki: GET /api/v2/wikis/:wikiId/attachments
-- ❌ LinkSharedFilesToWiki: Links Shared Files to Wiki: POST /api/v2/wikis/:wikiId/sharedFiles
-- ❌ RemoveLinkToSharedFileFromWiki: Removes link to shared file from Wiki: DELETE /api/v2/wikis/:wikiId/sharedFiles/:id
 - ❌ RemoveWikiAttachment: Removes files attached to Wiki: DELETE /api/v2/wikis/:wikiId/attachments/:attachmentId
-- ❌ GetListOfSharedFilesOnWiki: Returns the list of Shared Files on Wiki: GET /api/v2/wikis/:wikiId/sharedFiles
 - ❌ DeleteWikiPage: Deletes Wiki page: DELETE /api/v2/wikis/:wikiId
 - ✅ CountWikiPage: Returns number of Wiki pages: GET /api/v2/wikis/count
 - ❌ AddWikiPage: Adds new Wiki page: POST /api/v2/wikis
 - ❌ AttachFileToWiki: Attaches file to Wiki: POST /api/v2/wikis/:wikiId/attachments
 
+#### Shared files for wiki
+- ❌ GetListOfSharedFilesOnWiki: Returns the list of Shared Files on Wiki: GET /api/v2/wikis/:wikiId/sharedFiles
+- ❌ LinkSharedFilesToWiki: Links Shared Files to Wiki: POST /api/v2/wikis/:wikiId/sharedFiles
+- ❌ RemoveLinkToSharedFileFromWiki: Removes link to shared file from Wiki: DELETE /api/v2/wikis/:wikiId/sharedFiles/:id
 
 ### Git
 - ✅ GetGitRepository: Returns Git repository: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName
