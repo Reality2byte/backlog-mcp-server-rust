@@ -1,6 +1,5 @@
 use crate::models::{Issue, ParentChildCondition};
 use backlog_api_core::{Error as ApiError, IntoRequest};
-#[cfg(feature = "macros")]
 use backlog_api_macros::ToFormParams;
 use backlog_core::ApiDate;
 use backlog_core::identifier::{
@@ -13,47 +12,46 @@ use serde::Serialize;
 /// Response type for getting a list of issues
 pub type GetIssueListResponse = Vec<Issue>;
 
-#[derive(Debug, Clone, Builder)]
-#[cfg_attr(feature = "macros", derive(ToFormParams))]
+#[derive(Debug, Clone, Builder, ToFormParams)]
 #[builder(build_fn(error = "ApiError"))]
 pub struct GetIssueListParams {
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(array, name = "projectId"))]
+    #[form(array, name = "projectId")]
     pub project_id: Option<Vec<ProjectId>>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(array, name = "issueTypeId"))]
+    #[form(array, name = "issueTypeId")]
     pub issue_type_id: Option<Vec<IssueTypeId>>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(array, name = "categoryId"))]
+    #[form(array, name = "categoryId")]
     pub category_id: Option<Vec<CategoryId>>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(array, name = "versionId"))]
+    #[form(array, name = "versionId")]
     pub version_id: Option<Vec<MilestoneId>>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(array, name = "milestoneId"))]
+    #[form(array, name = "milestoneId")]
     pub milestone_id: Option<Vec<MilestoneId>>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(array, name = "statusId"))]
+    #[form(array, name = "statusId")]
     pub status_id: Option<Vec<StatusId>>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(array, name = "priorityId"))]
+    #[form(array, name = "priorityId")]
     pub priority_id: Option<Vec<PriorityId>>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(array, name = "assigneeId"))]
+    #[form(array, name = "assigneeId")]
     pub assignee_id: Option<Vec<UserId>>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(array, name = "createdUserId"))]
+    #[form(array, name = "createdUserId")]
     pub created_user_id: Option<Vec<UserId>>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(array, name = "resolutionId"))]
+    #[form(array, name = "resolutionId")]
     pub resolution_id: Option<Vec<ResolutionId>>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(name = "parentChild"))]
+    #[form(name = "parentChild")]
     pub parent_child_condition: Option<ParentChildCondition>,
     #[builder(default, setter(into, strip_option))]
     pub attachment: Option<bool>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(name = "sharedFile"))]
+    #[form(name = "sharedFile")]
     pub shared_file: Option<bool>,
     #[builder(default, setter(into, strip_option))]
     pub sort: Option<String>, // (e.g., "issueType", "created")
@@ -64,24 +62,24 @@ pub struct GetIssueListParams {
     #[builder(default, setter(into, strip_option))]
     pub count: Option<u32>, // (1-100)
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(name = "createdSince"))]
+    #[form(name = "createdSince")]
     pub created_since: Option<ApiDate>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(name = "createdUntil"))]
+    #[form(name = "createdUntil")]
     pub created_until: Option<ApiDate>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(name = "updatedSince"))]
+    #[form(name = "updatedSince")]
     pub updated_since: Option<ApiDate>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(name = "updatedUntil"))]
+    #[form(name = "updatedUntil")]
     pub updated_until: Option<ApiDate>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(array, name = "parentIssueId"))]
+    #[form(array, name = "parentIssueId")]
     pub parent_issue_id: Option<Vec<IssueId>>, // (Note: different from single parentIssueId in Add/Update)
     #[builder(default, setter(into, strip_option))]
     pub keyword: Option<String>, // (e.g., "bug", "feature")
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(array))]
+    #[form(array)]
     pub id: Option<Vec<IssueId>>, // for id[] parameter
 }
 
@@ -102,77 +100,6 @@ impl IntoRequest for GetIssueListParams {
 impl From<GetIssueListParams> for Vec<(String, String)> {
     fn from(params: GetIssueListParams) -> Self {
         (&params).into()
-    }
-}
-
-#[cfg(not(feature = "macros"))]
-impl From<&GetIssueListParams> for Vec<(String, String)> {
-    fn from(params: &GetIssueListParams) -> Self {
-        let mut seq = Vec::new();
-
-        macro_rules! push_val {
-            ($field:expr, $key:expr) => {
-                if let Some(value) = $field {
-                    seq.push(($key.to_string(), value.to_string()));
-                }
-            };
-        }
-
-        macro_rules! push_vec {
-            ($field:expr, $key:expr) => {
-                if let Some(values) = &$field {
-                    values
-                        .iter()
-                        .for_each(|v| seq.push(($key.to_string(), v.to_string())));
-                }
-            };
-        }
-
-        push_vec!(params.project_id, "projectId[]");
-        push_vec!(params.issue_type_id, "issueTypeId[]");
-        push_vec!(params.category_id, "categoryId[]");
-        push_vec!(params.version_id, "versionId[]");
-        push_vec!(params.milestone_id, "milestoneId[]");
-        push_vec!(params.status_id, "statusId[]");
-        push_vec!(params.priority_id, "priorityId[]");
-        push_vec!(params.assignee_id, "assigneeId[]");
-        push_vec!(params.created_user_id, "createdUserId[]");
-        push_vec!(params.resolution_id, "resolutionId[]");
-        push_vec!(params.parent_issue_id, "parentIssueId[]");
-        push_vec!(params.id, "id[]");
-
-        if let Some(parent_child_condition) = &params.parent_child_condition {
-            seq.push((
-                "parentChild".to_string(), // API doc uses "parentChild" not "parentChildCondition"
-                (parent_child_condition.clone() as u8).to_string(),
-            ));
-        }
-
-        push_val!(&params.attachment, "attachment");
-        push_val!(&params.shared_file, "sharedFile");
-        push_val!(&params.sort, "sort");
-        push_val!(&params.order, "order");
-        push_val!(&params.offset, "offset");
-        push_val!(&params.count, "count");
-        if let Some(created_since) = &params.created_since {
-            seq.push(("createdSince".to_string(), created_since.to_string()));
-        }
-        if let Some(created_until) = &params.created_until {
-            seq.push(("createdUntil".to_string(), created_until.to_string()));
-        }
-        if let Some(updated_since) = &params.updated_since {
-            seq.push(("updatedSince".to_string(), updated_since.to_string()));
-        }
-        if let Some(updated_until) = &params.updated_until {
-            seq.push(("updatedUntil".to_string(), updated_until.to_string()));
-        }
-        push_val!(&params.keyword, "keyword");
-        push_val!(&params.parent_child_condition, "parentChild");
-
-        // Custom fields would be handled here if implemented
-        // e.g., params.custom_fields.iter().for_each(|(k,v)| seq.push((k.clone(), v.clone())));
-
-        seq
     }
 }
 

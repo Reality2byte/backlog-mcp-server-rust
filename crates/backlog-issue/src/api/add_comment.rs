@@ -2,7 +2,7 @@
 use crate::models::Comment;
 #[cfg(feature = "writable")]
 use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
-#[cfg(all(feature = "writable", feature = "macros"))]
+#[cfg(feature = "writable")]
 use backlog_api_macros::ToFormParams;
 #[cfg(feature = "writable")]
 use backlog_core::{
@@ -19,20 +19,19 @@ use serde::Serialize;
 pub type AddCommentResponse = Comment;
 
 #[cfg(feature = "writable")]
-#[derive(Debug, Clone, Builder)]
-#[cfg_attr(feature = "macros", derive(ToFormParams))]
+#[derive(Debug, Clone, Builder, ToFormParams)]
 #[builder(build_fn(error = "ApiError"))]
 pub struct AddCommentParams {
     #[builder(setter(into))]
-    #[cfg_attr(feature = "macros", form(skip))]
+    #[form(skip)]
     pub issue_id_or_key: IssueIdOrKey,
     #[builder(setter(into))]
     pub content: String,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(array, name = "notifiedUserId"))]
+    #[form(array, name = "notifiedUserId")]
     pub notified_user_id: Option<Vec<UserId>>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(array, name = "attachmentId"))]
+    #[form(array, name = "attachmentId")]
     pub attachment_id: Option<Vec<AttachmentId>>,
 }
 
@@ -47,29 +46,7 @@ impl IntoRequest for AddCommentParams {
     }
 
     fn to_form(&self) -> impl Serialize {
-        #[cfg(feature = "macros")]
-        {
-            let params: Vec<(String, String)> = self.into();
-            params
-        }
-
-        #[cfg(not(feature = "macros"))]
-        {
-            let mut params = vec![("content".to_string(), self.content.clone())];
-
-            if let Some(notified_user_ids) = &self.notified_user_id {
-                for user_id in notified_user_ids {
-                    params.push(("notifiedUserId[]".to_string(), user_id.to_string()));
-                }
-            }
-
-            if let Some(attachment_ids) = &self.attachment_id {
-                for attachment_id in attachment_ids {
-                    params.push(("attachmentId[]".to_string(), attachment_id.to_string()));
-                }
-            }
-
-            params
-        }
+        let params: Vec<(String, String)> = self.into();
+        params
     }
 }

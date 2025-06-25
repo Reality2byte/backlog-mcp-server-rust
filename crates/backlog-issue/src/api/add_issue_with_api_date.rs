@@ -13,7 +13,7 @@ use derive_builder::Builder;
 #[cfg(feature = "writable")]
 use serde::Serialize;
 
-#[cfg(all(feature = "writable", feature = "macros"))]
+#[cfg(feature = "writable")]
 use backlog_api_macros::ToFormParams;
 
 #[cfg(feature = "writable")]
@@ -24,58 +24,57 @@ pub type AddIssueWithApiDateResponse = Issue;
 /// This demonstrates how ApiDate can eliminate the need for special handling
 /// of DateTime<Utc> fields in API parameters.
 #[cfg(feature = "writable")]
-#[derive(Debug, Builder)]
-#[cfg_attr(feature = "macros", derive(ToFormParams))]
+#[derive(Debug, Builder, ToFormParams)]
 #[builder(build_fn(error = "ApiError"))]
 pub struct AddIssueWithApiDateParams {
     #[builder(setter(into))]
-    #[cfg_attr(feature = "macros", form(name = "projectId"))]
+    #[form(name = "projectId")]
     pub project_id: ProjectId,
     #[builder(setter(into))]
     pub summary: String,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(name = "parentIssueId"))]
+    #[form(name = "parentIssueId")]
     pub parent_issue_id: Option<IssueId>,
     #[builder(default, setter(into, strip_option))]
     pub description: Option<String>,
 
     // Using ApiDate for automatic formatting - no special attributes needed!
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(name = "startDate"))]
+    #[form(name = "startDate")]
     pub start_date: Option<ApiDate>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(name = "dueDate"))]
+    #[form(name = "dueDate")]
     pub due_date: Option<ApiDate>,
 
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(name = "estimatedHours"))]
+    #[form(name = "estimatedHours")]
     pub estimated_hours: Option<f32>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(name = "actualHours"))]
+    #[form(name = "actualHours")]
     pub actual_hours: Option<f32>,
     #[builder(setter(into))]
-    #[cfg_attr(feature = "macros", form(name = "issueTypeId"))]
+    #[form(name = "issueTypeId")]
     pub issue_type_id: IssueTypeId,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(array, name = "categoryId"))]
+    #[form(array, name = "categoryId")]
     pub category_id: Option<Vec<CategoryId>>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(array, name = "versionId"))]
+    #[form(array, name = "versionId")]
     pub version_id: Option<Vec<MilestoneId>>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(array, name = "milestoneId"))]
+    #[form(array, name = "milestoneId")]
     pub milestone_id: Option<Vec<MilestoneId>>,
     #[builder(setter(into))]
-    #[cfg_attr(feature = "macros", form(name = "priorityId"))]
+    #[form(name = "priorityId")]
     pub priority_id: PriorityId,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(name = "assigneeId"))]
+    #[form(name = "assigneeId")]
     pub assignee_id: Option<UserId>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(array, name = "notifiedUserId"))]
+    #[form(array, name = "notifiedUserId")]
     pub notified_user_ids: Option<Vec<UserId>>,
     #[builder(default, setter(into, strip_option))]
-    #[cfg_attr(feature = "macros", form(array, name = "attachmentId"))]
+    #[form(array, name = "attachmentId")]
     pub attachment_ids: Option<Vec<AttachmentId>>,
 }
 
@@ -92,80 +91,6 @@ impl IntoRequest for AddIssueWithApiDateParams {
     fn to_form(&self) -> impl Serialize {
         let params: Vec<(String, String)> = self.into();
         params
-    }
-}
-
-// Manual implementation (no special date handling needed since ApiDate.to_string() handles it)
-#[cfg(all(feature = "writable", not(feature = "macros")))]
-impl From<&AddIssueWithApiDateParams> for Vec<(String, String)> {
-    fn from(params: &AddIssueWithApiDateParams) -> Self {
-        let mut form_params = vec![
-            ("projectId".to_string(), params.project_id.to_string()),
-            ("summary".to_string(), params.summary.clone()),
-            ("issueTypeId".to_string(), params.issue_type_id.to_string()),
-            ("priorityId".to_string(), params.priority_id.to_string()),
-        ];
-
-        if let Some(parent_issue_id) = &params.parent_issue_id {
-            form_params.push(("parentIssueId".to_string(), parent_issue_id.to_string()));
-        }
-
-        if let Some(description) = &params.description {
-            form_params.push(("description".to_string(), description.clone()));
-        }
-
-        // ApiDate automatically formats to YYYY-MM-DD via Display trait
-        if let Some(start_date) = &params.start_date {
-            form_params.push(("startDate".to_string(), start_date.to_string()));
-        }
-
-        if let Some(due_date) = &params.due_date {
-            form_params.push(("dueDate".to_string(), due_date.to_string()));
-        }
-
-        if let Some(estimated_hours) = &params.estimated_hours {
-            form_params.push(("estimatedHours".to_string(), estimated_hours.to_string()));
-        }
-
-        if let Some(actual_hours) = &params.actual_hours {
-            form_params.push(("actualHours".to_string(), actual_hours.to_string()));
-        }
-
-        if let Some(category_ids) = &params.category_id {
-            for id in category_ids {
-                form_params.push(("categoryId[]".to_string(), id.to_string()));
-            }
-        }
-
-        if let Some(version_ids) = &params.version_id {
-            for id in version_ids {
-                form_params.push(("versionId[]".to_string(), id.to_string()));
-            }
-        }
-
-        if let Some(milestone_ids) = &params.milestone_id {
-            for id in milestone_ids {
-                form_params.push(("milestoneId[]".to_string(), id.to_string()));
-            }
-        }
-
-        if let Some(assignee_id) = &params.assignee_id {
-            form_params.push(("assigneeId".to_string(), assignee_id.to_string()));
-        }
-
-        if let Some(notified_user_ids) = &params.notified_user_ids {
-            for id in notified_user_ids {
-                form_params.push(("notifiedUserId[]".to_string(), id.to_string()));
-            }
-        }
-
-        if let Some(attachment_ids) = &params.attachment_ids {
-            for id in attachment_ids {
-                form_params.push(("attachmentId[]".to_string(), id.to_string()));
-            }
-        }
-
-        form_params
     }
 }
 

@@ -6,27 +6,25 @@ use backlog_core::{
 };
 use serde::Serialize;
 
-#[cfg(feature = "macros")]
 use backlog_api_macros::ToFormParams;
 
 pub type UpdatePullRequestResponse = PullRequest;
 
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "macros", derive(ToFormParams))]
+#[derive(Debug, Clone, ToFormParams)]
 pub struct UpdatePullRequestParams {
-    #[cfg_attr(feature = "macros", form(skip))]
+    #[form(skip)]
     pub project_id_or_key: ProjectIdOrKey,
-    #[cfg_attr(feature = "macros", form(skip))]
+    #[form(skip)]
     pub repo_id_or_name: RepositoryIdOrName,
-    #[cfg_attr(feature = "macros", form(skip))]
+    #[form(skip)]
     pub number: PullRequestNumber,
     pub summary: Option<String>,
     pub description: Option<String>,
-    #[cfg_attr(feature = "macros", form(name = "issueId"))]
+    #[form(name = "issueId")]
     pub issue_id: Option<IssueId>,
-    #[cfg_attr(feature = "macros", form(name = "assigneeId"))]
+    #[form(name = "assigneeId")]
     pub assignee_id: Option<UserId>,
-    #[cfg_attr(feature = "macros", form(array, name = "notifiedUserId"))]
+    #[form(array, name = "notifiedUserId")]
     pub notified_user_ids: Option<Vec<UserId>>,
     pub comment: Option<String>,
 }
@@ -78,42 +76,6 @@ impl UpdatePullRequestParams {
     pub fn comment(mut self, comment: impl Into<String>) -> Self {
         self.comment = Some(comment.into());
         self
-    }
-}
-
-// Form serialization: macro when available, manual fallback
-#[cfg(not(feature = "macros"))]
-impl From<&UpdatePullRequestParams> for Vec<(String, String)> {
-    fn from(params: &UpdatePullRequestParams) -> Self {
-        let mut seq = Vec::new();
-
-        if let Some(summary) = &params.summary {
-            seq.push(("summary".to_string(), summary.clone()));
-        }
-
-        if let Some(description) = &params.description {
-            seq.push(("description".to_string(), description.clone()));
-        }
-
-        if let Some(issue_id) = &params.issue_id {
-            seq.push(("issueId".to_string(), issue_id.value().to_string()));
-        }
-
-        if let Some(assignee_id) = &params.assignee_id {
-            seq.push(("assigneeId".to_string(), assignee_id.value().to_string()));
-        }
-
-        if let Some(user_ids) = &params.notified_user_ids {
-            user_ids.iter().for_each(|id| {
-                seq.push(("notifiedUserId[]".to_string(), id.value().to_string()));
-            });
-        }
-
-        if let Some(comment) = &params.comment {
-            seq.push(("comment".to_string(), comment.clone()));
-        }
-
-        seq
     }
 }
 

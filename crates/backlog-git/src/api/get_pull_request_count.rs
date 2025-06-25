@@ -1,9 +1,6 @@
 use crate::models::PullRequestCount;
 use backlog_api_core::IntoRequest;
-#[cfg(feature = "macros")]
 use backlog_api_macros::ToFormParams;
-#[cfg(not(feature = "macros"))]
-use backlog_core::identifier::Identifier;
 use backlog_core::{
     ProjectIdOrKey, RepositoryIdOrName,
     identifier::{IssueId, StatusId, UserId},
@@ -12,20 +9,19 @@ use serde::Serialize;
 
 pub type GetPullRequestCountResponse = PullRequestCount;
 
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "macros", derive(ToFormParams))]
+#[derive(Debug, Clone, ToFormParams)]
 pub struct GetPullRequestCountParams {
-    #[cfg_attr(feature = "macros", form(skip))]
+    #[form(skip)]
     pub project_id_or_key: ProjectIdOrKey,
-    #[cfg_attr(feature = "macros", form(skip))]
+    #[form(skip)]
     pub repo_id_or_name: RepositoryIdOrName,
-    #[cfg_attr(feature = "macros", form(array, name = "statusId"))]
+    #[form(array, name = "statusId")]
     pub status_ids: Option<Vec<StatusId>>,
-    #[cfg_attr(feature = "macros", form(array, name = "assigneeId"))]
+    #[form(array, name = "assigneeId")]
     pub assignee_ids: Option<Vec<UserId>>,
-    #[cfg_attr(feature = "macros", form(array, name = "issueId"))]
+    #[form(array, name = "issueId")]
     pub issue_ids: Option<Vec<IssueId>>,
-    #[cfg_attr(feature = "macros", form(array, name = "createdUserId"))]
+    #[form(array, name = "createdUserId")]
     pub created_user_ids: Option<Vec<UserId>>,
 }
 
@@ -74,41 +70,7 @@ impl IntoRequest for GetPullRequestCountParams {
     }
 
     fn to_query(&self) -> impl Serialize {
-        #[cfg(feature = "macros")]
-        {
-            let params: Vec<(String, String)> = self.into();
-            params
-        }
-
-        #[cfg(not(feature = "macros"))]
-        {
-            let mut params = Vec::new();
-
-            if let Some(status_ids) = &self.status_ids {
-                status_ids.iter().for_each(|id| {
-                    params.push(("statusId[]".to_string(), id.value().to_string()));
-                });
-            }
-
-            if let Some(assignee_ids) = &self.assignee_ids {
-                assignee_ids.iter().for_each(|id| {
-                    params.push(("assigneeId[]".to_string(), id.value().to_string()));
-                });
-            }
-
-            if let Some(issue_ids) = &self.issue_ids {
-                issue_ids.iter().for_each(|id| {
-                    params.push(("issueId[]".to_string(), id.value().to_string()));
-                });
-            }
-
-            if let Some(created_user_ids) = &self.created_user_ids {
-                created_user_ids.iter().for_each(|id| {
-                    params.push(("createdUserId[]".to_string(), id.value().to_string()));
-                });
-            }
-
-            params
-        }
+        let params: Vec<(String, String)> = self.into();
+        params
     }
 }

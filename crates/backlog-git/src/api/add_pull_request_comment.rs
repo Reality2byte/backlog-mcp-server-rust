@@ -6,22 +6,20 @@ use backlog_core::{
 };
 use serde::Serialize;
 
-#[cfg(feature = "macros")]
 use backlog_api_macros::ToFormParams;
 
 pub type AddPullRequestCommentResponse = PullRequestComment;
 
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "macros", derive(ToFormParams))]
+#[derive(Debug, Clone, ToFormParams)]
 pub struct AddPullRequestCommentParams {
-    #[cfg_attr(feature = "macros", form(skip))]
+    #[form(skip)]
     pub project_id_or_key: ProjectIdOrKey,
-    #[cfg_attr(feature = "macros", form(skip))]
+    #[form(skip)]
     pub repo_id_or_name: RepositoryIdOrName,
-    #[cfg_attr(feature = "macros", form(skip))]
+    #[form(skip)]
     pub number: PullRequestNumber,
     pub content: String,
-    #[cfg_attr(feature = "macros", form(array, name = "notifiedUserId"))]
+    #[form(array, name = "notifiedUserId")]
     pub notified_user_ids: Option<Vec<UserId>>,
 }
 
@@ -44,22 +42,6 @@ impl AddPullRequestCommentParams {
     pub fn notified_user_ids(mut self, notified_user_ids: Vec<UserId>) -> Self {
         self.notified_user_ids = Some(notified_user_ids);
         self
-    }
-}
-
-// Form serialization: macro when available, manual fallback
-#[cfg(not(feature = "macros"))]
-impl From<&AddPullRequestCommentParams> for Vec<(String, String)> {
-    fn from(params: &AddPullRequestCommentParams) -> Self {
-        let mut seq = vec![("content".to_string(), params.content.clone())];
-
-        if let Some(user_ids) = &params.notified_user_ids {
-            user_ids.iter().for_each(|id| {
-                seq.push(("notifiedUserId[]".to_string(), id.value().to_string()));
-            });
-        }
-
-        seq
     }
 }
 

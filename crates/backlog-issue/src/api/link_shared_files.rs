@@ -2,7 +2,7 @@
 use crate::models::SharedFile;
 #[cfg(feature = "writable")]
 use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
-#[cfg(all(feature = "writable", feature = "macros"))]
+#[cfg(feature = "writable")]
 use backlog_api_macros::ToFormParams;
 #[cfg(feature = "writable")]
 use backlog_core::{IssueIdOrKey, identifier::SharedFileId};
@@ -16,15 +16,14 @@ use serde::Serialize;
 pub type LinkSharedFilesToIssueResponse = Vec<SharedFile>;
 
 #[cfg(feature = "writable")]
-#[derive(Debug, Clone, Builder)]
-#[cfg_attr(feature = "macros", derive(ToFormParams))]
+#[derive(Debug, Clone, Builder, ToFormParams)]
 #[builder(build_fn(error = "ApiError"))]
 pub struct LinkSharedFilesToIssueParams {
     #[builder(setter(into))]
-    #[cfg_attr(feature = "macros", form(skip))]
+    #[form(skip)]
     pub issue_id_or_key: IssueIdOrKey,
     #[builder(setter(into))]
-    #[cfg_attr(feature = "macros", form(array, name = "fileId"))]
+    #[form(array, name = "fileId")]
     pub shared_file_ids: Vec<SharedFileId>,
 }
 
@@ -39,21 +38,7 @@ impl IntoRequest for LinkSharedFilesToIssueParams {
     }
 
     fn to_form(&self) -> impl Serialize {
-        #[cfg(feature = "macros")]
-        {
-            let params: Vec<(String, String)> = self.into();
-            params
-        }
-
-        #[cfg(not(feature = "macros"))]
-        {
-            let mut params = Vec::new();
-
-            for shared_file_id in &self.shared_file_ids {
-                params.push(("fileId[]".to_string(), shared_file_id.to_string()));
-            }
-
-            params
-        }
+        let params: Vec<(String, String)> = self.into();
+        params
     }
 }

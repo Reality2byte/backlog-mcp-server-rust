@@ -1,6 +1,5 @@
 use crate::models::Document;
 use backlog_api_core::IntoRequest;
-#[cfg(feature = "macros")]
 use backlog_api_macros::ToFormParams;
 use backlog_core::identifier::ProjectId;
 use derive_builder::Builder;
@@ -13,8 +12,7 @@ pub type ListDocumentsResponse = Vec<Document>;
 /// Parameters for listing documents
 ///
 /// Corresponds to `GET /api/v2/documents`.
-#[derive(Debug, Builder, Clone, PartialEq)]
-#[cfg_attr(feature = "macros", derive(ToFormParams))]
+#[derive(Debug, Builder, Clone, PartialEq, ToFormParams)]
 #[builder(setter(strip_option))]
 pub struct ListDocumentsParams {
     // Based on curl: /api/v2/documents?apiKey=xxx&projectId=601486&offset=0&count=1
@@ -22,7 +20,7 @@ pub struct ListDocumentsParams {
     // User confirmed routing definition /api/v2/documents is primary.
     // So, projectId is a query param.
     #[builder(default, setter(into))]
-    #[cfg_attr(feature = "macros", form(array, name = "projectId"))]
+    #[form(array, name = "projectId")]
     pub project_ids: Option<Vec<ProjectId>>, // Array of project IDs (optional)
     #[builder(default, setter(into))]
     pub keyword: Option<String>,
@@ -74,38 +72,6 @@ impl fmt::Display for DocumentOrder {
 impl From<ListDocumentsParams> for Vec<(String, String)> {
     fn from(params: ListDocumentsParams) -> Self {
         (&params).into()
-    }
-}
-
-// Support reference conversion
-#[cfg(not(feature = "macros"))]
-impl From<&ListDocumentsParams> for Vec<(String, String)> {
-    fn from(params: &ListDocumentsParams) -> Self {
-        let mut query_params = Vec::new();
-
-        // Handle array of project IDs
-        if let Some(project_ids) = &params.project_ids {
-            for project_id in project_ids {
-                query_params.push(("projectId[]".to_string(), project_id.to_string()));
-            }
-        }
-
-        if let Some(keyword) = &params.keyword {
-            query_params.push(("keyword".to_string(), keyword.clone()));
-        }
-        if let Some(sort) = &params.sort {
-            query_params.push(("sort".to_string(), sort.to_string()));
-        }
-        if let Some(order) = &params.order {
-            query_params.push(("order".to_string(), order.to_string()));
-        }
-        if let Some(offset) = params.offset {
-            query_params.push(("offset".to_string(), offset.to_string()));
-        }
-        if let Some(count) = params.count {
-            query_params.push(("count".to_string(), count.to_string()));
-        }
-        query_params
     }
 }
 
