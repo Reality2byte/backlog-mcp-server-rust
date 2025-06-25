@@ -17,7 +17,9 @@ pub use attachment::Attachment;
 pub use changelog::ChangeLogEntry;
 pub use comment::Comment;
 pub use custom_field::CustomField;
-pub use custom_field_type::CustomFieldType;
+pub use custom_field_type::{
+    CustomFieldSettings, CustomFieldType, DateSettings, ListSettings, NumericSettings,
+};
 pub use custom_field_type_id::CustomFieldTypeId;
 pub use external_file_link::ExternalFileLink;
 pub use initial_date::InitialDate;

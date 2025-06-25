@@ -55,7 +55,7 @@ impl From<&AddPullRequestCommentParams> for Vec<(String, String)> {
 
         if let Some(user_ids) = &params.notified_user_ids {
             user_ids.iter().for_each(|id| {
-                seq.push(("notifiedUserId[]".to_string(), id.value().to_string()));
+                seq.push(("notifiedUserId[]".to_string(), id.to_string()));
             });
         }
 

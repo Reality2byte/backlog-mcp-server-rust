@@ -72,6 +72,9 @@ blg project status-list MFP
 # List categories for a project
 blg project category-list MFP
 
+# List custom fields for a project
+blg project custom-field-list MFP
+
 # Add a category to a project (requires project_writable feature)
 blg project category-add MFP --name "New Category"
 

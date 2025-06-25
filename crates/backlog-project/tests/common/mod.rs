@@ -10,7 +10,8 @@ pub async fn setup_project_api(mock_server: &MockServer) -> ProjectApi {
 
 /// Common imports for tests
 pub use backlog_core::identifier::{
-    CategoryId, IssueTypeId, MilestoneId, PriorityId, ProjectId, ResolutionId, StatusId, UserId,
+    CategoryId, CustomFieldId, IssueTypeId, MilestoneId, PriorityId, ProjectId, ResolutionId,
+    StatusId, UserId,
 };
 pub use backlog_domain_models::Milestone;
 pub use chrono::TimeZone;

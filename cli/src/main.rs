@@ -593,6 +593,12 @@ enum ProjectCommands {
         #[clap(name = "PROJECT_ID_OR_KEY")]
         project_id_or_key: String,
     },
+    /// List custom fields for a project
+    CustomFieldList {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+    },
     /// Add a category to a project
     CategoryAdd {
         /// Project ID or Key
@@ -2181,6 +2187,55 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error listing project users: {}", e);
+                    }
+                }
+            }
+            ProjectCommands::CustomFieldList { project_id_or_key } => {
+                println!("Listing custom fields for project: {}", project_id_or_key);
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let params = backlog_project::GetCustomFieldListParams::new(proj_id_or_key);
+                match client.project().get_custom_field_list(params).await {
+                    Ok(custom_fields) => {
+                        if custom_fields.is_empty() {
+                            println!("No custom fields found in this project");
+                        } else {
+                            for field in custom_fields {
+                                let field_type = match field.settings {
+                                    backlog_issue::CustomFieldSettings::Text => "Text",
+                                    backlog_issue::CustomFieldSettings::TextArea => "TextArea",
+                                    backlog_issue::CustomFieldSettings::Numeric(_) => "Numeric",
+                                    backlog_issue::CustomFieldSettings::Date(_) => "Date",
+                                    backlog_issue::CustomFieldSettings::SingleList(_) => {
+                                        "SingleList"
+                                    }
+                                    backlog_issue::CustomFieldSettings::MultipleList(_) => {
+                                        "MultipleList"
+                                    }
+                                    backlog_issue::CustomFieldSettings::Checkbox(_) => "Checkbox",
+                                    backlog_issue::CustomFieldSettings::Radio(_) => "Radio",
+                                };
+                                let required_str = if field.required {
+                                    "Required"
+                                } else {
+                                    "Optional"
+                                };
+                                println!(
+                                    "[{}] {} ({}) - {} - Display Order: {}",
+                                    field.id,
+                                    field.name,
+                                    field_type,
+                                    required_str,
+                                    field.display_order
+                                );
+                                if !field.description.is_empty() {
+                                    println!("    Description: {}", field.description);
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error listing custom fields: {}", e);
                     }
                 }
             }

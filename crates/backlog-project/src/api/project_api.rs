@@ -3,12 +3,12 @@ use backlog_domain_models::Milestone;
 use client::Client;
 
 use crate::api::{
-    GetCategoryListParams, GetCategoryListResponse, GetIssueTypeListParams,
-    GetIssueTypeListResponse, GetMilestoneListParams, GetMilestoneListResponse,
-    GetPriorityListParams, GetPriorityListResponse, GetProjectDetailParams,
-    GetProjectDetailResponse, GetProjectIconParams, GetProjectUserListParams,
-    GetProjectUserListResponse, GetResolutionListParams, GetResolutionListResponse,
-    GetStatusListParams, GetStatusListResponse,
+    GetCategoryListParams, GetCategoryListResponse, GetCustomFieldListParams,
+    GetCustomFieldListResponse, GetIssueTypeListParams, GetIssueTypeListResponse,
+    GetMilestoneListParams, GetMilestoneListResponse, GetPriorityListParams,
+    GetPriorityListResponse, GetProjectDetailParams, GetProjectDetailResponse,
+    GetProjectIconParams, GetProjectUserListParams, GetProjectUserListResponse,
+    GetResolutionListParams, GetResolutionListResponse, GetStatusListParams, GetStatusListResponse,
     get_project_list::{GetProjectListParams, GetProjectListResponse},
 };
 #[cfg(feature = "writable")]
@@ -118,6 +118,16 @@ impl ProjectApi {
         &self,
         params: GetProjectUserListParams,
     ) -> Result<GetProjectUserListResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Gets the list of custom fields for a project.
+    ///
+    /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/customFields`.
+    pub async fn get_custom_field_list(
+        &self,
+        params: GetCustomFieldListParams,
+    ) -> Result<GetCustomFieldListResponse> {
         self.0.execute(params).await
     }
 

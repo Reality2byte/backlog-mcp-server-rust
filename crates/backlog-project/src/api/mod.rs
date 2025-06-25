@@ -7,6 +7,7 @@ mod delete_issue_type;
 mod delete_status;
 mod delete_version;
 mod get_category_list;
+mod get_custom_field_list;
 mod get_issue_type_list;
 mod get_milestone_list;
 mod get_priority_list;
@@ -88,4 +89,5 @@ pub use get_milestone_list::{GetMilestoneListParams, GetMilestoneListResponse};
 pub use get_status_list::{GetStatusListParams, GetStatusListResponse};
 
 pub use get_category_list::{GetCategoryListParams, GetCategoryListResponse};
+pub use get_custom_field_list::{GetCustomFieldListParams, GetCustomFieldListResponse};
 pub use get_resolution_list::{GetResolutionListParams, GetResolutionListResponse};
