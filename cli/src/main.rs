@@ -31,6 +31,8 @@ use backlog_domain_models::{IssueTypeColor, StatusColor};
 #[cfg(feature = "issue_writable")]
 use backlog_issue::DeleteCommentParams;
 #[cfg(feature = "issue_writable")]
+use backlog_issue::UnlinkSharedFileParams;
+#[cfg(feature = "issue_writable")]
 use backlog_issue::{AddIssueParamsBuilder, UpdateIssueParamsBuilder};
 use backlog_project::GetProjectListParams;
 #[cfg(feature = "project_writable")]
@@ -370,6 +372,17 @@ enum IssueCommands {
         /// Shared file IDs to link (comma-separated)
         #[clap(short, long, value_delimiter = ',')]
         file_ids: Vec<u32>,
+    },
+    /// Unlink a shared file from an issue
+    #[cfg(feature = "issue_writable")]
+    #[command(about = "Unlink a shared file from an issue")]
+    UnlinkSharedFile {
+        /// Issue ID or Key (e.g., "PROJECT-123" or "12345")
+        #[clap(name = "ISSUE_ID_OR_KEY")]
+        issue_id_or_key: String,
+        /// Shared file ID to unlink
+        #[clap(short, long)]
+        file_id: u32,
     },
 }
 
@@ -1958,11 +1971,57 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+            #[cfg(feature = "issue_writable")]
+            IssueCommands::UnlinkSharedFile {
+                issue_id_or_key,
+                file_id,
+            } => {
+                println!(
+                    "Unlinking shared file {} from issue: {}",
+                    file_id, issue_id_or_key
+                );
+
+                let parsed_issue_id_or_key =
+                    IssueIdOrKey::from_str(&issue_id_or_key).map_err(|e| {
+                        format!(
+                            "Failed to parse issue_id_or_key '{}': {}",
+                            issue_id_or_key, e
+                        )
+                    })?;
+
+                let params =
+                    UnlinkSharedFileParams::new(parsed_issue_id_or_key, SharedFileId::new(file_id));
+
+                match client.issue().unlink_shared_file(params).await {
+                    Ok(unlinked_file) => {
+                        println!("✅ Successfully unlinked shared file from the issue!");
+                        println!("   Name: {}", unlinked_file.name);
+                        println!("   ID: {}", unlinked_file.id);
+                        println!("   Directory: {}", unlinked_file.dir);
+                        match &unlinked_file.content {
+                            backlog_issue::models::FileContent::File { size } => {
+                                println!("   Type: File");
+                                println!("   Size: {} bytes", size);
+                            }
+                            backlog_issue::models::FileContent::Directory => {
+                                println!("   Type: Directory");
+                            }
+                        }
+                        println!("   Created by: {}", unlinked_file.created_user.name);
+                        println!("   Created at: {}", unlinked_file.created);
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to unlink shared file from issue: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
             #[cfg(not(feature = "issue_writable"))]
             IssueCommands::Create(_)
             | IssueCommands::Update(_)
             | IssueCommands::Delete(_)
-            | IssueCommands::LinkSharedFiles { .. } => {
+            | IssueCommands::LinkSharedFiles { .. }
+            | IssueCommands::UnlinkSharedFile { .. } => {
                 eprintln!(
                     "Issue creation, update, and deletion are not available. Please build with 'issue_writable' feature."
                 );

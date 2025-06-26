@@ -7,7 +7,7 @@ mod writable_tests {
     use backlog_issue::models::{Comment, FileContent, SharedFile};
     use backlog_issue::{
         AddCommentParamsBuilder, DeleteCommentParams, GetAttachmentFileParams,
-        LinkSharedFilesToIssueParamsBuilder, UpdateCommentParams,
+        LinkSharedFilesToIssueParamsBuilder, UnlinkSharedFileParams, UpdateCommentParams,
     };
     use chrono::{TimeZone, Utc};
     use client::test_utils::setup_client;
@@ -631,5 +631,134 @@ mod writable_tests {
         assert!(result.is_ok());
         let comment = result.unwrap();
         assert_eq!(comment.id, CommentId::new(1));
+    }
+
+    #[tokio::test]
+    async fn test_unlink_shared_file_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+
+        let issue_key = "TESTPROJ-1";
+        let shared_file_id = SharedFileId::new(456);
+
+        let expected_shared_file = create_mock_shared_file(
+            456,
+            "/shared/docs",
+            "removed_document.pdf",
+            Some(2048),
+            101,
+            "alice",
+            "2023-01-01T00:00:00Z",
+        );
+
+        Mock::given(method("DELETE"))
+            .and(path(format!(
+                "/api/v2/issues/{}/sharedFiles/{}",
+                issue_key, shared_file_id
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_shared_file))
+            .mount(&mock_server)
+            .await;
+
+        let params = UnlinkSharedFileParams {
+            issue_id_or_key: IssueIdOrKey::Key(issue_key.parse::<IssueKey>().unwrap()),
+            shared_file_id,
+        };
+
+        let result = issue_api.unlink_shared_file(params).await;
+
+        assert!(result.is_ok());
+        let shared_file = result.unwrap();
+        assert_eq!(shared_file.id, SharedFileId::new(456));
+        assert_eq!(shared_file.name, "removed_document.pdf");
+        assert_eq!(shared_file.dir, "/shared/docs");
+    }
+
+    #[tokio::test]
+    async fn test_unlink_shared_file_issue_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+
+        let issue_key = "INVALID-999";
+        let shared_file_id = SharedFileId::new(456);
+
+        Mock::given(method("DELETE"))
+            .and(path(format!(
+                "/api/v2/issues/{}/sharedFiles/{}",
+                issue_key, shared_file_id
+            )))
+            .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
+                "errors": [{"message": "Issue not found"}]
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let params = UnlinkSharedFileParams {
+            issue_id_or_key: IssueIdOrKey::Key(issue_key.parse::<IssueKey>().unwrap()),
+            shared_file_id,
+        };
+
+        let result = issue_api.unlink_shared_file(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_unlink_shared_file_file_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+
+        let issue_key = "TESTPROJ-1";
+        let shared_file_id = SharedFileId::new(99999);
+
+        Mock::given(method("DELETE"))
+            .and(path(format!(
+                "/api/v2/issues/{}/sharedFiles/{}",
+                issue_key, shared_file_id
+            )))
+            .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
+                "errors": [{"message": "Shared file not found"}]
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let params = UnlinkSharedFileParams {
+            issue_id_or_key: IssueIdOrKey::Key(issue_key.parse::<IssueKey>().unwrap()),
+            shared_file_id,
+        };
+
+        let result = issue_api.unlink_shared_file(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_unlink_shared_file_forbidden() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+
+        let issue_key = "TESTPROJ-1";
+        let shared_file_id = SharedFileId::new(456);
+
+        Mock::given(method("DELETE"))
+            .and(path(format!(
+                "/api/v2/issues/{}/sharedFiles/{}",
+                issue_key, shared_file_id
+            )))
+            .respond_with(ResponseTemplate::new(403).set_body_json(serde_json::json!({
+                "errors": [{"message": "You do not have permission to unlink this shared file"}]
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let params = UnlinkSharedFileParams {
+            issue_id_or_key: IssueIdOrKey::Key(issue_key.parse::<IssueKey>().unwrap()),
+            shared_file_id,
+        };
+
+        let result = issue_api.unlink_shared_file(params).await;
+        assert!(result.is_err());
     }
 }

@@ -106,7 +106,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 #### Shared files for issue
 - ✅ GetListOfLinkedSharedFiles: Returns the list of linked Shared Files to issues: GET /api/v2/issues/:issueIdOrKey/sharedFiles
 - ✅ LinkSharedFilesToIssue: Links shared files to issue: POST /api/v2/issues/:issueIdOrKey/sharedFiles
-- ❌ RemoveLinkToSharedFileFromIssue: Removes link to shared file from issue: DELETE /api/v2/issues/:issueIdOrKey/sharedFiles/:id
+- ✅ RemoveLinkToSharedFileFromIssue: Removes link to shared file from issue: DELETE /api/v2/issues/:issueIdOrKey/sharedFiles/:id
 
 ### Comment
 - ✅ UpdateComment: Updates content of comment: PATCH /api/v2/issues/:issueIdOrKey/comments/:commentId
