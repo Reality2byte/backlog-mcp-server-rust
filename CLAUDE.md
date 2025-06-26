@@ -633,6 +633,13 @@ When optimizing parameter structures, first analyze the parameter types:
   - Full integration with real Backlog API testing on MFP project (attachment ID: 90074, file: test-attachment.txt)
   - Follows `POST /api/v2/wikis/:wikiId/attachments` endpoint specification with proper error handling
   - Implements transparent file upload → attachment workflow (space upload + wiki attachment)
+- **Wiki Attachment Deletion API**: Complete implementation of wiki attachment deletion functionality (TDD)
+  - Added `delete_wiki_attachment()` API method in `backlog-wiki` crate with comprehensive test coverage
+  - Implemented `DeleteWikiAttachmentParams` following standard parameter patterns
+  - Extended CLI with `wiki delete-attachment` command with safety confirmation prompt (`--features wiki_writable`)
+  - Follows `DELETE /api/v2/wikis/:wikiId/attachments/:attachmentId` endpoint specification
+  - Safety features: interactive confirmation prompt, `--force` flag for automation, detailed error handling
+  - Returns deleted attachment details including original creation information
 
 ### TDD Development Process
 When implementing new API features, follow Test-Driven Development:

@@ -12,6 +12,8 @@ mod attach_files_to_wiki;
 #[cfg(feature = "writable")]
 mod delete_wiki;
 #[cfg(feature = "writable")]
+mod delete_wiki_attachment;
+#[cfg(feature = "writable")]
 mod update_wiki;
 
 // Export response types (always available)
@@ -28,6 +30,8 @@ pub use add_wiki::{AddWikiParams, AddWikiResponse};
 pub use attach_files_to_wiki::{AttachFilesToWikiParams, AttachFilesToWikiResponse};
 #[cfg(feature = "writable")]
 pub use delete_wiki::{DeleteWikiParams, DeleteWikiResponse};
+#[cfg(feature = "writable")]
+pub use delete_wiki_attachment::{DeleteWikiAttachmentParams, DeleteWikiAttachmentResponse};
 #[cfg(feature = "writable")]
 pub use update_wiki::{UpdateWikiParams, UpdateWikiResponse};
 

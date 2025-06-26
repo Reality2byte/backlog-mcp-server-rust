@@ -50,7 +50,10 @@ use backlog_user::GetUserIconParams;
 use backlog_user::GetUserListParams;
 use backlog_user::GetUserParams;
 #[cfg(feature = "wiki_writable")]
-use backlog_wiki::{AddWikiParams, AttachFilesToWikiParams, DeleteWikiParams, UpdateWikiParams};
+use backlog_wiki::{
+    AddWikiParams, AttachFilesToWikiParams, DeleteWikiAttachmentParams, DeleteWikiParams,
+    UpdateWikiParams,
+};
 #[cfg(feature = "project_writable")]
 use chrono::{DateTime, Utc};
 use clap::{Args, Parser};
@@ -931,6 +934,19 @@ enum WikiCommands {
         /// File path to attach
         #[clap(long)]
         file_path: PathBuf,
+    },
+    /// Delete an attachment from a wiki page
+    #[cfg(feature = "wiki_writable")]
+    DeleteAttachment {
+        /// Wiki ID
+        #[clap(name = "WIKI_ID")]
+        wiki_id: u32,
+        /// Attachment ID to delete
+        #[clap(name = "ATTACHMENT_ID")]
+        attachment_id: u32,
+        /// Force deletion without confirmation
+        #[clap(long, short = 'f')]
+        force: bool,
     },
 }
 
@@ -3323,6 +3339,58 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to attach file to wiki: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "wiki_writable")]
+            WikiCommands::DeleteAttachment {
+                wiki_id,
+                attachment_id,
+                force,
+            } => {
+                // Get attachment details before deletion for confirmation
+                if !force {
+                    print!(
+                        "Are you sure you want to delete attachment {} from wiki {}? [y/N]: ",
+                        attachment_id, wiki_id
+                    );
+                    use std::io::{self, Write};
+                    io::stdout().flush().unwrap();
+
+                    let mut input = String::new();
+                    io::stdin().read_line(&mut input).unwrap();
+                    let input = input.trim().to_lowercase();
+
+                    if input != "y" && input != "yes" {
+                        println!("Operation cancelled.");
+                        return Ok(());
+                    }
+                }
+
+                println!(
+                    "🗑️ Deleting attachment {} from wiki {}...",
+                    attachment_id, wiki_id
+                );
+
+                let delete_params = DeleteWikiAttachmentParams::new(
+                    WikiId::new(wiki_id),
+                    WikiAttachmentId::new(attachment_id),
+                );
+
+                match client.wiki().delete_wiki_attachment(delete_params).await {
+                    Ok(deleted_attachment) => {
+                        println!("✅ Attachment deleted successfully");
+                        println!("   Deleted attachment: {}", deleted_attachment.name);
+                        println!("   File size: {} bytes", deleted_attachment.size);
+                        println!(
+                            "   Originally attached by: {} at {}",
+                            deleted_attachment.created_user.name,
+                            deleted_attachment.created.format("%Y-%m-%d %H:%M:%S")
+                        );
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to delete attachment: {}", e);
                         std::process::exit(1);
                     }
                 }

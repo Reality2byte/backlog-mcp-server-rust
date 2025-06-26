@@ -1,9 +1,10 @@
 #[cfg(feature = "writable")]
 mod writable_tests {
     use super::common::*;
-    use backlog_core::identifier::{AttachmentId, WikiId};
+    use backlog_core::identifier::{AttachmentId, WikiAttachmentId, WikiId};
     use backlog_wiki::api::{
-        AddWikiParams, AttachFilesToWikiParams, DeleteWikiParams, UpdateWikiParams,
+        AddWikiParams, AttachFilesToWikiParams, DeleteWikiAttachmentParams, DeleteWikiParams,
+        UpdateWikiParams,
     };
     use wiremock::MockServer;
     use wiremock::matchers::{body_string_contains, header, method, path, query_param};
@@ -601,6 +602,138 @@ mod writable_tests {
         let params = AttachFilesToWikiParams::new(WikiId::new(500), vec![AttachmentId::new(789)]);
 
         let result = wiki_api.attach_files_to_wiki(params).await;
+        assert!(result.is_err());
+    }
+
+    // Tests for delete_wiki_attachment functionality
+    #[tokio::test]
+    async fn test_delete_wiki_attachment_success() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        let expected_attachment =
+            create_mock_wiki_attachment(789, "deleted-file.pdf", 2048, 1, "user1");
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/wikis/123/attachments/789"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_attachment))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteWikiAttachmentParams::new(WikiId::new(123), WikiAttachmentId::new(789));
+
+        let result = wiki_api.delete_wiki_attachment(params).await;
+        assert!(result.is_ok());
+        let attachment = result.unwrap();
+        assert_eq!(attachment.id.value(), 789);
+        assert_eq!(attachment.name, "deleted-file.pdf");
+    }
+
+    #[tokio::test]
+    async fn test_delete_wiki_attachment_returns_details() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        let expected_attachment =
+            create_mock_wiki_attachment(456, "document.txt", 1024, 2, "admin");
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/wikis/555/attachments/456"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_attachment))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteWikiAttachmentParams::new(WikiId::new(555), WikiAttachmentId::new(456));
+
+        let result = wiki_api.delete_wiki_attachment(params).await;
+        assert!(result.is_ok());
+        let attachment = result.unwrap();
+        assert_eq!(attachment.name, "document.txt");
+        assert_eq!(attachment.size, 1024);
+    }
+
+    #[tokio::test]
+    async fn test_delete_wiki_attachment_wiki_not_found() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/wikis/404/attachments/123"))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteWikiAttachmentParams::new(WikiId::new(404), WikiAttachmentId::new(123));
+
+        let result = wiki_api.delete_wiki_attachment(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_delete_wiki_attachment_attachment_not_found() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/wikis/123/attachments/404"))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteWikiAttachmentParams::new(WikiId::new(123), WikiAttachmentId::new(404));
+
+        let result = wiki_api.delete_wiki_attachment(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_delete_wiki_attachment_unauthorized() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/wikis/403/attachments/123"))
+            .respond_with(ResponseTemplate::new(403))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteWikiAttachmentParams::new(WikiId::new(403), WikiAttachmentId::new(123));
+
+        let result = wiki_api.delete_wiki_attachment(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_delete_wiki_attachment_server_error() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/wikis/500/attachments/123"))
+            .respond_with(ResponseTemplate::new(500))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteWikiAttachmentParams::new(WikiId::new(500), WikiAttachmentId::new(123));
+
+        let result = wiki_api.delete_wiki_attachment(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_delete_wiki_attachment_bad_request() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/wikis/400/attachments/123"))
+            .respond_with(ResponseTemplate::new(400))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteWikiAttachmentParams::new(WikiId::new(400), WikiAttachmentId::new(123));
+
+        let result = wiki_api.delete_wiki_attachment(params).await;
         assert!(result.is_err());
     }
 }
