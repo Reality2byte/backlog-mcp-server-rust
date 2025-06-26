@@ -2,6 +2,8 @@ use backlog_api_core::Result;
 use client::Client;
 
 use crate::api::{GetSpaceLogoParams, GetSpaceLogoResponse, GetSpaceParams, GetSpaceResponse};
+#[cfg(feature = "writable")]
+use crate::api::{UploadAttachmentParams, UploadAttachmentResponse};
 
 pub struct SpaceApi(Client);
 
@@ -20,5 +22,15 @@ impl SpaceApi {
     /// Corresponds to `GET /api/v2/space/image`.
     pub async fn get_space_logo(&self, params: GetSpaceLogoParams) -> Result<GetSpaceLogoResponse> {
         self.0.download_file(params).await
+    }
+
+    /// Upload an attachment file
+    /// Corresponds to `POST /api/v2/space/attachment`.
+    #[cfg(feature = "writable")]
+    pub async fn upload_attachment(
+        &self,
+        params: &UploadAttachmentParams,
+    ) -> Result<UploadAttachmentResponse> {
+        self.0.upload_file(params.file_path.clone()).await
     }
 }

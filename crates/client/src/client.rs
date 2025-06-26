@@ -2,6 +2,8 @@ use backlog_api_core::{
     BacklogApiErrorResponse, Error as ApiError, IntoDownloadRequest, IntoRequest, Result, bytes,
 };
 use reqwest::header::{CONTENT_DISPOSITION, CONTENT_TYPE};
+use std::path::PathBuf;
+use tokio::fs;
 use url::Url;
 
 /// A trait for converting HTTP responses into different output types
@@ -146,6 +148,39 @@ impl Client {
     {
         let request = params.into_request(&self.client, &self.base_url)?;
         self.execute_unified(request, FileResponse).await
+    }
+
+    /// Uploads a file to the Backlog API using multipart/form-data
+    /// Corresponds to `POST /api/v2/space/attachment`
+    pub async fn upload_file<T>(&self, file_path: PathBuf) -> Result<T>
+    where
+        T: serde::de::DeserializeOwned + Send,
+    {
+        let file_content = fs::read(&file_path)
+            .await
+            .map_err(|e| ApiError::InvalidBuildParameter(format!("Failed to read file: {}", e)))?;
+
+        let filename = file_path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("attachment")
+            .to_string();
+
+        let file_part = reqwest::multipart::Part::bytes(file_content).file_name(filename);
+
+        let form = reqwest::multipart::Form::new().part("file", file_part);
+
+        let url = self
+            .base_url
+            .join("/api/v2/space/attachment")
+            .map_err(|e| ApiError::InvalidBuildParameter(format!("Failed to build URL: {}", e)))?;
+
+        let request = self.client.post(url).multipart(form).build().map_err(|e| {
+            ApiError::InvalidBuildParameter(format!("Failed to build request: {}", e))
+        })?;
+
+        self.execute_unified(request, JsonResponse::<T>::new())
+            .await
     }
 
     /// Unified method for executing requests with customizable response handling

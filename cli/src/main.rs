@@ -41,6 +41,8 @@ use backlog_project::{
     UpdateVersionParams,
 };
 use backlog_space::GetSpaceLogoParams;
+#[cfg(feature = "space_writable")]
+use backlog_space::UploadAttachmentParams;
 use backlog_user::GetOwnUserParams;
 use backlog_user::GetUserIconParams;
 use backlog_user::GetUserListParams;
@@ -544,6 +546,13 @@ enum SpaceCommands {
         /// Output file path to save the logo
         #[clap(short, long, value_name = "FILE_PATH")]
         output: PathBuf,
+    },
+    /// Upload an attachment file
+    #[cfg(feature = "space_writable")]
+    UploadAttachment {
+        /// File path to upload
+        #[clap(short, long, value_name = "FILE_PATH")]
+        file: PathBuf,
     },
 }
 
@@ -1982,6 +1991,37 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         eprintln!("Error downloading space logo: {}", e);
                     }
                 }
+            }
+            #[cfg(feature = "space_writable")]
+            SpaceCommands::UploadAttachment { file } => {
+                println!("Uploading attachment: {}", file.display());
+
+                // Check if file exists
+                if !file.exists() {
+                    eprintln!("Error: File does not exist: {}", file.display());
+                    std::process::exit(1);
+                }
+
+                let params = UploadAttachmentParams::new(file.clone());
+
+                match client.space().upload_attachment(&params).await {
+                    Ok(attachment) => {
+                        println!("✅ Attachment uploaded successfully");
+                        println!("Attachment ID: {}", attachment.id);
+                        println!("Filename: {}", attachment.name);
+                        println!("Size: {} bytes", attachment.size);
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to upload attachment: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(not(feature = "space_writable"))]
+            SpaceCommands::UploadAttachment { .. } => {
+                eprintln!(
+                    "Attachment upload is not available. Please build with 'space_writable' feature."
+                );
             }
         },
         Commands::Project(project_args) => match project_args.command {

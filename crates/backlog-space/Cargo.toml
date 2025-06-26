@@ -22,3 +22,4 @@ derive_builder = { workspace = true }
 client = { path = "../client", features = ["test-utils"] }
 wiremock = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt"] }
+tempfile = { workspace = true }
