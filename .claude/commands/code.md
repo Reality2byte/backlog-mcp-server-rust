@@ -1,1 +1,1 @@
-Implement according to your plan with **TDD process**.
+Implement according to your plan except MCP server with **t-wada's** TDD process.

@@ -21,6 +21,8 @@ mod add_issue;
 #[cfg(feature = "writable")]
 mod add_issue_with_api_date;
 #[cfg(feature = "writable")]
+mod delete_attachment;
+#[cfg(feature = "writable")]
 mod delete_comment;
 #[cfg(feature = "writable")]
 mod delete_issue;
@@ -55,6 +57,8 @@ pub use add_issue::{AddIssueParams, AddIssueParamsBuilder, AddIssueResponse};
 pub use add_issue_with_api_date::{
     AddIssueWithApiDateParams, AddIssueWithApiDateParamsBuilder, AddIssueWithApiDateResponse,
 };
+#[cfg(feature = "writable")]
+pub use delete_attachment::{DeleteAttachmentParams, DeleteAttachmentResponse};
 #[cfg(feature = "writable")]
 pub use delete_comment::{DeleteCommentParams, DeleteCommentResponse};
 #[cfg(feature = "writable")]

@@ -4,10 +4,10 @@ mod writable_tests {
     use backlog_core::identifier::{AttachmentId, CommentId, SharedFileId, UserId};
     use backlog_core::{IssueIdOrKey, IssueKey, Language, Role, User};
     use backlog_issue::api::IssueApi;
-    use backlog_issue::models::{Comment, FileContent, SharedFile};
+    use backlog_issue::models::{Attachment, Comment, FileContent, SharedFile};
     use backlog_issue::{
-        AddCommentParamsBuilder, DeleteCommentParams, GetAttachmentFileParams,
-        LinkSharedFilesToIssueParamsBuilder, UpdateCommentParams,
+        AddCommentParamsBuilder, DeleteAttachmentParams, DeleteCommentParams,
+        GetAttachmentFileParams, LinkSharedFilesToIssueParamsBuilder, UpdateCommentParams,
     };
     use chrono::{TimeZone, Utc};
     use client::test_utils::setup_client;
@@ -87,6 +87,22 @@ mod writable_tests {
                 Some(s) => FileContent::File { size: s },
                 None => FileContent::Directory,
             },
+        }
+    }
+
+    fn create_mock_attachment(
+        id: u32,
+        name: &str,
+        size: u64,
+        user_id: u32,
+        user_name: &str,
+    ) -> Attachment {
+        Attachment {
+            id: AttachmentId::new(id),
+            name: name.to_string(),
+            size,
+            created_user: create_mock_user(user_id, user_name),
+            created: Utc.with_ymd_and_hms(2024, 1, 1, 12, 0, 0).unwrap(),
         }
     }
 
@@ -631,5 +647,127 @@ mod writable_tests {
         assert!(result.is_ok());
         let comment = result.unwrap();
         assert_eq!(comment.id, CommentId::new(1));
+    }
+
+    #[tokio::test]
+    async fn test_delete_attachment_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+
+        let issue_id_or_key = "MFP-2";
+        let attachment_id = AttachmentId::new(12345);
+
+        let expected_attachment =
+            create_mock_attachment(12345, "deleted_file.pdf", 1024, 100, "testuser");
+
+        Mock::given(method("DELETE"))
+            .and(path(format!(
+                "/api/v2/issues/{}/attachments/{}",
+                issue_id_or_key, attachment_id
+            )))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_attachment))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteAttachmentParams {
+            issue_id_or_key: IssueIdOrKey::Key(issue_id_or_key.parse::<IssueKey>().unwrap()),
+            attachment_id,
+        };
+
+        let result = issue_api.delete_attachment(params).await;
+
+        assert!(result.is_ok());
+        let attachment = result.unwrap();
+        assert_eq!(attachment.id, AttachmentId::new(12345));
+        assert_eq!(attachment.name, "deleted_file.pdf");
+        assert_eq!(attachment.size, 1024);
+    }
+
+    #[tokio::test]
+    async fn test_delete_attachment_issue_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+
+        let issue_id_or_key = "INVALID-999";
+        let attachment_id = AttachmentId::new(12345);
+
+        Mock::given(method("DELETE"))
+            .and(path(format!(
+                "/api/v2/issues/{}/attachments/{}",
+                issue_id_or_key, attachment_id
+            )))
+            .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
+                "errors": [{"message": "Issue not found"}]
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteAttachmentParams {
+            issue_id_or_key: IssueIdOrKey::Key(issue_id_or_key.parse::<IssueKey>().unwrap()),
+            attachment_id,
+        };
+
+        let result = issue_api.delete_attachment(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_delete_attachment_attachment_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+
+        let issue_id_or_key = "MFP-2";
+        let attachment_id = AttachmentId::new(99999);
+
+        Mock::given(method("DELETE"))
+            .and(path(format!(
+                "/api/v2/issues/{}/attachments/{}",
+                issue_id_or_key, attachment_id
+            )))
+            .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
+                "errors": [{"message": "Attachment not found"}]
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteAttachmentParams {
+            issue_id_or_key: IssueIdOrKey::Key(issue_id_or_key.parse::<IssueKey>().unwrap()),
+            attachment_id,
+        };
+
+        let result = issue_api.delete_attachment(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_delete_attachment_forbidden() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let issue_api = IssueApi::new(client);
+
+        let issue_id_or_key = "MFP-2";
+        let attachment_id = AttachmentId::new(12345);
+
+        Mock::given(method("DELETE"))
+            .and(path(format!(
+                "/api/v2/issues/{}/attachments/{}",
+                issue_id_or_key, attachment_id
+            )))
+            .respond_with(ResponseTemplate::new(403).set_body_json(serde_json::json!({
+                "errors": [{"message": "You do not have permission to delete this attachment"}]
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteAttachmentParams {
+            issue_id_or_key: IssueIdOrKey::Key(issue_id_or_key.parse::<IssueKey>().unwrap()),
+            attachment_id,
+        };
+
+        let result = issue_api.delete_attachment(params).await;
+        assert!(result.is_err());
     }
 }

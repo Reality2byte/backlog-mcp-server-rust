@@ -29,9 +29,9 @@ use backlog_core::{
 #[cfg(feature = "project_writable")]
 use backlog_domain_models::{IssueTypeColor, StatusColor};
 #[cfg(feature = "issue_writable")]
-use backlog_issue::DeleteCommentParams;
-#[cfg(feature = "issue_writable")]
 use backlog_issue::{AddIssueParamsBuilder, UpdateIssueParamsBuilder};
+#[cfg(feature = "issue_writable")]
+use backlog_issue::{DeleteAttachmentParams, DeleteCommentParams};
 use backlog_project::GetProjectListParams;
 #[cfg(feature = "project_writable")]
 use backlog_project::{
@@ -338,6 +338,10 @@ enum IssueCommands {
     #[cfg(feature = "issue_writable")]
     #[command(about = "Delete a comment from an issue")]
     DeleteComment(DeleteCommentArgs),
+    /// Delete an attachment from an issue
+    #[cfg(feature = "issue_writable")]
+    #[command(about = "Delete an attachment from an issue")]
+    DeleteAttachment(DeleteAttachmentArgs),
     /// Create a new issue
     #[command(about = "Create a new issue")]
     Create(CreateIssueArgs),
@@ -430,6 +434,18 @@ struct DeleteCommentArgs {
     /// Comment ID to delete
     #[clap(short = 'c', long)]
     comment_id: u32,
+}
+
+#[cfg(feature = "issue_writable")]
+#[derive(Args, Debug)]
+struct DeleteAttachmentArgs {
+    /// Issue ID or key (e.g., 'PROJECT-123')
+    #[clap(short, long)]
+    issue_id: String,
+
+    /// Attachment ID to delete
+    #[clap(short = 'a', long)]
+    attachment_id: u32,
 }
 
 #[derive(Args, Debug)]
@@ -1611,6 +1627,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to delete comment: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "issue_writable")]
+            IssueCommands::DeleteAttachment(args) => {
+                let params = DeleteAttachmentParams {
+                    issue_id_or_key: args.issue_id.parse::<IssueKey>()?.into(),
+                    attachment_id: AttachmentId::new(args.attachment_id),
+                };
+
+                match client.issue().delete_attachment(params).await {
+                    Ok(attachment) => {
+                        println!("✅ Attachment deleted successfully");
+                        println!("Deleted Attachment ID: {}", attachment.id);
+                        println!("Deleted File Name: {}", attachment.name);
+                        println!("File Size: {} bytes", attachment.size);
+                        println!("Originally Created: {}", attachment.created);
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to delete attachment: {}", e);
                         std::process::exit(1);
                     }
                 }

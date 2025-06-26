@@ -101,7 +101,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 #### Attachements
 - ✅ GetListOfIssueAttachments: Returns the list of issue attachments: GET /api/v2/issues/:issueIdOrKey/attachments
 - ✅ GetIssueAttachment: Downloads issue’s attachment file: GET /api/v2/issues/:issueIdOrKey/attachments/:attachmentId
-- ❌ DeleteIssueAttachment: Deletes an attachment of issue: DELETE /api/v2/issues/:issueIdOrKey/attachments/:attachmentId
+- ✅ DeleteIssueAttachment: Deletes an attachment of issue: DELETE /api/v2/issues/:issueIdOrKey/attachments/:attachmentId
 
 #### Shared files for issue
 - ✅ GetListOfLinkedSharedFiles: Returns the list of linked Shared Files to issues: GET /api/v2/issues/:issueIdOrKey/sharedFiles
@@ -133,7 +133,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 
 ### Custom Fields
 - ❌ UpdateCustomField: Updates Custom Field: PATCH /api/v2/projects/:projectIdOrKey/customFields/:id
-- ❌ GetCustomFieldList: Returns list of Custom Fields in the project: GET /api/v2/projects/:projectIdOrKey/customFields
+- ✅ GetCustomFieldList: Returns list of Custom Fields in the project: GET /api/v2/projects/:projectIdOrKey/customFields
 - ❌ AddCustomField: Adds new Custom Field to the project: POST /api/v2/projects/:projectIdOrKey/customFields
 - ❌ AddListItemForListTypeCustomField: Adds new list item for list type custom field. Only administrator can call this API if the option “Add items in adding or editing issues” is disabled in settings. Calling API fails if specified custom field’s type is not a list: POST /api/v2/projects/:projectIdOrKey/customFields/:id/items
 - ❌ DeleteCustomField: Deletes Custom Field: DELETE /api/v2/projects/:projectIdOrKey/customFields/:id

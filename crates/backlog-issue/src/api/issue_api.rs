@@ -3,13 +3,14 @@ use client::{Client, DownloadedFile};
 
 #[cfg(feature = "writable")]
 use super::{
-    AddCommentParams, AddIssueParams, DeleteCommentParams, DeleteIssueParams,
-    LinkSharedFilesToIssueParams, UpdateCommentParams, UpdateIssueParams,
+    AddCommentParams, AddIssueParams, DeleteAttachmentParams, DeleteCommentParams,
+    DeleteIssueParams, LinkSharedFilesToIssueParams, UpdateCommentParams, UpdateIssueParams,
 };
 #[cfg(feature = "writable")]
 use super::{
-    AddCommentResponse, AddIssueResponse, DeleteCommentResponse, DeleteIssueResponse,
-    LinkSharedFilesToIssueResponse, UpdateCommentResponse, UpdateIssueResponse,
+    AddCommentResponse, AddIssueResponse, DeleteAttachmentResponse, DeleteCommentResponse,
+    DeleteIssueResponse, LinkSharedFilesToIssueResponse, UpdateCommentResponse,
+    UpdateIssueResponse,
 };
 use super::{
     CountCommentParams, CountIssueParams, GetAttachmentFileParams, GetAttachmentListParams,
@@ -86,6 +87,17 @@ impl IssueApi {
         &self,
         params: DeleteCommentParams,
     ) -> Result<DeleteCommentResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Delete an attachment from an issue.
+    ///
+    /// Corresponds to `DELETE /api/v2/issues/:issueIdOrKey/attachments/:attachmentId`.
+    #[cfg(feature = "writable")]
+    pub async fn delete_attachment(
+        &self,
+        params: DeleteAttachmentParams,
+    ) -> Result<DeleteAttachmentResponse> {
         self.0.execute(params).await
     }
 
