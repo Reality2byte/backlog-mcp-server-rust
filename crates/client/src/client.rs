@@ -1,8 +1,8 @@
 use backlog_api_core::{
-    BacklogApiErrorResponse, Error as ApiError, IntoDownloadRequest, IntoRequest, Result, bytes,
+    BacklogApiErrorResponse, Error as ApiError, IntoDownloadRequest, IntoRequest,
+    IntoUploadRequest, Result, bytes,
 };
 use reqwest::header::{CONTENT_DISPOSITION, CONTENT_TYPE};
-use std::path::PathBuf;
 use tokio::fs;
 use url::Url;
 
@@ -150,12 +150,22 @@ impl Client {
         self.execute_unified(request, FileResponse).await
     }
 
-    /// Uploads a file to the Backlog API using multipart/form-data
-    /// Corresponds to `POST /api/v2/space/attachment`
-    pub async fn upload_file<T>(&self, file_path: PathBuf) -> Result<T>
+    /// Uploads a file using the IntoUploadRequest trait
+    pub async fn upload_file<P, T>(&self, params: P) -> Result<T>
     where
+        P: IntoUploadRequest,
         T: serde::de::DeserializeOwned + Send,
     {
+        let path = params.path();
+        let url = self
+            .base_url
+            .join(&path)
+            .map_err(|e| ApiError::InvalidBuildParameter(format!("Failed to build URL: {}", e)))?;
+        let file_path = params.file_path().clone();
+        let field_name = params.file_field_name().to_string();
+        let additional_fields = params.additional_fields();
+
+        // ファイル読み込み
         let file_content = fs::read(&file_path)
             .await
             .map_err(|e| ApiError::InvalidBuildParameter(format!("Failed to read file: {}", e)))?;
@@ -166,14 +176,15 @@ impl Client {
             .unwrap_or("attachment")
             .to_string();
 
+        // Multipart form構築
         let file_part = reqwest::multipart::Part::bytes(file_content).file_name(filename);
 
-        let form = reqwest::multipart::Form::new().part("file", file_part);
+        let mut form = reqwest::multipart::Form::new().part(field_name.clone(), file_part);
 
-        let url = self
-            .base_url
-            .join("/api/v2/space/attachment")
-            .map_err(|e| ApiError::InvalidBuildParameter(format!("Failed to build URL: {}", e)))?;
+        // 追加フィールドがあれば追加
+        for (key, value) in additional_fields {
+            form = form.text(key, value);
+        }
 
         let request = self.client.post(url).multipart(form).build().map_err(|e| {
             ApiError::InvalidBuildParameter(format!("Failed to build request: {}", e))

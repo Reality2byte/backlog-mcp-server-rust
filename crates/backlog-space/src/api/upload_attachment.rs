@@ -1,4 +1,6 @@
 #[cfg(feature = "writable")]
+use backlog_api_core::IntoUploadRequest;
+#[cfg(feature = "writable")]
 use std::path::PathBuf;
 
 /// Response type for uploading an attachment
@@ -22,5 +24,16 @@ pub struct UploadAttachmentParams {
 impl UploadAttachmentParams {
     pub fn new(file_path: PathBuf) -> Self {
         Self { file_path }
+    }
+}
+
+#[cfg(feature = "writable")]
+impl IntoUploadRequest for UploadAttachmentParams {
+    fn path(&self) -> String {
+        "/api/v2/space/attachment".to_string()
+    }
+
+    fn file_path(&self) -> &PathBuf {
+        &self.file_path
     }
 }

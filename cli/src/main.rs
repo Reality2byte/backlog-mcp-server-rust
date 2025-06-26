@@ -2004,7 +2004,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 let params = UploadAttachmentParams::new(file.clone());
 
-                match client.space().upload_attachment(&params).await {
+                match client.space().upload_attachment(params).await {
                     Ok(attachment) => {
                         println!("✅ Attachment uploaded successfully");
                         println!("Attachment ID: {}", attachment.id);

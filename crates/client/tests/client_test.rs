@@ -1,9 +1,25 @@
+use backlog_api_core::IntoUploadRequest;
 use client::Client;
 use std::fs;
 use std::path::PathBuf;
 use tempfile::NamedTempFile;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
+
+#[derive(Debug, Clone)]
+struct TestUploadParams {
+    file_path: PathBuf,
+}
+
+impl IntoUploadRequest for TestUploadParams {
+    fn path(&self) -> String {
+        "/api/v2/space/attachment".to_string()
+    }
+
+    fn file_path(&self) -> &PathBuf {
+        &self.file_path
+    }
+}
 
 #[tokio::test]
 async fn test_upload_file_success() {
@@ -35,8 +51,10 @@ async fn test_upload_file_success() {
         size: u64,
     }
 
-    let result: Result<AttachmentResponse, _> =
-        client.upload_file(temp_file.path().to_path_buf()).await;
+    let params = TestUploadParams {
+        file_path: temp_file.path().to_path_buf(),
+    };
+    let result: Result<AttachmentResponse, _> = client.upload_file(params).await;
     assert!(result.is_ok());
     let attachment = result.unwrap();
     assert_eq!(attachment.id, 123);
@@ -59,7 +77,10 @@ async fn test_upload_file_not_found() {
         size: u64,
     }
 
-    let result: Result<AttachmentResponse, _> = client.upload_file(non_existent_file).await;
+    let params = TestUploadParams {
+        file_path: non_existent_file,
+    };
+    let result: Result<AttachmentResponse, _> = client.upload_file(params).await;
     assert!(result.is_err());
 }
 
@@ -97,7 +118,9 @@ async fn test_upload_file_api_error() {
         size: u64,
     }
 
-    let result: Result<AttachmentResponse, _> =
-        client.upload_file(temp_file.path().to_path_buf()).await;
+    let params = TestUploadParams {
+        file_path: temp_file.path().to_path_buf(),
+    };
+    let result: Result<AttachmentResponse, _> = client.upload_file(params).await;
     assert!(result.is_err());
 }
