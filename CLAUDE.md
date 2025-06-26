@@ -612,6 +612,13 @@ When optimizing parameter structures, first analyze the parameter types:
   - Added `update_issue_comment` tool to MCP server
   - Full integration with real Backlog API testing on MFP-2 project
   - Follows `PATCH /api/v2/issues/:issueIdOrKey/comments/:commentId` endpoint specification
+- **Wiki Page Creation API**: Complete implementation of wiki page creation functionality (TDD)
+  - Added `add_wiki()` API method in `backlog-wiki` crate with comprehensive test coverage
+  - Implemented `AddWikiParams` with manual form serialization following standard patterns
+  - Extended CLI with `wiki create` command (`--features wiki_writable`)
+  - Full integration with real Backlog API testing on MFP project (IDs: 4188464, 4188465)
+  - Follows `POST /api/v2/wikis` endpoint specification with proper error handling
+  - Supports required parameters (projectId, name, content) and optional mailNotify parameter
 
 ### TDD Development Process
 When implementing new API features, follow Test-Driven Development:

@@ -50,7 +50,7 @@ use backlog_user::GetUserIconParams;
 use backlog_user::GetUserListParams;
 use backlog_user::GetUserParams;
 #[cfg(feature = "wiki_writable")]
-use backlog_wiki::UpdateWikiParams;
+use backlog_wiki::{AddWikiParams, UpdateWikiParams};
 #[cfg(feature = "project_writable")]
 use chrono::{DateTime, Utc};
 use clap::{Args, Parser};
@@ -879,6 +879,22 @@ enum WikiCommands {
         /// Output file path (if not specified, use original filename)
         #[clap(short, long)]
         output: Option<String>,
+    },
+    /// Create a new wiki page
+    #[cfg(feature = "wiki_writable")]
+    Create {
+        /// Project ID
+        #[clap(long)]
+        project_id: String,
+        /// Wiki page name
+        #[clap(long)]
+        name: String,
+        /// Wiki page content
+        #[clap(long)]
+        content: String,
+        /// Send email notification
+        #[clap(long)]
+        mail_notify: Option<bool>,
     },
     /// Update a wiki page
     #[cfg(feature = "wiki_writable")]
@@ -3116,6 +3132,41 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to download wiki attachment: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "wiki_writable")]
+            WikiCommands::Create {
+                project_id,
+                name,
+                content,
+                mail_notify,
+            } => {
+                println!("Creating new wiki page in project: {}", project_id);
+
+                let params = AddWikiParams::new(ProjectId::from_str(&project_id)?, name, content);
+
+                let params = if let Some(mail_notify) = mail_notify {
+                    params.mail_notify(mail_notify)
+                } else {
+                    params
+                };
+
+                match client.wiki().add_wiki(params).await {
+                    Ok(wiki_detail) => {
+                        println!("✅ Wiki page created successfully");
+                        println!("   ID: {}", wiki_detail.id.value());
+                        println!("   Name: {}", wiki_detail.name);
+                        println!("   Project ID: {}", wiki_detail.project_id.value());
+                        println!(
+                            "   Created by: {} at {}",
+                            wiki_detail.created_user.name,
+                            wiki_detail.created.format("%Y-%m-%d %H:%M:%S")
+                        );
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to create wiki page: {}", e);
                         std::process::exit(1);
                     }
                 }

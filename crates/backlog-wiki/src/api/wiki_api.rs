@@ -1,10 +1,10 @@
+#[cfg(feature = "writable")]
+use crate::api::{AddWikiParams, AddWikiResponse, UpdateWikiParams, UpdateWikiResponse};
 use crate::api::{
     DownloadWikiAttachmentParams, GetWikiAttachmentListParams, GetWikiAttachmentListResponse,
     GetWikiCountParams, GetWikiCountResponse, GetWikiDetailParams, GetWikiDetailResponse,
     GetWikiListParams, GetWikiListResponse,
 };
-#[cfg(feature = "writable")]
-use crate::api::{UpdateWikiParams, UpdateWikiResponse};
 use backlog_api_core::Result;
 use client::Client;
 
@@ -52,6 +52,13 @@ impl WikiApi {
         params: DownloadWikiAttachmentParams,
     ) -> Result<client::DownloadedFile> {
         self.0.download_file(params).await
+    }
+
+    /// Add new wiki page
+    /// Corresponds to `POST /api/v2/wikis`.
+    #[cfg(feature = "writable")]
+    pub async fn add_wiki(&self, params: AddWikiParams) -> Result<AddWikiResponse> {
+        self.0.execute(params).await
     }
 
     /// Update wiki page

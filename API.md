@@ -101,7 +101,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 #### Attachements
 - ✅ GetListOfIssueAttachments: Returns the list of issue attachments: GET /api/v2/issues/:issueIdOrKey/attachments
 - ✅ GetIssueAttachment: Downloads issue’s attachment file: GET /api/v2/issues/:issueIdOrKey/attachments/:attachmentId
-- ❌ DeleteIssueAttachment: Deletes an attachment of issue: DELETE /api/v2/issues/:issueIdOrKey/attachments/:attachmentId
+- ✅ DeleteIssueAttachment: Deletes an attachment of issue: DELETE /api/v2/issues/:issueIdOrKey/attachments/:attachmentId
 
 #### Shared files for issue
 - ✅ GetListOfLinkedSharedFiles: Returns the list of linked Shared Files to issues: GET /api/v2/issues/:issueIdOrKey/sharedFiles
@@ -181,7 +181,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ❌ RemoveWikiAttachment: Removes files attached to Wiki: DELETE /api/v2/wikis/:wikiId/attachments/:attachmentId
 - ❌ DeleteWikiPage: Deletes Wiki page: DELETE /api/v2/wikis/:wikiId
 - ✅ CountWikiPage: Returns number of Wiki pages: GET /api/v2/wikis/count
-- ❌ AddWikiPage: Adds new Wiki page: POST /api/v2/wikis
+- ✅ AddWikiPage: Adds new Wiki page: POST /api/v2/wikis
 - ❌ AttachFileToWiki: Attaches file to Wiki: POST /api/v2/wikis/:wikiId/attachments
 
 #### Shared files for wiki

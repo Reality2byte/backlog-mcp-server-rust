@@ -6,6 +6,8 @@ mod get_wiki_list;
 mod wiki_api;
 
 #[cfg(feature = "writable")]
+mod add_wiki;
+#[cfg(feature = "writable")]
 mod update_wiki;
 
 // Export response types (always available)
@@ -16,6 +18,8 @@ pub use get_wiki_detail::{GetWikiDetailParams, GetWikiDetailResponse};
 pub use get_wiki_list::{GetWikiListParams, GetWikiListResponse};
 
 // Export writable types with feature gates
+#[cfg(feature = "writable")]
+pub use add_wiki::{AddWikiParams, AddWikiResponse};
 #[cfg(feature = "writable")]
 pub use update_wiki::{UpdateWikiParams, UpdateWikiResponse};
 
