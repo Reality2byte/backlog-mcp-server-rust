@@ -103,7 +103,7 @@ The project implements **78+ API endpoints** across 8 domain modules with varyin
 | **Project** | 22 | ✅ Complete | ✅ Full CRUD | 🟢 Extensive |
 | **Git/PR** | 16 | ✅ Complete | ✅ Full CRUD | 🟢 Complete |
 | **Issue** | 14 | ✅ Complete | ✅ Full CRUD | 🟢 Complete |
-| **Wiki** | 6 | ✅ Complete | ✅ Update only | 🟡 Partial |
+| **Wiki** | 6 | ✅ Complete | ✅ Create/Update/Delete | 🟢 Extensive |
 | **Document** | 4 | ✅ Complete | (Read-only API) | 🟢 Read-only |
 | **User** | 4 | ✅ Complete | ❌ Planned | 🟡 Read-only |
 | **File** | 2 | ✅ Complete | (Read-only API) | 🟢 Complete |

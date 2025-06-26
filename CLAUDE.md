@@ -619,6 +619,13 @@ When optimizing parameter structures, first analyze the parameter types:
   - Full integration with real Backlog API testing on MFP project (IDs: 4188464, 4188465)
   - Follows `POST /api/v2/wikis` endpoint specification with proper error handling
   - Supports required parameters (projectId, name, content) and optional mailNotify parameter
+- **Wiki Page Deletion API**: Complete implementation of wiki page deletion functionality (TDD)
+  - Added `delete_wiki()` API method in `backlog-wiki` crate with comprehensive test coverage
+  - Implemented `DeleteWikiParams` with query parameter serialization for DELETE requests
+  - Extended CLI with `wiki delete` command (`--features wiki_writable`)
+  - Full integration with real Backlog API testing on MFP project (IDs: 4188466, 4188467)
+  - Follows `DELETE /api/v2/wikis/:wikiId` endpoint specification with proper error handling
+  - Supports required wikiId parameter and optional mailNotify query parameter
 
 ### TDD Development Process
 When implementing new API features, follow Test-Driven Development:

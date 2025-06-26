@@ -50,7 +50,7 @@ use backlog_user::GetUserIconParams;
 use backlog_user::GetUserListParams;
 use backlog_user::GetUserParams;
 #[cfg(feature = "wiki_writable")]
-use backlog_wiki::{AddWikiParams, UpdateWikiParams};
+use backlog_wiki::{AddWikiParams, DeleteWikiParams, UpdateWikiParams};
 #[cfg(feature = "project_writable")]
 use chrono::{DateTime, Utc};
 use clap::{Args, Parser};
@@ -909,6 +909,16 @@ enum WikiCommands {
         #[clap(long)]
         content: Option<String>,
         /// Send email notification of update
+        #[clap(long)]
+        mail_notify: Option<bool>,
+    },
+    /// Delete a wiki page
+    #[cfg(feature = "wiki_writable")]
+    Delete {
+        /// Wiki ID
+        #[clap(name = "WIKI_ID")]
+        wiki_id: u32,
+        /// Send email notification of deletion
         #[clap(long)]
         mail_notify: Option<bool>,
     },
@@ -3218,6 +3228,42 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to update wiki: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "wiki_writable")]
+            WikiCommands::Delete {
+                wiki_id,
+                mail_notify,
+            } => {
+                println!("Deleting wiki ID: {}", wiki_id);
+
+                let mut params = DeleteWikiParams::new(WikiId::new(wiki_id));
+
+                if let Some(mail_notify) = mail_notify {
+                    params = params.mail_notify(mail_notify);
+                }
+
+                match client.wiki().delete_wiki(params).await {
+                    Ok(wiki_detail) => {
+                        println!("✅ Wiki deleted successfully");
+                        println!("   ID: {}", wiki_detail.id.value());
+                        println!("   Name: {}", wiki_detail.name);
+                        println!("   Project ID: {}", wiki_detail.project_id.value());
+                        println!(
+                            "   Created by: {} at {}",
+                            wiki_detail.created_user.name,
+                            wiki_detail.created.format("%Y-%m-%d %H:%M:%S")
+                        );
+                        println!(
+                            "   Last updated by: {} at {}",
+                            wiki_detail.updated_user.name,
+                            wiki_detail.updated.format("%Y-%m-%d %H:%M:%S")
+                        );
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to delete wiki: {}", e);
                         std::process::exit(1);
                     }
                 }

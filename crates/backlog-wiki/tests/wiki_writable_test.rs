@@ -1,9 +1,9 @@
 #[cfg(feature = "writable")]
 mod writable_tests {
     use super::common::*;
-    use backlog_wiki::api::{AddWikiParams, UpdateWikiParams};
+    use backlog_wiki::api::{AddWikiParams, DeleteWikiParams, UpdateWikiParams};
     use wiremock::MockServer;
-    use wiremock::matchers::{body_string_contains, header, method, path};
+    use wiremock::matchers::{body_string_contains, header, method, path, query_param};
 
     #[tokio::test]
     async fn test_update_wiki_success_with_all_params() {
@@ -323,6 +323,122 @@ mod writable_tests {
             AddWikiParams::new(ProjectId::new(500), "Server Error", "Internal server error");
 
         let result = wiki_api.add_wiki(params).await;
+        assert!(result.is_err());
+    }
+
+    // Tests for delete_wiki functionality
+    #[tokio::test]
+    async fn test_delete_wiki_success() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        let expected_detail = create_mock_wiki_detail(123, 456, "Deleted Wiki Page");
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/wikis/123"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_detail))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteWikiParams::new(WikiId::new(123));
+
+        let result = wiki_api.delete_wiki(params).await;
+        assert!(result.is_ok());
+        let detail = result.unwrap();
+        assert_eq!(detail.name, "Deleted Wiki Page");
+        assert_eq!(detail.id.value(), 123);
+    }
+
+    #[tokio::test]
+    async fn test_delete_wiki_success_with_mail_notify() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        let expected_detail = create_mock_wiki_detail(456, 789, "Deleted with Notification");
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/wikis/456"))
+            .and(query_param("mailNotify", "true"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_detail))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteWikiParams::new(WikiId::new(456)).mail_notify(true);
+
+        let result = wiki_api.delete_wiki(params).await;
+        assert!(result.is_ok());
+        let detail = result.unwrap();
+        assert_eq!(detail.name, "Deleted with Notification");
+    }
+
+    #[tokio::test]
+    async fn test_delete_wiki_success_with_mail_notify_false() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        let expected_detail = create_mock_wiki_detail(789, 123, "Deleted without Notification");
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/wikis/789"))
+            .and(query_param("mailNotify", "false"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_detail))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteWikiParams::new(WikiId::new(789)).mail_notify(false);
+
+        let result = wiki_api.delete_wiki(params).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_delete_wiki_not_found() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/wikis/404"))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteWikiParams::new(WikiId::new(404));
+
+        let result = wiki_api.delete_wiki(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_delete_wiki_unauthorized() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/wikis/403"))
+            .respond_with(ResponseTemplate::new(403))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteWikiParams::new(WikiId::new(403));
+
+        let result = wiki_api.delete_wiki(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_delete_wiki_server_error() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/wikis/500"))
+            .respond_with(ResponseTemplate::new(500))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteWikiParams::new(WikiId::new(500));
+
+        let result = wiki_api.delete_wiki(params).await;
         assert!(result.is_err());
     }
 }

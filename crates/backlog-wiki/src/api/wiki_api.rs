@@ -1,5 +1,8 @@
 #[cfg(feature = "writable")]
-use crate::api::{AddWikiParams, AddWikiResponse, UpdateWikiParams, UpdateWikiResponse};
+use crate::api::{
+    AddWikiParams, AddWikiResponse, DeleteWikiParams, DeleteWikiResponse, UpdateWikiParams,
+    UpdateWikiResponse,
+};
 use crate::api::{
     DownloadWikiAttachmentParams, GetWikiAttachmentListParams, GetWikiAttachmentListResponse,
     GetWikiCountParams, GetWikiCountResponse, GetWikiDetailParams, GetWikiDetailResponse,
@@ -65,6 +68,13 @@ impl WikiApi {
     /// Corresponds to `PATCH /api/v2/wikis/:wikiId`.
     #[cfg(feature = "writable")]
     pub async fn update_wiki(&self, params: UpdateWikiParams) -> Result<UpdateWikiResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Delete wiki page
+    /// Corresponds to `DELETE /api/v2/wikis/:wikiId`.
+    #[cfg(feature = "writable")]
+    pub async fn delete_wiki(&self, params: DeleteWikiParams) -> Result<DeleteWikiResponse> {
         self.0.execute(params).await
     }
 }
