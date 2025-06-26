@@ -626,6 +626,13 @@ When optimizing parameter structures, first analyze the parameter types:
   - Full integration with real Backlog API testing on MFP project (IDs: 4188466, 4188467)
   - Follows `DELETE /api/v2/wikis/:wikiId` endpoint specification with proper error handling
   - Supports required wikiId parameter and optional mailNotify query parameter
+- **Wiki File Attachment API**: Complete implementation of wiki file attachment functionality (TDD)
+  - Added `attach_files_to_wiki()` API method in `backlog-wiki` crate with comprehensive test coverage
+  - Implemented `AttachFilesToWikiParams` with form-encoded array parameters (`attachmentId[]`)
+  - Extended CLI with `wiki attach-file` command providing seamless 2-step workflow (`--features wiki_writable`)
+  - Full integration with real Backlog API testing on MFP project (attachment ID: 90074, file: test-attachment.txt)
+  - Follows `POST /api/v2/wikis/:wikiId/attachments` endpoint specification with proper error handling
+  - Implements transparent file upload → attachment workflow (space upload + wiki attachment)
 
 ### TDD Development Process
 When implementing new API features, follow Test-Driven Development:

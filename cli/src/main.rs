@@ -50,7 +50,7 @@ use backlog_user::GetUserIconParams;
 use backlog_user::GetUserListParams;
 use backlog_user::GetUserParams;
 #[cfg(feature = "wiki_writable")]
-use backlog_wiki::{AddWikiParams, DeleteWikiParams, UpdateWikiParams};
+use backlog_wiki::{AddWikiParams, AttachFilesToWikiParams, DeleteWikiParams, UpdateWikiParams};
 #[cfg(feature = "project_writable")]
 use chrono::{DateTime, Utc};
 use clap::{Args, Parser};
@@ -921,6 +921,16 @@ enum WikiCommands {
         /// Send email notification of deletion
         #[clap(long)]
         mail_notify: Option<bool>,
+    },
+    /// Attach file to a wiki page
+    #[cfg(feature = "wiki_writable")]
+    AttachFile {
+        /// Wiki ID
+        #[clap(name = "WIKI_ID")]
+        wiki_id: u32,
+        /// File path to attach
+        #[clap(long)]
+        file_path: PathBuf,
     },
 }
 
@@ -3264,6 +3274,55 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to delete wiki: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "wiki_writable")]
+            WikiCommands::AttachFile { wiki_id, file_path } => {
+                println!("Attaching file to wiki ID: {}", wiki_id);
+
+                // Step 1: Upload file to space to get attachment ID
+                println!("📤 Uploading file: {}", file_path.display());
+                let upload_params = UploadAttachmentParams::new(file_path.clone());
+
+                let attachment = match client.space().upload_attachment(upload_params).await {
+                    Ok(attachment) => {
+                        println!("✅ File uploaded successfully");
+                        println!("   Attachment ID: {}", attachment.id);
+                        println!("   File name: {}", attachment.name);
+                        println!("   File size: {} bytes", attachment.size);
+                        attachment
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to upload file: {}", e);
+                        std::process::exit(1);
+                    }
+                };
+
+                // Step 2: Attach the uploaded file to the wiki page
+                println!("🔗 Attaching file to wiki page...");
+                let attach_params = AttachFilesToWikiParams::new(
+                    WikiId::new(wiki_id),
+                    vec![AttachmentId::new(attachment.id)],
+                );
+
+                match client.wiki().attach_files_to_wiki(attach_params).await {
+                    Ok(wiki_attachments) => {
+                        println!("✅ File attached to wiki successfully");
+                        for attachment in wiki_attachments {
+                            println!("   Attachment ID: {}", attachment.id.value());
+                            println!("   File name: {}", attachment.name);
+                            println!("   File size: {} bytes", attachment.size);
+                            println!(
+                                "   Attached by: {} at {}",
+                                attachment.created_user.name,
+                                attachment.created.format("%Y-%m-%d %H:%M:%S")
+                            );
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to attach file to wiki: {}", e);
                         std::process::exit(1);
                     }
                 }

@@ -1,7 +1,10 @@
 #[cfg(feature = "writable")]
 mod writable_tests {
     use super::common::*;
-    use backlog_wiki::api::{AddWikiParams, DeleteWikiParams, UpdateWikiParams};
+    use backlog_core::identifier::{AttachmentId, WikiId};
+    use backlog_wiki::api::{
+        AddWikiParams, AttachFilesToWikiParams, DeleteWikiParams, UpdateWikiParams,
+    };
     use wiremock::MockServer;
     use wiremock::matchers::{body_string_contains, header, method, path, query_param};
 
@@ -439,6 +442,165 @@ mod writable_tests {
         let params = DeleteWikiParams::new(WikiId::new(500));
 
         let result = wiki_api.delete_wiki(params).await;
+        assert!(result.is_err());
+    }
+
+    // Tests for attach_files_to_wiki functionality
+    #[tokio::test]
+    async fn test_attach_files_to_wiki_success_single_file() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        let expected_attachment = create_mock_wiki_attachment(456, "document.pdf", 2048, 1, "john");
+        let expected_response = vec![expected_attachment];
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/wikis/123/attachments"))
+            .respond_with(ResponseTemplate::new(201).set_body_json(&expected_response))
+            .mount(&mock_server)
+            .await;
+
+        let params = AttachFilesToWikiParams::new(WikiId::new(123), vec![AttachmentId::new(456)]);
+
+        let result = wiki_api.attach_files_to_wiki(params).await;
+        match result {
+            Ok(attachments) => {
+                assert_eq!(attachments.len(), 1);
+                assert_eq!(attachments[0].id.value(), 456);
+                assert_eq!(attachments[0].name, "document.pdf");
+            }
+            Err(e) => {
+                panic!("Expected Ok but got error: {:?}", e);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_attach_files_to_wiki_success_multiple_files() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        let expected_attachments = vec![
+            create_mock_wiki_attachment(111, "file1.txt", 1024, 1, "alice"),
+            create_mock_wiki_attachment(222, "file2.jpg", 3072, 2, "bob"),
+            create_mock_wiki_attachment(333, "file3.pdf", 4096, 3, "charlie"),
+        ];
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/wikis/789/attachments"))
+            .respond_with(ResponseTemplate::new(201).set_body_json(&expected_attachments))
+            .mount(&mock_server)
+            .await;
+
+        let params = AttachFilesToWikiParams::new(
+            WikiId::new(789),
+            vec![
+                AttachmentId::new(111),
+                AttachmentId::new(222),
+                AttachmentId::new(333),
+            ],
+        );
+
+        let result = wiki_api.attach_files_to_wiki(params).await;
+        match result {
+            Ok(attachments) => {
+                assert_eq!(attachments.len(), 3);
+                assert_eq!(attachments[0].name, "file1.txt");
+                assert_eq!(attachments[1].name, "file2.jpg");
+                assert_eq!(attachments[2].name, "file3.pdf");
+            }
+            Err(e) => {
+                panic!("Expected Ok but got error: {:?}", e);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_attach_files_to_wiki_success_empty_attachments() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        let expected_response: Vec<WikiAttachment> = vec![];
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/wikis/555/attachments"))
+            .respond_with(ResponseTemplate::new(201).set_body_json(&expected_response))
+            .mount(&mock_server)
+            .await;
+
+        let params = AttachFilesToWikiParams::new(WikiId::new(555), vec![]);
+
+        let result = wiki_api.attach_files_to_wiki(params).await;
+        assert!(result.is_ok());
+        let attachments = result.unwrap();
+        assert_eq!(attachments.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_attach_files_to_wiki_bad_request() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/wikis/400/attachments"))
+            .respond_with(ResponseTemplate::new(400))
+            .mount(&mock_server)
+            .await;
+
+        let params = AttachFilesToWikiParams::new(WikiId::new(400), vec![AttachmentId::new(999)]);
+
+        let result = wiki_api.attach_files_to_wiki(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_attach_files_to_wiki_unauthorized() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/wikis/403/attachments"))
+            .respond_with(ResponseTemplate::new(403))
+            .mount(&mock_server)
+            .await;
+
+        let params = AttachFilesToWikiParams::new(WikiId::new(403), vec![AttachmentId::new(123)]);
+
+        let result = wiki_api.attach_files_to_wiki(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_attach_files_to_wiki_wiki_not_found() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/wikis/404/attachments"))
+            .respond_with(ResponseTemplate::new(404))
+            .mount(&mock_server)
+            .await;
+
+        let params = AttachFilesToWikiParams::new(WikiId::new(404), vec![AttachmentId::new(456)]);
+
+        let result = wiki_api.attach_files_to_wiki(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_attach_files_to_wiki_server_error() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/wikis/500/attachments"))
+            .respond_with(ResponseTemplate::new(500))
+            .mount(&mock_server)
+            .await;
+
+        let params = AttachFilesToWikiParams::new(WikiId::new(500), vec![AttachmentId::new(789)]);
+
+        let result = wiki_api.attach_files_to_wiki(params).await;
         assert!(result.is_err());
     }
 }

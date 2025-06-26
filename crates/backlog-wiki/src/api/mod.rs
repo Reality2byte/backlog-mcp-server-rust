@@ -8,6 +8,8 @@ mod wiki_api;
 #[cfg(feature = "writable")]
 mod add_wiki;
 #[cfg(feature = "writable")]
+mod attach_files_to_wiki;
+#[cfg(feature = "writable")]
 mod delete_wiki;
 #[cfg(feature = "writable")]
 mod update_wiki;
@@ -22,6 +24,8 @@ pub use get_wiki_list::{GetWikiListParams, GetWikiListResponse};
 // Export writable types with feature gates
 #[cfg(feature = "writable")]
 pub use add_wiki::{AddWikiParams, AddWikiResponse};
+#[cfg(feature = "writable")]
+pub use attach_files_to_wiki::{AttachFilesToWikiParams, AttachFilesToWikiResponse};
 #[cfg(feature = "writable")]
 pub use delete_wiki::{DeleteWikiParams, DeleteWikiResponse};
 #[cfg(feature = "writable")]

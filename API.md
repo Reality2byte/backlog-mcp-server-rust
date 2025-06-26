@@ -37,9 +37,9 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Read operations**: list_documents(), get_document_tree(), get_document(), download_attachment()
 
 ### backlog-wiki (WikiApi)
-- **Implemented**: 6/15 endpoints (40%)
+- **Implemented**: 7/15 endpoints (47%)
 - **Read operations**: get_wiki_list(), get_wiki_detail(), get_wiki_count(), get_wiki_attachment_list(), download_wiki_attachment()
-- **Write operations** (requires `writable` feature): update_wiki()
+- **Write operations** (requires `writable` feature): add_wiki(), update_wiki(), delete_wiki(), attach_files_to_wiki()
 
 ### Not Implemented
 - **Activities**: 0/4 endpoints
@@ -182,7 +182,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ✅ DeleteWikiPage: Deletes Wiki page: DELETE /api/v2/wikis/:wikiId
 - ✅ CountWikiPage: Returns number of Wiki pages: GET /api/v2/wikis/count
 - ✅ AddWikiPage: Adds new Wiki page: POST /api/v2/wikis
-- ❌ AttachFileToWiki: Attaches file to Wiki: POST /api/v2/wikis/:wikiId/attachments
+- ✅ AttachFileToWiki: Attaches file to Wiki: POST /api/v2/wikis/:wikiId/attachments
 
 #### Shared files for wiki
 - ❌ GetListOfSharedFilesOnWiki: Returns the list of Shared Files on Wiki: GET /api/v2/wikis/:wikiId/sharedFiles
