@@ -1,10 +1,14 @@
+#[cfg(feature = "writable")]
+use crate::api::{
+    AddWikiParams, AddWikiResponse, AttachFilesToWikiParams, AttachFilesToWikiResponse,
+    DeleteWikiAttachmentParams, DeleteWikiAttachmentResponse, DeleteWikiParams, DeleteWikiResponse,
+    UpdateWikiParams, UpdateWikiResponse,
+};
 use crate::api::{
     DownloadWikiAttachmentParams, GetWikiAttachmentListParams, GetWikiAttachmentListResponse,
     GetWikiCountParams, GetWikiCountResponse, GetWikiDetailParams, GetWikiDetailResponse,
     GetWikiListParams, GetWikiListResponse,
 };
-#[cfg(feature = "writable")]
-use crate::api::{UpdateWikiParams, UpdateWikiResponse};
 use backlog_api_core::Result;
 use client::Client;
 
@@ -54,10 +58,44 @@ impl WikiApi {
         self.0.download_file(params).await
     }
 
+    /// Add new wiki page
+    /// Corresponds to `POST /api/v2/wikis`.
+    #[cfg(feature = "writable")]
+    pub async fn add_wiki(&self, params: AddWikiParams) -> Result<AddWikiResponse> {
+        self.0.execute(params).await
+    }
+
     /// Update wiki page
     /// Corresponds to `PATCH /api/v2/wikis/:wikiId`.
     #[cfg(feature = "writable")]
     pub async fn update_wiki(&self, params: UpdateWikiParams) -> Result<UpdateWikiResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Delete wiki page
+    /// Corresponds to `DELETE /api/v2/wikis/:wikiId`.
+    #[cfg(feature = "writable")]
+    pub async fn delete_wiki(&self, params: DeleteWikiParams) -> Result<DeleteWikiResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Attach files to wiki page
+    /// Corresponds to `POST /api/v2/wikis/:wikiId/attachments`.
+    #[cfg(feature = "writable")]
+    pub async fn attach_files_to_wiki(
+        &self,
+        params: AttachFilesToWikiParams,
+    ) -> Result<AttachFilesToWikiResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Delete wiki attachment
+    /// Corresponds to `DELETE /api/v2/wikis/:wikiId/attachments/:attachmentId`.
+    #[cfg(feature = "writable")]
+    pub async fn delete_wiki_attachment(
+        &self,
+        params: DeleteWikiAttachmentParams,
+    ) -> Result<DeleteWikiAttachmentResponse> {
         self.0.execute(params).await
     }
 }

@@ -1,6 +1,7 @@
 use crate::{HttpMethod, Result};
 use reqwest::Client as ReqwestClient;
 use serde::Serialize;
+use std::path::PathBuf;
 use url::Url;
 
 /// A trait for converting request parameters into a complete HTTP request.
@@ -91,6 +92,28 @@ pub trait IntoDownloadRequest {
     }
 }
 
+/// A trait for converting request parameters into an upload request.
+///
+/// Similar to IntoRequest but specifically designed for file upload operations
+/// that use multipart/form-data encoding.
+pub trait IntoUploadRequest {
+    /// Returns the URL path for this upload request.
+    fn path(&self) -> String;
+
+    /// Returns the file path to upload.
+    fn file_path(&self) -> &PathBuf;
+
+    /// Returns the form field name for the file (default: "file").
+    fn file_field_name(&self) -> &str {
+        "file"
+    }
+
+    /// Returns additional form fields to include in the multipart request.
+    fn additional_fields(&self) -> Vec<(String, String)> {
+        Vec::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -108,5 +131,102 @@ mod tests {
         }
 
         // If this compiles, the trait definition is correct
+    }
+
+    #[test]
+    fn test_into_upload_request_trait_compiles() {
+        use std::path::PathBuf;
+
+        #[allow(dead_code)]
+        struct TestUploadParams {
+            file_path: PathBuf,
+        }
+
+        impl IntoUploadRequest for TestUploadParams {
+            fn path(&self) -> String {
+                "/test/upload".to_string()
+            }
+
+            fn file_path(&self) -> &PathBuf {
+                &self.file_path
+            }
+        }
+
+        // Test default implementations
+        let params = TestUploadParams {
+            file_path: PathBuf::from("/test/file.txt"),
+        };
+
+        assert_eq!(params.file_field_name(), "file");
+        assert_eq!(params.additional_fields().len(), 0);
+    }
+
+    #[test]
+    fn test_into_upload_request_with_custom_field_name() {
+        use std::path::PathBuf;
+
+        struct CustomUploadParams {
+            file_path: PathBuf,
+        }
+
+        impl IntoUploadRequest for CustomUploadParams {
+            fn path(&self) -> String {
+                "/custom/upload".to_string()
+            }
+
+            fn file_path(&self) -> &PathBuf {
+                &self.file_path
+            }
+
+            fn file_field_name(&self) -> &str {
+                "custom_file"
+            }
+        }
+
+        let params = CustomUploadParams {
+            file_path: PathBuf::from("/test/custom.txt"),
+        };
+
+        assert_eq!(params.file_field_name(), "custom_file");
+    }
+
+    #[test]
+    fn test_into_upload_request_with_additional_fields() {
+        use std::path::PathBuf;
+
+        struct UploadWithMetadata {
+            file_path: PathBuf,
+            description: String,
+        }
+
+        impl IntoUploadRequest for UploadWithMetadata {
+            fn path(&self) -> String {
+                "/metadata/upload".to_string()
+            }
+
+            fn file_path(&self) -> &PathBuf {
+                &self.file_path
+            }
+
+            fn additional_fields(&self) -> Vec<(String, String)> {
+                vec![
+                    ("description".to_string(), self.description.clone()),
+                    ("type".to_string(), "document".to_string()),
+                ]
+            }
+        }
+
+        let params = UploadWithMetadata {
+            file_path: PathBuf::from("/test/doc.pdf"),
+            description: "Test document".to_string(),
+        };
+
+        let fields = params.additional_fields();
+        assert_eq!(fields.len(), 2);
+        assert_eq!(
+            fields[0],
+            ("description".to_string(), "Test document".to_string())
+        );
+        assert_eq!(fields[1], ("type".to_string(), "document".to_string()));
     }
 }

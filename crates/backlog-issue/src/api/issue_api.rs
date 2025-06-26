@@ -4,13 +4,14 @@ use client::{Client, DownloadedFile};
 #[cfg(feature = "writable")]
 use super::{
     AddCommentParams, AddIssueParams, DeleteAttachmentParams, DeleteCommentParams,
-    DeleteIssueParams, LinkSharedFilesToIssueParams, UpdateCommentParams, UpdateIssueParams,
+    DeleteIssueParams, LinkSharedFilesToIssueParams, UnlinkSharedFileParams, UpdateCommentParams,
+    UpdateIssueParams,
 };
 #[cfg(feature = "writable")]
 use super::{
     AddCommentResponse, AddIssueResponse, DeleteAttachmentResponse, DeleteCommentResponse,
-    DeleteIssueResponse, LinkSharedFilesToIssueResponse, UpdateCommentResponse,
-    UpdateIssueResponse,
+    DeleteIssueResponse, LinkSharedFilesToIssueResponse, UnlinkSharedFileResponse,
+    UpdateCommentResponse, UpdateIssueResponse,
 };
 use super::{
     CountCommentParams, CountIssueParams, GetAttachmentFileParams, GetAttachmentListParams,
@@ -145,6 +146,17 @@ impl IssueApi {
         &self,
         params: LinkSharedFilesToIssueParams,
     ) -> Result<LinkSharedFilesToIssueResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Unlink a shared file from an issue.
+    ///
+    /// Corresponds to `DELETE /api/v2/issues/:issueIdOrKey/sharedFiles/:id`.
+    #[cfg(feature = "writable")]
+    pub async fn unlink_shared_file(
+        &self,
+        params: UnlinkSharedFileParams,
+    ) -> Result<UnlinkSharedFileResponse> {
         self.0.execute(params).await
     }
 

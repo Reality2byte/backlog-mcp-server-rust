@@ -37,9 +37,9 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Read operations**: list_documents(), get_document_tree(), get_document(), download_attachment()
 
 ### backlog-wiki (WikiApi)
-- **Implemented**: 6/15 endpoints (40%)
+- **Implemented**: 8/15 endpoints (53%)
 - **Read operations**: get_wiki_list(), get_wiki_detail(), get_wiki_count(), get_wiki_attachment_list(), download_wiki_attachment()
-- **Write operations** (requires `writable` feature): update_wiki()
+- **Write operations** (requires `writable` feature): add_wiki(), update_wiki(), delete_wiki(), attach_files_to_wiki(), delete_wiki_attachment()
 
 ### Not Implemented
 - **Activities**: 0/4 endpoints
@@ -106,7 +106,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 #### Shared files for issue
 - ✅ GetListOfLinkedSharedFiles: Returns the list of linked Shared Files to issues: GET /api/v2/issues/:issueIdOrKey/sharedFiles
 - ✅ LinkSharedFilesToIssue: Links shared files to issue: POST /api/v2/issues/:issueIdOrKey/sharedFiles
-- ❌ RemoveLinkToSharedFileFromIssue: Removes link to shared file from issue: DELETE /api/v2/issues/:issueIdOrKey/sharedFiles/:id
+- ✅ RemoveLinkToSharedFileFromIssue: Removes link to shared file from issue: DELETE /api/v2/issues/:issueIdOrKey/sharedFiles/:id
 
 ### Comment
 - ✅ UpdateComment: Updates content of comment: PATCH /api/v2/issues/:issueIdOrKey/comments/:commentId
@@ -178,11 +178,11 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ❌ GetWikiPageTagList: Returns list of tags that are used in the project: GET /api/v2/wikis/tags
 - ✅ GetWikiPage: Returns information about Wiki page: GET /api/v2/wikis/:wikiId
 - ✅ GetListOfWikiAttachments: Gets list of files attached to Wiki: GET /api/v2/wikis/:wikiId/attachments
-- ❌ RemoveWikiAttachment: Removes files attached to Wiki: DELETE /api/v2/wikis/:wikiId/attachments/:attachmentId
-- ❌ DeleteWikiPage: Deletes Wiki page: DELETE /api/v2/wikis/:wikiId
+- ✅ RemoveWikiAttachment: Removes files attached to Wiki: DELETE /api/v2/wikis/:wikiId/attachments/:attachmentId
+- ✅ DeleteWikiPage: Deletes Wiki page: DELETE /api/v2/wikis/:wikiId
 - ✅ CountWikiPage: Returns number of Wiki pages: GET /api/v2/wikis/count
-- ❌ AddWikiPage: Adds new Wiki page: POST /api/v2/wikis
-- ❌ AttachFileToWiki: Attaches file to Wiki: POST /api/v2/wikis/:wikiId/attachments
+- ✅ AddWikiPage: Adds new Wiki page: POST /api/v2/wikis
+- ✅ AttachFileToWiki: Attaches file to Wiki: POST /api/v2/wikis/:wikiId/attachments
 
 #### Shared files for wiki
 - ❌ GetListOfSharedFilesOnWiki: Returns the list of Shared Files on Wiki: GET /api/v2/wikis/:wikiId/sharedFiles

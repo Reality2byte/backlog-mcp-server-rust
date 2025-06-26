@@ -30,7 +30,7 @@ crates/                     # Internal library crates
 ├── backlog-space/          # Space management API
 ├── backlog-user/           # User management API
 ├── backlog-document/       # Document API
-├── backlog-wiki/           # Wiki API (includes update functionality)
+├── backlog-wiki/           # Wiki API (full CRUD operations and file attachment)
 ├── backlog-git/            # Git repository and Pull Request API
 ├── backlog-file/           # Shared file API
 └── client/                 # Generic HTTP client wrapper
@@ -64,7 +64,7 @@ Model Context Protocol server that exposes Backlog API functionalities as AI-fri
 - **`backlog-project/`**: Project management API endpoints (22 endpoints) - most extensive API covering categories, statuses, versions, issue types.
 - **`backlog-space/`**: Space API endpoints (2 endpoints) - basic space information.
 - **`backlog-user/`**: User management API endpoints (4 endpoints) - user information and icons.
-- **`backlog-wiki/`**: Wiki API endpoints (6 endpoints) - wiki pages with update capabilities and attachment management.
+- **`backlog-wiki/`**: Wiki API endpoints (8 endpoints) - wiki pages with full CRUD operations, attachment management, and file attachment capabilities.
 
 ## Feature Flags
 
@@ -103,7 +103,7 @@ The project implements **78+ API endpoints** across 8 domain modules with varyin
 | **Project** | 22 | ✅ Complete | ✅ Full CRUD | 🟢 Extensive |
 | **Git/PR** | 16 | ✅ Complete | ✅ Full CRUD | 🟢 Complete |
 | **Issue** | 14 | ✅ Complete | ✅ Full CRUD | 🟢 Complete |
-| **Wiki** | 6 | ✅ Complete | ✅ Update only | 🟡 Partial |
+| **Wiki** | 8 | ✅ Complete | ✅ Create/Update/Delete | 🟢 Extensive |
 | **Document** | 4 | ✅ Complete | (Read-only API) | 🟢 Read-only |
 | **User** | 4 | ✅ Complete | ❌ Planned | 🟡 Read-only |
 | **File** | 2 | ✅ Complete | (Read-only API) | 🟢 Complete |

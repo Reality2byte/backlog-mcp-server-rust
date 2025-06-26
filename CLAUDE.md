@@ -612,6 +612,34 @@ When optimizing parameter structures, first analyze the parameter types:
   - Added `update_issue_comment` tool to MCP server
   - Full integration with real Backlog API testing on MFP-2 project
   - Follows `PATCH /api/v2/issues/:issueIdOrKey/comments/:commentId` endpoint specification
+- **Wiki Page Creation API**: Complete implementation of wiki page creation functionality (TDD)
+  - Added `add_wiki()` API method in `backlog-wiki` crate with comprehensive test coverage
+  - Implemented `AddWikiParams` with manual form serialization following standard patterns
+  - Extended CLI with `wiki create` command (`--features wiki_writable`)
+  - Full integration with real Backlog API testing on MFP project (IDs: 4188464, 4188465)
+  - Follows `POST /api/v2/wikis` endpoint specification with proper error handling
+  - Supports required parameters (projectId, name, content) and optional mailNotify parameter
+- **Wiki Page Deletion API**: Complete implementation of wiki page deletion functionality (TDD)
+  - Added `delete_wiki()` API method in `backlog-wiki` crate with comprehensive test coverage
+  - Implemented `DeleteWikiParams` with query parameter serialization for DELETE requests
+  - Extended CLI with `wiki delete` command (`--features wiki_writable`)
+  - Full integration with real Backlog API testing on MFP project (IDs: 4188466, 4188467)
+  - Follows `DELETE /api/v2/wikis/:wikiId` endpoint specification with proper error handling
+  - Supports required wikiId parameter and optional mailNotify query parameter
+- **Wiki File Attachment API**: Complete implementation of wiki file attachment functionality (TDD)
+  - Added `attach_files_to_wiki()` API method in `backlog-wiki` crate with comprehensive test coverage
+  - Implemented `AttachFilesToWikiParams` with form-encoded array parameters (`attachmentId[]`)
+  - Extended CLI with `wiki attach-file` command providing seamless 2-step workflow (`--features wiki_writable`)
+  - Full integration with real Backlog API testing on MFP project (attachment ID: 90074, file: test-attachment.txt)
+  - Follows `POST /api/v2/wikis/:wikiId/attachments` endpoint specification with proper error handling
+  - Implements transparent file upload → attachment workflow (space upload + wiki attachment)
+- **Wiki Attachment Deletion API**: Complete implementation of wiki attachment deletion functionality (TDD)
+  - Added `delete_wiki_attachment()` API method in `backlog-wiki` crate with comprehensive test coverage
+  - Implemented `DeleteWikiAttachmentParams` following standard parameter patterns
+  - Extended CLI with `wiki delete-attachment` command with safety confirmation prompt (`--features wiki_writable`)
+  - Follows `DELETE /api/v2/wikis/:wikiId/attachments/:attachmentId` endpoint specification
+  - Safety features: interactive confirmation prompt, `--force` flag for automation, detailed error handling
+  - Returns deleted attachment details including original creation information
 
 ### TDD Development Process
 When implementing new API features, follow Test-Driven Development:

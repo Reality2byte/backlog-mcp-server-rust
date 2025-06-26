@@ -29,6 +29,8 @@ mod delete_issue;
 #[cfg(feature = "writable")]
 mod link_shared_files;
 #[cfg(feature = "writable")]
+mod unlink_shared_file;
+#[cfg(feature = "writable")]
 mod update_comment;
 #[cfg(feature = "writable")]
 mod update_issue;
@@ -68,6 +70,8 @@ pub use link_shared_files::{
     LinkSharedFilesToIssueParams, LinkSharedFilesToIssueParamsBuilder,
     LinkSharedFilesToIssueResponse,
 };
+#[cfg(feature = "writable")]
+pub use unlink_shared_file::{UnlinkSharedFileParams, UnlinkSharedFileResponse};
 #[cfg(feature = "writable")]
 pub use update_comment::{UpdateCommentParams, UpdateCommentResponse};
 #[cfg(feature = "writable")]

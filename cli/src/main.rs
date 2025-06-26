@@ -29,9 +29,13 @@ use backlog_core::{
 #[cfg(feature = "project_writable")]
 use backlog_domain_models::{IssueTypeColor, StatusColor};
 #[cfg(feature = "issue_writable")]
-use backlog_issue::{AddIssueParamsBuilder, UpdateIssueParamsBuilder};
+use backlog_issue::DeleteAttachmentParams;
 #[cfg(feature = "issue_writable")]
-use backlog_issue::{DeleteAttachmentParams, DeleteCommentParams};
+use backlog_issue::DeleteCommentParams;
+#[cfg(feature = "issue_writable")]
+use backlog_issue::UnlinkSharedFileParams;
+#[cfg(feature = "issue_writable")]
+use backlog_issue::{AddIssueParamsBuilder, UpdateIssueParamsBuilder};
 use backlog_project::GetProjectListParams;
 #[cfg(feature = "project_writable")]
 use backlog_project::{
@@ -48,7 +52,10 @@ use backlog_user::GetUserIconParams;
 use backlog_user::GetUserListParams;
 use backlog_user::GetUserParams;
 #[cfg(feature = "wiki_writable")]
-use backlog_wiki::UpdateWikiParams;
+use backlog_wiki::{
+    AddWikiParams, AttachFilesToWikiParams, DeleteWikiAttachmentParams, DeleteWikiParams,
+    UpdateWikiParams,
+};
 #[cfg(feature = "project_writable")]
 use chrono::{DateTime, Utc};
 use clap::{Args, Parser};
@@ -374,6 +381,17 @@ enum IssueCommands {
         /// Shared file IDs to link (comma-separated)
         #[clap(short, long, value_delimiter = ',')]
         file_ids: Vec<u32>,
+    },
+    /// Unlink a shared file from an issue
+    #[cfg(feature = "issue_writable")]
+    #[command(about = "Unlink a shared file from an issue")]
+    UnlinkSharedFile {
+        /// Issue ID or Key (e.g., "PROJECT-123" or "12345")
+        #[clap(name = "ISSUE_ID_OR_KEY")]
+        issue_id_or_key: String,
+        /// Shared file ID to unlink
+        #[clap(short, long)]
+        file_id: u32,
     },
 }
 
@@ -883,6 +901,22 @@ enum WikiCommands {
         #[clap(short, long)]
         output: Option<String>,
     },
+    /// Create a new wiki page
+    #[cfg(feature = "wiki_writable")]
+    Create {
+        /// Project ID
+        #[clap(long)]
+        project_id: String,
+        /// Wiki page name
+        #[clap(long)]
+        name: String,
+        /// Wiki page content
+        #[clap(long)]
+        content: String,
+        /// Send email notification
+        #[clap(long)]
+        mail_notify: Option<bool>,
+    },
     /// Update a wiki page
     #[cfg(feature = "wiki_writable")]
     Update {
@@ -898,6 +932,39 @@ enum WikiCommands {
         /// Send email notification of update
         #[clap(long)]
         mail_notify: Option<bool>,
+    },
+    /// Delete a wiki page
+    #[cfg(feature = "wiki_writable")]
+    Delete {
+        /// Wiki ID
+        #[clap(name = "WIKI_ID")]
+        wiki_id: u32,
+        /// Send email notification of deletion
+        #[clap(long)]
+        mail_notify: Option<bool>,
+    },
+    /// Attach file to a wiki page
+    #[cfg(feature = "wiki_writable")]
+    AttachFile {
+        /// Wiki ID
+        #[clap(name = "WIKI_ID")]
+        wiki_id: u32,
+        /// File path to attach
+        #[clap(long)]
+        file_path: PathBuf,
+    },
+    /// Delete an attachment from a wiki page
+    #[cfg(feature = "wiki_writable")]
+    DeleteAttachment {
+        /// Wiki ID
+        #[clap(name = "WIKI_ID")]
+        wiki_id: u32,
+        /// Attachment ID to delete
+        #[clap(name = "ATTACHMENT_ID")]
+        attachment_id: u32,
+        /// Force deletion without confirmation
+        #[clap(long, short = 'f')]
+        force: bool,
     },
 }
 
@@ -1995,11 +2062,57 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+            #[cfg(feature = "issue_writable")]
+            IssueCommands::UnlinkSharedFile {
+                issue_id_or_key,
+                file_id,
+            } => {
+                println!(
+                    "Unlinking shared file {} from issue: {}",
+                    file_id, issue_id_or_key
+                );
+
+                let parsed_issue_id_or_key =
+                    IssueIdOrKey::from_str(&issue_id_or_key).map_err(|e| {
+                        format!(
+                            "Failed to parse issue_id_or_key '{}': {}",
+                            issue_id_or_key, e
+                        )
+                    })?;
+
+                let params =
+                    UnlinkSharedFileParams::new(parsed_issue_id_or_key, SharedFileId::new(file_id));
+
+                match client.issue().unlink_shared_file(params).await {
+                    Ok(unlinked_file) => {
+                        println!("✅ Successfully unlinked shared file from the issue!");
+                        println!("   Name: {}", unlinked_file.name);
+                        println!("   ID: {}", unlinked_file.id);
+                        println!("   Directory: {}", unlinked_file.dir);
+                        match &unlinked_file.content {
+                            backlog_issue::models::FileContent::File { size } => {
+                                println!("   Type: File");
+                                println!("   Size: {} bytes", size);
+                            }
+                            backlog_issue::models::FileContent::Directory => {
+                                println!("   Type: Directory");
+                            }
+                        }
+                        println!("   Created by: {}", unlinked_file.created_user.name);
+                        println!("   Created at: {}", unlinked_file.created);
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to unlink shared file from issue: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
             #[cfg(not(feature = "issue_writable"))]
             IssueCommands::Create(_)
             | IssueCommands::Update(_)
             | IssueCommands::Delete(_)
-            | IssueCommands::LinkSharedFiles { .. } => {
+            | IssueCommands::LinkSharedFiles { .. }
+            | IssueCommands::UnlinkSharedFile { .. } => {
                 eprintln!(
                     "Issue creation, update, and deletion are not available. Please build with 'issue_writable' feature."
                 );
@@ -2041,7 +2154,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 let params = UploadAttachmentParams::new(file.clone());
 
-                match client.space().upload_attachment(&params).await {
+                match client.space().upload_attachment(params).await {
                     Ok(attachment) => {
                         println!("✅ Attachment uploaded successfully");
                         println!("Attachment ID: {}", attachment.id);
@@ -3099,6 +3212,41 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             #[cfg(feature = "wiki_writable")]
+            WikiCommands::Create {
+                project_id,
+                name,
+                content,
+                mail_notify,
+            } => {
+                println!("Creating new wiki page in project: {}", project_id);
+
+                let params = AddWikiParams::new(ProjectId::from_str(&project_id)?, name, content);
+
+                let params = if let Some(mail_notify) = mail_notify {
+                    params.mail_notify(mail_notify)
+                } else {
+                    params
+                };
+
+                match client.wiki().add_wiki(params).await {
+                    Ok(wiki_detail) => {
+                        println!("✅ Wiki page created successfully");
+                        println!("   ID: {}", wiki_detail.id.value());
+                        println!("   Name: {}", wiki_detail.name);
+                        println!("   Project ID: {}", wiki_detail.project_id.value());
+                        println!(
+                            "   Created by: {} at {}",
+                            wiki_detail.created_user.name,
+                            wiki_detail.created.format("%Y-%m-%d %H:%M:%S")
+                        );
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to create wiki page: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "wiki_writable")]
             WikiCommands::Update {
                 wiki_id,
                 name,
@@ -3145,6 +3293,143 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to update wiki: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "wiki_writable")]
+            WikiCommands::Delete {
+                wiki_id,
+                mail_notify,
+            } => {
+                println!("Deleting wiki ID: {}", wiki_id);
+
+                let mut params = DeleteWikiParams::new(WikiId::new(wiki_id));
+
+                if let Some(mail_notify) = mail_notify {
+                    params = params.mail_notify(mail_notify);
+                }
+
+                match client.wiki().delete_wiki(params).await {
+                    Ok(wiki_detail) => {
+                        println!("✅ Wiki deleted successfully");
+                        println!("   ID: {}", wiki_detail.id.value());
+                        println!("   Name: {}", wiki_detail.name);
+                        println!("   Project ID: {}", wiki_detail.project_id.value());
+                        println!(
+                            "   Created by: {} at {}",
+                            wiki_detail.created_user.name,
+                            wiki_detail.created.format("%Y-%m-%d %H:%M:%S")
+                        );
+                        println!(
+                            "   Last updated by: {} at {}",
+                            wiki_detail.updated_user.name,
+                            wiki_detail.updated.format("%Y-%m-%d %H:%M:%S")
+                        );
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to delete wiki: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "wiki_writable")]
+            WikiCommands::AttachFile { wiki_id, file_path } => {
+                println!("Attaching file to wiki ID: {}", wiki_id);
+
+                // Step 1: Upload file to space to get attachment ID
+                println!("📤 Uploading file: {}", file_path.display());
+                let upload_params = UploadAttachmentParams::new(file_path.clone());
+
+                let attachment = match client.space().upload_attachment(upload_params).await {
+                    Ok(attachment) => {
+                        println!("✅ File uploaded successfully");
+                        println!("   Attachment ID: {}", attachment.id);
+                        println!("   File name: {}", attachment.name);
+                        println!("   File size: {} bytes", attachment.size);
+                        attachment
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to upload file: {}", e);
+                        std::process::exit(1);
+                    }
+                };
+
+                // Step 2: Attach the uploaded file to the wiki page
+                println!("🔗 Attaching file to wiki page...");
+                let attach_params = AttachFilesToWikiParams::new(
+                    WikiId::new(wiki_id),
+                    vec![AttachmentId::new(attachment.id)],
+                );
+
+                match client.wiki().attach_files_to_wiki(attach_params).await {
+                    Ok(wiki_attachments) => {
+                        println!("✅ File attached to wiki successfully");
+                        for attachment in wiki_attachments {
+                            println!("   Attachment ID: {}", attachment.id.value());
+                            println!("   File name: {}", attachment.name);
+                            println!("   File size: {} bytes", attachment.size);
+                            println!(
+                                "   Attached by: {} at {}",
+                                attachment.created_user.name,
+                                attachment.created.format("%Y-%m-%d %H:%M:%S")
+                            );
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to attach file to wiki: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "wiki_writable")]
+            WikiCommands::DeleteAttachment {
+                wiki_id,
+                attachment_id,
+                force,
+            } => {
+                // Get attachment details before deletion for confirmation
+                if !force {
+                    print!(
+                        "Are you sure you want to delete attachment {} from wiki {}? [y/N]: ",
+                        attachment_id, wiki_id
+                    );
+                    use std::io::{self, Write};
+                    io::stdout().flush().unwrap();
+
+                    let mut input = String::new();
+                    io::stdin().read_line(&mut input).unwrap();
+                    let input = input.trim().to_lowercase();
+
+                    if input != "y" && input != "yes" {
+                        println!("Operation cancelled.");
+                        return Ok(());
+                    }
+                }
+
+                println!(
+                    "🗑️ Deleting attachment {} from wiki {}...",
+                    attachment_id, wiki_id
+                );
+
+                let delete_params = DeleteWikiAttachmentParams::new(
+                    WikiId::new(wiki_id),
+                    WikiAttachmentId::new(attachment_id),
+                );
+
+                match client.wiki().delete_wiki_attachment(delete_params).await {
+                    Ok(deleted_attachment) => {
+                        println!("✅ Attachment deleted successfully");
+                        println!("   Deleted attachment: {}", deleted_attachment.name);
+                        println!("   File size: {} bytes", deleted_attachment.size);
+                        println!(
+                            "   Originally attached by: {} at {}",
+                            deleted_attachment.created_user.name,
+                            deleted_attachment.created.format("%Y-%m-%d %H:%M:%S")
+                        );
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to delete attachment: {}", e);
                         std::process::exit(1);
                     }
                 }

@@ -36,7 +36,7 @@ mod writable_tests {
             .await;
 
         let params = UploadAttachmentParams::new(temp_file.path().to_path_buf());
-        let result = space_api.upload_attachment(&params).await;
+        let result = space_api.upload_attachment(params).await;
 
         assert!(result.is_ok());
         let attachment = result.unwrap();
@@ -53,7 +53,7 @@ mod writable_tests {
         let non_existent_file = PathBuf::from("/tmp/non_existent_attachment.txt");
         let params = UploadAttachmentParams::new(non_existent_file);
 
-        let result = space_api.upload_attachment(&params).await;
+        let result = space_api.upload_attachment(params).await;
         assert!(result.is_err());
     }
 
@@ -84,7 +84,7 @@ mod writable_tests {
             .await;
 
         let params = UploadAttachmentParams::new(temp_file.path().to_path_buf());
-        let result = space_api.upload_attachment(&params).await;
+        let result = space_api.upload_attachment(params).await;
 
         assert!(result.is_err());
     }
@@ -116,7 +116,7 @@ mod writable_tests {
             .await;
 
         let params = UploadAttachmentParams::new(temp_file.path().to_path_buf());
-        let result = space_api.upload_attachment(&params).await;
+        let result = space_api.upload_attachment(params).await;
 
         assert!(result.is_err());
     }

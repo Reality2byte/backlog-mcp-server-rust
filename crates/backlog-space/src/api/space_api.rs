@@ -29,8 +29,8 @@ impl SpaceApi {
     #[cfg(feature = "writable")]
     pub async fn upload_attachment(
         &self,
-        params: &UploadAttachmentParams,
+        params: UploadAttachmentParams,
     ) -> Result<UploadAttachmentResponse> {
-        self.0.upload_file(params.file_path.clone()).await
+        self.0.upload_file(params).await
     }
 }
