@@ -9,10 +9,10 @@ use backlog_api_client::UpdatePullRequestCommentParams;
 #[allow(unused_imports)]
 use backlog_api_client::UpdatePullRequestParams;
 use backlog_api_client::{
-    AddCommentParamsBuilder, AttachmentId, GetIssueListParamsBuilder, GetPullRequestCountParams,
-    IssueIdOrKey, ProjectId, ProjectIdOrKey, PullRequestAttachmentId, PullRequestCommentId,
-    PullRequestNumber, RepositoryIdOrName, StatusId, UserId, WikiId, backlog_issue,
-    client::BacklogApiClient,
+    AddCommentParamsBuilder, AttachmentId, GetCommentNotificationsParams,
+    GetIssueListParamsBuilder, GetPullRequestCountParams, IssueIdOrKey, ProjectId, ProjectIdOrKey,
+    PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber, RepositoryIdOrName, StatusId,
+    UserId, WikiId, backlog_issue, client::BacklogApiClient,
 };
 #[cfg(any(feature = "git_writable", feature = "issue_writable"))]
 use backlog_core::identifier::IssueId;
@@ -364,6 +364,9 @@ enum IssueCommands {
     /// Get a specific comment for an issue
     #[command(about = "Get a specific comment for an issue")]
     GetComment(GetCommentArgs),
+    /// Get notifications for a comment
+    #[command(about = "Get notifications for a comment")]
+    GetCommentNotifications(GetCommentArgs),
     /// List participants in an issue
     #[command(about = "List participants in an issue")]
     ListParticipants {
@@ -1982,6 +1985,60 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error getting comment: {}", e);
+                    }
+                }
+            }
+            IssueCommands::GetCommentNotifications(get_args) => {
+                println!(
+                    "Getting notifications for comment {} in issue: {}",
+                    get_args.comment_id, get_args.issue_id_or_key
+                );
+
+                let parsed_issue_id_or_key = IssueIdOrKey::from_str(&get_args.issue_id_or_key)
+                    .map_err(|e| {
+                        format!(
+                            "Failed to parse issue_id_or_key '{}': {}",
+                            get_args.issue_id_or_key, e
+                        )
+                    })?;
+
+                let comment_id = CommentId::new(get_args.comment_id);
+
+                match client
+                    .issue()
+                    .get_comment_notifications(GetCommentNotificationsParams::new(
+                        parsed_issue_id_or_key,
+                        comment_id,
+                    ))
+                    .await
+                {
+                    Ok(notifications) => {
+                        if notifications.is_empty() {
+                            println!("No notifications found for this comment.");
+                        } else {
+                            println!("Found {} notification(s):", notifications.len());
+                            for (i, notification) in notifications.iter().enumerate() {
+                                println!(
+                                    "  {}. Notification ID: {}",
+                                    i + 1,
+                                    notification.id.value()
+                                );
+                                println!("     User: {}", notification.user.name);
+                                if let Some(user_id) = &notification.user.user_id {
+                                    println!("     User ID: {}", user_id);
+                                }
+                                println!("     Already Read: {}", notification.already_read);
+                                println!(
+                                    "     Resource Already Read: {}",
+                                    notification.resource_already_read
+                                );
+                                println!("     Reason: {:?}", notification.reason);
+                                println!();
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error getting comment notifications: {}", e);
                     }
                 }
             }

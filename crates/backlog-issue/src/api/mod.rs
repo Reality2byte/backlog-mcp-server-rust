@@ -9,6 +9,7 @@ mod get_attachment_file;
 mod get_attachment_list;
 mod get_comment;
 mod get_comment_list;
+mod get_comment_notifications;
 mod get_issue;
 mod get_issue_list;
 mod get_participant_list;
@@ -46,6 +47,9 @@ pub use get_attachment_list::{GetAttachmentListParams, GetAttachmentListResponse
 pub use get_comment::{GetCommentParams, GetCommentResponse};
 pub use get_comment_list::{
     CommentOrder, GetCommentListParams, GetCommentListParamsBuilder, GetCommentListResponse,
+};
+pub use get_comment_notifications::{
+    GetCommentNotificationsParams, GetCommentNotificationsResponse,
 };
 pub use get_issue::{GetIssueParams, GetIssueResponse};
 pub use get_issue_list::{GetIssueListParams, GetIssueListParamsBuilder, GetIssueListResponse};

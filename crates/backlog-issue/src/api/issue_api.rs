@@ -15,13 +15,13 @@ use super::{
 };
 use super::{
     CountCommentParams, CountIssueParams, GetAttachmentFileParams, GetAttachmentListParams,
-    GetCommentListParams, GetCommentParams, GetIssueListParams, GetIssueParams,
-    GetParticipantListParams, GetSharedFileListParams,
+    GetCommentListParams, GetCommentNotificationsParams, GetCommentParams, GetIssueListParams,
+    GetIssueParams, GetParticipantListParams, GetSharedFileListParams,
 };
 use super::{
     CountCommentResponse, CountIssueResponse, GetAttachmentListResponse, GetCommentListResponse,
-    GetCommentResponse, GetIssueListResponse, GetIssueResponse, GetParticipantListResponse,
-    GetSharedFileListResponse,
+    GetCommentNotificationsResponse, GetCommentResponse, GetIssueListResponse, GetIssueResponse,
+    GetParticipantListResponse, GetSharedFileListResponse,
 };
 
 pub struct IssueApi(Client);
@@ -118,6 +118,16 @@ impl IssueApi {
 
     /// Get a specific comment for an issue by its ID or key and comment ID.
     pub async fn get_comment(&self, params: GetCommentParams) -> Result<GetCommentResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Get a list of notifications for a specific comment.
+    ///
+    /// Corresponds to `GET /api/v2/issues/:issueIdOrKey/comments/:commentId/notifications`.
+    pub async fn get_comment_notifications(
+        &self,
+        params: GetCommentNotificationsParams,
+    ) -> Result<GetCommentNotificationsResponse> {
         self.0.execute(params).await
     }
 

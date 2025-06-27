@@ -35,9 +35,9 @@ pub use backlog_file::{FileApi, GetSharedFilesListParams, GetSharedFilesListResp
 #[cfg(feature = "issue")]
 pub use backlog_issue::{
     AddCommentParams, AddCommentParamsBuilder, Attachment, ChangeLogEntry, Comment, CommentOrder,
-    GetCommentListParams, GetCommentListParamsBuilder, GetIssueListParams,
-    GetIssueListParamsBuilder, Issue, IssueApi, SharedFile as IssueSharedFile, UpdateIssueParams,
-    UpdateIssueParamsBuilder,
+    GetCommentListParams, GetCommentListParamsBuilder, GetCommentNotificationsParams,
+    GetIssueListParams, GetIssueListParamsBuilder, Issue, IssueApi, SharedFile as IssueSharedFile,
+    UpdateIssueParams, UpdateIssueParamsBuilder,
 };
 
 // Re-export backlog_issue module for parameter access
