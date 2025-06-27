@@ -11,6 +11,7 @@ mod get_comment;
 mod get_comment_list;
 mod get_issue;
 mod get_issue_list;
+mod get_participant_list;
 mod get_shared_file_list;
 
 // Write-only API modules (feature-gated)
@@ -48,6 +49,7 @@ pub use get_comment_list::{
 };
 pub use get_issue::{GetIssueParams, GetIssueResponse};
 pub use get_issue_list::{GetIssueListParams, GetIssueListParamsBuilder, GetIssueListResponse};
+pub use get_participant_list::{GetParticipantListParams, GetParticipantListResponse};
 pub use get_shared_file_list::{GetSharedFileListParams, GetSharedFileListResponse};
 
 // Write-only exports (feature-gated)

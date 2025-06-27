@@ -364,6 +364,13 @@ enum IssueCommands {
     /// Get a specific comment for an issue
     #[command(about = "Get a specific comment for an issue")]
     GetComment(GetCommentArgs),
+    /// List participants in an issue
+    #[command(about = "List participants in an issue")]
+    ListParticipants {
+        /// Issue ID or Key (e.g., "PROJECT-123" or "12345")
+        #[clap(name = "ISSUE_ID_OR_KEY")]
+        issue_id_or_key: String,
+    },
     /// List shared files linked to an issue
     #[command(about = "List shared files linked to an issue")]
     ListSharedFiles {
@@ -1975,6 +1982,51 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error getting comment: {}", e);
+                    }
+                }
+            }
+            IssueCommands::ListParticipants { issue_id_or_key } => {
+                println!("Listing participants for issue: {}", issue_id_or_key);
+
+                let parsed_issue_id_or_key =
+                    IssueIdOrKey::from_str(&issue_id_or_key).map_err(|e| {
+                        format!(
+                            "Failed to parse issue_id_or_key '{}': {}",
+                            issue_id_or_key, e
+                        )
+                    })?;
+
+                match client
+                    .issue()
+                    .get_participant_list(backlog_issue::GetParticipantListParams::new(
+                        parsed_issue_id_or_key,
+                    ))
+                    .await
+                {
+                    Ok(participants) => {
+                        if participants.is_empty() {
+                            println!("No participants found for this issue.");
+                        } else {
+                            println!("Found {} participant(s):", participants.len());
+                            for participant in participants {
+                                println!("- {} (ID: {})", participant.name, participant.id.value());
+                                if let Some(user_id) = &participant.user_id {
+                                    println!("  User ID: {}", user_id);
+                                }
+                                println!("  Email: {}", participant.mail_address);
+                                println!("  Role: {:?}", participant.role_type);
+                                if let Some(last_login) = &participant.last_login_time {
+                                    println!(
+                                        "  Last Login: {}",
+                                        last_login.format("%Y-%m-%d %H:%M:%S")
+                                    );
+                                }
+                                println!();
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error listing participants: {}", e);
                     }
                 }
             }

@@ -16,11 +16,12 @@ use super::{
 use super::{
     CountCommentParams, CountIssueParams, GetAttachmentFileParams, GetAttachmentListParams,
     GetCommentListParams, GetCommentParams, GetIssueListParams, GetIssueParams,
-    GetSharedFileListParams,
+    GetParticipantListParams, GetSharedFileListParams,
 };
 use super::{
     CountCommentResponse, CountIssueResponse, GetAttachmentListResponse, GetCommentListResponse,
-    GetCommentResponse, GetIssueListResponse, GetIssueResponse, GetSharedFileListResponse,
+    GetCommentResponse, GetIssueListResponse, GetIssueResponse, GetParticipantListResponse,
+    GetSharedFileListResponse,
 };
 
 pub struct IssueApi(Client);
@@ -125,6 +126,16 @@ impl IssueApi {
         &self,
         params: GetAttachmentListParams,
     ) -> Result<GetAttachmentListResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Get a list of participants in an issue.
+    ///
+    /// Corresponds to `GET /api/v2/issues/:issueIdOrKey/participants`.
+    pub async fn get_participant_list(
+        &self,
+        params: GetParticipantListParams,
+    ) -> Result<GetParticipantListResponse> {
         self.0.execute(params).await
     }
 

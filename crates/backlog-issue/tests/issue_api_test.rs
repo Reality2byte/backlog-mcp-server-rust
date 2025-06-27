@@ -1,9 +1,10 @@
 mod common;
+use backlog_core::{IssueKey, identifier::Identifier};
 use common::*;
 
 use backlog_issue::{
     CommentOrder, CountCommentParams, GetAttachmentListParams, GetCommentListParamsBuilder,
-    GetCommentParams, GetIssueListParamsBuilder, GetSharedFileListParams,
+    GetCommentParams, GetIssueListParamsBuilder, GetParticipantListParams, GetSharedFileListParams,
 };
 
 fn create_mock_user(id: u32, name: &str) -> User {
@@ -266,6 +267,86 @@ async fn test_get_attachment_list_success() {
     assert_eq!(attachments.len(), 2);
     assert_eq!(attachments[0].name, "file1.txt");
     assert_eq!(attachments[1].size, 20480);
+}
+
+#[tokio::test]
+async fn test_get_participant_list_success() {
+    let mock_server = wiremock::MockServer::start().await;
+    let issue_api = setup_issue_api(&mock_server).await;
+    let issue_key = "TESTKEY-1";
+
+    let expected_participants = vec![
+        create_mock_user(1, "admin"),
+        create_mock_user(2, "alice"),
+        create_mock_user(3, "bob"),
+    ];
+
+    wiremock::Mock::given(wiremock::matchers::method("GET"))
+        .and(wiremock::matchers::path(format!(
+            "/api/v2/issues/{}/participants",
+            issue_key
+        )))
+        .respond_with(wiremock::ResponseTemplate::new(200).set_body_json(&expected_participants))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetParticipantListParams::new(IssueKey::new("TESTKEY".parse().unwrap(), 1));
+    let result = issue_api.get_participant_list(params).await;
+
+    assert!(result.is_ok());
+    let participants = result.unwrap();
+    assert_eq!(participants.len(), 3);
+    assert_eq!(participants[0].user_id, Some("admin".to_string()));
+    assert_eq!(participants[1].user_id, Some("alice".to_string()));
+    assert_eq!(participants[2].user_id, Some("bob".to_string()));
+}
+
+#[tokio::test]
+async fn test_get_participant_list_empty() {
+    let mock_server = wiremock::MockServer::start().await;
+    let issue_api = setup_issue_api(&mock_server).await;
+    let issue_id = IssueId::new(12345);
+
+    wiremock::Mock::given(wiremock::matchers::method("GET"))
+        .and(wiremock::matchers::path(format!(
+            "/api/v2/issues/{}/participants",
+            issue_id.value()
+        )))
+        .respond_with(wiremock::ResponseTemplate::new(200).set_body_json(Vec::<User>::new()))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetParticipantListParams::new(issue_id);
+    let result = issue_api.get_participant_list(params).await;
+
+    assert!(result.is_ok());
+    let participants = result.unwrap();
+    assert!(participants.is_empty());
+}
+
+#[tokio::test]
+async fn test_get_participant_list_issue_not_found() {
+    let mock_server = wiremock::MockServer::start().await;
+    let issue_api = setup_issue_api(&mock_server).await;
+    let issue_key = "NONEXISTENT-1";
+
+    wiremock::Mock::given(wiremock::matchers::method("GET"))
+        .and(wiremock::matchers::path(format!(
+            "/api/v2/issues/{}/participants",
+            issue_key
+        )))
+        .respond_with(
+            wiremock::ResponseTemplate::new(404).set_body_json(serde_json::json!({
+                "errors": [{"message": "No issue for the issueIdOrKey."}]
+            })),
+        )
+        .mount(&mock_server)
+        .await;
+
+    let params = GetParticipantListParams::new(IssueKey::new("TESTKEY".parse().unwrap(), 1));
+    let result = issue_api.get_participant_list(params).await;
+
+    assert!(result.is_err());
 }
 
 #[tokio::test]
