@@ -37,8 +37,8 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Read operations**: list_documents(), get_document_tree(), get_document(), download_attachment()
 
 ### backlog-wiki (WikiApi)
-- **Implemented**: 8/15 endpoints (53%)
-- **Read operations**: get_wiki_list(), get_wiki_detail(), get_wiki_count(), get_wiki_attachment_list(), download_wiki_attachment()
+- **Implemented**: 11/15 endpoints (73%)
+- **Read operations**: get_wiki_list(), get_wiki_detail(), get_wiki_count(), get_wiki_attachment_list(), download_wiki_attachment(), get_wiki_tag_list()
 - **Write operations** (requires `writable` feature): add_wiki(), update_wiki(), delete_wiki(), attach_files_to_wiki(), delete_wiki_attachment()
 
 ### Not Implemented
@@ -175,7 +175,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ✅ GetWikiPageAttachment: Downloads Wiki page’s attachment file: GET /api/v2/wikis/:wikiId/attachments/:attachmentId
 - ❌ GetWikiPageHistory: Returns history of Wiki page: GET /api/v2/wikis/:wikiId/history
 - ✅ GetWikiPageList: Returns list of Wiki pages: GET /api/v2/wikis
-- ❌ GetWikiPageTagList: Returns list of tags that are used in the project: GET /api/v2/wikis/tags
+- ✅ GetWikiPageTagList: Returns list of tags that are used in the project: GET /api/v2/wikis/tags
 - ✅ GetWikiPage: Returns information about Wiki page: GET /api/v2/wikis/:wikiId
 - ✅ GetListOfWikiAttachments: Gets list of files attached to Wiki: GET /api/v2/wikis/:wikiId/attachments
 - ✅ RemoveWikiAttachment: Removes files attached to Wiki: DELETE /api/v2/wikis/:wikiId/attachments/:attachmentId

@@ -966,6 +966,12 @@ enum WikiCommands {
         #[clap(long, short = 'f')]
         force: bool,
     },
+    /// List tags used in wiki pages
+    ListTags {
+        /// Project ID or Key
+        #[clap(short, long)]
+        project_id: String,
+    },
 }
 
 #[derive(Parser, Debug, Default)]
@@ -3430,6 +3436,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to delete attachment: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            WikiCommands::ListTags { project_id } => {
+                println!(
+                    "Listing tags used in wiki pages for project: {}",
+                    project_id
+                );
+
+                use backlog_wiki::GetWikiTagListParams;
+                let params = GetWikiTagListParams::new(project_id.parse::<ProjectIdOrKey>()?);
+
+                match client.wiki().get_wiki_tag_list(params).await {
+                    Ok(tags) => {
+                        if tags.is_empty() {
+                            println!("No tags found in the project");
+                        } else {
+                            println!("Wiki Tags ({} total):", tags.len());
+                            for tag in tags {
+                                println!("  {} (ID: {})", tag.name, tag.id.value());
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to get wiki tags: {}", e);
                         std::process::exit(1);
                     }
                 }

@@ -7,7 +7,7 @@ use crate::api::{
 use crate::api::{
     DownloadWikiAttachmentParams, GetWikiAttachmentListParams, GetWikiAttachmentListResponse,
     GetWikiCountParams, GetWikiCountResponse, GetWikiDetailParams, GetWikiDetailResponse,
-    GetWikiListParams, GetWikiListResponse,
+    GetWikiListParams, GetWikiListResponse, GetWikiTagListParams, GetWikiTagListResponse,
 };
 use backlog_api_core::Result;
 use client::Client;
@@ -37,6 +37,15 @@ impl WikiApi {
     /// Get wiki page list
     /// Corresponds to `GET /api/v2/wikis`.
     pub async fn get_wiki_list(&self, params: GetWikiListParams) -> Result<GetWikiListResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Get list of tags used in wiki pages within a project.
+    /// Corresponds to `GET /api/v2/wikis/tags`.
+    pub async fn get_wiki_tag_list(
+        &self,
+        params: GetWikiTagListParams,
+    ) -> Result<GetWikiTagListResponse> {
         self.0.execute(params).await
     }
 

@@ -5,7 +5,7 @@ use backlog_core::ProjectKey;
 use backlog_wiki::WikiCount;
 use backlog_wiki::api::{
     DownloadWikiAttachmentParams, GetWikiAttachmentListParams, GetWikiCountParams,
-    GetWikiDetailParams, GetWikiListParams,
+    GetWikiDetailParams, GetWikiListParams, GetWikiTagListParams,
 };
 use wiremock::MockServer;
 use wiremock::matchers::{method, path, query_param};
@@ -260,4 +260,156 @@ async fn test_download_wiki_attachment_with_u32_ids() {
     assert_eq!(downloaded_file.filename, "image.png");
     assert_eq!(downloaded_file.content_type, "image/png");
     assert_eq!(downloaded_file.bytes.len(), attachment_content.len());
+}
+
+#[tokio::test]
+async fn test_get_wiki_tag_list_success() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    let expected_tags = vec![
+        WikiTag {
+            id: WikiTagId::new(1),
+            name: "proceedings".to_string(),
+        },
+        WikiTag {
+            id: WikiTagId::new(2),
+            name: "meeting".to_string(),
+        },
+    ];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/tags"))
+        .and(query_param("projectIdOrKey", "MFP"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_tags))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetWikiTagListParams::new("MFP".parse::<ProjectKey>().unwrap());
+    let result = wiki_api.get_wiki_tag_list(params).await;
+    assert!(result.is_ok());
+    let tags = result.unwrap();
+    assert_eq!(tags.len(), 2);
+    assert_eq!(tags[0].id.value(), 1);
+    assert_eq!(tags[0].name, "proceedings");
+    assert_eq!(tags[1].id.value(), 2);
+    assert_eq!(tags[1].name, "meeting");
+}
+
+#[tokio::test]
+async fn test_get_wiki_tag_list_empty() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    let expected_tags: Vec<WikiTag> = vec![];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/tags"))
+        .and(query_param("projectIdOrKey", "EMPTY"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_tags))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetWikiTagListParams::new("EMPTY".parse::<ProjectKey>().unwrap());
+    let result = wiki_api.get_wiki_tag_list(params).await;
+    assert!(result.is_ok());
+    let tags = result.unwrap();
+    assert_eq!(tags.len(), 0);
+}
+
+#[tokio::test]
+async fn test_get_wiki_tag_list_project_not_found() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/tags"))
+        .and(query_param("projectIdOrKey", "INVALID"))
+        .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
+            "errors": [{"message": "Project not found"}]
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetWikiTagListParams::new("INVALID".parse::<ProjectKey>().unwrap());
+    let result = wiki_api.get_wiki_tag_list(params).await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_wiki_tag_list_access_forbidden() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/tags"))
+        .and(query_param("projectIdOrKey", "PRIVATE"))
+        .respond_with(ResponseTemplate::new(403).set_body_json(serde_json::json!({
+            "errors": [{"message": "You do not have permission to access this project"}]
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetWikiTagListParams::new("PRIVATE".parse::<ProjectKey>().unwrap());
+    let result = wiki_api.get_wiki_tag_list(params).await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_wiki_tag_list_server_error() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/tags"))
+        .and(query_param("projectIdOrKey", "ERROR"))
+        .respond_with(ResponseTemplate::new(500).set_body_json(serde_json::json!({
+            "errors": [{"message": "Internal server error"}]
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetWikiTagListParams::new("ERROR".parse::<ProjectKey>().unwrap());
+    let result = wiki_api.get_wiki_tag_list(params).await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_wiki_tag_list_single_tag() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    let expected_tags = vec![WikiTag {
+        id: WikiTagId::new(1),
+        name: "important".to_string(),
+    }];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/tags"))
+        .and(query_param("projectIdOrKey", "SINGLE"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_tags))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetWikiTagListParams::new("SINGLE".parse::<ProjectKey>().unwrap());
+    let result = wiki_api.get_wiki_tag_list(params).await;
+    assert!(result.is_ok());
+    let tags = result.unwrap();
+    assert_eq!(tags.len(), 1);
+    assert_eq!(tags[0].id.value(), 1);
+    assert_eq!(tags[0].name, "important");
+}
+
+#[test]
+fn test_get_wiki_tag_list_params_to_query() {
+    let params = GetWikiTagListParams::new("MFP".parse::<ProjectKey>().unwrap());
+
+    // IntoRequestトレイトのto_query()メソッドをテスト
+    use backlog_api_core::IntoRequest;
+    let query = params.to_query();
+
+    // シリアライズして確認
+    let json = serde_json::to_string(&query).unwrap();
+    assert!(json.contains("projectIdOrKey"));
+    assert!(json.contains("MFP"));
 }
