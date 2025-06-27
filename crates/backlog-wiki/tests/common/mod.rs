@@ -14,7 +14,7 @@ pub use backlog_core::identifier::{
 };
 pub use backlog_core::{Language, Role, Star, User};
 pub use backlog_file::models::{FileContent, SharedFile};
-pub use backlog_wiki::models::{Wiki, WikiAttachment, WikiDetail, WikiTag};
+pub use backlog_wiki::models::{Wiki, WikiAttachment, WikiDetail, WikiHistory, WikiTag};
 pub use chrono::{TimeZone, Utc};
 pub use wiremock::{Mock, ResponseTemplate};
 
@@ -117,6 +117,29 @@ pub fn create_mock_wiki_attachment(
         name: name.to_string(),
         size,
         created_user: create_mock_user(user_id, user_name),
+        created: created_time,
+    }
+}
+
+#[allow(dead_code)]
+pub fn create_mock_wiki_history(
+    page_id: u32,
+    version: u32,
+    name: &str,
+    user_name: &str,
+) -> WikiHistory {
+    let created_time = Utc
+        .with_ymd_and_hms(2024, 1, 1, 12, 0, 0)
+        .unwrap()
+        .checked_add_signed(chrono::Duration::hours(version as i64))
+        .unwrap();
+
+    WikiHistory {
+        page_id: WikiId::new(page_id),
+        version,
+        name: name.to_string(),
+        content: format!("Content for {} version {}", name, version),
+        created_user: create_mock_user(1, user_name),
         created: created_time,
     }
 }

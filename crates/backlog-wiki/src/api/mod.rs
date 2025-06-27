@@ -2,6 +2,7 @@ mod download_wiki_attachment;
 mod get_wiki_attachment_list;
 mod get_wiki_count;
 mod get_wiki_detail;
+mod get_wiki_history;
 mod get_wiki_list;
 mod get_wiki_tag_list;
 mod wiki_api;
@@ -22,6 +23,7 @@ pub use download_wiki_attachment::DownloadWikiAttachmentParams;
 pub use get_wiki_attachment_list::{GetWikiAttachmentListParams, GetWikiAttachmentListResponse};
 pub use get_wiki_count::{GetWikiCountParams, GetWikiCountResponse};
 pub use get_wiki_detail::{GetWikiDetailParams, GetWikiDetailResponse};
+pub use get_wiki_history::{GetWikiHistoryParams, GetWikiHistoryResponse};
 pub use get_wiki_list::{GetWikiListParams, GetWikiListResponse};
 pub use get_wiki_tag_list::{GetWikiTagListParams, GetWikiTagListResponse};
 

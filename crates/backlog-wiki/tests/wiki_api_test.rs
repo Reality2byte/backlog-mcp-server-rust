@@ -5,7 +5,7 @@ use backlog_core::ProjectKey;
 use backlog_wiki::WikiCount;
 use backlog_wiki::api::{
     DownloadWikiAttachmentParams, GetWikiAttachmentListParams, GetWikiCountParams,
-    GetWikiDetailParams, GetWikiListParams, GetWikiTagListParams,
+    GetWikiDetailParams, GetWikiHistoryParams, GetWikiListParams, GetWikiTagListParams,
 };
 use wiremock::MockServer;
 use wiremock::matchers::{method, path, query_param};
@@ -412,4 +412,158 @@ fn test_get_wiki_tag_list_params_to_query() {
     let json = serde_json::to_string(&query).unwrap();
     assert!(json.contains("projectIdOrKey"));
     assert!(json.contains("MFP"));
+}
+
+#[tokio::test]
+async fn test_get_wiki_history_success() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    let expected_history = vec![
+        create_mock_wiki_history(123, 2, "Updated Page", "alice"),
+        create_mock_wiki_history(123, 1, "Initial Page", "john"),
+    ];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/123/history"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_history))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetWikiHistoryParams::new(WikiId::new(123));
+    let result = wiki_api.get_wiki_history(params).await;
+    assert!(result.is_ok());
+    let history = result.unwrap();
+    assert_eq!(history.len(), 2);
+    assert_eq!(history[0].version, 2);
+    assert_eq!(history[0].name, "Updated Page");
+    assert_eq!(history[1].version, 1);
+    assert_eq!(history[1].name, "Initial Page");
+}
+
+#[tokio::test]
+async fn test_get_wiki_history_with_parameters() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    let expected_history = vec![create_mock_wiki_history(123, 3, "Latest Version", "bob")];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/123/history"))
+        .and(query_param("minId", "100"))
+        .and(query_param("maxId", "200"))
+        .and(query_param("count", "10"))
+        .and(query_param("order", "asc"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_history))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetWikiHistoryParams::new(WikiId::new(123))
+        .min_id(100)
+        .max_id(200)
+        .count(10)
+        .order(backlog_wiki::HistoryOrder::Asc);
+
+    let result = wiki_api.get_wiki_history(params).await;
+    assert!(result.is_ok());
+    let history = result.unwrap();
+    assert_eq!(history.len(), 1);
+    assert_eq!(history[0].version, 3);
+    assert_eq!(history[0].name, "Latest Version");
+}
+
+#[tokio::test]
+async fn test_get_wiki_history_empty() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    let expected_history: Vec<WikiHistory> = vec![];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/999/history"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_history))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetWikiHistoryParams::new(WikiId::new(999));
+    let result = wiki_api.get_wiki_history(params).await;
+    assert!(result.is_ok());
+    let history = result.unwrap();
+    assert_eq!(history.len(), 0);
+}
+
+#[tokio::test]
+async fn test_get_wiki_history_not_found() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/404/history"))
+        .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
+            "errors": [{"message": "Wiki not found"}]
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetWikiHistoryParams::new(WikiId::new(404));
+    let result = wiki_api.get_wiki_history(params).await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_wiki_history_access_forbidden() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/403/history"))
+        .respond_with(ResponseTemplate::new(403).set_body_json(serde_json::json!({
+            "errors": [{"message": "You do not have permission to access this wiki"}]
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetWikiHistoryParams::new(WikiId::new(403));
+    let result = wiki_api.get_wiki_history(params).await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_wiki_history_server_error() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/500/history"))
+        .respond_with(ResponseTemplate::new(500).set_body_json(serde_json::json!({
+            "errors": [{"message": "Internal server error"}]
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetWikiHistoryParams::new(WikiId::new(500));
+    let result = wiki_api.get_wiki_history(params).await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_wiki_history_with_u32_id() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    let expected_history = vec![create_mock_wiki_history(789, 1, "Test Wiki", "admin")];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/789/history"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_history))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetWikiHistoryParams::new(789u32);
+    let result = wiki_api.get_wiki_history(params).await;
+    assert!(result.is_ok());
+    let history = result.unwrap();
+    assert_eq!(history.len(), 1);
+    assert_eq!(history[0].page_id.value(), 789);
+    assert_eq!(history[0].version, 1);
 }

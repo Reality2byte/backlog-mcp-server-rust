@@ -81,3 +81,126 @@ pub struct WikiTag {
     pub id: WikiTagId,
     pub name: String,
 }
+
+/// Represents a single entry in the wiki page history.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[serde(rename_all = "camelCase")]
+pub struct WikiHistory {
+    /// The wiki page ID this history entry belongs to.
+    #[serde(rename = "pageId")]
+    pub page_id: WikiId,
+    /// The version number of this history entry.
+    pub version: u32,
+    /// The name/title of the wiki page at this version.
+    pub name: String,
+    /// The content of the wiki page at this version.
+    pub content: String,
+    /// The user who created this version.
+    #[serde(rename = "createdUser")]
+    pub created_user: User,
+    /// The timestamp when this version was created.
+    pub created: DateTime<Utc>,
+}
+
+/// Represents the sort order for wiki history entries.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub enum HistoryOrder {
+    #[serde(rename = "asc")]
+    Asc,
+    #[serde(rename = "desc")]
+    Desc,
+}
+
+impl Default for HistoryOrder {
+    fn default() -> Self {
+        Self::Desc
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use backlog_core::{
+        Language, Role,
+        identifier::{Identifier, UserId},
+    };
+    use serde_json;
+
+    #[test]
+    fn test_wiki_history_deserialization() {
+        let json = r#"{
+            "pageId": 1,
+            "version": 2,
+            "name": "Updated Page",
+            "content": "New content",
+            "createdUser": {
+                "id": 123,
+                "name": "john",
+                "roleType": 1,
+                "lang": "ja",
+                "mailAddress": "john@example.com"
+            },
+            "created": "2014-06-24T05:04:48Z"
+        }"#;
+
+        let history: WikiHistory = serde_json::from_str(json).unwrap();
+        assert_eq!(history.page_id.value(), 1);
+        assert_eq!(history.version, 2);
+        assert_eq!(history.name, "Updated Page");
+        assert_eq!(history.content, "New content");
+        assert_eq!(history.created_user.name, "john");
+    }
+
+    #[test]
+    fn test_wiki_history_serialization() {
+        let history = WikiHistory {
+            page_id: WikiId::new(1),
+            version: 2,
+            name: "Test Page".to_string(),
+            content: "Test content".to_string(),
+            created_user: User {
+                id: UserId::new(123),
+                user_id: Some("john".to_string()),
+                name: "john".to_string(),
+                role_type: Role::User,
+                lang: Some(Language::Japanese),
+                mail_address: "john@example.com".to_string(),
+                last_login_time: None,
+            },
+            created: chrono::DateTime::parse_from_rfc3339("2014-06-24T05:04:48Z")
+                .unwrap()
+                .with_timezone(&Utc),
+        };
+
+        let json = serde_json::to_string(&history).unwrap();
+        assert!(json.contains("\"pageId\":1"));
+        assert!(json.contains("\"version\":2"));
+        assert!(json.contains("\"name\":\"Test Page\""));
+    }
+
+    #[test]
+    fn test_history_order_default() {
+        let order = HistoryOrder::default();
+        assert_eq!(order, HistoryOrder::Desc);
+    }
+
+    #[test]
+    fn test_history_order_serialization() {
+        let asc = HistoryOrder::Asc;
+        let desc = HistoryOrder::Desc;
+
+        assert_eq!(serde_json::to_string(&asc).unwrap(), "\"asc\"");
+        assert_eq!(serde_json::to_string(&desc).unwrap(), "\"desc\"");
+    }
+
+    #[test]
+    fn test_history_order_deserialization() {
+        let asc: HistoryOrder = serde_json::from_str("\"asc\"").unwrap();
+        let desc: HistoryOrder = serde_json::from_str("\"desc\"").unwrap();
+
+        assert_eq!(asc, HistoryOrder::Asc);
+        assert_eq!(desc, HistoryOrder::Desc);
+    }
+}

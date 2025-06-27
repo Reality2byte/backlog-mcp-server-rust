@@ -972,6 +972,31 @@ enum WikiCommands {
         #[clap(short, long)]
         project_id: String,
     },
+    /// Get history of a wiki page
+    History {
+        /// Wiki ID
+        #[clap(name = "WIKI_ID")]
+        wiki_id: u32,
+        /// Minimum ID for history entries
+        #[clap(long)]
+        min_id: Option<u32>,
+        /// Maximum ID for history entries
+        #[clap(long)]
+        max_id: Option<u32>,
+        /// Maximum number of history entries to retrieve (1-100)
+        #[clap(long)]
+        count: Option<u32>,
+        /// Sort order for history entries
+        #[clap(long, value_enum)]
+        order: Option<HistoryOrderCli>,
+    },
+}
+
+#[cfg(feature = "wiki")]
+#[derive(Clone, clap::ValueEnum)]
+enum HistoryOrderCli {
+    Asc,
+    Desc,
 }
 
 #[derive(Parser, Debug, Default)]
@@ -3462,6 +3487,66 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to get wiki tags: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            WikiCommands::History {
+                wiki_id,
+                min_id,
+                max_id,
+                count,
+                order,
+            } => {
+                println!("Getting history for wiki ID: {}", wiki_id);
+
+                use backlog_wiki::{GetWikiHistoryParams, HistoryOrder};
+                let mut params = GetWikiHistoryParams::new(WikiId::new(wiki_id));
+
+                if let Some(min_id) = min_id {
+                    params = params.min_id(min_id);
+                }
+                if let Some(max_id) = max_id {
+                    params = params.max_id(max_id);
+                }
+                if let Some(count) = count {
+                    params = params.count(count);
+                }
+                if let Some(order) = order {
+                    let order = match order {
+                        HistoryOrderCli::Asc => HistoryOrder::Asc,
+                        HistoryOrderCli::Desc => HistoryOrder::Desc,
+                    };
+                    params = params.order(order);
+                }
+
+                match client.wiki().get_wiki_history(params).await {
+                    Ok(history) => {
+                        if history.is_empty() {
+                            println!("No history found for wiki {}", wiki_id);
+                        } else {
+                            println!("Wiki {} History ({} entries):", wiki_id, history.len());
+                            for entry in &history {
+                                println!(
+                                    "Version {}: {} (by {} at {})",
+                                    entry.version,
+                                    entry.name,
+                                    entry.created_user.name,
+                                    entry.created.format("%Y-%m-%d %H:%M:%S")
+                                );
+                                if !entry.content.is_empty() {
+                                    let preview = if entry.content.len() > 100 {
+                                        format!("{}...", &entry.content[..100])
+                                    } else {
+                                        entry.content.clone()
+                                    };
+                                    println!("  Content: {}", preview);
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to get wiki history: {}", e);
                         std::process::exit(1);
                     }
                 }
