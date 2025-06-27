@@ -3,15 +3,15 @@ use client::{Client, DownloadedFile};
 
 #[cfg(feature = "writable")]
 use super::{
-    AddCommentParams, AddIssueParams, DeleteAttachmentParams, DeleteCommentParams,
-    DeleteIssueParams, LinkSharedFilesToIssueParams, UnlinkSharedFileParams, UpdateCommentParams,
-    UpdateIssueParams,
+    AddCommentNotificationParams, AddCommentParams, AddIssueParams, DeleteAttachmentParams,
+    DeleteCommentParams, DeleteIssueParams, LinkSharedFilesToIssueParams, UnlinkSharedFileParams,
+    UpdateCommentParams, UpdateIssueParams,
 };
 #[cfg(feature = "writable")]
 use super::{
-    AddCommentResponse, AddIssueResponse, DeleteAttachmentResponse, DeleteCommentResponse,
-    DeleteIssueResponse, LinkSharedFilesToIssueResponse, UnlinkSharedFileResponse,
-    UpdateCommentResponse, UpdateIssueResponse,
+    AddCommentNotificationResponse, AddCommentResponse, AddIssueResponse, DeleteAttachmentResponse,
+    DeleteCommentResponse, DeleteIssueResponse, LinkSharedFilesToIssueResponse,
+    UnlinkSharedFileResponse, UpdateCommentResponse, UpdateIssueResponse,
 };
 use super::{
     CountCommentParams, CountIssueParams, GetAttachmentFileParams, GetAttachmentListParams,
@@ -128,6 +128,17 @@ impl IssueApi {
         &self,
         params: GetCommentNotificationsParams,
     ) -> Result<GetCommentNotificationsResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Add notifications to a specific comment.
+    ///
+    /// Corresponds to `POST /api/v2/issues/:issueIdOrKey/comments/:commentId/notifications`.
+    #[cfg(feature = "writable")]
+    pub async fn add_comment_notification(
+        &self,
+        params: AddCommentNotificationParams,
+    ) -> Result<AddCommentNotificationResponse> {
         self.0.execute(params).await
     }
 

@@ -5,8 +5,9 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 ## Implementation Summary by Domain
 
 ### backlog-space (SpaceApi)
-- **Implemented**: 2/9 endpoints (22%)
+- **Implemented**: 3/9 endpoints (33%)
 - **Read operations**: get_space(), get_space_logo()
+- **Write operations**: upload_attachment()
 
 ### backlog-project (ProjectApi)
 - **Implemented**: 23/36 endpoints (64%)
@@ -14,9 +15,9 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Write operations** (requires `writable` feature): add_category(), update_category(), delete_category(), add_issue_type(), delete_issue_type(), update_issue_type(), add_version(), update_version(), delete_version(), add_status(), update_status(), delete_status(), update_status_order()
 
 ### backlog-issue (IssueApi)
-- **Implemented**: 15/26 endpoints (58%)
-- **Read operations**: get_issue(), get_issue_list(), count_issue(), get_comment_list(), get_comment(), count_comment(), get_attachment_list(), get_attachment_file(), get_shared_file_list()
-- **Write operations** (requires `writable` feature): add_issue(), delete_issue(), update_issue(), add_comment(), delete_comment(), link_shared_files_to_issue()
+- **Implemented**: 18/26 endpoints (69%)
+- **Read operations**: get_issue(), get_issue_list(), count_issue(), get_comment_list(), get_comment(), count_comment(), get_attachment_list(), get_attachment_file(), get_shared_file_list(), get_participant_list(), get_comment_notifications()
+- **Write operations** (requires `writable` feature): add_issue(), delete_issue(), update_issue(), add_comment(), delete_comment(), link_shared_files_to_issue(), add_comment_notification()
 
 ### backlog-file (FileApi)
 - **Implemented**: 2/2 endpoints (100%)
@@ -63,7 +64,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ❌ UpdateSpaceNotification: Updates space notification: PUT /api/v2/space/notification
 - ❌ GetLicence: Returns licence: GET /api/v2/space/licence
 - ❌ GetSpaceDiskUsage: Returns information about space disk usage: GET /api/v2/space/diskUsage
-- ❌ PostAttachmentFile: Posts an attachment file for issue or wiki. Returns id of the attachment file: POST /api/v2/space/attachment
+- ✅ PostAttachmentFile: Posts an attachment file for issue or wiki. Returns id of the attachment file: POST /api/v2/space/attachment
 
 ### Projects
 - ✅ GetProject: Returns information about project: GET /api/v2/projects/:projectIdOrKey
@@ -115,9 +116,9 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ✅ DeleteComment: Delete comment: DELETE /api/v2/issues/:issueIdOrKey/comments/:commentId
 - ✅ GetCommentList: Returns list of comments in issue: GET /api/v2/issues/:issueIdOrKey/comments
 - ✅ GetComment: Returns information about comment: GET /api/v2/issues/:issueIdOrKey/comments/:commentId
-- ✅ GetIssueParticipantList: null: GET /api/v2/issues/:issueIdOrKey/participants
+- ✅ GetIssueParticipantList: Returns list of issue participants: GET /api/v2/issues/:issueIdOrKey/participants
 - ✅ GetListOfCommentNotifications: Returns the list of comment notifications: GET /api/v2/issues/:issueIdOrKey/comments/:commentId/notifications
-- ❌ AddCommentNotification: Adds notifications to the comment. Only the user who added the comment can add notifications: POST /api/v2/issues/:issueIdOrKey/comments/:commentId/notifications
+- ✅ AddCommentNotification: Adds notifications to the comment. Only the user who added the comment can add notifications: POST /api/v2/issues/:issueIdOrKey/comments/:commentId/notifications
 
 ### Priority
 - ✅ GetPriorityList: Returns list of priorities: GET /api/v2/priorities
@@ -166,7 +167,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - ❌ UpdateWebhook: Updates information about webhook: PATCH /api/v2/projects/:projectIdOrKey/webhooks/:webhookId
 - ❌ GetWebhook: Returns information about webhook: GET /api/v2/projects/:projectIdOrKey/webhooks/:webhookId
 
-### Files
+### Shared Files
 - ✅ GetFile: Downloads the file: GET /api/v2/projects/:projectIdOrKey/files/:sharedFileId
 - ✅ GetListOfSharedFiles: Gets list of Shared Files: GET /api/v2/projects/:projectIdOrKey/files/metadata/:path
 

@@ -29,6 +29,8 @@ use backlog_core::{
 #[cfg(feature = "project_writable")]
 use backlog_domain_models::{IssueTypeColor, StatusColor};
 #[cfg(feature = "issue_writable")]
+use backlog_issue::AddCommentNotificationParams;
+#[cfg(feature = "issue_writable")]
 use backlog_issue::DeleteAttachmentParams;
 #[cfg(feature = "issue_writable")]
 use backlog_issue::DeleteCommentParams;
@@ -367,6 +369,10 @@ enum IssueCommands {
     /// Get notifications for a comment
     #[command(about = "Get notifications for a comment")]
     GetCommentNotifications(GetCommentArgs),
+    /// Add notifications to a comment
+    #[cfg(feature = "issue_writable")]
+    #[command(about = "Add notifications to a comment")]
+    AddCommentNotification(AddCommentNotificationArgs),
     /// List participants in an issue
     #[command(about = "List participants in an issue")]
     ListParticipants {
@@ -575,6 +581,18 @@ struct GetCommentArgs {
     issue_id_or_key: String,
     /// The ID of the comment
     comment_id: u32,
+}
+
+#[cfg(feature = "issue_writable")]
+#[derive(Args, Debug)]
+struct AddCommentNotificationArgs {
+    /// The ID or key of the issue (e.g., "PROJECT-123" or "12345")
+    issue_id_or_key: String,
+    /// The ID of the comment
+    comment_id: u32,
+    /// User IDs to notify (comma-separated, e.g., "123,456")
+    #[arg(short, long)]
+    users: String,
 }
 
 #[derive(Parser)]
@@ -2039,6 +2057,68 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error getting comment notifications: {}", e);
+                    }
+                }
+            }
+            #[cfg(feature = "issue_writable")]
+            IssueCommands::AddCommentNotification(add_args) => {
+                println!(
+                    "Adding notifications to comment {} in issue: {}",
+                    add_args.comment_id, add_args.issue_id_or_key
+                );
+
+                let parsed_issue_id_or_key = IssueIdOrKey::from_str(&add_args.issue_id_or_key)
+                    .map_err(|e| {
+                        format!(
+                            "Failed to parse issue_id_or_key '{}': {}",
+                            add_args.issue_id_or_key, e
+                        )
+                    })?;
+
+                let comment_id = CommentId::new(add_args.comment_id);
+
+                // Parse user IDs from comma-separated string
+                let user_ids: Result<Vec<UserId>, _> = add_args
+                    .users
+                    .split(',')
+                    .map(|id_str| {
+                        id_str
+                            .trim()
+                            .parse::<u32>()
+                            .map(UserId::new)
+                            .map_err(|e| format!("Invalid user ID '{}': {}", id_str.trim(), e))
+                    })
+                    .collect();
+
+                let user_ids = match user_ids {
+                    Ok(ids) => ids,
+                    Err(e) => {
+                        eprintln!("Error parsing user IDs: {}", e);
+                        return Ok(());
+                    }
+                };
+
+                let params =
+                    AddCommentNotificationParams::new(parsed_issue_id_or_key, comment_id, user_ids);
+
+                match client.issue().add_comment_notification(params).await {
+                    Ok(comment) => {
+                        println!("✅ Comment notifications added successfully!");
+                        println!("Comment ID: {}", comment.id.value());
+                        println!("Notifications count: {}", comment.notifications.len());
+                        if !comment.notifications.is_empty() {
+                            println!("Notified users:");
+                            for notification in &comment.notifications {
+                                println!(
+                                    "  - {} (ID: {})",
+                                    notification.user.name,
+                                    notification.user.id.value()
+                                );
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Error adding comment notifications: {}", e);
                     }
                 }
             }

@@ -19,6 +19,8 @@ mod get_shared_file_list;
 #[cfg(feature = "writable")]
 mod add_comment;
 #[cfg(feature = "writable")]
+mod add_comment_notification;
+#[cfg(feature = "writable")]
 mod add_issue;
 #[cfg(feature = "writable")]
 mod add_issue_with_api_date;
@@ -59,6 +61,8 @@ pub use get_shared_file_list::{GetSharedFileListParams, GetSharedFileListRespons
 // Write-only exports (feature-gated)
 #[cfg(feature = "writable")]
 pub use add_comment::{AddCommentParams, AddCommentParamsBuilder, AddCommentResponse};
+#[cfg(feature = "writable")]
+pub use add_comment_notification::{AddCommentNotificationParams, AddCommentNotificationResponse};
 #[cfg(feature = "writable")]
 pub use add_issue::{AddIssueParams, AddIssueParamsBuilder, AddIssueResponse};
 #[cfg(feature = "writable")]
