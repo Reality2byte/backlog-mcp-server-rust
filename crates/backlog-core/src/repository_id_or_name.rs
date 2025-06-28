@@ -36,7 +36,7 @@ impl fmt::Display for RepositoryIdOrName {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             RepositoryIdOrName::Id(id) => write!(f, "{}", id.value()),
-            RepositoryIdOrName::Name(name) => write!(f, "{}", name),
+            RepositoryIdOrName::Name(name) => write!(f, "{name}"),
         }
     }
 }

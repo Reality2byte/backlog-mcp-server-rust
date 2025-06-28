@@ -7,7 +7,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     eprintln!("Backlog MCP Server starting...");
 
     let service = Server::new()?.serve(stdio()).await.inspect_err(|e| {
-        println!("Error starting server: {}", e);
+        println!("Error starting server: {e}");
     })?;
     service.waiting().await?;
 

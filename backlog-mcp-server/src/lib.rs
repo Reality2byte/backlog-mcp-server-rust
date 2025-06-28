@@ -1,3 +1,4 @@
+pub mod access_control;
 pub mod document;
 mod error;
 pub mod file;

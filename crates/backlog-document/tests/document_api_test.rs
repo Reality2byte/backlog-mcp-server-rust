@@ -16,8 +16,7 @@ async fn test_download_attachment_success() {
 
     Mock::given(method("GET"))
         .and(path(format!(
-            "/api/v2/documents/{}/attachments/{}",
-            document_id_val, attachment_id_val
+            "/api/v2/documents/{document_id_val}/attachments/{attachment_id_val}"
         )))
         .respond_with(
             ResponseTemplate::new(200)
@@ -57,8 +56,7 @@ async fn test_download_attachment_error_404() {
 
     Mock::given(method("GET"))
         .and(path(format!(
-            "/api/v2/documents/{}/attachments/{}",
-            document_id_val, attachment_id_val
+            "/api/v2/documents/{document_id_val}/attachments/{attachment_id_val}"
         )))
         .respond_with(ResponseTemplate::new(404))
         .mount(&server)

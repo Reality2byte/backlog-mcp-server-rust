@@ -142,7 +142,7 @@ fn generate_array_field_serialization(
     field_type: &Type,
     _config: &FieldConfig,
 ) -> Result<TokenStream> {
-    let array_key = format!("{}[]", api_name);
+    let array_key = format!("{api_name}[]");
 
     if is_option_type(field_type) {
         // Optional array: Option<Vec<T>>

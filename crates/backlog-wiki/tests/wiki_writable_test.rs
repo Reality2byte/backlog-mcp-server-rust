@@ -471,7 +471,7 @@ mod writable_tests {
                 assert_eq!(attachments[0].name, "document.pdf");
             }
             Err(e) => {
-                panic!("Expected Ok but got error: {:?}", e);
+                panic!("Expected Ok but got error: {e:?}");
             }
         }
     }
@@ -511,7 +511,7 @@ mod writable_tests {
                 assert_eq!(attachments[2].name, "file3.pdf");
             }
             Err(e) => {
-                panic!("Expected Ok but got error: {:?}", e);
+                panic!("Expected Ok but got error: {e:?}");
             }
         }
     }

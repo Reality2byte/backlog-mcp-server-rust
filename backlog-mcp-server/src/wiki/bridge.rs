@@ -37,8 +37,7 @@ pub(crate) async fn get_wiki_list(
             ProjectIdOrKey::Key(key)
         } else {
             return Err(McpError::Parameter(format!(
-                "Invalid project ID or key: {}. Must be a numeric ID or valid project key.",
-                project_str
+                "Invalid project ID or key: {project_str}. Must be a numeric ID or valid project key.",
             )));
         };
         params = params.project_id_or_key(project_id_or_key);

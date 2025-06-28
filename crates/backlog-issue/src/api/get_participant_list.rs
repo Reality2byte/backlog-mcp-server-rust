@@ -60,7 +60,7 @@ mod tests {
     #[test]
     fn test_get_participant_list_params_debug() {
         let params = GetParticipantListParams::new(IssueKey::new("TEST".parse().unwrap(), 123));
-        let debug_str = format!("{:?}", params);
+        let debug_str = format!("{params:?}");
         assert!(debug_str.contains("GetParticipantListParams"));
         assert!(debug_str.contains("TEST"));
     }

@@ -199,8 +199,7 @@ impl FromStr for PrCommentOrder {
             "asc" => Ok(PrCommentOrder::Asc),
             "desc" => Ok(PrCommentOrder::Desc),
             _ => Err(CoreError::InvalidParameter(format!(
-                "Invalid pull request comment order: '{}'. Must be 'asc' or 'desc'.",
-                s
+                "Invalid pull request comment order: '{s}'. Must be 'asc' or 'desc'."
             ))),
         }
     }

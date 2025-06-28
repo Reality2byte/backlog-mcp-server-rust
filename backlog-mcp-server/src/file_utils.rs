@@ -18,10 +18,7 @@ impl std::str::FromStr for FileFormat {
             "text" => Ok(FileFormat::Text),
             "raw" => Ok(FileFormat::Raw),
             other => Err(McpError::invalid_request(
-                format!(
-                    "Invalid format '{}'. Valid options: 'image', 'text', 'raw'",
-                    other
-                ),
+                format!("Invalid format '{other}'. Valid options: 'image', 'text', 'raw'",),
                 None,
             )),
         }
@@ -112,8 +109,7 @@ impl FormatDetector {
         if !content_type.starts_with("image/") {
             return Err(McpError::invalid_request(
                 format!(
-                    "File '{}' is not an image. Reported content type: {}",
-                    filename_for_error_message, content_type
+                    "File '{filename_for_error_message}' is not an image. Reported content type: {content_type}"
                 ),
                 None,
             ));

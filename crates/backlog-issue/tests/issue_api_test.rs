@@ -14,7 +14,7 @@ fn create_mock_user(id: u32, name: &str) -> User {
         name: name.to_string(),
         role_type: Role::User,
         lang: Some(Language::Japanese),
-        mail_address: format!("{}@example.com", name),
+        mail_address: format!("{name}@example.com"),
         last_login_time: Some(
             chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
                 .unwrap()
@@ -199,7 +199,7 @@ async fn test_get_comment_list_success_no_params() {
     ];
 
     Mock::given(method("GET"))
-        .and(path(format!("/api/v2/issues/{}/comments", issue_key)))
+        .and(path(format!("/api/v2/issues/{issue_key}/comments")))
         .respond_with(ResponseTemplate::new(200).set_body_json(&expected_comments))
         .mount(&mock_server)
         .await;
@@ -222,7 +222,7 @@ async fn test_get_comment_list_with_params() {
     let expected_comments = vec![create_mock_comment(5, "Comment with params", 103, "carol")];
 
     Mock::given(method("GET"))
-        .and(path(format!("/api/v2/issues/{}/comments", issue_id)))
+        .and(path(format!("/api/v2/issues/{issue_id}/comments")))
         .and(query_param("count", "1"))
         .and(query_param("order", "asc"))
         .respond_with(ResponseTemplate::new(200).set_body_json(&expected_comments))
@@ -252,7 +252,7 @@ async fn test_get_attachment_list_success() {
     ];
 
     Mock::given(method("GET"))
-        .and(path(format!("/api/v2/issues/{}/attachments", issue_key)))
+        .and(path(format!("/api/v2/issues/{issue_key}/attachments")))
         .respond_with(ResponseTemplate::new(200).set_body_json(&expected_attachments))
         .mount(&mock_server)
         .await;
@@ -283,8 +283,7 @@ async fn test_get_participant_list_success() {
 
     wiremock::Mock::given(wiremock::matchers::method("GET"))
         .and(wiremock::matchers::path(format!(
-            "/api/v2/issues/{}/participants",
-            issue_key
+            "/api/v2/issues/{issue_key}/participants"
         )))
         .respond_with(wiremock::ResponseTemplate::new(200).set_body_json(&expected_participants))
         .mount(&mock_server)
@@ -332,8 +331,7 @@ async fn test_get_participant_list_issue_not_found() {
 
     wiremock::Mock::given(wiremock::matchers::method("GET"))
         .and(wiremock::matchers::path(format!(
-            "/api/v2/issues/{}/participants",
-            issue_key
+            "/api/v2/issues/{issue_key}/participants"
         )))
         .respond_with(
             wiremock::ResponseTemplate::new(404).set_body_json(serde_json::json!({
@@ -377,7 +375,7 @@ async fn test_get_shared_file_list_success() {
     ];
 
     Mock::given(method("GET"))
-        .and(path(format!("/api/v2/issues/{}/sharedFiles", issue_key)))
+        .and(path(format!("/api/v2/issues/{issue_key}/sharedFiles")))
         .respond_with(ResponseTemplate::new(200).set_body_json(&expected_shared_files))
         .mount(&mock_server)
         .await;
@@ -401,7 +399,7 @@ async fn test_count_comment_success() {
     let issue_key = "TESTKEY-1";
 
     Mock::given(method("GET"))
-        .and(path(format!("/api/v2/issues/{}/comments/count", issue_key)))
+        .and(path(format!("/api/v2/issues/{issue_key}/comments/count")))
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
             "count": 5
         })))
@@ -430,8 +428,7 @@ async fn test_get_comment_success() {
 
     Mock::given(method("GET"))
         .and(path(format!(
-            "/api/v2/issues/{}/comments/{}",
-            issue_key, comment_id
+            "/api/v2/issues/{issue_key}/comments/{comment_id}"
         )))
         .respond_with(ResponseTemplate::new(200).set_body_json(&expected_comment))
         .mount(&mock_server)

@@ -34,7 +34,7 @@ impl fmt::Display for IssueIdOrKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             IssueIdOrKey::Id(id) => write!(f, "{}", id.value()),
-            IssueIdOrKey::Key(key) => write!(f, "{}", key),
+            IssueIdOrKey::Key(key) => write!(f, "{key}"),
         }
     }
 }

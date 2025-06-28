@@ -22,7 +22,7 @@ mod writable_tests {
             name: name.to_string(),
             role_type: Role::User,
             lang: Some(Language::Japanese),
-            mail_address: format!("{}@example.com", name),
+            mail_address: format!("{name}@example.com"),
             last_login_time: Some(
                 chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
                     .unwrap()
@@ -117,7 +117,7 @@ mod writable_tests {
         let expected_comment = create_mock_comment(1001, "This is a test comment", 101, "alice");
 
         Mock::given(method("POST"))
-            .and(path(format!("/api/v2/issues/{}/comments", issue_key)))
+            .and(path(format!("/api/v2/issues/{issue_key}/comments")))
             .respond_with(ResponseTemplate::new(201).set_body_json(&expected_comment))
             .mount(&mock_server)
             .await;
@@ -146,7 +146,7 @@ mod writable_tests {
         let expected_comment = create_mock_comment(1002, "Comment with notifications", 102, "bob");
 
         Mock::given(method("POST"))
-            .and(path(format!("/api/v2/issues/{}/comments", issue_key)))
+            .and(path(format!("/api/v2/issues/{issue_key}/comments")))
             .respond_with(ResponseTemplate::new(201).set_body_json(&expected_comment))
             .mount(&mock_server)
             .await;
@@ -162,7 +162,7 @@ mod writable_tests {
         let result = issue_api.add_comment(params).await;
 
         if let Err(e) = &result {
-            panic!("Expected success, but got error: {:?}", e);
+            panic!("Expected success, but got error: {e:?}");
         }
         let comment = result.unwrap();
         assert_eq!(comment.id, CommentId::new(1002));
@@ -180,7 +180,7 @@ mod writable_tests {
         let issue_key = "TESTKEY-404";
 
         Mock::given(method("POST"))
-            .and(path(format!("/api/v2/issues/{}/comments", issue_key)))
+            .and(path(format!("/api/v2/issues/{issue_key}/comments")))
             .respond_with(ResponseTemplate::new(404))
             .mount(&mock_server)
             .await;
@@ -225,7 +225,7 @@ mod writable_tests {
         ];
 
         Mock::given(method("POST"))
-            .and(path(format!("/api/v2/issues/{}/sharedFiles", issue_key)))
+            .and(path(format!("/api/v2/issues/{issue_key}/sharedFiles")))
             .respond_with(ResponseTemplate::new(200).set_body_json(&expected_shared_files))
             .mount(&mock_server)
             .await;
@@ -263,7 +263,7 @@ mod writable_tests {
         )];
 
         Mock::given(method("POST"))
-            .and(path(format!("/api/v2/issues/{}/sharedFiles", issue_key)))
+            .and(path(format!("/api/v2/issues/{issue_key}/sharedFiles")))
             .respond_with(ResponseTemplate::new(200).set_body_json(&expected_shared_file))
             .mount(&mock_server)
             .await;
@@ -300,8 +300,7 @@ mod writable_tests {
 
         Mock::given(method("GET"))
             .and(path(format!(
-                "/api/v2/issues/{}/attachments/{}",
-                issue_key_str, attachment_id_val
+                "/api/v2/issues/{issue_key_str}/attachments/{attachment_id_val}"
             )))
             .respond_with(
                 ResponseTemplate::new(200)
@@ -309,7 +308,7 @@ mod writable_tests {
                     .insert_header("Content-Type", expected_content_type)
                     .insert_header(
                         "Content-Disposition",
-                        format!("attachment; filename=\"{}\"", expected_filename),
+                        format!("attachment; filename=\"{expected_filename}\""),
                     ),
             )
             .mount(&mock_server)
@@ -338,8 +337,7 @@ mod writable_tests {
 
         Mock::given(method("GET"))
             .and(path(format!(
-                "/api/v2/issues/{}/attachments/{}",
-                issue_key_str, attachment_id_val
+                "/api/v2/issues/{issue_key_str}/attachments/{attachment_id_val}",
             )))
             .respond_with(ResponseTemplate::new(404))
             .mount(&mock_server)
@@ -371,8 +369,7 @@ mod writable_tests {
 
         Mock::given(method("PATCH"))
             .and(path(format!(
-                "/api/v2/issues/{}/comments/{}",
-                issue_id_or_key, comment_id
+                "/api/v2/issues/{issue_id_or_key}/comments/{comment_id}",
             )))
             .respond_with(ResponseTemplate::new(200).set_body_json(&expected_comment))
             .mount(&mock_server)
@@ -404,8 +401,7 @@ mod writable_tests {
 
         Mock::given(method("PATCH"))
             .and(path(format!(
-                "/api/v2/issues/{}/comments/{}",
-                issue_id_or_key, comment_id
+                "/api/v2/issues/{issue_id_or_key}/comments/{comment_id}",
             )))
             .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
                 "errors": [{"message": "Issue not found"}]
@@ -434,8 +430,7 @@ mod writable_tests {
 
         Mock::given(method("PATCH"))
             .and(path(format!(
-                "/api/v2/issues/{}/comments/{}",
-                issue_id_or_key, comment_id
+                "/api/v2/issues/{issue_id_or_key}/comments/{comment_id}",
             )))
             .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
                 "errors": [{"message": "Comment not found"}]
@@ -464,8 +459,7 @@ mod writable_tests {
 
         Mock::given(method("PATCH"))
             .and(path(format!(
-                "/api/v2/issues/{}/comments/{}",
-                issue_id_or_key, comment_id
+                "/api/v2/issues/{issue_id_or_key}/comments/{comment_id}",
             )))
             .respond_with(ResponseTemplate::new(403).set_body_json(serde_json::json!({
                 "errors": [{"message": "You do not have permission to update this comment"}]
@@ -512,8 +506,7 @@ mod writable_tests {
 
         Mock::given(method("DELETE"))
             .and(path(format!(
-                "/api/v2/issues/{}/comments/{}",
-                issue_id_or_key, comment_id
+                "/api/v2/issues/{issue_id_or_key}/comments/{comment_id}",
             )))
             .respond_with(ResponseTemplate::new(200).set_body_json(&expected_comment))
             .mount(&mock_server)
@@ -543,8 +536,7 @@ mod writable_tests {
 
         Mock::given(method("DELETE"))
             .and(path(format!(
-                "/api/v2/issues/{}/comments/{}",
-                issue_id_or_key, comment_id
+                "/api/v2/issues/{issue_id_or_key}/comments/{comment_id}",
             )))
             .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
                 "errors": [{"message": "Issue not found"}]
@@ -572,8 +564,7 @@ mod writable_tests {
 
         Mock::given(method("DELETE"))
             .and(path(format!(
-                "/api/v2/issues/{}/comments/{}",
-                issue_id_or_key, comment_id
+                "/api/v2/issues/{issue_id_or_key}/comments/{comment_id}",
             )))
             .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
                 "errors": [{"message": "Comment not found"}]
@@ -601,8 +592,7 @@ mod writable_tests {
 
         Mock::given(method("DELETE"))
             .and(path(format!(
-                "/api/v2/issues/{}/comments/{}",
-                issue_id_or_key, comment_id
+                "/api/v2/issues/{issue_id_or_key}/comments/{comment_id}",
             )))
             .respond_with(ResponseTemplate::new(403).set_body_json(serde_json::json!({
                 "errors": [{"message": "You do not have permission to delete this comment"}]
@@ -632,8 +622,7 @@ mod writable_tests {
 
         Mock::given(method("DELETE"))
             .and(path(format!(
-                "/api/v2/issues/{}/comments/{}",
-                issue_key, comment_id
+                "/api/v2/issues/{issue_key}/comments/{comment_id}",
             )))
             .respond_with(ResponseTemplate::new(200).set_body_json(&expected_comment))
             .mount(&mock_server)
@@ -671,8 +660,7 @@ mod writable_tests {
 
         Mock::given(method("DELETE"))
             .and(path(format!(
-                "/api/v2/issues/{}/sharedFiles/{}",
-                issue_key, shared_file_id
+                "/api/v2/issues/{issue_key}/sharedFiles/{shared_file_id}",
             )))
             .respond_with(ResponseTemplate::new(200).set_body_json(&expected_shared_file))
             .mount(&mock_server)
@@ -703,8 +691,7 @@ mod writable_tests {
 
         Mock::given(method("DELETE"))
             .and(path(format!(
-                "/api/v2/issues/{}/sharedFiles/{}",
-                issue_key, shared_file_id
+                "/api/v2/issues/{issue_key}/sharedFiles/{shared_file_id}",
             )))
             .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
                 "errors": [{"message": "Issue not found"}]
@@ -732,8 +719,7 @@ mod writable_tests {
 
         Mock::given(method("DELETE"))
             .and(path(format!(
-                "/api/v2/issues/{}/sharedFiles/{}",
-                issue_key, shared_file_id
+                "/api/v2/issues/{issue_key}/sharedFiles/{shared_file_id}",
             )))
             .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
                 "errors": [{"message": "Shared file not found"}]
@@ -761,8 +747,7 @@ mod writable_tests {
 
         Mock::given(method("DELETE"))
             .and(path(format!(
-                "/api/v2/issues/{}/sharedFiles/{}",
-                issue_key, shared_file_id
+                "/api/v2/issues/{issue_key}/sharedFiles/{shared_file_id}",
             )))
             .respond_with(ResponseTemplate::new(403).set_body_json(serde_json::json!({
                 "errors": [{"message": "You do not have permission to unlink this shared file"}]
@@ -793,8 +778,7 @@ mod writable_tests {
 
         Mock::given(method("DELETE"))
             .and(path(format!(
-                "/api/v2/issues/{}/attachments/{}",
-                issue_id_or_key, attachment_id
+                "/api/v2/issues/{issue_id_or_key}/attachments/{attachment_id}",
             )))
             .respond_with(ResponseTemplate::new(200).set_body_json(&expected_attachment))
             .mount(&mock_server)

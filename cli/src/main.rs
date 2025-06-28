@@ -1084,26 +1084,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match cli.command {
         Commands::Repo(repo_args) => match repo_args.command {
             RepoCommands::List { project_id } => {
-                println!("Listing repositories for project: {}", project_id);
+                println!("Listing repositories for project: {project_id}");
                 let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
                 // Assumes backlog_git is enabled via features for the client build
                 let params = backlog_api_client::GetRepositoryListParams::new(proj_id_or_key);
                 let repos = client.git().get_repository_list(params).await?;
                 // TODO: Pretty print repositories
-                println!("{:?}", repos);
+                println!("{repos:?}");
             }
             RepoCommands::Show {
                 project_id,
                 repo_id,
             } => {
-                println!("Showing repository {} in project: {}", repo_id, project_id);
+                println!("Showing repository {repo_id} in project: {project_id}");
                 let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
                 let repo_id_or_name = repo_id.parse::<RepositoryIdOrName>()?;
                 let params =
                     backlog_api_client::GetRepositoryParams::new(proj_id_or_key, repo_id_or_name);
                 let repo = client.git().get_repository(params).await?;
                 // TODO: Pretty print repository
-                println!("{:?}", repo);
+                println!("{repo:?}");
             }
         },
         Commands::Pr(pr_args) => match pr_args.command {
@@ -1111,10 +1111,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 project_id,
                 repo_id,
             } => {
-                println!(
-                    "Listing pull requests for repo {} in project: {}",
-                    repo_id, project_id
-                );
+                println!("Listing pull requests for repo {repo_id} in project: {project_id}");
                 let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
                 let repo_id_or_name = repo_id.parse::<RepositoryIdOrName>()?;
                 let params = backlog_api_client::GetPullRequestListParams::new(
@@ -1123,17 +1120,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
                 let prs = client.git().get_pull_request_list(params).await?;
                 // TODO: Pretty print pull requests
-                println!("{:?}", prs);
+                println!("{prs:?}");
             }
             PrCommands::Show {
                 project_id,
                 repo_id,
                 pr_number,
             } => {
-                println!(
-                    "Showing PR #{} for repo {} in project: {}",
-                    pr_number, repo_id, project_id
-                );
+                println!("Showing PR #{pr_number} for repo {repo_id} in project: {project_id}");
                 let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
                 let repo_id_or_name = repo_id.parse::<RepositoryIdOrName>()?;
                 let pr_num = PullRequestNumber::from(pr_number);
@@ -1145,7 +1139,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
                 let pr = client.git().get_pull_request(params).await?;
                 // TODO: Pretty print pull request
-                println!("{:?}", pr);
+                println!("{pr:?}");
             }
             PrCommands::DownloadAttachment(dl_args) => {
                 println!(
@@ -1189,7 +1183,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error downloading PR attachment: {}", e);
+                        eprintln!("Error downloading PR attachment: {e}");
                     }
                 }
             }
@@ -1231,7 +1225,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Size: {} bytes", deleted_attachment.size);
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to delete PR attachment: {}", e);
+                        eprintln!("❌ Failed to delete PR attachment: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -1248,15 +1242,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 notify_user_ids,
                 comment,
             } => {
-                println!(
-                    "Updating PR #{} in repo {} (project {})",
-                    pr_number, repo_id, project_id
-                );
+                println!("Updating PR #{pr_number} in repo {repo_id} (project {project_id})");
 
                 let parsed_project_id = ProjectIdOrKey::from_str(&project_id)
-                    .map_err(|e| format!("Failed to parse project_id '{}': {}", project_id, e))?;
+                    .map_err(|e| format!("Failed to parse project_id '{project_id}': {e}"))?;
                 let parsed_repo_id = RepositoryIdOrName::from_str(&repo_id)
-                    .map_err(|e| format!("Failed to parse repo_id '{}': {}", repo_id, e))?;
+                    .map_err(|e| format!("Failed to parse repo_id '{repo_id}': {e}"))?;
                 let parsed_pr_number = PullRequestNumber::from(pr_number);
 
                 let mut params = UpdatePullRequestParams::new(
@@ -1298,7 +1289,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Number: {}", pull_request.number.value());
                         println!("Summary: {}", pull_request.summary);
                         if let Some(description) = &pull_request.description {
-                            println!("Description: {}", description);
+                            println!("Description: {description}");
                         }
                         if let Some(assignee) = &pull_request.assignee {
                             println!("Assignee: {} (ID: {})", assignee.name, assignee.id.value());
@@ -1308,7 +1299,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to update pull request: {}", e);
+                        eprintln!("❌ Failed to update pull request: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -1322,14 +1313,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 content,
             } => {
                 println!(
-                    "Updating comment {} for PR #{} in repo {} (project {})",
-                    comment_id, pr_number, repo_id, project_id
+                    "Updating comment {comment_id} for PR #{pr_number} in repo {repo_id} (project {project_id})"
                 );
 
                 let parsed_project_id = ProjectIdOrKey::from_str(&project_id)
-                    .map_err(|e| format!("Failed to parse project_id '{}': {}", project_id, e))?;
+                    .map_err(|e| format!("Failed to parse project_id '{project_id}': {e}"))?;
                 let parsed_repo_id = RepositoryIdOrName::from_str(&repo_id)
-                    .map_err(|e| format!("Failed to parse repo_id '{}': {}", repo_id, e))?;
+                    .map_err(|e| format!("Failed to parse repo_id '{repo_id}': {e}"))?;
                 let parsed_pr_number = PullRequestNumber::from(pr_number);
                 let parsed_comment_id = PullRequestCommentId::new(comment_id);
 
@@ -1355,7 +1345,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Updated: {}", comment.updated);
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to update pull request comment: {}", e);
+                        eprintln!("❌ Failed to update pull request comment: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -1366,14 +1356,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 pr_number,
             } => {
                 println!(
-                    "Getting comment count for PR #{} in repo {} (project {})",
-                    pr_number, repo_id, project_id
+                    "Getting comment count for PR #{pr_number} in repo {repo_id} (project {project_id})"
                 );
 
                 let parsed_project_id = ProjectIdOrKey::from_str(&project_id)
-                    .map_err(|e| format!("Failed to parse project_id '{}': {}", project_id, e))?;
+                    .map_err(|e| format!("Failed to parse project_id '{project_id}': {e}"))?;
                 let parsed_repo_id = RepositoryIdOrName::from_str(&repo_id)
-                    .map_err(|e| format!("Failed to parse repo_id '{}': {}", repo_id, e))?;
+                    .map_err(|e| format!("Failed to parse repo_id '{repo_id}': {e}"))?;
                 let parsed_pr_number = PullRequestNumber::from(pr_number);
 
                 let params = backlog_api_client::GetPullRequestCommentCountParams::new(
@@ -1387,7 +1376,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Comment count: {}", count_response.count);
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to get pull request comment count: {}", e);
+                        eprintln!("❌ Failed to get pull request comment count: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -1402,15 +1391,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 offset: _,
                 count: _,
             } => {
-                println!(
-                    "Getting pull request count for repo {} (project {})",
-                    repo_id, project_id
-                );
+                println!("Getting pull request count for repo {repo_id} (project {project_id})");
 
                 let parsed_project_id = ProjectIdOrKey::from_str(&project_id)
-                    .map_err(|e| format!("Failed to parse project_id '{}': {}", project_id, e))?;
+                    .map_err(|e| format!("Failed to parse project_id '{project_id}': {e}"))?;
                 let parsed_repo_id = RepositoryIdOrName::from_str(&repo_id)
-                    .map_err(|e| format!("Failed to parse repo_id '{}': {}", repo_id, e))?;
+                    .map_err(|e| format!("Failed to parse repo_id '{repo_id}': {e}"))?;
 
                 // Parse filter parameters
                 let mut params = GetPullRequestCountParams::new(parsed_project_id, parsed_repo_id);
@@ -1424,7 +1410,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     match status_ids {
                         Ok(ids) => params = params.status_ids(ids),
                         Err(e) => {
-                            eprintln!("❌ Failed to parse status_ids: {}", e);
+                            eprintln!("❌ Failed to parse status_ids: {e}");
                             std::process::exit(1);
                         }
                     };
@@ -1439,7 +1425,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     match assignee_ids {
                         Ok(ids) => params = params.assignee_ids(ids),
                         Err(e) => {
-                            eprintln!("❌ Failed to parse assignee_ids: {}", e);
+                            eprintln!("❌ Failed to parse assignee_ids: {e}");
                             std::process::exit(1);
                         }
                     };
@@ -1454,7 +1440,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     match issue_ids {
                         Ok(ids) => params = params.issue_ids(ids),
                         Err(e) => {
-                            eprintln!("❌ Failed to parse issue_ids: {}", e);
+                            eprintln!("❌ Failed to parse issue_ids: {e}");
                             std::process::exit(1);
                         }
                     };
@@ -1469,7 +1455,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     match created_user_ids {
                         Ok(ids) => params = params.created_user_ids(ids),
                         Err(e) => {
-                            eprintln!("❌ Failed to parse created_user_ids: {}", e);
+                            eprintln!("❌ Failed to parse created_user_ids: {e}");
                             std::process::exit(1);
                         }
                     };
@@ -1481,7 +1467,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Pull request count: {}", count_response.count);
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to get pull request count: {}", e);
+                        eprintln!("❌ Failed to get pull request count: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -1499,15 +1485,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 notify_user_ids,
                 attachment_ids,
             } => {
-                println!(
-                    "Creating pull request in repo {} (project {})",
-                    repo_id, project_id
-                );
+                println!("Creating pull request in repo {repo_id} (project {project_id})");
 
                 let parsed_project_id = ProjectIdOrKey::from_str(&project_id)
-                    .map_err(|e| format!("Failed to parse project_id '{}': {}", project_id, e))?;
+                    .map_err(|e| format!("Failed to parse project_id '{project_id}': {e}"))?;
                 let parsed_repo_id = RepositoryIdOrName::from_str(&repo_id)
-                    .map_err(|e| format!("Failed to parse repo_id '{}': {}", repo_id, e))?;
+                    .map_err(|e| format!("Failed to parse repo_id '{repo_id}': {e}"))?;
 
                 // Build parameters
                 let mut params = AddPullRequestParams::new(
@@ -1538,7 +1521,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     match notify_user_ids {
                         Ok(ids) => params = params.notified_user_ids(ids),
                         Err(e) => {
-                            eprintln!("❌ Failed to parse notify_user_ids: {}", e);
+                            eprintln!("❌ Failed to parse notify_user_ids: {e}");
                             std::process::exit(1);
                         }
                     };
@@ -1553,7 +1536,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     match attachment_ids {
                         Ok(ids) => params = params.attachment_ids(ids),
                         Err(e) => {
-                            eprintln!("❌ Failed to parse attachment_ids: {}", e);
+                            eprintln!("❌ Failed to parse attachment_ids: {e}");
                             std::process::exit(1);
                         }
                     };
@@ -1566,7 +1549,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Number: {}", pull_request.number.value());
                         println!("Summary: {}", pull_request.summary);
                         if let Some(description) = &pull_request.description {
-                            println!("Description: {}", description);
+                            println!("Description: {description}");
                         }
                         println!("Base: {}", pull_request.base);
                         println!("Branch: {}", pull_request.branch);
@@ -1578,7 +1561,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to create pull request: {}", e);
+                        eprintln!("❌ Failed to create pull request: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -1586,17 +1569,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
         Commands::Issue(issue_args) => match issue_args.command {
             IssueCommands::Show { issue_id_or_key } => {
-                println!("Showing issue: {}", issue_id_or_key);
+                println!("Showing issue: {issue_id_or_key}");
                 let parsed_issue_id_or_key = issue_id_or_key.parse::<IssueIdOrKey>()?;
                 let issue = client
                     .issue()
                     .get_issue(backlog_issue::GetIssueParams::new(parsed_issue_id_or_key))
                     .await?;
                 // TODO: Pretty print issue
-                println!("{:?}", issue);
+                println!("{issue:?}");
             }
             IssueCommands::List { params } => {
-                println!("Listing issues with params: {:?}", params);
+                println!("Listing issues with params: {params:?}");
                 let mut builder = GetIssueListParamsBuilder::default();
 
                 if let Some(p_ids) = params.project_id {
@@ -1628,7 +1611,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let list_params = builder.build()?;
                 let issues = client.issue().get_issue_list(list_params).await?;
                 // TODO: Pretty print issues
-                println!("{:?}", issues);
+                println!("{issues:?}");
             }
             IssueCommands::DownloadAttachment(dl_args) => {
                 println!(
@@ -1668,7 +1651,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error downloading attachment: {}", e);
+                        eprintln!("Error downloading attachment: {e}");
                     }
                 }
             }
@@ -1699,7 +1682,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     match user_ids {
                         Ok(ids) => builder.notified_user_id(ids),
                         Err(e) => {
-                            eprintln!("Error parsing notify_users '{}': {}", notify_str, e);
+                            eprintln!("Error parsing notify_users '{notify_str}': {e}");
                             return Ok(());
                         }
                     };
@@ -1714,7 +1697,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     match attachment_ids {
                         Ok(ids) => builder.attachment_id(ids),
                         Err(e) => {
-                            eprintln!("Error parsing attachments '{}': {}", attach_str, e);
+                            eprintln!("Error parsing attachments '{attach_str}': {e}");
                             return Ok(());
                         }
                     };
@@ -1729,11 +1712,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Created by: {}", comment.created_user.name);
                         println!("Created at: {}", comment.created);
                         if let Some(content) = &comment.content {
-                            println!("Content: {}", content);
+                            println!("Content: {content}");
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error adding comment: {}", e);
+                        eprintln!("Error adding comment: {e}");
                     }
                 }
             }
@@ -1756,7 +1739,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Updated: {}", comment.updated);
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to update comment: {}", e);
+                        eprintln!("❌ Failed to update comment: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -1778,7 +1761,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Originally Created: {}", comment.created);
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to delete comment: {}", e);
+                        eprintln!("❌ Failed to delete comment: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -1799,7 +1782,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Originally Created: {}", attachment.created);
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to delete attachment: {}", e);
+                        eprintln!("❌ Failed to delete attachment: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -1871,7 +1854,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Status: {}", issue.status.name);
                     }
                     Err(e) => {
-                        eprintln!("Error creating issue: {}", e);
+                        eprintln!("Error creating issue: {e}");
                     }
                 }
             }
@@ -1926,7 +1909,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Status: {}", issue.status.name);
                     }
                     Err(e) => {
-                        eprintln!("Error updating issue: {}", e);
+                        eprintln!("Error updating issue: {e}");
                     }
                 }
             }
@@ -1947,7 +1930,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Summary: {}", issue.summary);
                     }
                     Err(e) => {
-                        eprintln!("Error deleting issue: {}", e);
+                        eprintln!("Error deleting issue: {e}");
                     }
                 }
             }
@@ -1979,7 +1962,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         );
                     }
                     Err(e) => {
-                        eprintln!("Error counting comments: {}", e);
+                        eprintln!("Error counting comments: {e}");
                     }
                 }
             }
@@ -2013,7 +1996,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Created at: {}", comment.created);
                         println!("Updated at: {}", comment.updated);
                         if let Some(content) = &comment.content {
-                            println!("Content: {}", content);
+                            println!("Content: {content}");
                         } else {
                             println!("Content: (empty)");
                         }
@@ -2028,7 +2011,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error getting comment: {}", e);
+                        eprintln!("Error getting comment: {e}");
                     }
                 }
             }
@@ -2069,7 +2052,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 );
                                 println!("     User: {}", notification.user.name);
                                 if let Some(user_id) = &notification.user.user_id {
-                                    println!("     User ID: {}", user_id);
+                                    println!("     User ID: {user_id}");
                                 }
                                 println!("     Already Read: {}", notification.already_read);
                                 println!(
@@ -2082,7 +2065,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error getting comment notifications: {}", e);
+                        eprintln!("Error getting comment notifications: {e}");
                     }
                 }
             }
@@ -2119,7 +2102,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let user_ids = match user_ids {
                     Ok(ids) => ids,
                     Err(e) => {
-                        eprintln!("Error parsing user IDs: {}", e);
+                        eprintln!("Error parsing user IDs: {e}");
                         return Ok(());
                     }
                 };
@@ -2144,19 +2127,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("❌ Error adding comment notifications: {}", e);
+                        eprintln!("❌ Error adding comment notifications: {e}");
                     }
                 }
             }
             IssueCommands::ListParticipants { issue_id_or_key } => {
-                println!("Listing participants for issue: {}", issue_id_or_key);
+                println!("Listing participants for issue: {issue_id_or_key}");
 
                 let parsed_issue_id_or_key =
                     IssueIdOrKey::from_str(&issue_id_or_key).map_err(|e| {
-                        format!(
-                            "Failed to parse issue_id_or_key '{}': {}",
-                            issue_id_or_key, e
-                        )
+                        format!("Failed to parse issue_id_or_key '{issue_id_or_key}': {e}")
                     })?;
 
                 match client
@@ -2174,7 +2154,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             for participant in participants {
                                 println!("- {} (ID: {})", participant.name, participant.id.value());
                                 if let Some(user_id) = &participant.user_id {
-                                    println!("  User ID: {}", user_id);
+                                    println!("  User ID: {user_id}");
                                 }
                                 println!("  Email: {}", participant.mail_address);
                                 println!("  Role: {:?}", participant.role_type);
@@ -2189,19 +2169,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error listing participants: {}", e);
+                        eprintln!("Error listing participants: {e}");
                     }
                 }
             }
             IssueCommands::ListSharedFiles { issue_id_or_key } => {
-                println!("Listing shared files for issue: {}", issue_id_or_key);
+                println!("Listing shared files for issue: {issue_id_or_key}");
 
                 let parsed_issue_id_or_key =
                     IssueIdOrKey::from_str(&issue_id_or_key).map_err(|e| {
-                        format!(
-                            "Failed to parse issue_id_or_key '{}': {}",
-                            issue_id_or_key, e
-                        )
+                        format!("Failed to parse issue_id_or_key '{issue_id_or_key}': {e}")
                     })?;
 
                 match client
@@ -2225,7 +2202,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 match &file.content {
                                     backlog_issue::models::FileContent::File { size } => {
                                         println!("   Type: File");
-                                        println!("   Size: {} bytes", size);
+                                        println!("   Size: {size} bytes");
                                     }
                                     backlog_issue::models::FileContent::Directory => {
                                         println!("   Type: Directory");
@@ -2237,14 +2214,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     println!("   Updated by: {}", updated_user.name);
                                 }
                                 if let Some(updated) = &file.updated {
-                                    println!("   Updated at: {}", updated);
+                                    println!("   Updated at: {updated}");
                                 }
                                 println!();
                             }
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error listing shared files: {}", e);
+                        eprintln!("Error listing shared files: {e}");
                     }
                 }
             }
@@ -2261,10 +2238,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 let parsed_issue_id_or_key =
                     IssueIdOrKey::from_str(&issue_id_or_key).map_err(|e| {
-                        format!(
-                            "Failed to parse issue_id_or_key '{}': {}",
-                            issue_id_or_key, e
-                        )
+                        format!("Failed to parse issue_id_or_key '{issue_id_or_key}': {e}")
                     })?;
 
                 let shared_file_ids: Vec<SharedFileId> =
@@ -2274,7 +2248,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .issue_id_or_key(parsed_issue_id_or_key)
                     .shared_file_ids(shared_file_ids)
                     .build()
-                    .map_err(|e| format!("Failed to build parameters: {}", e))?;
+                    .map_err(|e| format!("Failed to build parameters: {e}"))?;
 
                 match client.issue().link_shared_files_to_issue(params).await {
                     Ok(linked_files) => {
@@ -2291,7 +2265,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             match &file.content {
                                 backlog_issue::models::FileContent::File { size } => {
                                     println!("   Type: File");
-                                    println!("   Size: {} bytes", size);
+                                    println!("   Size: {size} bytes");
                                 }
                                 backlog_issue::models::FileContent::Directory => {
                                     println!("   Type: Directory");
@@ -2303,7 +2277,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to link shared files to issue: {}", e);
+                        eprintln!("❌ Failed to link shared files to issue: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -2313,17 +2287,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 issue_id_or_key,
                 file_id,
             } => {
-                println!(
-                    "Unlinking shared file {} from issue: {}",
-                    file_id, issue_id_or_key
-                );
+                println!("Unlinking shared file {file_id} from issue: {issue_id_or_key}");
 
                 let parsed_issue_id_or_key =
                     IssueIdOrKey::from_str(&issue_id_or_key).map_err(|e| {
-                        format!(
-                            "Failed to parse issue_id_or_key '{}': {}",
-                            issue_id_or_key, e
-                        )
+                        format!("Failed to parse issue_id_or_key '{issue_id_or_key}': {e}")
                     })?;
 
                 let params =
@@ -2338,7 +2306,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         match &unlinked_file.content {
                             backlog_issue::models::FileContent::File { size } => {
                                 println!("   Type: File");
-                                println!("   Size: {} bytes", size);
+                                println!("   Size: {size} bytes");
                             }
                             backlog_issue::models::FileContent::Directory => {
                                 println!("   Type: Directory");
@@ -2348,7 +2316,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("   Created at: {}", unlinked_file.created);
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to unlink shared file from issue: {}", e);
+                        eprintln!("❌ Failed to unlink shared file from issue: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -2384,7 +2352,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error downloading space logo: {}", e);
+                        eprintln!("Error downloading space logo: {e}");
                     }
                 }
             }
@@ -2408,7 +2376,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Size: {} bytes", attachment.size);
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to upload attachment: {}", e);
+                        eprintln!("❌ Failed to upload attachment: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -2447,12 +2415,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error listing projects: {}", e);
+                        eprintln!("Error listing projects: {e}");
                     }
                 }
             }
             ProjectCommands::Show { project_id_or_key } => {
-                println!("Showing project: {}", project_id_or_key);
+                println!("Showing project: {project_id_or_key}");
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let params = backlog_project::GetProjectDetailParams::new(proj_id_or_key);
@@ -2480,12 +2448,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Use Dev Attributes: {}", project.use_dev_attributes);
                     }
                     Err(e) => {
-                        eprintln!("Error getting project: {}", e);
+                        eprintln!("Error getting project: {e}");
                     }
                 }
             }
             ProjectCommands::StatusList { project_id_or_key } => {
-                println!("Listing statuses for project: {}", project_id_or_key);
+                println!("Listing statuses for project: {project_id_or_key}");
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let params = backlog_project::GetStatusListParams::new(proj_id_or_key);
@@ -2503,12 +2471,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error listing statuses: {}", e);
+                        eprintln!("Error listing statuses: {e}");
                     }
                 }
             }
             ProjectCommands::MilestoneList { project_id_or_key } => {
-                println!("Listing milestones for project: {}", project_id_or_key);
+                println!("Listing milestones for project: {project_id_or_key}");
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 match client
@@ -2525,7 +2493,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             for milestone in milestones {
                                 print!("[{}] {}", milestone.id, milestone.name);
                                 if let Some(description) = &milestone.description {
-                                    print!(" - {}", description);
+                                    print!(" - {description}");
                                 }
                                 println!();
 
@@ -2543,12 +2511,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error listing milestones: {}", e);
+                        eprintln!("Error listing milestones: {e}");
                     }
                 }
             }
             ProjectCommands::IssueTypeList { project_id_or_key } => {
-                println!("Listing issue types for project: {}", project_id_or_key);
+                println!("Listing issue types for project: {project_id_or_key}");
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let params = backlog_project::GetIssueTypeListParams::new(proj_id_or_key);
@@ -2566,12 +2534,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error listing issue types: {}", e);
+                        eprintln!("Error listing issue types: {e}");
                     }
                 }
             }
             ProjectCommands::CategoryList { project_id_or_key } => {
-                println!("Listing categories for project: {}", project_id_or_key);
+                println!("Listing categories for project: {project_id_or_key}");
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let params = backlog_project::GetCategoryListParams::new(proj_id_or_key);
@@ -2589,12 +2557,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error listing categories: {}", e);
+                        eprintln!("Error listing categories: {e}");
                     }
                 }
             }
             ProjectCommands::UserList { project_id_or_key } => {
-                println!("Listing users for project: {}", project_id_or_key);
+                println!("Listing users for project: {project_id_or_key}");
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let params = backlog_project::GetProjectUserListParams::new(proj_id_or_key);
@@ -2622,12 +2590,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error listing project users: {}", e);
+                        eprintln!("Error listing project users: {e}");
                     }
                 }
             }
             ProjectCommands::CustomFieldList { project_id_or_key } => {
-                println!("Listing custom fields for project: {}", project_id_or_key);
+                println!("Listing custom fields for project: {project_id_or_key}");
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let params = backlog_project::GetCustomFieldListParams::new(proj_id_or_key);
@@ -2671,7 +2639,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error listing custom fields: {}", e);
+                        eprintln!("Error listing custom fields: {e}");
                     }
                 }
             }
@@ -2680,10 +2648,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 project_id_or_key,
                 name,
             } => {
-                println!(
-                    "Adding category '{}' to project: {}",
-                    name, project_id_or_key
-                );
+                println!("Adding category '{name}' to project: {project_id_or_key}");
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let params = AddCategoryParams::new(proj_id_or_key, name.clone());
@@ -2697,7 +2662,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         );
                     }
                     Err(e) => {
-                        eprintln!("Error adding category: {}", e);
+                        eprintln!("Error adding category: {e}");
                     }
                 }
             }
@@ -2708,8 +2673,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 name,
             } => {
                 println!(
-                    "Updating category {} in project {} to name '{}'",
-                    category_id, project_id_or_key, name
+                    "Updating category {category_id} in project {project_id_or_key} to name '{name}'"
                 );
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
@@ -2725,7 +2689,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         );
                     }
                     Err(e) => {
-                        eprintln!("Error updating category: {}", e);
+                        eprintln!("Error updating category: {e}");
                     }
                 }
             }
@@ -2734,10 +2698,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 project_id_or_key,
                 category_id,
             } => {
-                println!(
-                    "Deleting category {} from project: {}",
-                    category_id, project_id_or_key
-                );
+                println!("Deleting category {category_id} from project: {project_id_or_key}");
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let cat_id = CategoryId::new(category_id);
@@ -2755,7 +2716,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         );
                     }
                     Err(e) => {
-                        eprintln!("Error deleting category: {}", e);
+                        eprintln!("Error deleting category: {e}");
                     }
                 }
             }
@@ -2767,10 +2728,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 template_summary,
                 template_description,
             } => {
-                println!(
-                    "Adding issue type '{}' to project: {}",
-                    name, project_id_or_key
-                );
+                println!("Adding issue type '{name}' to project: {project_id_or_key}");
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
 
@@ -2796,15 +2754,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             issue_type.id, issue_type.name, issue_type.color
                         );
                         if let Some(template_summary) = &issue_type.template_summary {
-                            println!("  Template Summary: {}", template_summary);
+                            println!("  Template Summary: {template_summary}");
                         }
                         if let Some(template_description) = &issue_type.template_description {
-                            println!("  Template Description: {}", template_description);
+                            println!("  Template Description: {template_description}");
                         }
                         println!("  Display Order: {}", issue_type.display_order);
                     }
                     Err(e) => {
-                        eprintln!("Error adding issue type: {}", e);
+                        eprintln!("Error adding issue type: {e}");
                     }
                 }
             }
@@ -2815,8 +2773,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 substitute_issue_type_id,
             } => {
                 println!(
-                    "Deleting issue type {} from project: {} (substitute: {})",
-                    issue_type_id, project_id_or_key, substitute_issue_type_id
+                    "Deleting issue type {issue_type_id} from project: {project_id_or_key} (substitute: {substitute_issue_type_id})"
                 );
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
@@ -2834,15 +2791,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             issue_type.id, issue_type.name, issue_type.color
                         );
                         if let Some(template_summary) = &issue_type.template_summary {
-                            println!("  Template Summary: {}", template_summary);
+                            println!("  Template Summary: {template_summary}");
                         }
                         if let Some(template_description) = &issue_type.template_description {
-                            println!("  Template Description: {}", template_description);
+                            println!("  Template Description: {template_description}");
                         }
                         println!("  Display Order: {}", issue_type.display_order);
                     }
                     Err(e) => {
-                        eprintln!("Error deleting issue type: {}", e);
+                        eprintln!("Error deleting issue type: {e}");
                     }
                 }
             }
@@ -2855,10 +2812,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 template_summary,
                 template_description,
             } => {
-                println!(
-                    "Updating issue type {} in project: {}",
-                    issue_type_id, project_id_or_key
-                );
+                println!("Updating issue type {issue_type_id} in project: {project_id_or_key}");
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let issue_type_id_val = IssueTypeId::new(issue_type_id);
@@ -2891,15 +2845,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             issue_type.id, issue_type.name, issue_type.color
                         );
                         if let Some(template_summary) = &issue_type.template_summary {
-                            println!("  Template Summary: {}", template_summary);
+                            println!("  Template Summary: {template_summary}");
                         }
                         if let Some(template_description) = &issue_type.template_description {
-                            println!("  Template Description: {}", template_description);
+                            println!("  Template Description: {template_description}");
                         }
                         println!("  Display Order: {}", issue_type.display_order);
                     }
                     Err(e) => {
-                        eprintln!("Error updating issue type: {}", e);
+                        eprintln!("Error updating issue type: {e}");
                     }
                 }
             }
@@ -2911,23 +2865,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 start_date,
                 release_due_date,
             } => {
-                println!(
-                    "Adding version/milestone '{}' to project: {}",
-                    name, project_id_or_key
-                );
+                println!("Adding version/milestone '{name}' to project: {project_id_or_key}");
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let mut params = AddMilestoneParams::new(proj_id_or_key, &name);
                 params.description = description.clone();
                 params.start_date = start_date.as_ref().map(|d| {
-                    DateTime::parse_from_str(&format!("{}T00:00:00Z", d), "%Y-%m-%dT%H:%M:%SZ")
+                    DateTime::parse_from_str(&format!("{d}T00:00:00Z"), "%Y-%m-%dT%H:%M:%SZ")
                         .map(|dt| ApiDate::from(dt.with_timezone(&Utc)))
-                        .unwrap_or_else(|_| panic!("Invalid date format: {}", d))
+                        .unwrap_or_else(|_| panic!("Invalid date format: {d}"))
                 });
                 params.release_due_date = release_due_date.as_ref().map(|d| {
-                    DateTime::parse_from_str(&format!("{}T00:00:00Z", d), "%Y-%m-%dT%H:%M:%SZ")
+                    DateTime::parse_from_str(&format!("{d}T00:00:00Z"), "%Y-%m-%dT%H:%M:%SZ")
                         .map(|dt| ApiDate::from(dt.with_timezone(&Utc)))
-                        .unwrap_or_else(|_| panic!("Invalid date format: {}", d))
+                        .unwrap_or_else(|_| panic!("Invalid date format: {d}"))
                 });
 
                 match client.project().add_version(params).await {
@@ -2935,7 +2886,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Version/milestone added successfully:");
                         println!("[{}] {}", milestone.id, milestone.name);
                         if let Some(desc) = &milestone.description {
-                            println!("  Description: {}", desc);
+                            println!("  Description: {desc}");
                         }
                         if let Some(start_date) = &milestone.start_date {
                             println!("  Start Date: {}", start_date.format("%Y-%m-%d"));
@@ -2948,11 +2899,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                         println!("  Archived: {}", milestone.archived);
                         if let Some(display_order) = milestone.display_order {
-                            println!("  Display Order: {}", display_order);
+                            println!("  Display Order: {display_order}");
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error adding version/milestone: {}", e);
+                        eprintln!("Error adding version/milestone: {e}");
                     }
                 }
             }
@@ -2966,24 +2917,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 release_due_date,
                 archived,
             } => {
-                println!(
-                    "Updating version/milestone {} in project: {}",
-                    version_id, project_id_or_key
-                );
+                println!("Updating version/milestone {version_id} in project: {project_id_or_key}");
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let version_id_val = MilestoneId::new(version_id);
                 let mut params = UpdateVersionParams::new(proj_id_or_key, version_id_val, &name);
                 params.description = description.clone();
                 params.start_date = start_date.as_ref().map(|d| {
-                    DateTime::parse_from_str(&format!("{}T00:00:00Z", d), "%Y-%m-%dT%H:%M:%SZ")
+                    DateTime::parse_from_str(&format!("{d}T00:00:00Z"), "%Y-%m-%dT%H:%M:%SZ")
                         .map(|dt| ApiDate::from(dt.with_timezone(&Utc)))
-                        .unwrap_or_else(|_| panic!("Invalid date format: {}", d))
+                        .unwrap_or_else(|_| panic!("Invalid date format: {d}"))
                 });
                 params.release_due_date = release_due_date.as_ref().map(|d| {
-                    DateTime::parse_from_str(&format!("{}T00:00:00Z", d), "%Y-%m-%dT%H:%M:%SZ")
+                    DateTime::parse_from_str(&format!("{d}T00:00:00Z"), "%Y-%m-%dT%H:%M:%SZ")
                         .map(|dt| ApiDate::from(dt.with_timezone(&Utc)))
-                        .unwrap_or_else(|_| panic!("Invalid date format: {}", d))
+                        .unwrap_or_else(|_| panic!("Invalid date format: {d}"))
                 });
                 params.archived = archived;
 
@@ -2992,7 +2940,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Version/milestone updated successfully:");
                         println!("[{}] {}", milestone.id, milestone.name);
                         if let Some(desc) = &milestone.description {
-                            println!("  Description: {}", desc);
+                            println!("  Description: {desc}");
                         }
                         if let Some(start_date) = &milestone.start_date {
                             println!("  Start Date: {}", start_date.format("%Y-%m-%d"));
@@ -3005,11 +2953,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                         println!("  Archived: {}", milestone.archived);
                         if let Some(display_order) = milestone.display_order {
-                            println!("  Display Order: {}", display_order);
+                            println!("  Display Order: {display_order}");
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error updating version/milestone: {}", e);
+                        eprintln!("Error updating version/milestone: {e}");
                     }
                 }
             }
@@ -3019,8 +2967,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 version_id,
             } => {
                 println!(
-                    "Deleting version/milestone {} from project: {}",
-                    version_id, project_id_or_key
+                    "Deleting version/milestone {version_id} from project: {project_id_or_key}"
                 );
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
@@ -3032,7 +2979,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Version/milestone deleted successfully:");
                         println!("[{}] {}", milestone.id, milestone.name);
                         if let Some(desc) = &milestone.description {
-                            println!("  Description: {}", desc);
+                            println!("  Description: {desc}");
                         }
                         if let Some(start_date) = &milestone.start_date {
                             println!("  Start Date: {}", start_date.format("%Y-%m-%d"));
@@ -3045,11 +2992,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                         println!("  Archived: {}", milestone.archived);
                         if let Some(display_order) = milestone.display_order {
-                            println!("  Display Order: {}", display_order);
+                            println!("  Display Order: {display_order}");
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error deleting version/milestone: {}", e);
+                        eprintln!("Error deleting version/milestone: {e}");
                     }
                 }
             }
@@ -3059,7 +3006,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 name,
                 color,
             } => {
-                println!("Adding status '{}' to project: {}", name, project_id_or_key);
+                println!("Adding status '{name}' to project: {project_id_or_key}");
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let parsed_color = StatusColor::from_str(&color)?;
@@ -3075,7 +3022,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Display Order: {}", status.display_order);
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to add status: {}", e);
+                        eprintln!("❌ Failed to add status: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -3087,10 +3034,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 name,
                 color,
             } => {
-                println!(
-                    "Updating status {} in project: {}",
-                    status_id, project_id_or_key
-                );
+                println!("Updating status {status_id} in project: {project_id_or_key}");
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
                 let status_id_val = StatusId::new(status_id);
@@ -3120,7 +3064,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Display Order: {}", status.display_order);
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to update status: {}", e);
+                        eprintln!("❌ Failed to update status: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -3132,8 +3076,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 substitute_status_id,
             } => {
                 println!(
-                    "Deleting status {} from project: {} (substitute: {})",
-                    status_id, project_id_or_key, substitute_status_id
+                    "Deleting status {status_id} from project: {project_id_or_key} (substitute: {substitute_status_id})"
                 );
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
@@ -3151,7 +3094,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Display Order: {}", status.display_order);
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to delete status: {}", e);
+                        eprintln!("❌ Failed to delete status: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -3162,8 +3105,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 status_ids,
             } => {
                 println!(
-                    "Updating status order in project: {} with IDs: {}",
-                    project_id_or_key, status_ids
+                    "Updating status order in project: {project_id_or_key} with IDs: {status_ids}"
                 );
 
                 let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
@@ -3177,7 +3119,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let status_id_vec = match parsed_status_ids {
                     Ok(ids) => ids,
                     Err(e) => {
-                        eprintln!("❌ Error parsing status IDs '{}': {}", status_ids, e);
+                        eprintln!("❌ Error parsing status IDs '{status_ids}': {e}");
                         std::process::exit(1);
                     }
                 };
@@ -3198,7 +3140,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to update status order: {}", e);
+                        eprintln!("❌ Failed to update status order: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -3235,7 +3177,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error listing priorities: {}", e);
+                        eprintln!("Error listing priorities: {e}");
                     }
                 }
             }
@@ -3253,7 +3195,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error listing resolutions: {}", e);
+                        eprintln!("Error listing resolutions: {e}");
                     }
                 }
             }
@@ -3277,7 +3219,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error downloading project icon: {}", e);
+                        eprintln!("Error downloading project icon: {e}");
                     }
                 }
             }
@@ -3301,7 +3243,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error listing users: {}", e);
+                        eprintln!("Error listing users: {e}");
                     }
                 }
             }
@@ -3312,33 +3254,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     Ok(user) => {
                         println!("User ID: {}", user.id);
                         if let Some(login_id) = &user.user_id {
-                            println!("Login ID: {}", login_id);
+                            println!("Login ID: {login_id}");
                         }
                         println!("Name: {}", user.name);
                         if !user.mail_address.is_empty() {
                             println!("Email: {}", user.mail_address);
                         }
                         if let Some(lang) = &user.lang {
-                            println!("Language: {}", lang);
+                            println!("Language: {lang}");
                         }
                         if let Some(last_login) = &user.last_login_time {
-                            println!("Last Login: {}", last_login);
+                            println!("Last Login: {last_login}");
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error getting user info: {}", e);
+                        eprintln!("Error getting user info: {e}");
                     }
                 }
             }
             UserCommands::Show { user_id } => {
-                println!("Getting user info for user ID: {}", user_id);
+                println!("Getting user info for user ID: {user_id}");
 
                 match client.user().get_user(GetUserParams::new(user_id)).await {
                     Ok(user) => {
                         println!("✅ User found");
                         println!("ID: {}", user.id);
                         if let Some(login_id) = &user.user_id {
-                            println!("Login ID: {}", login_id);
+                            println!("Login ID: {login_id}");
                         }
                         println!("Name: {}", user.name);
                         println!("Role: {}", user.role_type);
@@ -3346,14 +3288,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             println!("Email: {}", user.mail_address);
                         }
                         if let Some(lang) = &user.lang {
-                            println!("Language: {}", lang);
+                            println!("Language: {lang}");
                         }
                         if let Some(last_login) = &user.last_login_time {
-                            println!("Last Login: {}", last_login);
+                            println!("Last Login: {last_login}");
                         }
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to get user: {}", e);
+                        eprintln!("❌ Failed to get user: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -3375,7 +3317,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Error downloading user icon: {}", e);
+                        eprintln!("Error downloading user icon: {e}");
                     }
                 }
             }
@@ -3383,7 +3325,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         #[cfg(feature = "wiki")]
         Commands::Wiki(wiki_args) => match wiki_args.command {
             WikiCommands::ListAttachments { wiki_id } => {
-                println!("Listing attachments for wiki ID: {}", wiki_id);
+                println!("Listing attachments for wiki ID: {wiki_id}");
 
                 match client
                     .wiki()
@@ -3413,13 +3355,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to list wiki attachments: {}", e);
+                        eprintln!("❌ Failed to list wiki attachments: {e}");
                         std::process::exit(1);
                     }
                 }
             }
             WikiCommands::ListSharedFiles { wiki_id } => {
-                println!("Listing shared files for wiki ID: {}", wiki_id);
+                println!("Listing shared files for wiki ID: {wiki_id}");
 
                 match client
                     .wiki()
@@ -3462,7 +3404,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to list wiki shared files: {}", e);
+                        eprintln!("❌ Failed to list wiki shared files: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -3500,7 +3442,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             match &file.content {
                                 backlog_api_client::FileContent::File { size } => {
                                     println!("   Type: File");
-                                    println!("   Size: {} bytes", size);
+                                    println!("   Size: {size} bytes");
                                 }
                                 backlog_api_client::FileContent::Directory => {
                                     println!("   Type: Directory");
@@ -3512,23 +3454,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 println!("   Updated by: {}", updated_user.name);
                             }
                             if let Some(updated) = &file.updated {
-                                println!("   Updated at: {}", updated);
+                                println!("   Updated at: {updated}");
                             }
                             println!();
                         }
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to link shared files to wiki: {}", e);
+                        eprintln!("❌ Failed to link shared files to wiki: {e}");
                         std::process::exit(1);
                     }
                 }
             }
             #[cfg(feature = "wiki_writable")]
             WikiCommands::UnlinkSharedFile { wiki_id, file_id } => {
-                println!(
-                    "Unlinking shared file {} from wiki ID: {}",
-                    file_id, wiki_id
-                );
+                println!("Unlinking shared file {file_id} from wiki ID: {wiki_id}");
 
                 let params = backlog_wiki::UnlinkSharedFileFromWikiParams::new(
                     WikiId::new(wiki_id),
@@ -3544,7 +3483,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         match &shared_file.content {
                             backlog_api_client::FileContent::File { size } => {
                                 println!("   Type: File");
-                                println!("   Size: {} bytes", size);
+                                println!("   Size: {size} bytes");
                             }
                             backlog_api_client::FileContent::Directory => {
                                 println!("   Type: Directory");
@@ -3554,7 +3493,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("   Created at: {}", shared_file.created);
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to unlink shared file from wiki: {}", e);
+                        eprintln!("❌ Failed to unlink shared file from wiki: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -3564,10 +3503,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 attachment_id,
                 output,
             } => {
-                println!(
-                    "Downloading attachment {} from wiki ID: {}",
-                    attachment_id, wiki_id
-                );
+                println!("Downloading attachment {attachment_id} from wiki ID: {wiki_id}");
 
                 match client
                     .wiki()
@@ -3582,18 +3518,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                         match tokio::fs::write(&filename, &downloaded_file.bytes).await {
                             Ok(_) => {
-                                println!("✅ Successfully downloaded to: {}", filename);
+                                println!("✅ Successfully downloaded to: {filename}");
                                 println!("   Content-Type: {}", downloaded_file.content_type);
                                 println!("   File size: {} bytes", downloaded_file.bytes.len());
                             }
                             Err(e) => {
-                                eprintln!("❌ Failed to write file '{}': {}", filename, e);
+                                eprintln!("❌ Failed to write file '{filename}': {e}");
                                 std::process::exit(1);
                             }
                         }
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to download wiki attachment: {}", e);
+                        eprintln!("❌ Failed to download wiki attachment: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -3605,7 +3541,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 content,
                 mail_notify,
             } => {
-                println!("Creating new wiki page in project: {}", project_id);
+                println!("Creating new wiki page in project: {project_id}");
 
                 let params = AddWikiParams::new(ProjectId::from_str(&project_id)?, name, content);
 
@@ -3628,7 +3564,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         );
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to create wiki page: {}", e);
+                        eprintln!("❌ Failed to create wiki page: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -3640,7 +3576,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 content,
                 mail_notify,
             } => {
-                println!("Updating wiki ID: {}", wiki_id);
+                println!("Updating wiki ID: {wiki_id}");
 
                 // Create params with provided options
                 let mut params = UpdateWikiParams::new(WikiId::new(wiki_id));
@@ -3679,7 +3615,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to update wiki: {}", e);
+                        eprintln!("❌ Failed to update wiki: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -3689,7 +3625,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 wiki_id,
                 mail_notify,
             } => {
-                println!("Deleting wiki ID: {}", wiki_id);
+                println!("Deleting wiki ID: {wiki_id}");
 
                 let mut params = DeleteWikiParams::new(WikiId::new(wiki_id));
 
@@ -3715,14 +3651,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         );
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to delete wiki: {}", e);
+                        eprintln!("❌ Failed to delete wiki: {e}");
                         std::process::exit(1);
                     }
                 }
             }
             #[cfg(feature = "wiki_writable")]
             WikiCommands::AttachFile { wiki_id, file_path } => {
-                println!("Attaching file to wiki ID: {}", wiki_id);
+                println!("Attaching file to wiki ID: {wiki_id}");
 
                 // Step 1: Upload file to space to get attachment ID
                 println!("📤 Uploading file: {}", file_path.display());
@@ -3737,7 +3673,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         attachment
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to upload file: {}", e);
+                        eprintln!("❌ Failed to upload file: {e}");
                         std::process::exit(1);
                     }
                 };
@@ -3764,7 +3700,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to attach file to wiki: {}", e);
+                        eprintln!("❌ Failed to attach file to wiki: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -3778,8 +3714,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // Get attachment details before deletion for confirmation
                 if !force {
                     print!(
-                        "Are you sure you want to delete attachment {} from wiki {}? [y/N]: ",
-                        attachment_id, wiki_id
+                        "Are you sure you want to delete attachment {attachment_id} from wiki {wiki_id}? [y/N]: "
                     );
                     use std::io::{self, Write};
                     io::stdout().flush().unwrap();
@@ -3794,10 +3729,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
 
-                println!(
-                    "🗑️ Deleting attachment {} from wiki {}...",
-                    attachment_id, wiki_id
-                );
+                println!("🗑️ Deleting attachment {attachment_id} from wiki {wiki_id}...");
 
                 let delete_params = DeleteWikiAttachmentParams::new(
                     WikiId::new(wiki_id),
@@ -3816,16 +3748,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         );
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to delete attachment: {}", e);
+                        eprintln!("❌ Failed to delete attachment: {e}");
                         std::process::exit(1);
                     }
                 }
             }
             WikiCommands::ListTags { project_id } => {
-                println!(
-                    "Listing tags used in wiki pages for project: {}",
-                    project_id
-                );
+                println!("Listing tags used in wiki pages for project: {project_id}");
 
                 use backlog_wiki::GetWikiTagListParams;
                 let params = GetWikiTagListParams::new(project_id.parse::<ProjectIdOrKey>()?);
@@ -3842,7 +3771,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to get wiki tags: {}", e);
+                        eprintln!("❌ Failed to get wiki tags: {e}");
                         std::process::exit(1);
                     }
                 }
@@ -3854,7 +3783,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 count,
                 order,
             } => {
-                println!("Getting history for wiki ID: {}", wiki_id);
+                println!("Getting history for wiki ID: {wiki_id}");
 
                 use backlog_wiki::{GetWikiHistoryParams, HistoryOrder};
                 let mut params = GetWikiHistoryParams::new(WikiId::new(wiki_id));
@@ -3879,9 +3808,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 match client.wiki().get_wiki_history(params).await {
                     Ok(history) => {
                         if history.is_empty() {
-                            println!("No history found for wiki {}", wiki_id);
+                            println!("No history found for wiki {wiki_id}");
                         } else {
-                            println!("Wiki {} History ({} entries):", wiki_id, history.len());
+                            println!("Wiki {wiki_id} History ({} entries):", history.len());
                             for entry in &history {
                                 println!(
                                     "Version {}: {} (by {} at {})",
@@ -3896,13 +3825,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     } else {
                                         entry.content.clone()
                                     };
-                                    println!("  Content: {}", preview);
+                                    println!("  Content: {preview}");
                                 }
                             }
                         }
                     }
                     Err(e) => {
-                        eprintln!("❌ Failed to get wiki history: {}", e);
+                        eprintln!("❌ Failed to get wiki history: {e}");
                         std::process::exit(1);
                     }
                 }

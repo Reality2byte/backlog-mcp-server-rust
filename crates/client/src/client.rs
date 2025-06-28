@@ -160,7 +160,7 @@ impl Client {
         let url = self
             .base_url
             .join(&path)
-            .map_err(|e| ApiError::InvalidBuildParameter(format!("Failed to build URL: {}", e)))?;
+            .map_err(|e| ApiError::InvalidBuildParameter(format!("Failed to build URL: {e}")))?;
         let file_path = params.file_path().clone();
         let field_name = params.file_field_name().to_string();
         let additional_fields = params.additional_fields();
@@ -168,7 +168,7 @@ impl Client {
         // ファイル読み込み
         let file_content = fs::read(&file_path)
             .await
-            .map_err(|e| ApiError::InvalidBuildParameter(format!("Failed to read file: {}", e)))?;
+            .map_err(|e| ApiError::InvalidBuildParameter(format!("Failed to read file: {e}")))?;
 
         let filename = file_path
             .file_name()
@@ -187,7 +187,7 @@ impl Client {
         }
 
         let request = self.client.post(url).multipart(form).build().map_err(|e| {
-            ApiError::InvalidBuildParameter(format!("Failed to build request: {}", e))
+            ApiError::InvalidBuildParameter(format!("Failed to build request: {e}"))
         })?;
 
         self.execute_unified(request, JsonResponse::<T>::new())
@@ -208,8 +208,8 @@ impl Client {
             let headers = request.headers_mut();
             headers.insert(
                 reqwest::header::AUTHORIZATION,
-                format!("Bearer {}", token).parse().map_err(|e| {
-                    ApiError::InvalidBuildParameter(format!("Invalid auth token: {}", e))
+                format!("Bearer {token}").parse().map_err(|e| {
+                    ApiError::InvalidBuildParameter(format!("Invalid auth token: {e}"))
                 })?,
             );
         }
@@ -226,7 +226,7 @@ impl Client {
             let error_body_text = response
                 .text()
                 .await
-                .unwrap_or_else(|e| format!("Failed to read error body: {}", e));
+                .unwrap_or_else(|e| format!("Failed to read error body: {e}"));
 
             // Attempt to parse as BacklogApiErrorResponse
             match serde_json::from_str::<BacklogApiErrorResponse>(&error_body_text) {
@@ -244,7 +244,7 @@ impl Client {
                     });
                 }
                 Err(_) => {
-                    let summary = format!("HTTP Error {} with body: {}", status, error_body_text);
+                    let summary = format!("HTTP Error {status} with body: {error_body_text}");
                     return Err(ApiError::InvalidBuildParameter(summary));
                 }
             }

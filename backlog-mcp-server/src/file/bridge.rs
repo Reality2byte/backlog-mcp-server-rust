@@ -13,9 +13,8 @@ pub(crate) async fn get_shared_files_list_tool(
 ) -> Result<Vec<SharedFile>, McpError> {
     let client_guard = client.lock().await;
 
-    let project_id_or_key = ProjectIdOrKey::from_str(&request.project_id_or_key).map_err(|e| {
-        McpError::invalid_request(format!("Invalid project ID or key: {}", e), None)
-    })?;
+    let project_id_or_key = ProjectIdOrKey::from_str(&request.project_id_or_key)
+        .map_err(|e| McpError::invalid_request(format!("Invalid project ID or key: {e}"), None))?;
 
     let params = GetSharedFilesListParams {
         project_id_or_key,
@@ -30,7 +29,7 @@ pub(crate) async fn get_shared_files_list_tool(
         .get_shared_files_list(params)
         .await
         .map_err(|e| {
-            McpError::internal_error(format!("Failed to get shared files list: {}", e), None)
+            McpError::internal_error(format!("Failed to get shared files list: {e}"), None)
         })
 }
 
@@ -40,14 +39,15 @@ pub(crate) async fn download_shared_file_bridge(
 ) -> Result<DownloadedFile, McpError> {
     let client_guard = client.lock().await;
 
-    let project_id_or_key = ProjectIdOrKey::from_str(&request.project_id_or_key).map_err(|e| {
-        McpError::invalid_request(format!("Invalid project ID or key: {}", e), None)
-    })?;
+    let project_id_or_key = ProjectIdOrKey::from_str(&request.project_id_or_key)
+        .map_err(|e| McpError::invalid_request(format!("Invalid project ID or key: {e}"), None))?;
 
     let shared_file_id = SharedFileId::new(request.shared_file_id);
     let params = GetFileParams::new(project_id_or_key, shared_file_id);
 
-    client_guard.file().get_file(params).await.map_err(|e| {
-        McpError::internal_error(format!("Failed to download shared file: {}", e), None)
-    })
+    client_guard
+        .file()
+        .get_file(params)
+        .await
+        .map_err(|e| McpError::internal_error(format!("Failed to download shared file: {e}"), None))
 }

@@ -25,7 +25,7 @@ pub fn create_mock_user(id: u32, name: &str) -> User {
         name: name.to_string(),
         role_type: Role::User,
         lang: Some(Language::Japanese),
-        mail_address: format!("{}@example.com", name),
+        mail_address: format!("{name}@example.com"),
         last_login_time: Some(
             chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
                 .unwrap()
@@ -66,7 +66,7 @@ pub fn create_mock_wiki_detail(id: u32, project_id: u32, name: &str) -> WikiDeta
         id: WikiId::new(id),
         project_id: ProjectId::new(project_id),
         name: name.to_string(),
-        content: format!("# {}\n\nThis is the content of {}.", name, name),
+        content: format!("# {name}\n\nThis is the content of {name}."),
         tags: vec![WikiTag {
             id: WikiTagId::new(1),
             name: "documentation".to_string(),
@@ -92,7 +92,7 @@ pub fn create_mock_wiki_detail(id: u32, project_id: u32, name: &str) -> WikiDeta
         stars: vec![Star {
             id: StarId::new(300),
             comment: Some("Great documentation!".to_string()),
-            url: format!("https://example.backlog.jp/view/PROJ-{}", id),
+            url: format!("https://example.backlog.jp/view/PROJ-{id}"),
             presenter: create_mock_user(3, "bob"),
             created: created_time,
         }],
@@ -138,7 +138,7 @@ pub fn create_mock_wiki_history(
         page_id: WikiId::new(page_id),
         version,
         name: name.to_string(),
-        content: format!("Content for {} version {}", name, version),
+        content: format!("Content for {name} version {version}"),
         created_user: create_mock_user(1, user_name),
         created: created_time,
     }

@@ -12,7 +12,7 @@ fn create_mock_user(id: u32, name: &str) -> User {
         name: name.to_string(),
         role_type: Role::Admin,
         lang: Some(Language::Japanese),
-        mail_address: format!("{}@example.com", name),
+        mail_address: format!("{name}@example.com"),
         last_login_time: Some(Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap()),
     }
 }
@@ -40,8 +40,7 @@ async fn test_get_shared_files_list_success() {
 
     Mock::given(method("GET"))
         .and(path(format!(
-            "/api/v2/projects/{}/files/metadata/{}",
-            project_id, dir_path
+            "/api/v2/projects/{project_id}/files/metadata/{dir_path}"
         )))
         .and(query_param("order", "desc"))
         .and(query_param("offset", "0"))
@@ -81,8 +80,7 @@ async fn test_get_shared_files_list_empty() {
 
     Mock::given(method("GET"))
         .and(path(format!(
-            "/api/v2/projects/{}/files/metadata/{}",
-            project_key, dir_path
+            "/api/v2/projects/{project_key}/files/metadata/{dir_path}"
         )))
         .respond_with(ResponseTemplate::new(200).set_body_json(&expected_files))
         .mount(&server)
@@ -119,8 +117,7 @@ async fn test_get_shared_files_list_project_not_found() {
 
     Mock::given(method("GET"))
         .and(path(format!(
-            "/api/v2/projects/{}/files/metadata/{}",
-            project_id, dir_path
+            "/api/v2/projects/{project_id}/files/metadata/{dir_path}"
         )))
         .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
         .mount(&server)
@@ -139,7 +136,7 @@ async fn test_get_shared_files_list_project_not_found() {
         assert_eq!(status, 404);
         assert_eq!(errors[0].message, "No such project.");
     } else {
-        panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        panic!("Expected ApiError::HttpStatus, got {result:?}");
     }
 }
 
@@ -154,8 +151,7 @@ async fn test_get_shared_files_list_with_custom_params() {
 
     Mock::given(method("GET"))
         .and(path(format!(
-            "/api/v2/projects/{}/files/metadata/{}",
-            project_id, dir_path
+            "/api/v2/projects/{project_id}/files/metadata/{dir_path}"
         )))
         .and(query_param("order", "asc"))
         .and(query_param("offset", "10"))
@@ -187,8 +183,7 @@ async fn test_get_file_success() {
     let file_content = b"Hello, World!";
     Mock::given(method("GET"))
         .and(path(format!(
-            "/api/v2/projects/{}/files/{}",
-            project_id,
+            "/api/v2/projects/{project_id}/files/{}",
             shared_file_id.value()
         )))
         .respond_with(
@@ -228,8 +223,7 @@ async fn test_get_file_not_found() {
 
     Mock::given(method("GET"))
         .and(path(format!(
-            "/api/v2/projects/{}/files/{}",
-            project_id,
+            "/api/v2/projects/{project_id}/files/{}",
             shared_file_id.value()
         )))
         .respond_with(ResponseTemplate::new(404).set_body_json(&error_response))
@@ -243,6 +237,6 @@ async fn test_get_file_not_found() {
         assert_eq!(status, 404);
         assert_eq!(errors[0].message, "No such file.");
     } else {
-        panic!("Expected ApiError::HttpStatus, got {:?}", result);
+        panic!("Expected ApiError::HttpStatus, got {result:?}");
     }
 }
