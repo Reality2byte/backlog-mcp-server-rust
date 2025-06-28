@@ -21,10 +21,12 @@ pub(crate) async fn get_project_status_list_tool(
     // This will use From<CoreError> for Error if parsing fails.
     let project_id = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
 
-    // Check project access with parsed type
-    access_control.check_project_access_id_or_key(&project_id)?;
-
     let client_guard = client.lock().await;
+
+    // Check project access with parsed type
+    access_control
+        .check_project_access_id_or_key_async(&project_id, &client_guard)
+        .await?;
     // This will use From<ApiError> for Error if the API call fails.
     let params = backlog_project::GetStatusListParams::new(project_id);
     let statuses = client_guard.project().get_status_list(params).await?;
@@ -39,10 +41,12 @@ pub(crate) async fn get_project_issue_types_tool(
 ) -> Result<Vec<IssueType>> {
     let project_id = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
 
-    // Check project access with parsed type
-    access_control.check_project_access_id_or_key(&project_id)?;
-
     let client_guard = client.lock().await;
+
+    // Check project access with parsed type
+    access_control
+        .check_project_access_id_or_key_async(&project_id, &client_guard)
+        .await?;
     let params = backlog_project::GetIssueTypeListParams::new(project_id);
     let issue_types = client_guard.project().get_issue_type_list(params).await?;
     Ok(issue_types)

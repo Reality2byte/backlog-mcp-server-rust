@@ -20,7 +20,8 @@ pub(crate) async fn get_shared_files_list_tool(
 
     // Check project access with parsed type
     access_control
-        .check_project_access_id_or_key(&project_id_or_key)
+        .check_project_access_id_or_key_async(&project_id_or_key, &client_guard)
+        .await
         .map_err(|e| McpError::invalid_request(format!("Access denied: {e}"), None))?;
 
     let params = GetSharedFilesListParams {
@@ -52,7 +53,8 @@ pub(crate) async fn download_shared_file_bridge(
 
     // Check project access with parsed type
     access_control
-        .check_project_access_id_or_key(&project_id_or_key)
+        .check_project_access_id_or_key_async(&project_id_or_key, &client_guard)
+        .await
         .map_err(|e| McpError::invalid_request(format!("Access denied: {e}"), None))?;
 
     let shared_file_id = SharedFileId::new(request.shared_file_id);

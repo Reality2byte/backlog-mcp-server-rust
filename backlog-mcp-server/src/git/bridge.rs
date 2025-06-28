@@ -29,12 +29,14 @@ pub(crate) async fn get_repository_list(
     // Type-safe conversion
     let project_id = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
 
-    // Check project access with converted type
-    access_control.check_project_access_id_or_key(&project_id)?;
+    let client_guard = client.lock().await;
+
+    // Check project access with converted type and client
+    access_control
+        .check_project_access_id_or_key_async(&project_id, &client_guard)
+        .await?;
 
     let params = GetRepositoryListParams::new(project_id);
-
-    let client_guard = client.lock().await;
     let repositories = client_guard.git().get_repository_list(params).await?;
     Ok(repositories)
 }
@@ -45,14 +47,16 @@ pub(crate) async fn get_repository(
     access_control: &AccessControl,
 ) -> Result<Repository> {
     let proj_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
-
-    // Check project access
-    access_control.check_project_access_id_or_key(&proj_id_or_key)?;
-
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
-    let params = GetRepositoryParams::new(proj_id_or_key, repo_id_or_name);
 
     let client_guard = client.lock().await;
+
+    // Check project access
+    access_control
+        .check_project_access_id_or_key_async(&proj_id_or_key, &client_guard)
+        .await?;
+
+    let params = GetRepositoryParams::new(proj_id_or_key, repo_id_or_name);
     let repository = client_guard.git().get_repository(params).await?;
     Ok(repository)
 }
@@ -63,14 +67,16 @@ pub(crate) async fn get_pull_request_list(
     access_control: &AccessControl,
 ) -> Result<Vec<PullRequest>> {
     let proj_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
-
-    // Check project access
-    access_control.check_project_access_id_or_key(&proj_id_or_key)?;
-
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
-    let params = GetPullRequestListParams::new(proj_id_or_key, repo_id_or_name);
 
     let client_guard = client.lock().await;
+
+    // Check project access
+    access_control
+        .check_project_access_id_or_key_async(&proj_id_or_key, &client_guard)
+        .await?;
+
+    let params = GetPullRequestListParams::new(proj_id_or_key, repo_id_or_name);
     let pull_requests = client_guard.git().get_pull_request_list(params).await?;
     Ok(pull_requests)
 }
@@ -81,15 +87,17 @@ pub(crate) async fn get_pull_request(
     access_control: &AccessControl,
 ) -> Result<PullRequest> {
     let proj_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
-
-    // Check project access
-    access_control.check_project_access_id_or_key(&proj_id_or_key)?;
-
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
     let pr_number = PullRequestNumber::from(req.pr_number);
-    let params = GetPullRequestParams::new(proj_id_or_key, repo_id_or_name, pr_number);
 
     let client_guard = client.lock().await;
+
+    // Check project access
+    access_control
+        .check_project_access_id_or_key_async(&proj_id_or_key, &client_guard)
+        .await?;
+
+    let params = GetPullRequestParams::new(proj_id_or_key, repo_id_or_name, pr_number);
     let pull_request = client_guard.git().get_pull_request(params).await?;
     Ok(pull_request)
 }
@@ -100,16 +108,18 @@ pub(crate) async fn get_pull_request_attachment_list_tool(
     access_control: &AccessControl,
 ) -> Result<Vec<PullRequestAttachment>> {
     let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
-
-    // Check project access
-    access_control.check_project_access_id_or_key(&project_id_or_key)?;
-
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
     let pr_number = PullRequestNumber::from(req.pr_number);
-    let params =
-        GetPullRequestAttachmentListParams::new(project_id_or_key, repo_id_or_name, pr_number);
 
     let client_guard = client.lock().await;
+
+    // Check project access
+    access_control
+        .check_project_access_id_or_key_async(&project_id_or_key, &client_guard)
+        .await?;
+
+    let params =
+        GetPullRequestAttachmentListParams::new(project_id_or_key, repo_id_or_name, pr_number);
     Ok(client_guard
         .git()
         .get_pull_request_attachment_list(params)
@@ -122,21 +132,23 @@ pub(crate) async fn download_pr_attachment_bridge(
     access_control: &AccessControl,
 ) -> Result<DownloadedFile> {
     let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
-
-    // Check project access
-    access_control.check_project_access_id_or_key(&project_id_or_key)?;
-
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
     let pr_number = PullRequestNumber::from(req.pr_number);
     let attachment_id_for_download = PullRequestAttachmentId::new(req.attachment_id);
+
+    let client_guard = client.lock().await;
+
+    // Check project access
+    access_control
+        .check_project_access_id_or_key_async(&project_id_or_key, &client_guard)
+        .await?;
+
     let params = DownloadPullRequestAttachmentParams::new(
         project_id_or_key,
         repo_id_or_name,
         pr_number,
         attachment_id_for_download,
     );
-
-    let client_guard = client.lock().await;
 
     // The download_pull_request_attachment method in backlog-git now returns (filename, content_type, bytes)
     // due to changes in client.download_file_raw.
@@ -154,13 +166,15 @@ pub(crate) async fn get_pull_request_comment_list_tool(
 ) -> Result<Vec<PullRequestComment>> {
     // Parse project ID first
     let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
-
-    // Check project access with parsed type
-    access_control.check_project_access_id_or_key(&project_id_or_key)?;
-
     let params = GetPullRequestCommentListParams::try_from(req)?;
 
     let client_guard = client.lock().await;
+
+    // Check project access with parsed type
+    access_control
+        .check_project_access_id_or_key_async(&project_id_or_key, &client_guard)
+        .await?;
+
     Ok(client_guard
         .git()
         .get_pull_request_comment_list(params)
@@ -175,12 +189,14 @@ pub(crate) async fn add_pull_request_comment_bridge(
 ) -> Result<PullRequestComment> {
     // Parse project ID first
     let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
-
-    // Check project access with parsed type
-    access_control.check_project_access_id_or_key(&project_id_or_key)?;
-
     let params = AddPullRequestCommentParams::try_from(req)?;
 
     let client_guard = client.lock().await;
+
+    // Check project access with parsed type
+    access_control
+        .check_project_access_id_or_key_async(&project_id_or_key, &client_guard)
+        .await?;
+
     Ok(client_guard.git().add_pull_request_comment(params).await?)
 }
