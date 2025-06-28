@@ -20,6 +20,12 @@ backlog-space = { path = "../crates/backlog-space" }
 clap = { version = "4.5", features = ["derive"] }
 tokio = { workspace = true, features = ["full", "macros", "rt-multi-thread"] }
 chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3.2"
 
 [features]
 default = ["all", "all_writable"]

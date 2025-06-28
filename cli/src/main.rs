@@ -1,3 +1,5 @@
+mod custom_fields;
+
 #[cfg(feature = "git_writable")]
 use backlog_api_client::AddPullRequestParams;
 #[cfg(feature = "issue_writable")]
@@ -519,6 +521,28 @@ struct CreateIssueArgs {
     /// Milestone IDs (comma-separated)
     #[arg(short, long)]
     milestone_ids: Option<String>,
+
+    /// Custom fields (format: "id:type:value[:other]", can be specified multiple times)
+    /// Examples:
+    /// --custom-field "1:text:Sample text"
+    /// --custom-field "2:numeric:123.45"
+    /// --custom-field "3:date:2024-06-24"
+    /// --custom-field "4:single_list:100:Other description"
+    #[arg(long = "custom-field", value_name = "FIELD")]
+    custom_fields: Vec<String>,
+
+    /// Custom fields JSON file path
+    /// Expected format:
+    /// {
+    ///   "1": {"type": "text", "value": "Sample text"},
+    ///   "2": {"type": "numeric", "value": 123.45}
+    /// }
+    #[arg(
+        long = "custom-fields-json",
+        value_name = "FILE",
+        conflicts_with = "custom_fields"
+    )]
+    custom_fields_json: Option<std::path::PathBuf>,
 }
 
 #[derive(Args, Debug)]
@@ -561,6 +585,18 @@ struct UpdateIssueArgs {
     /// Comment to add with the update
     #[arg(short, long)]
     comment: Option<String>,
+
+    /// Custom fields (format: "id:type:value[:other]", can be specified multiple times)
+    #[arg(long = "custom-field", value_name = "FIELD")]
+    custom_fields: Vec<String>,
+
+    /// Custom fields JSON file path
+    #[arg(
+        long = "custom-fields-json",
+        value_name = "FILE",
+        conflicts_with = "custom_fields"
+    )]
+    custom_fields_json: Option<std::path::PathBuf>,
 }
 
 #[derive(Args, Debug)]
@@ -1889,6 +1925,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
 
+                // Handle custom fields
+                let custom_fields_map = if let Some(json_path) = &create_args.custom_fields_json {
+                    match custom_fields::parse_custom_fields_json(json_path) {
+                        Ok(fields) => Some(fields),
+                        Err(e) => {
+                            eprintln!("Error parsing custom fields JSON: {e}");
+                            return Ok(());
+                        }
+                    }
+                } else if !create_args.custom_fields.is_empty() {
+                    match custom_fields::parse_custom_field_args(&create_args.custom_fields) {
+                        Ok(fields) => Some(fields),
+                        Err(e) => {
+                            eprintln!("Error parsing custom fields: {e}");
+                            return Ok(());
+                        }
+                    }
+                } else {
+                    None
+                };
+
+                if let Some(fields) = custom_fields_map {
+                    builder.custom_fields(fields);
+                }
+
                 let params = builder.build()?;
 
                 match client.issue().add_issue(params).await {
@@ -1943,6 +2004,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 if let Some(comment) = &update_args.comment {
                     builder.comment(comment);
+                }
+
+                // Handle custom fields
+                let custom_fields_map = if let Some(json_path) = &update_args.custom_fields_json {
+                    match custom_fields::parse_custom_fields_json(json_path) {
+                        Ok(fields) => Some(fields),
+                        Err(e) => {
+                            eprintln!("Error parsing custom fields JSON: {e}");
+                            return Ok(());
+                        }
+                    }
+                } else if !update_args.custom_fields.is_empty() {
+                    match custom_fields::parse_custom_field_args(&update_args.custom_fields) {
+                        Ok(fields) => Some(fields),
+                        Err(e) => {
+                            eprintln!("Error parsing custom fields: {e}");
+                            return Ok(());
+                        }
+                    }
+                } else {
+                    None
+                };
+
+                if let Some(fields) = custom_fields_map {
+                    builder.custom_fields(fields);
                 }
 
                 let params = builder.build()?;
