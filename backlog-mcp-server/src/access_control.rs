@@ -8,80 +8,61 @@ use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-/// Resolved project information containing both ID and Key
-#[derive(Debug, Clone)]
-struct ResolvedProject {
-    id: ProjectId,
-    key: ProjectKey,
-}
-
 /// Structure to manage project access control
 #[derive(Debug, Clone)]
 pub struct AccessControl {
-    /// Raw project identifiers from environment variable
-    allowed_projects_raw: Option<Vec<String>>,
-    /// Resolved project mappings (raw string -> ResolvedProject)
-    resolved_projects: Arc<RwLock<HashMap<String, ResolvedProject>>>,
+    /// Allowed project keys from environment variable
+    allowed_projects: Option<Vec<ProjectKey>>,
+    /// Resolved project mappings (ProjectId -> ProjectKey)
+    resolved_projects: Arc<RwLock<HashMap<ProjectId, ProjectKey>>>,
 }
 
 impl AccessControl {
     /// Initialize access control settings from environment variables
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        let allowed_projects_raw = env::var("BACKLOG_PROJECTS")
-            .ok()
-            .filter(|s| !s.trim().is_empty())
-            .map(|s| {
-                s.split(',')
-                    .map(|p| p.trim().to_string())
+        let env_value = env::var("BACKLOG_PROJECTS").ok();
+
+        let allowed_projects = if let Some(value) = env_value {
+            if value.trim().is_empty() {
+                None
+            } else {
+                let keys: Vec<ProjectKey> = value
+                    .split(',')
+                    .map(|p| p.trim())
                     .filter(|p| !p.is_empty())
-                    .collect::<Vec<_>>()
-            });
+                    .map(ProjectKey::from_str)
+                    .collect::<Result<_, _>>()?;
+
+                if keys.is_empty() { None } else { Some(keys) }
+            }
+        } else {
+            None
+        };
 
         Ok(Self {
-            allowed_projects_raw,
+            allowed_projects,
             resolved_projects: Arc::new(RwLock::new(HashMap::new())),
         })
     }
 
-    /// Resolve a project identifier using the API
-    async fn resolve_project(
+    /// Resolve a project by ID using the API
+    async fn resolve_project_by_id(
         &self,
-        project_str: &str,
+        project_id: &ProjectId,
         client: &BacklogApiClient,
-    ) -> Result<(), Error> {
-        // Try to get project information from API
+    ) -> Result<ProjectKey, Error> {
         use backlog_project::GetProjectDetailParams;
 
-        // Parse project_str to ProjectIdOrKey
-        let project_id_or_key = if let Ok(id) = project_str.parse::<u32>() {
-            ProjectIdOrKey::Id(ProjectId::new(id))
-        } else {
-            ProjectIdOrKey::Key(ProjectKey::from_str(project_str).map_err(|e| {
-                Error::Parameter(format!("Invalid project key '{project_str}': {e}"))
-            })?)
-        };
-
-        let params = GetProjectDetailParams::new(project_id_or_key);
+        let params = GetProjectDetailParams::new(ProjectIdOrKey::Id(*project_id));
         let project = client.project().get_project(params).await.map_err(|e| {
-            Error::Parameter(format!("Failed to resolve project '{project_str}': {e}"))
+            Error::Parameter(format!("Failed to resolve project ID '{project_id}': {e}"))
         })?;
-
-        let resolved = ResolvedProject {
-            id: project.id,
-            key: project.project_key,
-        };
 
         // Store the resolved project
         let mut resolved_map = self.resolved_projects.write().await;
-        resolved_map.insert(project_str.to_string(), resolved);
+        resolved_map.insert(project.id, project.project_key.clone());
 
-        Ok(())
-    }
-
-    /// Check if a project has been resolved
-    async fn is_resolved(&self, project_str: &str) -> bool {
-        let resolved_map = self.resolved_projects.read().await;
-        resolved_map.contains_key(project_str)
+        Ok(project.project_key)
     }
 
     /// Check access permissions for the specified project ID (async version)
@@ -94,32 +75,22 @@ impl AccessControl {
         if !self.is_enabled() {
             return Ok(());
         }
+        let allowed_keys = self.allowed_projects.as_ref().unwrap();
 
-        let raw_list = self.allowed_projects_raw.as_ref().unwrap();
-
-        // Check in resolved projects
+        // Check if this project ID is already resolved
         {
             let resolved_map = self.resolved_projects.read().await;
-            for (_, project) in resolved_map.iter() {
-                if &project.id == project_id {
+            if let Some(project_key) = resolved_map.get(project_id) {
+                if allowed_keys.contains(project_key) {
                     return Ok(());
                 }
             }
         }
 
-        // Resolve unresolved projects
-        for raw_project in raw_list {
-            if !self.is_resolved(raw_project).await {
-                // Ignore resolution errors for individual projects
-                let _ = self.resolve_project(raw_project, client).await;
-            }
-        }
-
-        // Check again after resolution
-        {
-            let resolved_map = self.resolved_projects.read().await;
-            for (_, project) in resolved_map.iter() {
-                if &project.id == project_id {
+        // If not resolved and not in unresolved list, try to resolve it
+        if let Some(allowed_keys) = &self.allowed_projects {
+            if let Ok(project_key) = self.resolve_project_by_id(project_id, client).await {
+                if allowed_keys.contains(&project_key) {
                     return Ok(());
                 }
             }
@@ -127,7 +98,7 @@ impl AccessControl {
 
         Err(Error::ProjectAccessDenied {
             project: project_id.to_string(),
-            allowed_projects: raw_list.clone(),
+            allowed_projects: allowed_keys.iter().map(|k| k.to_string()).collect(),
         })
     }
 
@@ -135,46 +106,20 @@ impl AccessControl {
     pub async fn check_project_access_by_key_async(
         &self,
         project_key: &ProjectKey,
-        client: &BacklogApiClient,
     ) -> Result<(), Error> {
         // If no allow list is set, allow access to all projects
         if !self.is_enabled() {
             return Ok(());
         }
 
-        let raw_list = self.allowed_projects_raw.as_ref().unwrap();
-
-        // Check in resolved projects
-        {
-            let resolved_map = self.resolved_projects.read().await;
-            for (_, project) in resolved_map.iter() {
-                if &project.key == project_key {
-                    return Ok(());
-                }
-            }
-        }
-
-        // Resolve unresolved projects
-        for raw_project in raw_list {
-            if !self.is_resolved(raw_project).await {
-                // Ignore resolution errors for individual projects
-                let _ = self.resolve_project(raw_project, client).await;
-            }
-        }
-
-        // Check again after resolution
-        {
-            let resolved_map = self.resolved_projects.read().await;
-            for (_, project) in resolved_map.iter() {
-                if &project.key == project_key {
-                    return Ok(());
-                }
-            }
+        let allowed_keys = self.allowed_projects.as_ref().unwrap();
+        if allowed_keys.contains(project_key) {
+            return Ok(());
         }
 
         Err(Error::ProjectAccessDenied {
             project: project_key.to_string(),
-            allowed_projects: raw_list.clone(),
+            allowed_projects: allowed_keys.iter().map(|k| k.to_string()).collect(),
         })
     }
 
@@ -186,7 +131,7 @@ impl AccessControl {
     ) -> Result<(), Error> {
         match project {
             ProjectIdOrKey::Id(id) => self.check_project_access_by_id_async(id, client).await,
-            ProjectIdOrKey::Key(key) => self.check_project_access_by_key_async(key, client).await,
+            ProjectIdOrKey::Key(key) => self.check_project_access_by_key_async(key).await,
             ProjectIdOrKey::EitherIdOrKey(id, _) => {
                 self.check_project_access_by_id_async(id, client).await
             }
@@ -195,7 +140,7 @@ impl AccessControl {
 
     /// Returns whether access control is enabled
     pub fn is_enabled(&self) -> bool {
-        self.allowed_projects_raw.is_some()
+        self.allowed_projects.is_some()
     }
 
     // Synchronous versions for backward compatibility (will be removed)
@@ -207,20 +152,10 @@ impl AccessControl {
             return Ok(());
         }
 
-        let raw_list = self.allowed_projects_raw.as_ref().unwrap();
-
-        // In sync version, we can only check if the ID matches a numeric entry
-        for raw_project in raw_list {
-            if let Ok(id) = raw_project.parse::<u32>() {
-                if ProjectId::new(id) == *project_id {
-                    return Ok(());
-                }
-            }
-        }
-
+        let allowed_keys = self.allowed_projects.as_ref().unwrap();
         Err(Error::ProjectAccessDenied {
             project: project_id.to_string(),
-            allowed_projects: raw_list.clone(),
+            allowed_projects: allowed_keys.iter().map(|k| k.to_string()).collect(),
         })
     }
 
@@ -231,20 +166,22 @@ impl AccessControl {
             return Ok(());
         }
 
-        let raw_list = self.allowed_projects_raw.as_ref().unwrap();
-
-        // In sync version, we can only check if the key matches a string entry
-        for raw_project in raw_list {
-            if let Ok(key) = ProjectKey::from_str(raw_project) {
-                if key == *project_key {
-                    return Ok(());
-                }
+        // Direct check - no resolution needed for keys
+        if let Some(allowed_keys) = &self.allowed_projects {
+            if allowed_keys.contains(project_key) {
+                return Ok(());
             }
         }
 
         Err(Error::ProjectAccessDenied {
             project: project_key.to_string(),
-            allowed_projects: raw_list.clone(),
+            allowed_projects: self
+                .allowed_projects
+                .as_ref()
+                .unwrap()
+                .iter()
+                .map(|key| key.to_string())
+                .collect::<Vec<String>>(),
         })
     }
 
@@ -261,7 +198,7 @@ impl AccessControl {
 impl Default for AccessControl {
     fn default() -> Self {
         Self::new().unwrap_or(Self {
-            allowed_projects_raw: None,
+            allowed_projects: None,
             resolved_projects: Arc::new(RwLock::new(HashMap::new())),
         })
     }
@@ -333,42 +270,10 @@ mod tests {
     }
 
     #[test]
-    fn test_access_control_with_project_ids() {
-        let _lock = TEST_MUTEX.lock().unwrap();
-        unsafe {
-            env::set_var("BACKLOG_PROJECTS", "123456,789012");
-        }
-        let access_control = AccessControl::new().unwrap();
-
-        assert!(access_control.is_enabled());
-
-        let project_id_1 = ProjectId::new(123456);
-        assert!(
-            access_control
-                .check_project_access_by_id(&project_id_1)
-                .is_ok()
-        );
-
-        let project_id_2 = ProjectId::new(789012);
-        assert!(
-            access_control
-                .check_project_access_by_id(&project_id_2)
-                .is_ok()
-        );
-
-        let project_id_3 = ProjectId::new(999999);
-        assert!(
-            access_control
-                .check_project_access_by_id(&project_id_3)
-                .is_err()
-        );
-    }
-
-    #[test]
     fn test_access_control_mixed_keys_and_ids() {
         let _lock = TEST_MUTEX.lock().unwrap();
         unsafe {
-            env::set_var("BACKLOG_PROJECTS", "PROJECT_A, 123456, PROJECT_C");
+            env::set_var("BACKLOG_PROJECTS", "PROJECT_A, PROJECT_C");
         }
         let access_control = AccessControl::new().unwrap();
 
@@ -378,13 +283,6 @@ mod tests {
         assert!(
             access_control
                 .check_project_access_by_key(&project_a)
-                .is_ok()
-        );
-
-        let project_id = ProjectId::new(123456);
-        assert!(
-            access_control
-                .check_project_access_by_id(&project_id)
                 .is_ok()
         );
 
@@ -399,13 +297,6 @@ mod tests {
         assert!(
             access_control
                 .check_project_access_by_key(&project_b)
-                .is_err()
-        );
-
-        let project_id_err = ProjectId::new(999999);
-        assert!(
-            access_control
-                .check_project_access_by_id(&project_id_err)
                 .is_err()
         );
     }
@@ -449,17 +340,9 @@ mod tests {
     fn test_access_control_phase2_document_api() {
         let _lock = TEST_MUTEX.lock().unwrap();
         unsafe {
-            env::set_var("BACKLOG_PROJECTS", "123456,PROJECT_X");
+            env::set_var("BACKLOG_PROJECTS", "PROJECT_X");
         }
         let access_control = AccessControl::new().unwrap();
-
-        // Simulate checking access after retrieving document with project_id
-        let project_id_1 = ProjectId::new(123456);
-        assert!(
-            access_control
-                .check_project_access_by_id(&project_id_1)
-                .is_ok()
-        );
 
         let project_x = ProjectKey::from_str("PROJECT_X").unwrap();
         assert!(
@@ -517,91 +400,6 @@ mod tests {
             } => {
                 assert_eq!(project, "OTHER_PROJ");
                 assert_eq!(allowed_projects, vec!["WIKI_PROJ"]);
-            }
-            _ => panic!("Expected ProjectAccessDenied error"),
-        }
-    }
-
-    #[test]
-    fn test_access_control_phase3_issue_comment_api() {
-        let _lock = TEST_MUTEX.lock().unwrap();
-        unsafe {
-            env::set_var("BACKLOG_PROJECTS", "ISSUE_PROJ,789012");
-        }
-        let access_control = AccessControl::new().unwrap();
-
-        // Simulate checking access after retrieving issue with project_id
-        let issue_proj = ProjectKey::from_str("ISSUE_PROJ").unwrap();
-        assert!(
-            access_control
-                .check_project_access_by_key(&issue_proj)
-                .is_ok()
-        );
-
-        let project_id = ProjectId::new(789012);
-        assert!(
-            access_control
-                .check_project_access_by_id(&project_id)
-                .is_ok()
-        );
-
-        let other_proj = ProjectKey::from_str("OTHER_PROJ").unwrap();
-        assert!(
-            access_control
-                .check_project_access_by_key(&other_proj)
-                .is_err()
-        );
-
-        let project_id_err = ProjectId::new(111111);
-        assert!(
-            access_control
-                .check_project_access_by_id(&project_id_err)
-                .is_err()
-        );
-    }
-
-    #[test]
-    fn test_check_project_access_by_id_with_allowed_id() {
-        let _lock = TEST_MUTEX.lock().unwrap();
-        unsafe {
-            env::set_var("BACKLOG_PROJECTS", "123456,789012");
-        }
-        let access_control = AccessControl::new().unwrap();
-
-        let project_id = ProjectId::new(123456);
-        assert!(
-            access_control
-                .check_project_access_by_id(&project_id)
-                .is_ok()
-        );
-
-        let project_id = ProjectId::new(789012);
-        assert!(
-            access_control
-                .check_project_access_by_id(&project_id)
-                .is_ok()
-        );
-    }
-
-    #[test]
-    fn test_check_project_access_by_id_with_denied_id() {
-        let _lock = TEST_MUTEX.lock().unwrap();
-        unsafe {
-            env::set_var("BACKLOG_PROJECTS", "123456,789012");
-        }
-        let access_control = AccessControl::new().unwrap();
-
-        let project_id = ProjectId::new(999999);
-        let err = access_control
-            .check_project_access_by_id(&project_id)
-            .unwrap_err();
-        match err {
-            crate::error::Error::ProjectAccessDenied {
-                project,
-                allowed_projects,
-            } => {
-                assert_eq!(project, "999999");
-                assert_eq!(allowed_projects, vec!["123456", "789012"]);
             }
             _ => panic!("Expected ProjectAccessDenied error"),
         }
