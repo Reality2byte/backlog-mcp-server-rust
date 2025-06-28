@@ -1,5 +1,5 @@
 #[cfg(feature = "writable")]
-use crate::models::Issue;
+use crate::models::{CustomFieldInput, Issue};
 #[cfg(feature = "writable")]
 use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
 #[cfg(feature = "writable")]
@@ -8,14 +8,16 @@ use backlog_api_macros::ToFormParams;
 use backlog_core::{
     ApiDate, IssueIdOrKey,
     identifier::{
-        AttachmentId, CategoryId, IssueId, IssueTypeId, MilestoneId, PriorityId, ResolutionId,
-        UserId,
+        AttachmentId, CategoryId, CustomFieldId, IssueId, IssueTypeId, MilestoneId, PriorityId,
+        ResolutionId, UserId,
     },
 };
 #[cfg(feature = "writable")]
 use derive_builder::Builder;
 #[cfg(feature = "writable")]
 use serde::Serialize;
+#[cfg(feature = "writable")]
+use std::collections::HashMap;
 
 /// Response type for updating an issue
 #[cfg(feature = "writable")]
@@ -80,9 +82,29 @@ pub struct UpdateIssueParams {
     pub resolution_id: Option<ResolutionId>,
     #[builder(default, setter(into, strip_option))]
     pub comment: Option<String>,
-    // Custom fields are omitted for now due to their dynamic nature.
-    // customField_{id}
-    // customField_{id}_otherValue
+    #[builder(default, setter(custom))]
+    #[form(skip)]
+    pub custom_fields: Option<HashMap<CustomFieldId, CustomFieldInput>>,
+}
+
+#[cfg(feature = "writable")]
+impl UpdateIssueParamsBuilder {
+    /// Set custom fields for the issue
+    pub fn custom_fields(
+        &mut self,
+        custom_fields: HashMap<CustomFieldId, CustomFieldInput>,
+    ) -> &mut Self {
+        self.custom_fields = Some(Some(custom_fields));
+        self
+    }
+
+    /// Add a single custom field
+    pub fn custom_field(&mut self, field_id: CustomFieldId, value: CustomFieldInput) -> &mut Self {
+        let mut fields = self.custom_fields.clone().flatten().unwrap_or_default();
+        fields.insert(field_id, value);
+        self.custom_fields = Some(Some(fields));
+        self
+    }
 }
 
 #[cfg(feature = "writable")]
@@ -96,7 +118,110 @@ impl IntoRequest for UpdateIssueParams {
     }
 
     fn to_form(&self) -> impl Serialize {
-        let params: Vec<(String, String)> = self.into();
+        let mut params: Vec<(String, String)> = self.into();
+
+        // Add custom fields
+        if let Some(ref custom_fields) = self.custom_fields {
+            for (field_id, input) in custom_fields {
+                let (value, other_value) = input.to_form_value();
+
+                match input {
+                    CustomFieldInput::MultipleList { ids, .. } => {
+                        // Multiple values need to be added as separate parameters
+                        for id in ids {
+                            params.push((format!("customField_{field_id}"), id.to_string()));
+                        }
+                    }
+                    CustomFieldInput::CheckBox(ids) => {
+                        // Multiple values need to be added as separate parameters
+                        for id in ids {
+                            params.push((format!("customField_{field_id}"), id.to_string()));
+                        }
+                    }
+                    _ => {
+                        params.push((format!("customField_{field_id}"), value));
+                    }
+                }
+
+                if let Some(other) = other_value {
+                    params.push((format!("customField_{field_id}_otherValue"), other));
+                }
+            }
+        }
+
         params
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::NaiveDate;
+
+    // Helper function to get form params including custom fields
+    fn get_form_params(params: &UpdateIssueParams) -> Vec<(String, String)> {
+        // First get standard params
+        let mut form_params: Vec<(String, String)> = params.into();
+
+        // Then add custom fields manually
+        if let Some(ref custom_fields) = params.custom_fields {
+            for (field_id, input) in custom_fields {
+                let (value, other_value) = input.to_form_value();
+
+                match input {
+                    CustomFieldInput::MultipleList { ids, .. } => {
+                        for id in ids {
+                            form_params.push((format!("customField_{field_id}"), id.to_string()));
+                        }
+                    }
+                    CustomFieldInput::CheckBox(ids) => {
+                        for id in ids {
+                            form_params.push((format!("customField_{field_id}"), id.to_string()));
+                        }
+                    }
+                    _ => {
+                        form_params.push((format!("customField_{field_id}"), value));
+                    }
+                }
+
+                if let Some(other) = other_value {
+                    form_params.push((format!("customField_{field_id}_otherValue"), other));
+                }
+            }
+        }
+
+        form_params
+    }
+
+    #[test]
+    fn test_update_custom_fields_text() {
+        let mut builder = UpdateIssueParamsBuilder::default();
+        builder.issue_id_or_key(IssueId::new(123)).custom_field(
+            CustomFieldId::new(10),
+            CustomFieldInput::Text("Updated text".to_string()),
+        );
+
+        let params = builder.build().unwrap();
+        let form_params = get_form_params(&params);
+
+        let custom_field = form_params.iter().find(|(key, _)| key == "customField_10");
+        assert!(custom_field.is_some());
+        assert_eq!(custom_field.unwrap().1, "Updated text");
+    }
+
+    #[test]
+    fn test_update_custom_fields_date() {
+        let mut builder = UpdateIssueParamsBuilder::default();
+        builder.issue_id_or_key(IssueId::new(123)).custom_field(
+            CustomFieldId::new(30),
+            CustomFieldInput::Date(NaiveDate::from_ymd_opt(2024, 12, 31).unwrap()),
+        );
+
+        let params = builder.build().unwrap();
+        let form_params = get_form_params(&params);
+
+        let custom_field = form_params.iter().find(|(key, _)| key == "customField_30");
+        assert!(custom_field.is_some());
+        assert_eq!(custom_field.unwrap().1, "2024-12-31");
     }
 }

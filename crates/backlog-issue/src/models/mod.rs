@@ -4,6 +4,8 @@ mod comment;
 mod custom_field;
 mod custom_field_type;
 mod custom_field_type_id;
+mod custom_field_value;
+mod custom_field_with_value;
 mod external_file_link;
 mod initial_date;
 mod issue;
@@ -21,6 +23,8 @@ pub use custom_field_type::{
     CustomFieldSettings, CustomFieldType, DateSettings, ListSettings, NumericSettings,
 };
 pub use custom_field_type_id::CustomFieldTypeId;
+pub use custom_field_value::{CustomFieldInput, CustomFieldListItem, CustomFieldValue};
+pub use custom_field_with_value::CustomFieldWithValue;
 pub use external_file_link::ExternalFileLink;
 pub use initial_date::InitialDate;
 pub use issue::Issue;
