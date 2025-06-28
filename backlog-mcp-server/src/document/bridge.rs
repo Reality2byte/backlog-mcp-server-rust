@@ -29,7 +29,7 @@ pub(crate) async fn get_document_details(
     let params = GetDocumentParams::new(document_id.clone());
     let document = client.document().get_document(params).await?;
 
-    // Phase 2: Post-check project access from response
+    // Check project access
     access_control.check_project_access(&document.project_id.to_string())?;
 
     Ok(document)
@@ -42,14 +42,17 @@ pub(crate) async fn download_document_attachment_bridge(
 ) -> Result<DownloadedFile> {
     let client_guard = client.lock().await;
     let document_id = DocumentId::from_str(req.document_id.trim())?;
-    let attachment_id = DocumentAttachmentId::new(req.attachment_id);
 
-    // Phase 2: First get document details to check project access
-    let doc_params = GetDocumentParams::new(document_id.clone());
-    let document = client_guard.document().get_document(doc_params).await?;
+    // First get document details to check project access
+    let document = client_guard
+        .document()
+        .get_document(GetDocumentParams::new(document_id.clone()))
+        .await?;
 
+    // Check project access
     access_control.check_project_access(&document.project_id.to_string())?;
 
+    let attachment_id = DocumentAttachmentId::new(req.attachment_id);
     let params = DownloadAttachmentParams::new(document_id, attachment_id);
     client_guard
         .document()
@@ -61,7 +64,11 @@ pub(crate) async fn download_document_attachment_bridge(
 pub(crate) async fn get_document_tree_tool(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetDocumentTreeRequest,
+    access_control: &AccessControl,
 ) -> Result<GetDocumentTreeResponse> {
+    // Check project access
+    access_control.check_project_access(&req.project_id_or_key)?;
+
     let client_guard = client.lock().await;
     let project_id_or_key_val = ProjectIdOrKey::from_str(req.project_id_or_key.trim())?;
     // Construct directly instead of using the builder, to sidestep the E0599 error for now.

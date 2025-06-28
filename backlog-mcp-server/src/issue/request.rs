@@ -31,7 +31,7 @@ pub(crate) struct GetIssuesByMilestoneNameRequest {
     pub milestone_name: String,
 }
 
-#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+#[derive(Debug, Clone, serde::Deserialize, schemars::JsonSchema)]
 pub(crate) struct UpdateIssueRequest {
     #[schemars(
         description = "The issue ID or issue key to update. Example: 'MYPROJECTKEY-123' or '12345'."
@@ -87,7 +87,7 @@ pub(crate) struct DownloadAttachmentRequest {
     pub format: Option<String>,
 }
 
-#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+#[derive(Debug, Clone, serde::Deserialize, schemars::JsonSchema)]
 pub(crate) struct GetIssueCommentsRequest {
     #[schemars(description = "Issue ID or key (e.g., 'PROJECT-123').")]
     pub issue_id_or_key: String,
@@ -129,7 +129,7 @@ impl TryFrom<GetIssueCommentsRequest> for GetCommentListParams {
     }
 }
 
-#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+#[derive(Debug, Clone, serde::Deserialize, schemars::JsonSchema)]
 pub(crate) struct AddCommentRequest {
     #[schemars(
         description = "The issue ID or issue key to add the comment to. Examples: 'MYPROJECTKEY-123', '12345'."

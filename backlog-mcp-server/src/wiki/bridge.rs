@@ -52,9 +52,8 @@ pub(crate) async fn get_wiki_list(
 
     let wikis = wiki_api.get_wiki_list(params).await?;
 
-    // Phase 2: Post-check project access from response
-    // Wiki list might contain wikis from multiple projects
-    for wiki in wikis.iter() {
+    // Check project access for each wiki in the response
+    for wiki in &wikis {
         access_control.check_project_access(&wiki.project_id.to_string())?;
     }
 
@@ -73,7 +72,7 @@ pub(crate) async fn get_wiki_detail(
         .get_wiki_detail(GetWikiDetailParams::new(wiki_id))
         .await?;
 
-    // Phase 2: Post-check project access from response
+    // Check project access from the response
     access_control.check_project_access(&wiki_detail.project_id.to_string())?;
 
     Ok(serde_json::to_value(wiki_detail)?)
@@ -87,9 +86,9 @@ pub(crate) async fn get_wiki_attachment_list(
     let wiki_api = client.wiki();
     let wiki_id = WikiId::new(request.wiki_id);
 
-    // Phase 2: First get wiki details to check project access
+    // First get wiki details to check project access
     let wiki_detail = wiki_api
-        .get_wiki_detail(GetWikiDetailParams::new(wiki_id))
+        .get_wiki_detail(GetWikiDetailParams::new(wiki_id.clone()))
         .await?;
 
     access_control.check_project_access(&wiki_detail.project_id.to_string())?;
@@ -108,15 +107,15 @@ pub(crate) async fn download_wiki_attachment(
 ) -> Result<DownloadedFile> {
     let wiki_api = client.wiki();
     let wiki_id = WikiId::new(request.wiki_id);
-    let attachment_id = WikiAttachmentId::new(request.attachment_id);
 
-    // Phase 2: First get wiki details to check project access
+    // First get wiki details to check project access
     let wiki_detail = wiki_api
-        .get_wiki_detail(GetWikiDetailParams::new(wiki_id))
+        .get_wiki_detail(GetWikiDetailParams::new(wiki_id.clone()))
         .await?;
 
     access_control.check_project_access(&wiki_detail.project_id.to_string())?;
 
+    let attachment_id = WikiAttachmentId::new(request.attachment_id);
     let downloaded_file = wiki_api
         .download_wiki_attachment(DownloadWikiAttachmentParams::new(wiki_id, attachment_id))
         .await?;
@@ -133,12 +132,12 @@ pub(crate) async fn update_wiki(
     let wiki_api = client.wiki();
     let wiki_id = WikiId::new(request.wiki_id);
 
-    // Phase 2: First get wiki details to check project access
-    let wiki_detail = wiki_api
-        .get_wiki_detail(GetWikiDetailParams::new(wiki_id))
+    // First get wiki details to check project access
+    let wiki_detail_before = wiki_api
+        .get_wiki_detail(GetWikiDetailParams::new(wiki_id.clone()))
         .await?;
 
-    access_control.check_project_access(&wiki_detail.project_id.to_string())?;
+    access_control.check_project_access(&wiki_detail_before.project_id.to_string())?;
 
     // Build UpdateWikiParams from request
     let mut params = UpdateWikiParams::new(wiki_id);

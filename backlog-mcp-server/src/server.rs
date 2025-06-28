@@ -129,7 +129,9 @@ impl Server {
 
     #[tool(description = "Get details for a specific Backlog issue.")]
     async fn get_issue(&self, #[tool(aggr)] request: GetIssueDetailsRequest) -> McpResult {
-        let issue = issue::bridge::get_issue_details(self.client.clone(), request).await?;
+        let issue =
+            issue::bridge::get_issue_details(self.client.clone(), request, &self.access_control)
+                .await?;
         Ok(CallToolResult::success(vec![Content::json(issue)?]))
     }
 
@@ -145,6 +147,7 @@ impl Server {
             &self.access_control,
         )
         .await?;
+
         Ok(CallToolResult::success(vec![Content::json(document)?]))
     }
 
@@ -174,10 +177,12 @@ impl Server {
 
     #[tool(description = "Get the document tree for a specified project.")]
     async fn get_document_tree(&self, #[tool(aggr)] request: GetDocumentTreeRequest) -> McpResult {
-        self.access_control
-            .check_project_access(&request.project_id_or_key)?;
-        let document_tree =
-            document::bridge::get_document_tree_tool(self.client.clone(), request).await?;
+        let document_tree = document::bridge::get_document_tree_tool(
+            self.client.clone(),
+            request,
+            &self.access_control,
+        )
+        .await?;
         Ok(CallToolResult::success(vec![Content::json(
             document_tree.active_tree,
         )?]))
@@ -210,21 +215,27 @@ impl Server {
     #[cfg(feature = "issue_writable")]
     #[tool(description = "Update the summary and/or description of a Backlog issue.")]
     async fn update_issue(&self, #[tool(aggr)] request: UpdateIssueRequest) -> McpResult {
-        let updated_issue = issue::bridge::update_issue_impl(self.client.clone(), request).await?;
+        let updated_issue =
+            issue::bridge::update_issue_impl(self.client.clone(), request, &self.access_control)
+                .await?;
         Ok(CallToolResult::success(vec![Content::json(updated_issue)?]))
     }
 
     #[cfg(feature = "issue_writable")]
     #[tool(description = "Add a comment to a Backlog issue.")]
     async fn add_comment_to_issue(&self, #[tool(aggr)] request: AddCommentRequest) -> McpResult {
-        let comment = issue::bridge::add_comment_impl(self.client.clone(), request).await?;
+        let comment =
+            issue::bridge::add_comment_impl(self.client.clone(), request, &self.access_control)
+                .await?;
         Ok(CallToolResult::success(vec![Content::json(comment)?]))
     }
 
     #[cfg(feature = "issue_writable")]
     #[tool(description = "Update an existing comment on a Backlog issue.")]
     async fn update_issue_comment(&self, #[tool(aggr)] request: UpdateCommentRequest) -> McpResult {
-        let comment = issue::bridge::update_comment_impl(self.client.clone(), request).await?;
+        let comment =
+            issue::bridge::update_comment_impl(self.client.clone(), request, &self.access_control)
+                .await?;
         Ok(CallToolResult::success(vec![Content::json(comment)?]))
     }
 
@@ -245,7 +256,12 @@ impl Server {
         &self,
         #[tool(aggr)] request: GetIssueCommentsRequest,
     ) -> McpResult {
-        let comments = issue::bridge::get_issue_comments_impl(self.client.clone(), request).await?;
+        let comments = issue::bridge::get_issue_comments_impl(
+            self.client.clone(),
+            request,
+            &self.access_control,
+        )
+        .await?;
         Ok(CallToolResult::success(vec![Content::json(comments)?]))
     }
 
@@ -257,8 +273,12 @@ impl Server {
         &self,
         #[tool(aggr)] request: GetAttachmentListRequest,
     ) -> McpResult {
-        let attachments =
-            issue::bridge::get_attachment_list_impl(self.client.clone(), request).await?;
+        let attachments = issue::bridge::get_attachment_list_impl(
+            self.client.clone(),
+            request,
+            &self.access_control,
+        )
+        .await?;
         Ok(CallToolResult::success(vec![Content::json(attachments)?]))
     }
 
@@ -270,8 +290,12 @@ impl Server {
         &self,
         #[tool(aggr)] request: GetIssueSharedFilesRequest,
     ) -> McpResult {
-        let shared_files =
-            issue::bridge::get_issue_shared_files_impl(self.client.clone(), request).await?;
+        let shared_files = issue::bridge::get_issue_shared_files_impl(
+            self.client.clone(),
+            request,
+            &self.access_control,
+        )
+        .await?;
         Ok(CallToolResult::success(vec![Content::json(shared_files)?]))
     }
 
@@ -294,8 +318,12 @@ impl Server {
             .map(str::parse::<FileFormat>)
             .transpose()?;
 
-        let file =
-            issue::bridge::download_issue_attachment_file(self.client.clone(), request).await?;
+        let file = issue::bridge::download_issue_attachment_file(
+            self.client.clone(),
+            request,
+            &self.access_control,
+        )
+        .await?;
 
         let response_data = SerializableFile::new(file, explicit_format)?;
         Ok(CallToolResult::success(vec![response_data.try_into()?]))
@@ -413,6 +441,7 @@ impl Server {
     async fn get_wiki_detail(&self, #[tool(aggr)] request: GetWikiDetailRequest) -> McpResult {
         let client = self.client.lock().await;
         let detail = wiki::bridge::get_wiki_detail(&client, request, &self.access_control).await?;
+
         Ok(CallToolResult::success(vec![Content::json(detail)?]))
     }
 
@@ -420,6 +449,7 @@ impl Server {
     async fn get_wiki_list(&self, #[tool(aggr)] request: GetWikiListRequest) -> McpResult {
         let client = self.client.lock().await;
         let wikis = wiki::bridge::get_wiki_list(&client, request, &self.access_control).await?;
+
         Ok(CallToolResult::success(vec![Content::json(wikis)?]))
     }
 
@@ -441,13 +471,13 @@ impl Server {
         &self,
         #[tool(aggr)] request: DownloadWikiAttachmentRequest,
     ) -> McpResult {
+        let client = self.client.lock().await;
         let explicit_format = request
             .format
             .as_deref()
             .map(str::parse::<FileFormat>)
             .transpose()?;
 
-        let client = self.client.lock().await;
         let file =
             wiki::bridge::download_wiki_attachment(&client, request, &self.access_control).await?;
 

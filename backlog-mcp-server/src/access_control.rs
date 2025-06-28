@@ -227,4 +227,19 @@ mod tests {
             _ => panic!("Expected ProjectAccessDenied error"),
         }
     }
+
+    #[test]
+    fn test_access_control_phase3_issue_comment_api() {
+        let _lock = TEST_MUTEX.lock().unwrap();
+        unsafe {
+            env::set_var("BACKLOG_PROJECTS", "ISSUE_PROJ,789012");
+        }
+        let access_control = AccessControl::new().unwrap();
+
+        // Simulate checking access after retrieving issue with project_id
+        assert!(access_control.check_project_access("ISSUE_PROJ").is_ok());
+        assert!(access_control.check_project_access("789012").is_ok());
+        assert!(access_control.check_project_access("OTHER_PROJ").is_err());
+        assert!(access_control.check_project_access("111111").is_err());
+    }
 }

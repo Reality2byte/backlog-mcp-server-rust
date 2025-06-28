@@ -5,6 +5,7 @@ use super::request::{
 };
 #[cfg(feature = "issue_writable")]
 use super::request::{AddIssueRequest, UpdateCommentRequest};
+use crate::access_control::AccessControl;
 use crate::error::{Error as McpError, Result};
 use crate::util::{MatchResult, find_by_name_from_array};
 #[cfg(feature = "issue_writable")]
@@ -24,6 +25,7 @@ use tokio::sync::Mutex;
 pub(crate) async fn get_issue_details(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetIssueDetailsRequest,
+    access_control: &AccessControl,
 ) -> Result<Issue> {
     let client_guard = client.lock().await;
     let parsed_issue_key = IssueKey::from_str(req.issue_key.trim())?;
@@ -31,6 +33,10 @@ pub(crate) async fn get_issue_details(
         .issue()
         .get_issue(backlog_issue::GetIssueParams::new(parsed_issue_key.clone()))
         .await?;
+
+    // Check project access from the response
+    access_control.check_project_access(&issue.project_id.to_string())?;
+
     Ok(issue)
 }
 
@@ -97,14 +103,25 @@ fn find_milestone_by_name(
 pub(crate) async fn update_issue_impl(
     client: Arc<Mutex<BacklogApiClient>>,
     req: UpdateIssueRequest,
+    access_control: &AccessControl,
 ) -> Result<Issue> {
     if req.summary.is_none() && req.description.is_none() {
         return Err(McpError::NothingToUpdate);
     }
 
-    let update_params = UpdateIssueParams::try_from(req)?;
+    let update_params = UpdateIssueParams::try_from(req.clone())?;
 
     let client_guard = client.lock().await;
+
+    // First get issue details to check project access
+    let parsed_issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
+    let issue = client_guard
+        .issue()
+        .get_issue(backlog_issue::GetIssueParams::new(parsed_issue_id_or_key))
+        .await?;
+
+    access_control.check_project_access(&issue.project_id.to_string())?;
+
     let updated_issue = client_guard.issue().update_issue(update_params).await?;
     Ok(updated_issue)
 }
@@ -112,10 +129,21 @@ pub(crate) async fn update_issue_impl(
 pub(crate) async fn get_issue_comments_impl(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetIssueCommentsRequest,
+    access_control: &AccessControl,
 ) -> Result<Vec<Comment>> {
-    let comment_params = GetCommentListParams::try_from(req)?;
+    let comment_params = GetCommentListParams::try_from(req.clone())?;
 
     let client_guard = client.lock().await;
+
+    // First get issue details to check project access
+    let parsed_issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
+    let issue = client_guard
+        .issue()
+        .get_issue(backlog_issue::GetIssueParams::new(parsed_issue_id_or_key))
+        .await?;
+
+    access_control.check_project_access(&issue.project_id.to_string())?;
+
     let comments = client_guard
         .issue()
         .get_comment_list(comment_params)
@@ -126,6 +154,7 @@ pub(crate) async fn get_issue_comments_impl(
 pub(crate) async fn get_attachment_list_impl(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetAttachmentListRequest,
+    access_control: &AccessControl,
 ) -> Result<Vec<Attachment>> {
     let parsed_issue_id_or_key =
         IssueIdOrKey::from_str(req.issue_id_or_key.trim()).map_err(|e| {
@@ -136,6 +165,17 @@ pub(crate) async fn get_attachment_list_impl(
         })?;
 
     let client_guard = client.lock().await;
+
+    // First get issue details to check project access
+    let issue = client_guard
+        .issue()
+        .get_issue(backlog_issue::GetIssueParams::new(
+            parsed_issue_id_or_key.clone(),
+        ))
+        .await?;
+
+    access_control.check_project_access(&issue.project_id.to_string())?;
+
     let attachments = client_guard
         .issue()
         .get_attachment_list(backlog_issue::GetAttachmentListParams::new(
@@ -148,11 +188,23 @@ pub(crate) async fn get_attachment_list_impl(
 pub(crate) async fn download_issue_attachment_file(
     client: Arc<Mutex<BacklogApiClient>>,
     req: DownloadAttachmentRequest,
+    access_control: &AccessControl,
 ) -> Result<DownloadedFile> {
     let parsed_issue_id_or_key = IssueIdOrKey::from_str(&req.issue_id_or_key)?;
     let parsed_attachment_id = AttachmentId::new(req.attachment_id);
 
     let client_guard = client.lock().await;
+
+    // First get issue details to check project access
+    let issue = client_guard
+        .issue()
+        .get_issue(backlog_issue::GetIssueParams::new(
+            parsed_issue_id_or_key.clone(),
+        ))
+        .await?;
+
+    access_control.check_project_access(&issue.project_id.to_string())?;
+
     let params =
         backlog_issue::GetAttachmentFileParams::new(parsed_issue_id_or_key, parsed_attachment_id);
     let attachment = client_guard.issue().get_attachment_file(params).await?;
@@ -163,10 +215,21 @@ pub(crate) async fn download_issue_attachment_file(
 pub(crate) async fn add_comment_impl(
     client: Arc<Mutex<BacklogApiClient>>,
     req: AddCommentRequest,
+    access_control: &AccessControl,
 ) -> Result<Comment> {
-    let add_comment_params = AddCommentParams::try_from(req)?;
+    let add_comment_params = AddCommentParams::try_from(req.clone())?;
 
     let client_guard = client.lock().await;
+
+    // First get issue details to check project access
+    let parsed_issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
+    let issue = client_guard
+        .issue()
+        .get_issue(backlog_issue::GetIssueParams::new(parsed_issue_id_or_key))
+        .await?;
+
+    access_control.check_project_access(&issue.project_id.to_string())?;
+
     let comment = client_guard.issue().add_comment(add_comment_params).await?;
     Ok(comment)
 }
@@ -175,6 +238,7 @@ pub(crate) async fn add_comment_impl(
 pub(crate) async fn update_comment_impl(
     client: Arc<Mutex<BacklogApiClient>>,
     req: UpdateCommentRequest,
+    access_control: &AccessControl,
 ) -> Result<Comment> {
     use backlog_api_client::backlog_issue::UpdateCommentParams;
     use backlog_core::identifier::CommentId;
@@ -182,13 +246,24 @@ pub(crate) async fn update_comment_impl(
     let parsed_issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
     let comment_id = CommentId::new(req.comment_id);
 
+    let client_guard = client.lock().await;
+
+    // Phase 3: First get issue details to check project access
+    let issue = client_guard
+        .issue()
+        .get_issue(backlog_issue::GetIssueParams::new(
+            parsed_issue_id_or_key.clone(),
+        ))
+        .await?;
+
+    access_control.check_project_access(&issue.project_id.to_string())?;
+
     let params = UpdateCommentParams {
         issue_id_or_key: parsed_issue_id_or_key,
         comment_id,
         content: req.content,
     };
 
-    let client_guard = client.lock().await;
     let comment = client_guard.issue().update_comment(params).await?;
     Ok(comment)
 }
@@ -196,10 +271,22 @@ pub(crate) async fn update_comment_impl(
 pub(crate) async fn get_issue_shared_files_impl(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetIssueSharedFilesRequest,
+    access_control: &AccessControl,
 ) -> Result<Vec<IssueSharedFile>> {
     let parsed_issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
 
     let client_guard = client.lock().await;
+
+    // First get issue details to check project access
+    let issue = client_guard
+        .issue()
+        .get_issue(backlog_issue::GetIssueParams::new(
+            parsed_issue_id_or_key.clone(),
+        ))
+        .await?;
+
+    access_control.check_project_access(&issue.project_id.to_string())?;
+
     let shared_files = client_guard
         .issue()
         .get_shared_file_list(backlog_issue::GetSharedFileListParams::new(
