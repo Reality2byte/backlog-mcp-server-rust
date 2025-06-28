@@ -37,44 +37,64 @@ impl AccessControl {
         Ok(Self { allowed_projects })
     }
 
-    /// Check access permissions for the specified project
-    pub fn check_project_access(&self, project: &str) -> Result<(), Error> {
+    /// Check access permissions for the specified project ID
+    pub fn check_project_access_by_id(&self, project_id: &ProjectId) -> Result<(), Error> {
         // If no allow list is set, allow access to all projects
         let Some(allowed) = &self.allowed_projects else {
             return Ok(());
         };
 
-        // Parse the input project identifier
-        let target_project = if let Ok(id) = project.parse::<u32>() {
-            ProjectIdOrKey::Id(ProjectId::new(id))
-        } else {
-            ProjectIdOrKey::Key(
-                ProjectKey::from_str(project)
-                    .map_err(|_| Error::Parameter(format!("Invalid project key: {project}")))?,
-            )
-        };
-
         // Check if it's included in the allow list
         if allowed.iter().any(|allowed_proj| {
-            match (allowed_proj, &target_project) {
-                // Compare IDs
-                (ProjectIdOrKey::Id(allowed_id), ProjectIdOrKey::Id(target_id)) => {
-                    allowed_id == target_id
-                }
-                // Compare keys
-                (ProjectIdOrKey::Key(allowed_key), ProjectIdOrKey::Key(target_key)) => {
-                    allowed_key == target_key
-                }
-                // Different formats are considered non-matching
-                _ => false,
-            }
+            matches!(allowed_proj, ProjectIdOrKey::Id(allowed_id) if allowed_id == project_id)
         }) {
             Ok(())
         } else {
             Err(Error::ProjectAccessDenied {
-                project: project.to_string(),
+                project: project_id.to_string(),
                 allowed_projects: allowed.iter().map(|p| format!("{p}")).collect(),
             })
+        }
+    }
+
+    /// Check access permissions for the specified project key
+    pub fn check_project_access_by_key(&self, project_key: &ProjectKey) -> Result<(), Error> {
+        // If no allow list is set, allow access to all projects
+        let Some(allowed) = &self.allowed_projects else {
+            return Ok(());
+        };
+
+        // Check if it's included in the allow list
+        if allowed.iter().any(|allowed_proj| {
+            matches!(allowed_proj, ProjectIdOrKey::Key(allowed_key) if allowed_key == project_key)
+        }) {
+            Ok(())
+        } else {
+            Err(Error::ProjectAccessDenied {
+                project: project_key.to_string(),
+                allowed_projects: allowed.iter().map(|p| format!("{p}")).collect(),
+            })
+        }
+    }
+
+    /// Check access permissions for the specified project
+    pub fn check_project_access(&self, project: &str) -> Result<(), Error> {
+        // Parse the input project identifier
+        if let Ok(id) = project.parse::<u32>() {
+            self.check_project_access_by_id(&ProjectId::new(id))
+        } else {
+            let project_key = ProjectKey::from_str(project)
+                .map_err(|_| Error::Parameter(format!("Invalid project key: {project}")))?;
+            self.check_project_access_by_key(&project_key)
+        }
+    }
+
+    /// Check access permissions for the specified project (accepts ProjectIdOrKey)
+    pub fn check_project_access_id_or_key(&self, project: &ProjectIdOrKey) -> Result<(), Error> {
+        match project {
+            ProjectIdOrKey::Id(id) => self.check_project_access_by_id(id),
+            ProjectIdOrKey::Key(key) => self.check_project_access_by_key(key),
+            ProjectIdOrKey::EitherIdOrKey(id, _) => self.check_project_access_by_id(id),
         }
     }
 
@@ -241,5 +261,131 @@ mod tests {
         assert!(access_control.check_project_access("789012").is_ok());
         assert!(access_control.check_project_access("OTHER_PROJ").is_err());
         assert!(access_control.check_project_access("111111").is_err());
+    }
+
+    #[test]
+    fn test_check_project_access_by_id_with_allowed_id() {
+        let _lock = TEST_MUTEX.lock().unwrap();
+        unsafe {
+            env::set_var("BACKLOG_PROJECTS", "123456,789012");
+        }
+        let access_control = AccessControl::new().unwrap();
+
+        let project_id = ProjectId::new(123456);
+        assert!(
+            access_control
+                .check_project_access_by_id(&project_id)
+                .is_ok()
+        );
+
+        let project_id = ProjectId::new(789012);
+        assert!(
+            access_control
+                .check_project_access_by_id(&project_id)
+                .is_ok()
+        );
+    }
+
+    #[test]
+    fn test_check_project_access_by_id_with_denied_id() {
+        let _lock = TEST_MUTEX.lock().unwrap();
+        unsafe {
+            env::set_var("BACKLOG_PROJECTS", "123456,789012");
+        }
+        let access_control = AccessControl::new().unwrap();
+
+        let project_id = ProjectId::new(999999);
+        let err = access_control
+            .check_project_access_by_id(&project_id)
+            .unwrap_err();
+        match err {
+            crate::error::Error::ProjectAccessDenied {
+                project,
+                allowed_projects,
+            } => {
+                assert_eq!(project, "999999");
+                assert_eq!(allowed_projects, vec!["123456", "789012"]);
+            }
+            _ => panic!("Expected ProjectAccessDenied error"),
+        }
+    }
+
+    #[test]
+    fn test_check_project_access_by_id_when_disabled() {
+        let _lock = TEST_MUTEX.lock().unwrap();
+        unsafe {
+            env::remove_var("BACKLOG_PROJECTS");
+        }
+        let access_control = AccessControl::new().unwrap();
+
+        let project_id = ProjectId::new(123456);
+        assert!(
+            access_control
+                .check_project_access_by_id(&project_id)
+                .is_ok()
+        );
+    }
+
+    #[test]
+    fn test_check_project_access_by_key_with_allowed_key() {
+        let _lock = TEST_MUTEX.lock().unwrap();
+        unsafe {
+            env::set_var("BACKLOG_PROJECTS", "PROJECT_A,PROJECT_B");
+        }
+        let access_control = AccessControl::new().unwrap();
+
+        let project_key = ProjectKey::from_str("PROJECT_A").unwrap();
+        assert!(
+            access_control
+                .check_project_access_by_key(&project_key)
+                .is_ok()
+        );
+
+        let project_key = ProjectKey::from_str("PROJECT_B").unwrap();
+        assert!(
+            access_control
+                .check_project_access_by_key(&project_key)
+                .is_ok()
+        );
+    }
+
+    #[test]
+    fn test_check_project_access_by_key_with_denied_key() {
+        let _lock = TEST_MUTEX.lock().unwrap();
+        unsafe {
+            env::set_var("BACKLOG_PROJECTS", "PROJECT_A,PROJECT_B");
+        }
+        let access_control = AccessControl::new().unwrap();
+
+        let project_key = ProjectKey::from_str("PROJECT_C").unwrap();
+        let err = access_control
+            .check_project_access_by_key(&project_key)
+            .unwrap_err();
+        match err {
+            crate::error::Error::ProjectAccessDenied {
+                project,
+                allowed_projects,
+            } => {
+                assert_eq!(project, "PROJECT_C");
+                assert_eq!(allowed_projects, vec!["PROJECT_A", "PROJECT_B"]);
+            }
+            _ => panic!("Expected ProjectAccessDenied error"),
+        }
+    }
+
+    #[test]
+    fn test_check_project_access_by_key_when_disabled() {
+        let _lock = TEST_MUTEX.lock().unwrap();
+        unsafe {
+            env::remove_var("BACKLOG_PROJECTS");
+        }
+        let access_control = AccessControl::new().unwrap();
+
+        let project_key = ProjectKey::from_str("ANY_PROJECT").unwrap();
+        assert!(
+            access_control
+                .check_project_access_by_key(&project_key)
+                .is_ok()
+        );
     }
 }
