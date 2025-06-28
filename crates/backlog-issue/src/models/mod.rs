@@ -5,7 +5,11 @@ mod custom_field;
 mod custom_field_type;
 mod custom_field_type_id;
 mod custom_field_value;
+#[cfg(test)]
+mod custom_field_value_test;
 mod custom_field_with_value;
+#[cfg(test)]
+mod custom_field_with_value_test;
 mod external_file_link;
 mod initial_date;
 mod issue;
