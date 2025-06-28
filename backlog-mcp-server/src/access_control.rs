@@ -101,9 +101,14 @@ impl Default for AccessControl {
 mod tests {
     use super::*;
     use std::env;
+    use std::sync::Mutex;
+
+    // Ensure tests run sequentially to avoid environment variable conflicts
+    static TEST_MUTEX: Mutex<()> = Mutex::new(());
 
     #[test]
     fn test_access_control_disabled_by_default() {
+        let _lock = TEST_MUTEX.lock().unwrap();
         unsafe {
             env::remove_var("BACKLOG_PROJECTS");
         }
@@ -114,6 +119,7 @@ mod tests {
 
     #[test]
     fn test_access_control_with_project_keys() {
+        let _lock = TEST_MUTEX.lock().unwrap();
         unsafe {
             env::set_var("BACKLOG_PROJECTS", "PROJECT_A,PROJECT_B,PROJECT_C");
         }
@@ -128,6 +134,7 @@ mod tests {
 
     #[test]
     fn test_access_control_with_project_ids() {
+        let _lock = TEST_MUTEX.lock().unwrap();
         unsafe {
             env::set_var("BACKLOG_PROJECTS", "123456,789012");
         }
@@ -141,6 +148,7 @@ mod tests {
 
     #[test]
     fn test_access_control_mixed_keys_and_ids() {
+        let _lock = TEST_MUTEX.lock().unwrap();
         unsafe {
             env::set_var("BACKLOG_PROJECTS", "PROJECT_A, 123456, PROJECT_C");
         }
@@ -156,6 +164,7 @@ mod tests {
 
     #[test]
     fn test_access_control_empty_string() {
+        let _lock = TEST_MUTEX.lock().unwrap();
         unsafe {
             env::set_var("BACKLOG_PROJECTS", "");
         }
@@ -165,6 +174,7 @@ mod tests {
 
     #[test]
     fn test_access_control_whitespace_handling() {
+        let _lock = TEST_MUTEX.lock().unwrap();
         unsafe {
             env::set_var("BACKLOG_PROJECTS", " PROJECT_A , PROJECT_B , ");
         }
