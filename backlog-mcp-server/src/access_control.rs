@@ -77,18 +77,6 @@ impl AccessControl {
         }
     }
 
-    /// Check access permissions for the specified project
-    pub fn check_project_access(&self, project: &str) -> Result<(), Error> {
-        // Parse the input project identifier
-        if let Ok(id) = project.parse::<u32>() {
-            self.check_project_access_by_id(&ProjectId::new(id))
-        } else {
-            let project_key = ProjectKey::from_str(project)
-                .map_err(|_| Error::Parameter(format!("Invalid project key: {project}")))?;
-            self.check_project_access_by_key(&project_key)
-        }
-    }
-
     /// Check access permissions for the specified project (accepts ProjectIdOrKey)
     pub fn check_project_access_id_or_key(&self, project: &ProjectIdOrKey) -> Result<(), Error> {
         match project {
@@ -134,7 +122,9 @@ mod tests {
         }
         let access_control = AccessControl::new().unwrap();
         assert!(!access_control.is_enabled());
-        assert!(access_control.check_project_access("ANY_PROJECT").is_ok());
+        // When disabled, any project is allowed
+        let project_key = ProjectKey::from_str("ANY_PROJECT").unwrap();
+        assert!(access_control.check_project_access_by_key(&project_key).is_ok());
     }
 
     #[test]
@@ -146,10 +136,18 @@ mod tests {
         let access_control = AccessControl::new().unwrap();
 
         assert!(access_control.is_enabled());
-        assert!(access_control.check_project_access("PROJECT_A").is_ok());
-        assert!(access_control.check_project_access("PROJECT_B").is_ok());
-        assert!(access_control.check_project_access("PROJECT_C").is_ok());
-        assert!(access_control.check_project_access("PROJECT_D").is_err());
+        
+        let project_a = ProjectKey::from_str("PROJECT_A").unwrap();
+        assert!(access_control.check_project_access_by_key(&project_a).is_ok());
+        
+        let project_b = ProjectKey::from_str("PROJECT_B").unwrap();
+        assert!(access_control.check_project_access_by_key(&project_b).is_ok());
+        
+        let project_c = ProjectKey::from_str("PROJECT_C").unwrap();
+        assert!(access_control.check_project_access_by_key(&project_c).is_ok());
+        
+        let project_d = ProjectKey::from_str("PROJECT_D").unwrap();
+        assert!(access_control.check_project_access_by_key(&project_d).is_err());
     }
 
     #[test]
@@ -161,9 +159,15 @@ mod tests {
         let access_control = AccessControl::new().unwrap();
 
         assert!(access_control.is_enabled());
-        assert!(access_control.check_project_access("123456").is_ok());
-        assert!(access_control.check_project_access("789012").is_ok());
-        assert!(access_control.check_project_access("999999").is_err());
+        
+        let project_id_1 = ProjectId::new(123456);
+        assert!(access_control.check_project_access_by_id(&project_id_1).is_ok());
+        
+        let project_id_2 = ProjectId::new(789012);
+        assert!(access_control.check_project_access_by_id(&project_id_2).is_ok());
+        
+        let project_id_3 = ProjectId::new(999999);
+        assert!(access_control.check_project_access_by_id(&project_id_3).is_err());
     }
 
     #[test]
@@ -175,11 +179,21 @@ mod tests {
         let access_control = AccessControl::new().unwrap();
 
         assert!(access_control.is_enabled());
-        assert!(access_control.check_project_access("PROJECT_A").is_ok());
-        assert!(access_control.check_project_access("123456").is_ok());
-        assert!(access_control.check_project_access("PROJECT_C").is_ok());
-        assert!(access_control.check_project_access("PROJECT_B").is_err());
-        assert!(access_control.check_project_access("999999").is_err());
+        
+        let project_a = ProjectKey::from_str("PROJECT_A").unwrap();
+        assert!(access_control.check_project_access_by_key(&project_a).is_ok());
+        
+        let project_id = ProjectId::new(123456);
+        assert!(access_control.check_project_access_by_id(&project_id).is_ok());
+        
+        let project_c = ProjectKey::from_str("PROJECT_C").unwrap();
+        assert!(access_control.check_project_access_by_key(&project_c).is_ok());
+        
+        let project_b = ProjectKey::from_str("PROJECT_B").unwrap();
+        assert!(access_control.check_project_access_by_key(&project_b).is_err());
+        
+        let project_id_err = ProjectId::new(999999);
+        assert!(access_control.check_project_access_by_id(&project_id_err).is_err());
     }
 
     #[test]
@@ -201,8 +215,12 @@ mod tests {
         let access_control = AccessControl::new().unwrap();
 
         assert!(access_control.is_enabled());
-        assert!(access_control.check_project_access("PROJECT_A").is_ok());
-        assert!(access_control.check_project_access("PROJECT_B").is_ok());
+        
+        let project_a = ProjectKey::from_str("PROJECT_A").unwrap();
+        assert!(access_control.check_project_access_by_key(&project_a).is_ok());
+        
+        let project_b = ProjectKey::from_str("PROJECT_B").unwrap();
+        assert!(access_control.check_project_access_by_key(&project_b).is_ok());
     }
 
     #[test]
@@ -214,10 +232,17 @@ mod tests {
         let access_control = AccessControl::new().unwrap();
 
         // Simulate checking access after retrieving document with project_id
-        assert!(access_control.check_project_access("123456").is_ok());
-        assert!(access_control.check_project_access("PROJECT_X").is_ok());
-        assert!(access_control.check_project_access("999999").is_err());
-        assert!(access_control.check_project_access("PROJECT_Y").is_err());
+        let project_id_1 = ProjectId::new(123456);
+        assert!(access_control.check_project_access_by_id(&project_id_1).is_ok());
+        
+        let project_x = ProjectKey::from_str("PROJECT_X").unwrap();
+        assert!(access_control.check_project_access_by_key(&project_x).is_ok());
+        
+        let project_id_err = ProjectId::new(999999);
+        assert!(access_control.check_project_access_by_id(&project_id_err).is_err());
+        
+        let project_y = ProjectKey::from_str("PROJECT_Y").unwrap();
+        assert!(access_control.check_project_access_by_key(&project_y).is_err());
     }
 
     #[test]
@@ -229,12 +254,15 @@ mod tests {
         let access_control = AccessControl::new().unwrap();
 
         // Simulate checking access after retrieving wiki with project_id
-        assert!(access_control.check_project_access("WIKI_PROJ").is_ok());
-        assert!(access_control.check_project_access("OTHER_PROJ").is_err());
+        let wiki_proj = ProjectKey::from_str("WIKI_PROJ").unwrap();
+        assert!(access_control.check_project_access_by_key(&wiki_proj).is_ok());
+        
+        let other_proj = ProjectKey::from_str("OTHER_PROJ").unwrap();
+        assert!(access_control.check_project_access_by_key(&other_proj).is_err());
 
         // Check error message contains allowed projects
         let err = access_control
-            .check_project_access("OTHER_PROJ")
+            .check_project_access_by_key(&other_proj)
             .unwrap_err();
         match err {
             crate::error::Error::ProjectAccessDenied {
@@ -257,10 +285,17 @@ mod tests {
         let access_control = AccessControl::new().unwrap();
 
         // Simulate checking access after retrieving issue with project_id
-        assert!(access_control.check_project_access("ISSUE_PROJ").is_ok());
-        assert!(access_control.check_project_access("789012").is_ok());
-        assert!(access_control.check_project_access("OTHER_PROJ").is_err());
-        assert!(access_control.check_project_access("111111").is_err());
+        let issue_proj = ProjectKey::from_str("ISSUE_PROJ").unwrap();
+        assert!(access_control.check_project_access_by_key(&issue_proj).is_ok());
+        
+        let project_id = ProjectId::new(789012);
+        assert!(access_control.check_project_access_by_id(&project_id).is_ok());
+        
+        let other_proj = ProjectKey::from_str("OTHER_PROJ").unwrap();
+        assert!(access_control.check_project_access_by_key(&other_proj).is_err());
+        
+        let project_id_err = ProjectId::new(111111);
+        assert!(access_control.check_project_access_by_id(&project_id_err).is_err());
     }
 
     #[test]
