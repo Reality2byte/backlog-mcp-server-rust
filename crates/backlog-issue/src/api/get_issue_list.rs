@@ -81,6 +81,18 @@ pub struct GetIssueListParams {
     #[builder(default, setter(into, strip_option))]
     #[form(array)]
     pub id: Option<Vec<IssueId>>, // for id[] parameter
+    #[builder(default, setter(into, strip_option))]
+    #[form(name = "startDateSince")]
+    pub start_date_since: Option<ApiDate>,
+    #[builder(default, setter(into, strip_option))]
+    #[form(name = "startDateUntil")]
+    pub start_date_until: Option<ApiDate>,
+    #[builder(default, setter(into, strip_option))]
+    #[form(name = "dueDateSince")]
+    pub due_date_since: Option<ApiDate>,
+    #[builder(default, setter(into, strip_option))]
+    #[form(name = "dueDateUntil")]
+    pub due_date_until: Option<ApiDate>,
 }
 
 impl IntoRequest for GetIssueListParams {
@@ -140,5 +152,58 @@ mod tests {
                 (*condition as u8).to_string()
             );
         }
+    }
+
+    #[test]
+    fn test_date_range_parameters() {
+        use chrono::{TimeZone, Utc};
+
+        let start_date = ApiDate::from(Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap());
+        let end_date = ApiDate::from(Utc.with_ymd_and_hms(2024, 12, 31, 0, 0, 0).unwrap());
+
+        let params = GetIssueListParamsBuilder::default()
+            .start_date_since(start_date)
+            .start_date_until(end_date)
+            .due_date_since(start_date)
+            .due_date_until(end_date)
+            .build()
+            .unwrap();
+
+        let form_params: Vec<(String, String)> = (&params).into();
+
+        let start_date_since = form_params.iter().find(|(key, _)| key == "startDateSince");
+        let start_date_until = form_params.iter().find(|(key, _)| key == "startDateUntil");
+        let due_date_since = form_params.iter().find(|(key, _)| key == "dueDateSince");
+        let due_date_until = form_params.iter().find(|(key, _)| key == "dueDateUntil");
+
+        assert!(start_date_since.is_some());
+        assert_eq!(start_date_since.unwrap().1, "2024-01-01");
+
+        assert!(start_date_until.is_some());
+        assert_eq!(start_date_until.unwrap().1, "2024-12-31");
+
+        assert!(due_date_since.is_some());
+        assert_eq!(due_date_since.unwrap().1, "2024-01-01");
+
+        assert!(due_date_until.is_some());
+        assert_eq!(due_date_until.unwrap().1, "2024-12-31");
+    }
+
+    #[test]
+    fn test_optional_date_range_parameters() {
+        let params = GetIssueListParamsBuilder::default().build().unwrap();
+
+        let form_params: Vec<(String, String)> = (&params).into();
+
+        // Check that date parameters are not included when None
+        let has_start_date_since = form_params.iter().any(|(key, _)| key == "startDateSince");
+        let has_start_date_until = form_params.iter().any(|(key, _)| key == "startDateUntil");
+        let has_due_date_since = form_params.iter().any(|(key, _)| key == "dueDateSince");
+        let has_due_date_until = form_params.iter().any(|(key, _)| key == "dueDateUntil");
+
+        assert!(!has_start_date_since);
+        assert!(!has_start_date_until);
+        assert!(!has_due_date_since);
+        assert!(!has_due_date_until);
     }
 }

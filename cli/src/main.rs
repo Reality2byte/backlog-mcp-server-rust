@@ -1070,6 +1070,18 @@ struct IssueListCliParams {
     /// Number of issues to retrieve (1-100, default 20)
     #[clap(long, default_value_t = 20)]
     count: u32,
+    /// Filter by start date (since). Format: YYYY-MM-DD
+    #[clap(long)]
+    start_date_since: Option<String>,
+    /// Filter by start date (until). Format: YYYY-MM-DD
+    #[clap(long)]
+    start_date_until: Option<String>,
+    /// Filter by due date (since). Format: YYYY-MM-DD
+    #[clap(long)]
+    due_date_since: Option<String>,
+    /// Filter by due date (until). Format: YYYY-MM-DD
+    #[clap(long)]
+    due_date_until: Option<String>,
     // TODO: Add more filters like sort, order, offset, issue_type_id, etc.
 }
 
@@ -1607,6 +1619,40 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     builder.keyword(keyword);
                 }
                 builder.count(params.count); // count has a default_value_t
+
+                // Handle date range parameters
+                if let Some(start_date_since) = params.start_date_since {
+                    let date = chrono::DateTime::parse_from_str(
+                        &format!("{start_date_since}T00:00:00Z"),
+                        "%Y-%m-%dT%H:%M:%SZ",
+                    )
+                    .map_err(|_| format!("Invalid start-date-since format: {start_date_since}"))?;
+                    builder.start_date_since(ApiDate::from(date.with_timezone(&chrono::Utc)));
+                }
+                if let Some(start_date_until) = params.start_date_until {
+                    let date = chrono::DateTime::parse_from_str(
+                        &format!("{start_date_until}T23:59:59Z"),
+                        "%Y-%m-%dT%H:%M:%SZ",
+                    )
+                    .map_err(|_| format!("Invalid start-date-until format: {start_date_until}"))?;
+                    builder.start_date_until(ApiDate::from(date.with_timezone(&chrono::Utc)));
+                }
+                if let Some(due_date_since) = params.due_date_since {
+                    let date = chrono::DateTime::parse_from_str(
+                        &format!("{due_date_since}T00:00:00Z"),
+                        "%Y-%m-%dT%H:%M:%SZ",
+                    )
+                    .map_err(|_| format!("Invalid due-date-since format: {due_date_since}"))?;
+                    builder.due_date_since(ApiDate::from(date.with_timezone(&chrono::Utc)));
+                }
+                if let Some(due_date_until) = params.due_date_until {
+                    let date = chrono::DateTime::parse_from_str(
+                        &format!("{due_date_until}T23:59:59Z"),
+                        "%Y-%m-%dT%H:%M:%SZ",
+                    )
+                    .map_err(|_| format!("Invalid due-date-until format: {due_date_until}"))?;
+                    builder.due_date_until(ApiDate::from(date.with_timezone(&chrono::Utc)));
+                }
 
                 let list_params = builder.build()?;
                 let issues = client.issue().get_issue_list(list_params).await?;
