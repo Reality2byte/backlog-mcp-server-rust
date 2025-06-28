@@ -923,6 +923,26 @@ enum WikiCommands {
         #[clap(name = "WIKI_ID")]
         wiki_id: u32,
     },
+    /// Link shared files to a wiki page
+    #[cfg(feature = "wiki_writable")]
+    LinkSharedFiles {
+        /// Wiki ID
+        #[clap(name = "WIKI_ID")]
+        wiki_id: u32,
+        /// Shared file IDs (comma-separated)
+        #[clap(name = "FILE_IDS", value_delimiter = ',')]
+        file_ids: Vec<u32>,
+    },
+    /// Unlink a shared file from a wiki page
+    #[cfg(feature = "wiki_writable")]
+    UnlinkSharedFile {
+        /// Wiki ID
+        #[clap(name = "WIKI_ID")]
+        wiki_id: u32,
+        /// Shared file ID
+        #[clap(name = "FILE_ID")]
+        file_id: u32,
+    },
     /// Download an attachment from a wiki page
     DownloadAttachment {
         /// Wiki ID
@@ -3443,6 +3463,98 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to list wiki shared files: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "wiki_writable")]
+            WikiCommands::LinkSharedFiles { wiki_id, file_ids } => {
+                println!(
+                    "Linking {} shared file(s) to wiki ID: {}",
+                    file_ids.len(),
+                    wiki_id
+                );
+
+                let shared_file_ids: Vec<backlog_core::identifier::SharedFileId> = file_ids
+                    .iter()
+                    .map(|&id| backlog_core::identifier::SharedFileId::new(id))
+                    .collect();
+
+                let params = backlog_wiki::LinkSharedFilesToWikiParams::new(
+                    WikiId::new(wiki_id),
+                    shared_file_ids,
+                );
+
+                match client.wiki().link_shared_files_to_wiki(params).await {
+                    Ok(shared_files) => {
+                        println!(
+                            "✅ Successfully linked {} shared file(s) to wiki",
+                            shared_files.len()
+                        );
+                        println!();
+
+                        for (index, file) in shared_files.iter().enumerate() {
+                            println!("{}. {}", index + 1, file.name);
+                            println!("   ID: {}", file.id.value());
+                            println!("   Directory: {}", file.dir);
+                            match &file.content {
+                                backlog_api_client::FileContent::File { size } => {
+                                    println!("   Type: File");
+                                    println!("   Size: {} bytes", size);
+                                }
+                                backlog_api_client::FileContent::Directory => {
+                                    println!("   Type: Directory");
+                                }
+                            }
+                            println!("   Created by: {}", file.created_user.name);
+                            println!("   Created at: {}", file.created);
+                            if let Some(updated_user) = &file.updated_user {
+                                println!("   Updated by: {}", updated_user.name);
+                            }
+                            if let Some(updated) = &file.updated {
+                                println!("   Updated at: {}", updated);
+                            }
+                            println!();
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to link shared files to wiki: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "wiki_writable")]
+            WikiCommands::UnlinkSharedFile { wiki_id, file_id } => {
+                println!(
+                    "Unlinking shared file {} from wiki ID: {}",
+                    file_id, wiki_id
+                );
+
+                let params = backlog_wiki::UnlinkSharedFileFromWikiParams::new(
+                    WikiId::new(wiki_id),
+                    backlog_core::identifier::SharedFileId::new(file_id),
+                );
+
+                match client.wiki().unlink_shared_file_from_wiki(params).await {
+                    Ok(shared_file) => {
+                        println!("✅ Successfully unlinked shared file from wiki:");
+                        println!("   Name: {}", shared_file.name);
+                        println!("   ID: {}", shared_file.id.value());
+                        println!("   Directory: {}", shared_file.dir);
+                        match &shared_file.content {
+                            backlog_api_client::FileContent::File { size } => {
+                                println!("   Type: File");
+                                println!("   Size: {} bytes", size);
+                            }
+                            backlog_api_client::FileContent::Directory => {
+                                println!("   Type: Directory");
+                            }
+                        }
+                        println!("   Created by: {}", shared_file.created_user.name);
+                        println!("   Created at: {}", shared_file.created);
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to unlink shared file from wiki: {}", e);
                         std::process::exit(1);
                     }
                 }

@@ -17,6 +17,10 @@ mod delete_wiki;
 #[cfg(feature = "writable")]
 mod delete_wiki_attachment;
 #[cfg(feature = "writable")]
+mod link_shared_files_to_wiki;
+#[cfg(feature = "writable")]
+mod unlink_shared_file_from_wiki;
+#[cfg(feature = "writable")]
 mod update_wiki;
 
 // Export response types (always available)
@@ -38,6 +42,12 @@ pub use attach_files_to_wiki::{AttachFilesToWikiParams, AttachFilesToWikiRespons
 pub use delete_wiki::{DeleteWikiParams, DeleteWikiResponse};
 #[cfg(feature = "writable")]
 pub use delete_wiki_attachment::{DeleteWikiAttachmentParams, DeleteWikiAttachmentResponse};
+#[cfg(feature = "writable")]
+pub use link_shared_files_to_wiki::{LinkSharedFilesToWikiParams, LinkSharedFilesToWikiResponse};
+#[cfg(feature = "writable")]
+pub use unlink_shared_file_from_wiki::{
+    UnlinkSharedFileFromWikiParams, UnlinkSharedFileFromWikiResponse,
+};
 #[cfg(feature = "writable")]
 pub use update_wiki::{UpdateWikiParams, UpdateWikiResponse};
 

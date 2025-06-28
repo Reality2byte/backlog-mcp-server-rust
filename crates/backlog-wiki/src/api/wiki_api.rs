@@ -2,7 +2,8 @@
 use crate::api::{
     AddWikiParams, AddWikiResponse, AttachFilesToWikiParams, AttachFilesToWikiResponse,
     DeleteWikiAttachmentParams, DeleteWikiAttachmentResponse, DeleteWikiParams, DeleteWikiResponse,
-    UpdateWikiParams, UpdateWikiResponse,
+    LinkSharedFilesToWikiParams, LinkSharedFilesToWikiResponse, UnlinkSharedFileFromWikiParams,
+    UnlinkSharedFileFromWikiResponse, UpdateWikiParams, UpdateWikiResponse,
 };
 use crate::api::{
     DownloadWikiAttachmentParams, GetWikiAttachmentListParams, GetWikiAttachmentListResponse,
@@ -125,6 +126,26 @@ impl WikiApi {
         &self,
         params: DeleteWikiAttachmentParams,
     ) -> Result<DeleteWikiAttachmentResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Link shared files to wiki page
+    /// Corresponds to `POST /api/v2/wikis/:wikiId/sharedFiles`.
+    #[cfg(feature = "writable")]
+    pub async fn link_shared_files_to_wiki(
+        &self,
+        params: LinkSharedFilesToWikiParams,
+    ) -> Result<LinkSharedFilesToWikiResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Unlink shared file from wiki page
+    /// Corresponds to `DELETE /api/v2/wikis/:wikiId/sharedFiles/:id`.
+    #[cfg(feature = "writable")]
+    pub async fn unlink_shared_file_from_wiki(
+        &self,
+        params: UnlinkSharedFileFromWikiParams,
+    ) -> Result<UnlinkSharedFileFromWikiResponse> {
         self.0.execute(params).await
     }
 }

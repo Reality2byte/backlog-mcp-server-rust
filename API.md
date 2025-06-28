@@ -38,9 +38,9 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Read operations**: list_documents(), get_document_tree(), get_document(), download_attachment()
 
 ### backlog-wiki (WikiApi)
-- **Implemented**: 12/15 endpoints (80%)
-- **Read operations**: get_wiki_list(), get_wiki_detail(), get_wiki_count(), get_wiki_attachment_list(), download_wiki_attachment(), get_wiki_tag_list(), get_wiki_history()
-- **Write operations** (requires `writable` feature): add_wiki(), update_wiki(), delete_wiki(), attach_files_to_wiki(), delete_wiki_attachment()
+- **Implemented**: 15/15 endpoints (100%) ✨ COMPLETE
+- **Read operations**: get_wiki_list(), get_wiki_detail(), get_wiki_count(), get_wiki_attachment_list(), download_wiki_attachment(), get_wiki_tag_list(), get_wiki_history(), get_wiki_shared_file_list()
+- **Write operations** (requires `writable` feature): add_wiki(), update_wiki(), delete_wiki(), attach_files_to_wiki(), delete_wiki_attachment(), link_shared_files_to_wiki(), unlink_shared_file_from_wiki()
 
 ### Not Implemented
 - **Activities**: 0/4 endpoints
@@ -187,8 +187,8 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 
 #### Shared files for wiki
 - ✅ GetListOfSharedFilesOnWiki: Returns the list of Shared Files on Wiki: GET /api/v2/wikis/:wikiId/sharedFiles
-- ❌ LinkSharedFilesToWiki: Links Shared Files to Wiki: POST /api/v2/wikis/:wikiId/sharedFiles
-- ❌ RemoveLinkToSharedFileFromWiki: Removes link to shared file from Wiki: DELETE /api/v2/wikis/:wikiId/sharedFiles/:id
+- ✅ LinkSharedFilesToWiki: Links Shared Files to Wiki: POST /api/v2/wikis/:wikiId/sharedFiles
+- ✅ RemoveLinkToSharedFileFromWiki: Removes link to shared file from Wiki: DELETE /api/v2/wikis/:wikiId/sharedFiles/:id
 
 ### Git
 - ✅ GetGitRepository: Returns Git repository: GET /api/v2/projects/:projectIdOrKey/git/repositories/:repoIdOrName
