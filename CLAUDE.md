@@ -503,6 +503,16 @@ When refactoring existing domain crates to follow this standard:
   - `bridge.rs`: Core logic functions
 - Main `server.rs` registers tools with `#[tool]` attributes
 - Unified file handling via `file_utils.rs` with intelligent format detection
+- Access control via `access_control.rs` with optional project filtering
+
+#### Project Access Control
+The MCP server supports project-level access control through the `BACKLOG_PROJECTS` environment variable:
+
+- **Environment Variable**: `BACKLOG_PROJECTS` - Comma-separated list of allowed project keys (e.g., `MFP,DEMO,TEST`)
+- **Behavior**: When set, the server only allows access to the specified projects. If not set, all projects accessible with the API key are available
+- **Implementation**: Uses type-safe access control with lazy API-based resolution for ProjectId ↔ ProjectKey mapping
+- **Location**: Access control checks are performed in bridge layer functions before executing API calls
+- **Example**: Setting `BACKLOG_PROJECTS="MFP"` allows access using both project key "MFP" and its corresponding project ID "14165"
 
 ## Important Implementation Details
 

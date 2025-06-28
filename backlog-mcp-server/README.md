@@ -36,12 +36,12 @@ The following tools are grouped by their respective modules:
 
 ### Tool Summary
 
-With the default configuration, you'll have access to **30+ tools** for comprehensive Backlog automation:
+With the default configuration, you'll have access to **33 tools** for comprehensive Backlog automation:
 
 - **Documents** (3 tools): View document trees, get details, download attachments
 - **Git/Pull Requests** (8 tools): Manage repositories, PRs, comments, and attachments
-- **Issues** (8 tools): View, update issues, manage comments, attachments, and shared files
-- **Projects** (1 tool): Get project status information
+- **Issues** (12 tools): View, create, update issues, manage comments, attachments, shared files, and priorities
+- **Projects** (2 tools): Get project status and issue type information
 - **Shared Files** (2 tools): Browse and download project shared files
 - **Users** (1 tool): List space users
 - **Wikis** (5 tools): Manage wiki pages, attachments, and content updates
@@ -158,10 +158,44 @@ The server includes both **read operations** for information gathering and **wri
     -   Description: Get a list of shared files linked to a specified issue.
     -   Input: `issue_id_or_key` (string, required): The issue ID or issue key for which to retrieve shared files. Examples: "MYPROJECTKEY-123", "12345".
     -   Output: A JSON array of `SharedFile` objects with details like ID, name, directory, size, type, and metadata.
+-   **`update_issue_comment`**
+    -   Description: Update an existing comment on a Backlog issue. This tool is only available if the `issue_writable` feature is enabled.
+    -   Input:
+        -   `issue_id_or_key` (string, required): The issue ID or issue key. Examples: "MYPROJECTKEY-123", "12345".
+        -   `comment_id` (number, required): The ID of the comment to update.
+        -   `content` (string, required): The new content for the comment.
+-   **`add_issue_to_project`**
+    -   Description: Create a new issue in a Backlog project. This tool is only available if the `issue_writable` feature is enabled.
+    -   Input:
+        -   `project_id` (string, required): The project ID or project key.
+        -   `summary` (string, required): The issue title/summary.
+        -   `issue_type_id` (number, required): The issue type ID.
+        -   `priority_id` (number, required): The priority ID.
+        -   `description` (string, optional): The issue description.
+        -   `start_date` (string, optional): The start date (format: YYYY-MM-DD).
+        -   `due_date` (string, optional): The due date (format: YYYY-MM-DD).
+        -   `assignee_id` (number, optional): The assignee user ID.
+        -   `category_ids` (array of numbers, optional): List of category IDs.
+        -   `version_ids` (array of numbers, optional): List of version/milestone IDs.
+        -   `milestone_ids` (array of numbers, optional): List of milestone IDs.
+        -   `parent_issue_id` (number, optional): The parent issue ID.
+        -   `notified_user_ids` (array of numbers, optional): List of user IDs to notify.
+-   **`add_comment_to_issue`**
+    -   Description: Add a comment to a specific issue. This tool is only available if the `issue_writable` feature is enabled.
+    -   Input:
+        -   `issue_id_or_key` (string, required): The issue ID or issue key.
+        -   `content` (string, required): The content of the comment.
+        -   `notified_user_ids` (array of numbers, optional): List of user IDs to notify about this comment.
+-   **`get_priorities`**
+    -   Description: Get a list of priority types available in the space.
+    -   Input: (No parameters)
 
 ### Project Tools
 -   **`get_project_status_list`**
     -   Description: Get a list of statuses for a specified project.
+    -   Input: `project_id_or_key` (Project ID or project key)
+-   **`get_project_issue_types`**
+    -   Description: Get a list of issue types for a specified project.
     -   Input: `project_id_or_key` (Project ID or project key)
 
 ### Shared File Tools
@@ -247,8 +281,8 @@ cargo build --package mcp-backlog-server
 The MCP server supports multiple feature flags to enable different write operations:
 
 -   **`issue_writable`** (enabled by default)
-    -   Enables: `update_issue` and `add_comment_to_issue` tools
-    -   Allows AI agents to modify issue content and add comments
+    -   Enables: `update_issue`, `update_issue_comment`, `add_issue_to_project`, and `add_comment_to_issue` tools
+    -   Allows AI agents to create issues, modify issue content, and manage comments
 
 -   **`git_writable`** (enabled by default)
     -   Enables: `add_pull_request_comment` tool
@@ -276,6 +310,10 @@ To run this server, the following environment variables must be set:
 
 -   `BACKLOG_BASE_URL`: The URL of your Backlog space (e.g., `https://your-space.backlog.com`)
 -   `BACKLOG_API_KEY`: Your Backlog API key. You can issue one from your personal settings page in Backlog.
+
+Optional environment variables:
+
+-   `BACKLOG_PROJECTS`: Comma-separated list of allowed project keys (e.g., `MFP,DEMO,TEST`). When set, the server will only allow access to the specified projects. If not set, all projects accessible with the API key are available.
 
 These environment variables are expected to be passed by the MCP client system when launching the server.
 
