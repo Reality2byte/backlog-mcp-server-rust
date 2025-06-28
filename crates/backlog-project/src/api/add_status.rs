@@ -1,5 +1,8 @@
+#[cfg(feature = "writable")]
 use backlog_api_core::{HttpMethod, IntoRequest};
+#[cfg(feature = "writable")]
 use backlog_core::ProjectIdOrKey;
+#[cfg(feature = "writable")]
 use serde::Serialize;
 
 pub type AddStatusResponse = backlog_domain_models::Status;

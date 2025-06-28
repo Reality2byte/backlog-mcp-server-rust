@@ -1,3 +1,4 @@
+use crate::access_control::AccessControl;
 use crate::error::{Error, Result};
 #[cfg(feature = "git_writable")]
 use crate::git::request::AddPullRequestCommentRequest;
@@ -23,8 +24,14 @@ use tokio::sync::Mutex;
 pub(crate) async fn get_repository_list(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetRepositoryListRequest,
+    access_control: &AccessControl,
 ) -> Result<Vec<Repository>> {
+    // Type-safe conversion
     let project_id = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+
+    // Check project access with converted type
+    access_control.check_project_access(&req.project_id_or_key)?;
+
     let params = GetRepositoryListParams::new(project_id);
 
     let client_guard = client.lock().await;
@@ -35,8 +42,13 @@ pub(crate) async fn get_repository_list(
 pub(crate) async fn get_repository(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetRepositoryDetailsRequest,
+    access_control: &AccessControl,
 ) -> Result<Repository> {
     let proj_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+
+    // Check project access
+    access_control.check_project_access(&req.project_id_or_key)?;
+
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
     let params = GetRepositoryParams::new(proj_id_or_key, repo_id_or_name);
 
@@ -48,8 +60,13 @@ pub(crate) async fn get_repository(
 pub(crate) async fn get_pull_request_list(
     client: Arc<Mutex<BacklogApiClient>>,
     req: ListPullRequestsRequest,
+    access_control: &AccessControl,
 ) -> Result<Vec<PullRequest>> {
     let proj_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+
+    // Check project access
+    access_control.check_project_access(&req.project_id_or_key)?;
+
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
     let params = GetPullRequestListParams::new(proj_id_or_key, repo_id_or_name);
 
@@ -61,8 +78,13 @@ pub(crate) async fn get_pull_request_list(
 pub(crate) async fn get_pull_request(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetPullRequestDetailsRequest,
+    access_control: &AccessControl,
 ) -> Result<PullRequest> {
     let proj_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+
+    // Check project access
+    access_control.check_project_access(&req.project_id_or_key)?;
+
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
     let pr_number = PullRequestNumber::from(req.pr_number);
     let params = GetPullRequestParams::new(proj_id_or_key, repo_id_or_name, pr_number);
@@ -75,8 +97,13 @@ pub(crate) async fn get_pull_request(
 pub(crate) async fn get_pull_request_attachment_list_tool(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetPullRequestAttachmentListRequest,
+    access_control: &AccessControl,
 ) -> Result<Vec<PullRequestAttachment>> {
     let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+
+    // Check project access
+    access_control.check_project_access(&req.project_id_or_key)?;
+
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
     let pr_number = PullRequestNumber::from(req.pr_number);
     let params =
@@ -92,8 +119,13 @@ pub(crate) async fn get_pull_request_attachment_list_tool(
 pub(crate) async fn download_pr_attachment_bridge(
     client: Arc<Mutex<BacklogApiClient>>,
     req: DownloadPullRequestAttachmentRequest,
+    access_control: &AccessControl,
 ) -> Result<DownloadedFile> {
     let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+
+    // Check project access
+    access_control.check_project_access(&req.project_id_or_key)?;
+
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
     let pr_number = PullRequestNumber::from(req.pr_number);
     let attachment_id_for_download = PullRequestAttachmentId::new(req.attachment_id);
@@ -118,7 +150,11 @@ pub(crate) async fn download_pr_attachment_bridge(
 pub(crate) async fn get_pull_request_comment_list_tool(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetPullRequestCommentListRequest,
+    access_control: &AccessControl,
 ) -> Result<Vec<PullRequestComment>> {
+    // Check project access before conversion
+    access_control.check_project_access(&req.project_id_or_key)?;
+
     let params = GetPullRequestCommentListParams::try_from(req)?;
 
     let client_guard = client.lock().await;
@@ -132,7 +168,11 @@ pub(crate) async fn get_pull_request_comment_list_tool(
 pub(crate) async fn add_pull_request_comment_bridge(
     client: Arc<Mutex<BacklogApiClient>>,
     req: AddPullRequestCommentRequest,
+    access_control: &AccessControl,
 ) -> Result<PullRequestComment> {
+    // Check project access before conversion
+    access_control.check_project_access(&req.project_id_or_key)?;
+
     let params = AddPullRequestCommentParams::try_from(req)?;
 
     let client_guard = client.lock().await;

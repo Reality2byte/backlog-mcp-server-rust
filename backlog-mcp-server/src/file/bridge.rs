@@ -1,3 +1,4 @@
+use crate::access_control::AccessControl;
 use crate::file::request::{DownloadSharedFileRequest, GetSharedFilesListRequest};
 use backlog_api_client::{DownloadedFile, client::BacklogApiClient};
 use backlog_core::{ProjectIdOrKey, identifier::SharedFileId};
@@ -10,7 +11,13 @@ use tokio::sync::Mutex;
 pub(crate) async fn get_shared_files_list_tool(
     client: Arc<Mutex<BacklogApiClient>>,
     request: GetSharedFilesListRequest,
+    access_control: &AccessControl,
 ) -> Result<Vec<SharedFile>, McpError> {
+    // Check project access
+    access_control
+        .check_project_access(&request.project_id_or_key)
+        .map_err(|e| McpError::invalid_request(format!("Access denied: {e}"), None))?;
+
     let client_guard = client.lock().await;
 
     let project_id_or_key = ProjectIdOrKey::from_str(&request.project_id_or_key)
@@ -36,7 +43,13 @@ pub(crate) async fn get_shared_files_list_tool(
 pub(crate) async fn download_shared_file_bridge(
     client: Arc<Mutex<BacklogApiClient>>,
     request: DownloadSharedFileRequest,
+    access_control: &AccessControl,
 ) -> Result<DownloadedFile, McpError> {
+    // Check project access
+    access_control
+        .check_project_access(&request.project_id_or_key)
+        .map_err(|e| McpError::invalid_request(format!("Access denied: {e}"), None))?;
+
     let client_guard = client.lock().await;
 
     let project_id_or_key = ProjectIdOrKey::from_str(&request.project_id_or_key)

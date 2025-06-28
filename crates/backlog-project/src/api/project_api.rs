@@ -1,4 +1,5 @@
 use backlog_api_core::Result;
+#[cfg(feature = "writable")]
 use backlog_domain_models::Milestone;
 use client::Client;
 

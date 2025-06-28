@@ -43,7 +43,11 @@ pub(crate) async fn get_issue_details(
 pub(crate) async fn get_version_milestone_list(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetVersionMilestoneListRequest,
+    access_control: &AccessControl,
 ) -> Result<Vec<Milestone>> {
+    // Check project access
+    access_control.check_project_access(&req.project_id_or_key)?;
+
     let client_guard = client.lock().await;
     let proj_id_or_key = ProjectIdOrKey::from_str(req.project_id_or_key.trim())?;
     let versions = client_guard
@@ -56,7 +60,11 @@ pub(crate) async fn get_version_milestone_list(
 pub(crate) async fn get_issues_by_milestone_name(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetIssuesByMilestoneNameRequest,
+    access_control: &AccessControl,
 ) -> Result<Vec<Issue>> {
+    // Check project access
+    access_control.check_project_access(&req.project_id_or_key)?;
+
     let proj_id_or_key = ProjectIdOrKey::from_str(req.project_id_or_key.trim())?;
 
     let client_guard = client.lock().await;
@@ -300,7 +308,11 @@ pub(crate) async fn get_issue_shared_files_impl(
 pub(crate) async fn add_issue_impl(
     client: Arc<Mutex<BacklogApiClient>>,
     req: AddIssueRequest,
+    access_control: &AccessControl,
 ) -> Result<Issue> {
+    // Check project access
+    access_control.check_project_access(&req.project_id)?;
+
     let project_id = ProjectId::from_str(req.project_id.trim())?;
     let issue_type_id = IssueTypeId::new(req.issue_type_id);
     let priority_id = PriorityId::new(req.priority_id);

@@ -87,9 +87,9 @@ impl Server {
         &self,
         #[tool(aggr)] request: GetRepositoryListRequest,
     ) -> McpResult {
-        self.access_control
-            .check_project_access(&request.project_id_or_key)?;
-        let repositories = git::bridge::get_repository_list(self.client.clone(), request).await?;
+        let repositories =
+            git::bridge::get_repository_list(self.client.clone(), request, &self.access_control)
+                .await?;
         Ok(CallToolResult::success(vec![Content::json(repositories)?]))
     }
 
@@ -98,9 +98,8 @@ impl Server {
         &self,
         #[tool(aggr)] request: GetRepositoryDetailsRequest,
     ) -> McpResult {
-        self.access_control
-            .check_project_access(&request.project_id_or_key)?;
-        let repository = git::bridge::get_repository(self.client.clone(), request).await?;
+        let repository =
+            git::bridge::get_repository(self.client.clone(), request, &self.access_control).await?;
         Ok(CallToolResult::success(vec![Content::json(repository)?]))
     }
 
@@ -109,10 +108,9 @@ impl Server {
         &self,
         #[tool(aggr)] request: ListPullRequestsRequest,
     ) -> McpResult {
-        self.access_control
-            .check_project_access(&request.project_id_or_key)?;
         let pull_requests =
-            git::bridge::get_pull_request_list(self.client.clone(), request).await?;
+            git::bridge::get_pull_request_list(self.client.clone(), request, &self.access_control)
+                .await?;
         Ok(CallToolResult::success(vec![Content::json(pull_requests)?]))
     }
 
@@ -121,9 +119,9 @@ impl Server {
         &self,
         #[tool(aggr)] request: GetPullRequestDetailsRequest,
     ) -> McpResult {
-        self.access_control
-            .check_project_access(&request.project_id_or_key)?;
-        let pull_request = git::bridge::get_pull_request(self.client.clone(), request).await?;
+        let pull_request =
+            git::bridge::get_pull_request(self.client.clone(), request, &self.access_control)
+                .await?;
         Ok(CallToolResult::success(vec![Content::json(pull_request)?]))
     }
 
@@ -193,10 +191,12 @@ impl Server {
         &self,
         #[tool(aggr)] request: GetVersionMilestoneListRequest,
     ) -> McpResult {
-        self.access_control
-            .check_project_access(&request.project_id_or_key)?;
-        let milestones =
-            issue::bridge::get_version_milestone_list(self.client.clone(), request).await?;
+        let milestones = issue::bridge::get_version_milestone_list(
+            self.client.clone(),
+            request,
+            &self.access_control,
+        )
+        .await?;
         Ok(CallToolResult::success(vec![Content::json(milestones)?]))
     }
 
@@ -205,10 +205,12 @@ impl Server {
         &self,
         #[tool(aggr)] request: GetIssuesByMilestoneNameRequest,
     ) -> McpResult {
-        self.access_control
-            .check_project_access(&request.project_id_or_key)?;
-        let issues =
-            issue::bridge::get_issues_by_milestone_name(self.client.clone(), request).await?;
+        let issues = issue::bridge::get_issues_by_milestone_name(
+            self.client.clone(),
+            request,
+            &self.access_control,
+        )
+        .await?;
         Ok(CallToolResult::success(vec![Content::json(issues)?]))
     }
 
@@ -242,9 +244,9 @@ impl Server {
     #[cfg(feature = "issue_writable")]
     #[tool(description = "Create a new issue in a Backlog project.")]
     async fn add_issue_to_project(&self, #[tool(aggr)] request: AddIssueRequest) -> McpResult {
-        self.access_control
-            .check_project_access(&request.project_id)?;
-        let issue = issue::bridge::add_issue_impl(self.client.clone(), request).await?;
+        let issue =
+            issue::bridge::add_issue_impl(self.client.clone(), request, &self.access_control)
+                .await?;
         Ok(CallToolResult::success(vec![Content::json(issue)?]))
     }
 
@@ -334,10 +336,12 @@ impl Server {
         &self,
         #[tool(aggr)] request: GetProjectStatusListRequest,
     ) -> McpResult {
-        self.access_control
-            .check_project_access(&request.project_id_or_key)?;
-        let statuses =
-            project::bridge::get_project_status_list_tool(self.client.clone(), request).await?;
+        let statuses = project::bridge::get_project_status_list_tool(
+            self.client.clone(),
+            request,
+            &self.access_control,
+        )
+        .await?;
         Ok(CallToolResult::success(vec![Content::json(statuses)?]))
     }
 
@@ -346,10 +350,12 @@ impl Server {
         &self,
         #[tool(aggr)] request: GetProjectIssueTypesRequest,
     ) -> McpResult {
-        self.access_control
-            .check_project_access(&request.project_id_or_key)?;
-        let issue_types =
-            project::bridge::get_project_issue_types_tool(self.client.clone(), request).await?;
+        let issue_types = project::bridge::get_project_issue_types_tool(
+            self.client.clone(),
+            request,
+            &self.access_control,
+        )
+        .await?;
         Ok(CallToolResult::success(vec![Content::json(issue_types)?]))
     }
 
@@ -364,9 +370,12 @@ impl Server {
         &self,
         #[tool(aggr)] request: GetSharedFilesListRequest,
     ) -> McpResult {
-        self.access_control
-            .check_project_access(&request.project_id_or_key)?;
-        let files = file::bridge::get_shared_files_list_tool(self.client.clone(), request).await?;
+        let files = file::bridge::get_shared_files_list_tool(
+            self.client.clone(),
+            request,
+            &self.access_control,
+        )
+        .await?;
         Ok(CallToolResult::success(vec![Content::json(files)?]))
     }
 
@@ -377,15 +386,18 @@ impl Server {
         &self,
         #[tool(aggr)] request: DownloadSharedFileRequest,
     ) -> McpResult {
-        self.access_control
-            .check_project_access(&request.project_id_or_key)?;
         let explicit_format = request
             .format
             .as_deref()
             .map(str::parse::<FileFormat>)
             .transpose()?;
 
-        let file = file::bridge::download_shared_file_bridge(self.client.clone(), request).await?;
+        let file = file::bridge::download_shared_file_bridge(
+            self.client.clone(),
+            request,
+            &self.access_control,
+        )
+        .await?;
 
         let response_data = SerializableFile::new(file, explicit_format)?;
         Ok(CallToolResult::success(vec![response_data.try_into()?]))
@@ -396,11 +408,12 @@ impl Server {
         &self,
         #[tool(aggr)] request: GetPullRequestAttachmentListRequest,
     ) -> McpResult {
-        self.access_control
-            .check_project_access(&request.project_id_or_key)?;
-        let attachments =
-            git::bridge::get_pull_request_attachment_list_tool(self.client.clone(), request)
-                .await?;
+        let attachments = git::bridge::get_pull_request_attachment_list_tool(
+            self.client.clone(),
+            request,
+            &self.access_control,
+        )
+        .await?;
         Ok(CallToolResult::success(vec![Content::json(attachments)?]))
     }
 
@@ -411,15 +424,18 @@ impl Server {
         &self,
         #[tool(aggr)] request: DownloadPullRequestAttachmentRequest,
     ) -> McpResult {
-        self.access_control
-            .check_project_access(&request.project_id_or_key)?;
         let explicit_format = request
             .format
             .as_deref()
             .map(str::parse::<FileFormat>)
             .transpose()?;
 
-        let file = git::bridge::download_pr_attachment_bridge(self.client.clone(), request).await?;
+        let file = git::bridge::download_pr_attachment_bridge(
+            self.client.clone(),
+            request,
+            &self.access_control,
+        )
+        .await?;
 
         let response_data = SerializableFile::new(file, explicit_format)?;
         Ok(CallToolResult::success(vec![response_data.try_into()?]))
@@ -430,10 +446,12 @@ impl Server {
         &self,
         #[tool(aggr)] request: GetPullRequestCommentListRequest,
     ) -> McpResult {
-        self.access_control
-            .check_project_access(&request.project_id_or_key)?;
-        let comments =
-            git::bridge::get_pull_request_comment_list_tool(self.client.clone(), request).await?;
+        let comments = git::bridge::get_pull_request_comment_list_tool(
+            self.client.clone(),
+            request,
+            &self.access_control,
+        )
+        .await?;
         Ok(CallToolResult::success(vec![Content::json(comments)?]))
     }
 
@@ -503,10 +521,12 @@ impl Server {
         &self,
         #[tool(aggr)] request: AddPullRequestCommentRequest,
     ) -> McpResult {
-        self.access_control
-            .check_project_access(&request.project_id_or_key)?;
-        let comment =
-            git::bridge::add_pull_request_comment_bridge(self.client.clone(), request).await?;
+        let comment = git::bridge::add_pull_request_comment_bridge(
+            self.client.clone(),
+            request,
+            &self.access_control,
+        )
+        .await?;
         Ok(CallToolResult::success(vec![Content::json(comment)?]))
     }
 }

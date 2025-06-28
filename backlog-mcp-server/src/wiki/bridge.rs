@@ -88,7 +88,7 @@ pub(crate) async fn get_wiki_attachment_list(
 
     // First get wiki details to check project access
     let wiki_detail = wiki_api
-        .get_wiki_detail(GetWikiDetailParams::new(wiki_id.clone()))
+        .get_wiki_detail(GetWikiDetailParams::new(wiki_id))
         .await?;
 
     access_control.check_project_access(&wiki_detail.project_id.to_string())?;
@@ -110,7 +110,7 @@ pub(crate) async fn download_wiki_attachment(
 
     // First get wiki details to check project access
     let wiki_detail = wiki_api
-        .get_wiki_detail(GetWikiDetailParams::new(wiki_id.clone()))
+        .get_wiki_detail(GetWikiDetailParams::new(wiki_id))
         .await?;
 
     access_control.check_project_access(&wiki_detail.project_id.to_string())?;
@@ -134,7 +134,7 @@ pub(crate) async fn update_wiki(
 
     // First get wiki details to check project access
     let wiki_detail_before = wiki_api
-        .get_wiki_detail(GetWikiDetailParams::new(wiki_id.clone()))
+        .get_wiki_detail(GetWikiDetailParams::new(wiki_id))
         .await?;
 
     access_control.check_project_access(&wiki_detail_before.project_id.to_string())?;

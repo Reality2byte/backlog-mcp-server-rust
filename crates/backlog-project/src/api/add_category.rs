@@ -1,5 +1,8 @@
+#[cfg(feature = "writable")]
 use backlog_api_core::{HttpMethod, IntoRequest};
+#[cfg(feature = "writable")]
 use backlog_core::ProjectIdOrKey;
+#[cfg(feature = "writable")]
 use serde::Serialize;
 
 pub type AddCategoryResponse = backlog_domain_models::Category;

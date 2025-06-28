@@ -1,3 +1,4 @@
+use crate::access_control::AccessControl;
 use crate::error::Result;
 use crate::project::request::{
     GetPrioritiesRequest, GetProjectIssueTypesRequest, GetProjectStatusListRequest,
@@ -14,7 +15,11 @@ use tokio::sync::Mutex;
 pub(crate) async fn get_project_status_list_tool(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetProjectStatusListRequest,
+    access_control: &AccessControl,
 ) -> Result<Vec<Status>> {
+    // Check project access before parsing
+    access_control.check_project_access(&req.project_id_or_key)?;
+
     // Parse the project_id_or_key from the request string.
     // This will use From<CoreError> for Error if parsing fails.
     let project_id = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
@@ -30,7 +35,11 @@ pub(crate) async fn get_project_status_list_tool(
 pub(crate) async fn get_project_issue_types_tool(
     client: Arc<Mutex<BacklogApiClient>>,
     req: GetProjectIssueTypesRequest,
+    access_control: &AccessControl,
 ) -> Result<Vec<IssueType>> {
+    // Check project access before parsing
+    access_control.check_project_access(&req.project_id_or_key)?;
+
     let project_id = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
 
     let client_guard = client.lock().await;
