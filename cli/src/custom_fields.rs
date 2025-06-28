@@ -4,21 +4,53 @@ use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use std::path::Path;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum CustomFieldError {
-    #[error("Invalid custom field format: {0}")]
-    InvalidFormat(String),
-    #[error("Invalid date format: {0}")]
-    InvalidDate(String),
-    #[error("Invalid numeric value: {0}")]
-    InvalidNumeric(String),
-    #[error("Failed to read JSON file: {0}")]
+    #[error(
+        "Invalid custom field format: '{input}'\nExpected format: id:type:value[:other]\nExamples:\n  - 1:text:Sample text\n  - 2:numeric:123.45\n  - 3:date:2024-06-24\n  - 4:single_list:100:Other description\n  - 5:multiple_list:100,200,300\n  - 6:checkbox:10,20,30\n  - 7:radio:400:Other value"
+    )]
+    InvalidFormat { input: String },
+
+    #[error(
+        "Invalid custom field ID: '{input}' is not a valid number.\nID must be a positive integer."
+    )]
+    InvalidId { input: String },
+
+    #[error(
+        "Unknown custom field type: '{field_type}'.\nValid types are:\n  - text\n  - textarea\n  - numeric\n  - date\n  - single_list\n  - multiple_list\n  - checkbox\n  - radio"
+    )]
+    UnknownFieldType { field_type: String },
+
+    #[error("Invalid numeric value: '{value}' is not a valid number.\nExamples: 123, 45.67, -89.0")]
+    InvalidNumericValue { value: String },
+
+    #[error(
+        "Invalid date format: '{value}' is not a valid date.\nExpected format: YYYY-MM-DD\nExample: 2024-06-24"
+    )]
+    InvalidDateFormat { value: String },
+
+    #[error(
+        "Missing ID for list field.\nsingle_list requires an ID.\nFormat: id:single_list:list_id[:other_value]\nExample: 1:single_list:100:Other description"
+    )]
+    MissingListId,
+
+    #[error(
+        "Invalid list IDs: '{value}' contains invalid ID.\nAll IDs must be positive integers separated by commas.\nExample: 1:multiple_list:100,200,300"
+    )]
+    InvalidListIds { value: String },
+
+    #[error(
+        "Custom fields file not found: '{path}'.\nMake sure the file exists and the path is correct."
+    )]
+    FileNotFound { path: String },
+
+    #[error("Invalid JSON format in '{path}': {error}.\nSee CUSTOM_FIELDS_USAGE.md for examples.")]
+    InvalidJson { path: String, error: String },
+
+    #[error("Failed to read file: {0}")]
     FileReadError(#[from] std::io::Error),
-    #[error("Failed to parse JSON: {0}")]
-    JsonParseError(#[from] serde_json::Error),
 }
 
 /// Custom field specification in JSON
@@ -62,8 +94,11 @@ impl CustomFieldSpec {
             CustomFieldSpec::TextArea { value } => Ok(CustomFieldInput::TextArea(value.clone())),
             CustomFieldSpec::Numeric { value } => Ok(CustomFieldInput::Numeric(*value)),
             CustomFieldSpec::Date { value } => {
-                let date = NaiveDate::parse_from_str(value, "%Y-%m-%d")
-                    .map_err(|_| CustomFieldError::InvalidDate(value.clone()))?;
+                let date = NaiveDate::parse_from_str(value, "%Y-%m-%d").map_err(|_| {
+                    CustomFieldError::InvalidDateFormat {
+                        value: value.clone(),
+                    }
+                })?;
                 Ok(CustomFieldInput::Date(date))
             }
             CustomFieldSpec::SingleList { id, other_value } => Ok(CustomFieldInput::SingleList {
@@ -101,14 +136,16 @@ pub fn parse_custom_field_arg(
     let parts: Vec<&str> = arg.splitn(4, ':').collect();
 
     if parts.len() < 3 {
-        return Err(CustomFieldError::InvalidFormat(
-            "Expected format: id:type:value[:other]".to_string(),
-        ));
+        return Err(CustomFieldError::InvalidFormat {
+            input: arg.to_string(),
+        });
     }
 
     let id = parts[0]
         .parse::<u32>()
-        .map_err(|_| CustomFieldError::InvalidFormat(format!("Invalid field ID: {}", parts[0])))?;
+        .map_err(|_| CustomFieldError::InvalidId {
+            input: parts[0].to_string(),
+        })?;
 
     let field_type = parts[1];
     let value = parts[2];
@@ -120,18 +157,28 @@ pub fn parse_custom_field_arg(
         "numeric" => {
             let num = value
                 .parse::<f64>()
-                .map_err(|_| CustomFieldError::InvalidNumeric(value.to_string()))?;
+                .map_err(|_| CustomFieldError::InvalidNumericValue {
+                    value: value.to_string(),
+                })?;
             CustomFieldInput::Numeric(num)
         }
         "date" => {
-            let date = NaiveDate::parse_from_str(value, "%Y-%m-%d")
-                .map_err(|_| CustomFieldError::InvalidDate(value.to_string()))?;
+            let date = NaiveDate::parse_from_str(value, "%Y-%m-%d").map_err(|_| {
+                CustomFieldError::InvalidDateFormat {
+                    value: value.to_string(),
+                }
+            })?;
             CustomFieldInput::Date(date)
         }
         "single_list" => {
-            let id = value.parse::<u32>().map_err(|_| {
-                CustomFieldError::InvalidFormat(format!("Invalid list ID: {value}"))
-            })?;
+            if value.is_empty() {
+                return Err(CustomFieldError::MissingListId);
+            }
+            let id = value
+                .parse::<u32>()
+                .map_err(|_| CustomFieldError::InvalidListIds {
+                    value: value.to_string(),
+                })?;
             CustomFieldInput::SingleList { id, other_value }
         }
         "multiple_list" => {
@@ -139,8 +186,8 @@ pub fn parse_custom_field_arg(
                 .split(',')
                 .map(|id| id.trim().parse::<u32>())
                 .collect();
-            let ids = ids.map_err(|_| {
-                CustomFieldError::InvalidFormat(format!("Invalid list IDs: {value}"))
+            let ids = ids.map_err(|_| CustomFieldError::InvalidListIds {
+                value: value.to_string(),
             })?;
             CustomFieldInput::MultipleList { ids, other_value }
         }
@@ -149,21 +196,26 @@ pub fn parse_custom_field_arg(
                 .split(',')
                 .map(|id| id.trim().parse::<u32>())
                 .collect();
-            let ids = ids.map_err(|_| {
-                CustomFieldError::InvalidFormat(format!("Invalid checkbox IDs: {value}"))
+            let ids = ids.map_err(|_| CustomFieldError::InvalidListIds {
+                value: value.to_string(),
             })?;
             CustomFieldInput::CheckBox(ids)
         }
         "radio" => {
-            let id = value.parse::<u32>().map_err(|_| {
-                CustomFieldError::InvalidFormat(format!("Invalid radio ID: {value}"))
-            })?;
+            if value.is_empty() {
+                return Err(CustomFieldError::MissingListId);
+            }
+            let id = value
+                .parse::<u32>()
+                .map_err(|_| CustomFieldError::InvalidListIds {
+                    value: value.to_string(),
+                })?;
             CustomFieldInput::Radio { id, other_value }
         }
         _ => {
-            return Err(CustomFieldError::InvalidFormat(format!(
-                "Unknown field type: {field_type}"
-            )));
+            return Err(CustomFieldError::UnknownFieldType {
+                field_type: field_type.to_string(),
+            });
         }
     };
 
@@ -182,16 +234,31 @@ pub fn parse_custom_field_arg(
 ///   "7": {"type": "radio", "id": 400, "other_value": "Other"}
 /// }
 pub fn parse_custom_fields_json(
-    path: &Path,
+    path: &str,
 ) -> Result<HashMap<CustomFieldId, CustomFieldInput>, CustomFieldError> {
-    let content = fs::read_to_string(path)?;
-    let specs: HashMap<String, CustomFieldSpec> = serde_json::from_str(&content)?;
+    let content = fs::read_to_string(path).map_err(|e| {
+        if e.kind() == std::io::ErrorKind::NotFound {
+            CustomFieldError::FileNotFound {
+                path: path.to_string(),
+            }
+        } else {
+            CustomFieldError::FileReadError(e)
+        }
+    })?;
+
+    let specs: HashMap<String, CustomFieldSpec> =
+        serde_json::from_str(&content).map_err(|e| CustomFieldError::InvalidJson {
+            path: path.to_string(),
+            error: e.to_string(),
+        })?;
 
     let mut result = HashMap::new();
     for (id_str, spec) in specs {
         let id = id_str
             .parse::<u32>()
-            .map_err(|_| CustomFieldError::InvalidFormat(format!("Invalid field ID: {id_str}")))?;
+            .map_err(|_| CustomFieldError::InvalidId {
+                input: id_str.clone(),
+            })?;
         let input = spec.to_input()?;
         result.insert(CustomFieldId::new(id), input);
     }

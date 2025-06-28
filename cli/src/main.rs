@@ -1,4 +1,4 @@
-mod custom_fields;
+use blg::custom_fields;
 
 #[cfg(feature = "git_writable")]
 use backlog_api_client::AddPullRequestParams;
@@ -1927,7 +1927,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 // Handle custom fields
                 let custom_fields_map = if let Some(json_path) = &create_args.custom_fields_json {
-                    match custom_fields::parse_custom_fields_json(json_path) {
+                    match custom_fields::parse_custom_fields_json(json_path.to_str().unwrap()) {
                         Ok(fields) => Some(fields),
                         Err(e) => {
                             eprintln!("Error parsing custom fields JSON: {e}");
@@ -2008,7 +2008,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 // Handle custom fields
                 let custom_fields_map = if let Some(json_path) = &update_args.custom_fields_json {
-                    match custom_fields::parse_custom_fields_json(json_path) {
+                    match custom_fields::parse_custom_fields_json(json_path.to_str().unwrap()) {
                         Ok(fields) => Some(fields),
                         Err(e) => {
                             eprintln!("Error parsing custom fields JSON: {e}");
