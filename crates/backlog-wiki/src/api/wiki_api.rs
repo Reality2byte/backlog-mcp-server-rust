@@ -22,6 +22,7 @@ impl WikiApi {
         Self(client)
     }
 
+    // Read operations
     /// Get wiki page count
     /// Corresponds to `GET /api/v2/wikis/count`.
     pub async fn get_wiki_count(&self, params: GetWikiCountParams) -> Result<GetWikiCountResponse> {

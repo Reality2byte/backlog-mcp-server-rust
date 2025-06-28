@@ -1,6 +1,6 @@
 #[cfg(feature = "writable")]
 use backlog_api_core::{Error as ApiError, HttpMethod, IntoRequest};
-#[cfg(all(feature = "writable", feature = "macros"))]
+#[cfg(feature = "writable")]
 use backlog_api_macros::ToFormParams;
 #[cfg(feature = "writable")]
 use backlog_core::identifier::{SharedFileId, WikiId};
@@ -19,17 +19,14 @@ pub type LinkSharedFilesToWikiResponse = Vec<SharedFile>;
 /// Corresponds to `POST /api/v2/wikis/:wikiId/sharedFiles`.
 #[cfg(feature = "writable")]
 #[derive(Debug, Clone, Builder)]
-#[cfg_attr(all(feature = "writable", feature = "macros"), derive(ToFormParams))]
+#[cfg_attr(feature = "writable", derive(ToFormParams))]
 #[builder(build_fn(error = "ApiError"))]
 pub struct LinkSharedFilesToWikiParams {
     #[builder(setter(into))]
-    #[cfg_attr(all(feature = "writable", feature = "macros"), form(skip))]
+    #[cfg_attr(feature = "writable", form(skip))]
     pub wiki_id: WikiId,
     #[builder(setter(into))]
-    #[cfg_attr(
-        all(feature = "writable", feature = "macros"),
-        form(array, name = "fileId")
-    )]
+    #[cfg_attr(feature = "writable", form(array, name = "fileId"))]
     pub shared_file_ids: Vec<SharedFileId>,
 }
 
@@ -55,18 +52,7 @@ impl IntoRequest for LinkSharedFilesToWikiParams {
     }
 
     fn to_form(&self) -> impl Serialize {
-        #[cfg(feature = "macros")]
-        {
-            let params: Vec<(String, String)> = self.into();
-            params
-        }
-        #[cfg(not(feature = "macros"))]
-        {
-            let mut params = Vec::new();
-            for shared_file_id in &self.shared_file_ids {
-                params.push(("fileId[]".to_string(), shared_file_id.to_string()));
-            }
-            params
-        }
+        let params: Vec<(String, String)> = self.into();
+        params
     }
 }

@@ -1,6 +1,7 @@
 use crate::models::WikiDetail;
 /// Corresponds to `POST /api/v2/wikis`.
 use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_macros::ToFormParams;
 use backlog_core::identifier::ProjectId;
 use serde::Serialize;
 
@@ -9,11 +10,13 @@ pub type AddWikiResponse = WikiDetail;
 
 /// Parameters for adding a new wiki page.
 #[cfg(feature = "writable")]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, ToFormParams)]
 pub struct AddWikiParams {
+    #[form(skip)]
     pub project_id: ProjectId,
     pub name: String,
     pub content: String,
+    #[form(name = "mailNotify")]
     pub mail_notify: Option<bool>,
 }
 
@@ -47,15 +50,8 @@ impl IntoRequest for AddWikiParams {
     }
 
     fn to_form(&self) -> impl Serialize {
-        let mut params = Vec::new();
+        let mut params: Vec<(String, String)> = self.into();
         params.push(("projectId".to_string(), self.project_id.to_string()));
-        params.push(("name".to_string(), self.name.clone()));
-        params.push(("content".to_string(), self.content.clone()));
-
-        if let Some(mail_notify) = self.mail_notify {
-            params.push(("mailNotify".to_string(), mail_notify.to_string()));
-        }
-
         params
     }
 }

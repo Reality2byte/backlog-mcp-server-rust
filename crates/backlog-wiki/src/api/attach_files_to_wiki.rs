@@ -1,6 +1,7 @@
 use crate::models::WikiAttachment;
 /// Corresponds to `POST /api/v2/wikis/:wikiId/attachments`.
 use backlog_api_core::{HttpMethod, IntoRequest};
+use backlog_api_macros::ToFormParams;
 use backlog_core::identifier::{AttachmentId, WikiId};
 use serde::Serialize;
 
@@ -9,9 +10,11 @@ pub type AttachFilesToWikiResponse = Vec<WikiAttachment>;
 
 /// Parameters for attaching files to a wiki page.
 #[cfg(feature = "writable")]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, ToFormParams)]
 pub struct AttachFilesToWikiParams {
+    #[form(skip)]
     pub wiki_id: WikiId,
+    #[form(array, name = "attachmentId")]
     pub attachment_ids: Vec<AttachmentId>,
 }
 
@@ -37,13 +40,7 @@ impl IntoRequest for AttachFilesToWikiParams {
     }
 
     fn to_form(&self) -> impl Serialize {
-        let mut params = Vec::new();
-
-        // Add each attachment ID as attachmentId[] parameter
-        for attachment_id in &self.attachment_ids {
-            params.push(("attachmentId[]".to_string(), attachment_id.to_string()));
-        }
-
+        let params: Vec<(String, String)> = self.into();
         params
     }
 }

@@ -174,68 +174,46 @@ impl<'de> Deserialize<'de> for CustomFieldType {
 
         let raw = RawCustomFieldType::deserialize(deserializer)?;
 
+        // Helper to parse optional JSON values
+        fn parse_optional_value<T, E>(value: Option<serde_json::Value>) -> Result<Option<T>, E>
+        where
+            T: serde::de::DeserializeOwned,
+            E: serde::de::Error,
+        {
+            Ok(value
+                .map(serde_json::from_value)
+                .transpose()
+                .map_err(E::custom)?
+                .flatten())
+        }
+
+        // Helper to create ListSettings from raw data
+        fn create_list_settings(raw: &RawCustomFieldType) -> ListSettings {
+            ListSettings {
+                items: raw.items.clone().unwrap_or_default(),
+                allow_add_item: raw.allow_add_item.unwrap_or_default(),
+                allow_input: raw.allow_input.unwrap_or_default(),
+            }
+        }
+
         let settings = match raw.type_id {
             1 => CustomFieldSettings::Text,
             2 => CustomFieldSettings::TextArea,
-            3 => {
-                let min = raw
-                    .min
-                    .map(serde_json::from_value)
-                    .transpose()
-                    .map_err(serde::de::Error::custom)?
-                    .flatten();
-                let max = raw
-                    .max
-                    .map(serde_json::from_value)
-                    .transpose()
-                    .map_err(serde::de::Error::custom)?
-                    .flatten();
-                CustomFieldSettings::Numeric(NumericSettings {
-                    min,
-                    max,
-                    initial_value: raw.initial_value,
-                    unit: raw.unit,
-                })
-            }
-            4 => {
-                let min = raw
-                    .min
-                    .map(serde_json::from_value)
-                    .transpose()
-                    .map_err(serde::de::Error::custom)?
-                    .flatten();
-                let max = raw
-                    .max
-                    .map(serde_json::from_value)
-                    .transpose()
-                    .map_err(serde::de::Error::custom)?
-                    .flatten();
-                CustomFieldSettings::Date(DateSettings {
-                    min,
-                    max,
-                    initial_date: raw.initial_date,
-                })
-            }
-            5 => CustomFieldSettings::SingleList(ListSettings {
-                items: raw.items.unwrap_or_default(),
-                allow_add_item: raw.allow_add_item.unwrap_or_default(),
-                allow_input: raw.allow_input.unwrap_or_default(),
+            3 => CustomFieldSettings::Numeric(NumericSettings {
+                min: parse_optional_value(raw.min.clone())?,
+                max: parse_optional_value(raw.max.clone())?,
+                initial_value: raw.initial_value,
+                unit: raw.unit.clone(),
             }),
-            6 => CustomFieldSettings::MultipleList(ListSettings {
-                items: raw.items.unwrap_or_default(),
-                allow_add_item: raw.allow_add_item.unwrap_or_default(),
-                allow_input: raw.allow_input.unwrap_or_default(),
+            4 => CustomFieldSettings::Date(DateSettings {
+                min: parse_optional_value(raw.min.clone())?,
+                max: parse_optional_value(raw.max.clone())?,
+                initial_date: raw.initial_date,
             }),
-            7 => CustomFieldSettings::Checkbox(ListSettings {
-                items: raw.items.unwrap_or_default(),
-                allow_add_item: raw.allow_add_item.unwrap_or_default(),
-                allow_input: raw.allow_input.unwrap_or_default(),
-            }),
-            8 => CustomFieldSettings::Radio(ListSettings {
-                items: raw.items.unwrap_or_default(),
-                allow_add_item: raw.allow_add_item.unwrap_or_default(),
-                allow_input: raw.allow_input.unwrap_or_default(),
-            }),
+            5 => CustomFieldSettings::SingleList(create_list_settings(&raw)),
+            6 => CustomFieldSettings::MultipleList(create_list_settings(&raw)),
+            7 => CustomFieldSettings::Checkbox(create_list_settings(&raw)),
+            8 => CustomFieldSettings::Radio(create_list_settings(&raw)),
             _ => {
                 return Err(serde::de::Error::custom(format!(
                     "unknown typeId: {}",

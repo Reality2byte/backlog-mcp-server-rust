@@ -7,13 +7,12 @@ license.workspace = true
 [features]
 default = []
 writable = ["client/writable"]
-macros = ["dep:backlog-api-macros"]
 schemars = ["backlog-core/schemars", "dep:schemars"]
 
 [dependencies]
 backlog-core = { path = "../backlog-core" }
 backlog-api-core = { path = "../backlog-api-core" }
-backlog-api-macros = { path = "../backlog-api-macros", optional = true }
+backlog-api-macros = { path = "../backlog-api-macros" }
 backlog-file = { path = "../backlog-file" }
 client = { path = "../client" }
 serde = { workspace = true }
