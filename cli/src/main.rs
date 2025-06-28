@@ -917,6 +917,12 @@ enum WikiCommands {
         #[clap(name = "WIKI_ID")]
         wiki_id: u32,
     },
+    /// List shared files linked to a wiki page
+    ListSharedFiles {
+        /// Wiki ID
+        #[clap(name = "WIKI_ID")]
+        wiki_id: u32,
+    },
     /// Download an attachment from a wiki page
     DownloadAttachment {
         /// Wiki ID
@@ -3388,6 +3394,55 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to list wiki attachments: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            WikiCommands::ListSharedFiles { wiki_id } => {
+                println!("Listing shared files for wiki ID: {}", wiki_id);
+
+                match client
+                    .wiki()
+                    .get_wiki_shared_file_list(backlog_wiki::GetWikiSharedFileListParams::new(
+                        WikiId::new(wiki_id),
+                    ))
+                    .await
+                {
+                    Ok(shared_files) => {
+                        if shared_files.is_empty() {
+                            println!("No shared files found linked to this wiki page");
+                        } else {
+                            println!("Found {} shared file(s):", shared_files.len());
+                            for shared_file in shared_files {
+                                println!(
+                                    "[{}] {} ({} bytes)",
+                                    shared_file.id.value(),
+                                    shared_file.name,
+                                    match &shared_file.content {
+                                        backlog_api_client::FileContent::File { size } => *size,
+                                        backlog_api_client::FileContent::Directory => 0,
+                                    }
+                                );
+                                println!("  Path: {}", shared_file.dir);
+                                println!(
+                                    "  Created by: {} at {}",
+                                    shared_file.created_user.name,
+                                    shared_file.created.format("%Y-%m-%d %H:%M:%S")
+                                );
+                                if let Some(updated_user) = &shared_file.updated_user {
+                                    if let Some(updated) = &shared_file.updated {
+                                        println!(
+                                            "  Updated by: {} at {}",
+                                            updated_user.name,
+                                            updated.format("%Y-%m-%d %H:%M:%S")
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to list wiki shared files: {}", e);
                         std::process::exit(1);
                     }
                 }

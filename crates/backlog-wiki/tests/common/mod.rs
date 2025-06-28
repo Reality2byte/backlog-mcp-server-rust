@@ -143,3 +143,27 @@ pub fn create_mock_wiki_history(
         created: created_time,
     }
 }
+
+#[allow(dead_code)]
+pub fn create_mock_shared_file(
+    id: u32,
+    project_id: u32,
+    dir: &str,
+    name: &str,
+    size: u64,
+    user_id: u32,
+    user_name: &str,
+) -> SharedFile {
+    let created_time = Utc.with_ymd_and_hms(2024, 1, 1, 12, 0, 0).unwrap();
+    SharedFile {
+        id: SharedFileId::new(id),
+        project_id: ProjectId::new(project_id),
+        dir: dir.to_string(),
+        name: name.to_string(),
+        created_user: create_mock_user(user_id, user_name),
+        created: created_time,
+        updated_user: None,
+        updated: None,
+        content: FileContent::File { size },
+    }
+}

@@ -5,7 +5,8 @@ use backlog_core::ProjectKey;
 use backlog_wiki::WikiCount;
 use backlog_wiki::api::{
     DownloadWikiAttachmentParams, GetWikiAttachmentListParams, GetWikiCountParams,
-    GetWikiDetailParams, GetWikiHistoryParams, GetWikiListParams, GetWikiTagListParams,
+    GetWikiDetailParams, GetWikiHistoryParams, GetWikiListParams, GetWikiSharedFileListParams,
+    GetWikiTagListParams,
 };
 use wiremock::MockServer;
 use wiremock::matchers::{method, path, query_param};
@@ -566,4 +567,145 @@ async fn test_get_wiki_history_with_u32_id() {
     assert_eq!(history.len(), 1);
     assert_eq!(history[0].page_id.value(), 789);
     assert_eq!(history[0].version, 1);
+}
+
+#[tokio::test]
+async fn test_get_wiki_shared_file_list_success() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    let expected_shared_files = vec![
+        create_mock_shared_file(1, 123, "/docs", "document.pdf", 2048, 1, "john"),
+        create_mock_shared_file(2, 123, "/images", "logo.png", 1024, 2, "alice"),
+        create_mock_shared_file(3, 123, "/data", "data.xlsx", 4096, 1, "john"),
+    ];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/123/sharedFiles"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_shared_files))
+        .mount(&mock_server)
+        .await;
+
+    let result = wiki_api
+        .get_wiki_shared_file_list(GetWikiSharedFileListParams::new(WikiId::new(123)))
+        .await;
+    assert!(result.is_ok());
+    let shared_files = result.unwrap();
+    assert_eq!(shared_files.len(), 3);
+    assert_eq!(shared_files[0].name, "document.pdf");
+    assert_eq!(shared_files[0].dir, "/docs");
+    assert_eq!(shared_files[0].id.value(), 1);
+    assert_eq!(shared_files[1].name, "logo.png");
+    assert_eq!(shared_files[1].dir, "/images");
+    assert_eq!(shared_files[2].name, "data.xlsx");
+    assert_eq!(shared_files[2].dir, "/data");
+}
+
+#[tokio::test]
+async fn test_get_wiki_shared_file_list_empty() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    let expected_shared_files: Vec<SharedFile> = vec![];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/456/sharedFiles"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_shared_files))
+        .mount(&mock_server)
+        .await;
+
+    let result = wiki_api
+        .get_wiki_shared_file_list(GetWikiSharedFileListParams::new(WikiId::new(456)))
+        .await;
+    assert!(result.is_ok());
+    let shared_files = result.unwrap();
+    assert_eq!(shared_files.len(), 0);
+}
+
+#[tokio::test]
+async fn test_get_wiki_shared_file_list_with_u32_id() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    let expected_shared_files = vec![create_mock_shared_file(
+        5,
+        789,
+        "/uploads",
+        "report.pdf",
+        3072,
+        3,
+        "bob",
+    )];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/789/sharedFiles"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_shared_files))
+        .mount(&mock_server)
+        .await;
+
+    let result = wiki_api
+        .get_wiki_shared_file_list(GetWikiSharedFileListParams::new(789u32))
+        .await;
+    assert!(result.is_ok());
+    let shared_files = result.unwrap();
+    assert_eq!(shared_files.len(), 1);
+    assert_eq!(shared_files[0].name, "report.pdf");
+    assert_eq!(shared_files[0].project_id.value(), 789);
+}
+
+#[tokio::test]
+async fn test_get_wiki_shared_file_list_wiki_not_found() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/999/sharedFiles"))
+        .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
+            "errors": [{"message": "Wiki not found"}]
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let result = wiki_api
+        .get_wiki_shared_file_list(GetWikiSharedFileListParams::new(WikiId::new(999)))
+        .await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_wiki_shared_file_list_access_forbidden() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/777/sharedFiles"))
+        .respond_with(ResponseTemplate::new(403).set_body_json(serde_json::json!({
+            "errors": [{"message": "You do not have permission to access this wiki"}]
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let result = wiki_api
+        .get_wiki_shared_file_list(GetWikiSharedFileListParams::new(WikiId::new(777)))
+        .await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_wiki_shared_file_list_server_error() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/888/sharedFiles"))
+        .respond_with(ResponseTemplate::new(500).set_body_json(serde_json::json!({
+            "errors": [{"message": "Internal server error"}]
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let result = wiki_api
+        .get_wiki_shared_file_list(GetWikiSharedFileListParams::new(WikiId::new(888)))
+        .await;
+    assert!(result.is_err());
 }

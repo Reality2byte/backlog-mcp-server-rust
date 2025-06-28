@@ -8,7 +8,8 @@ use crate::api::{
     DownloadWikiAttachmentParams, GetWikiAttachmentListParams, GetWikiAttachmentListResponse,
     GetWikiCountParams, GetWikiCountResponse, GetWikiDetailParams, GetWikiDetailResponse,
     GetWikiHistoryParams, GetWikiHistoryResponse, GetWikiListParams, GetWikiListResponse,
-    GetWikiTagListParams, GetWikiTagListResponse,
+    GetWikiSharedFileListParams, GetWikiSharedFileListResponse, GetWikiTagListParams,
+    GetWikiTagListResponse,
 };
 use backlog_api_core::Result;
 use client::Client;
@@ -75,6 +76,15 @@ impl WikiApi {
         params: DownloadWikiAttachmentParams,
     ) -> Result<client::DownloadedFile> {
         self.0.download_file(params).await
+    }
+
+    /// Get wiki shared file list
+    /// Corresponds to `GET /api/v2/wikis/:wikiId/sharedFiles`.
+    pub async fn get_wiki_shared_file_list(
+        &self,
+        params: GetWikiSharedFileListParams,
+    ) -> Result<GetWikiSharedFileListResponse> {
+        self.0.execute(params).await
     }
 
     /// Add new wiki page
