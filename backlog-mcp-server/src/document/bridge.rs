@@ -30,7 +30,7 @@ pub(crate) async fn get_document_details(
     let document = client.document().get_document(params).await?;
 
     // Check project access
-    access_control.check_project_access(&document.project_id.to_string())?;
+    access_control.check_project_access_by_id(&document.project_id)?;
 
     Ok(document)
 }
@@ -50,7 +50,7 @@ pub(crate) async fn download_document_attachment_bridge(
         .await?;
 
     // Check project access
-    access_control.check_project_access(&document.project_id.to_string())?;
+    access_control.check_project_access_by_id(&document.project_id)?;
 
     let attachment_id = DocumentAttachmentId::new(req.attachment_id);
     let params = DownloadAttachmentParams::new(document_id, attachment_id);
@@ -66,11 +66,11 @@ pub(crate) async fn get_document_tree_tool(
     req: GetDocumentTreeRequest,
     access_control: &AccessControl,
 ) -> Result<GetDocumentTreeResponse> {
-    // Check project access
-    access_control.check_project_access(&req.project_id_or_key)?;
-
     let client_guard = client.lock().await;
     let project_id_or_key_val = ProjectIdOrKey::from_str(req.project_id_or_key.trim())?;
+
+    // Check project access with parsed type
+    access_control.check_project_access_id_or_key(&project_id_or_key_val)?;
     // Construct directly instead of using the builder, to sidestep the E0599 error for now.
     let params = GetDocumentTreeParams {
         project_id_or_key: project_id_or_key_val,

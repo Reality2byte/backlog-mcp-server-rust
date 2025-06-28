@@ -35,7 +35,7 @@ pub(crate) async fn get_issue_details(
         .await?;
 
     // Check project access from the response
-    access_control.check_project_access(&issue.project_id.to_string())?;
+    access_control.check_project_access_by_id(&issue.project_id)?;
 
     Ok(issue)
 }
@@ -45,11 +45,11 @@ pub(crate) async fn get_version_milestone_list(
     req: GetVersionMilestoneListRequest,
     access_control: &AccessControl,
 ) -> Result<Vec<Milestone>> {
-    // Check project access
-    access_control.check_project_access(&req.project_id_or_key)?;
-
     let client_guard = client.lock().await;
     let proj_id_or_key = ProjectIdOrKey::from_str(req.project_id_or_key.trim())?;
+
+    // Check project access with parsed type
+    access_control.check_project_access_id_or_key(&proj_id_or_key)?;
     let versions = client_guard
         .project()
         .get_version_milestone_list(backlog_project::GetMilestoneListParams::new(proj_id_or_key))
@@ -62,10 +62,10 @@ pub(crate) async fn get_issues_by_milestone_name(
     req: GetIssuesByMilestoneNameRequest,
     access_control: &AccessControl,
 ) -> Result<Vec<Issue>> {
-    // Check project access
-    access_control.check_project_access(&req.project_id_or_key)?;
-
     let proj_id_or_key = ProjectIdOrKey::from_str(req.project_id_or_key.trim())?;
+
+    // Check project access with parsed type
+    access_control.check_project_access_id_or_key(&proj_id_or_key)?;
 
     let client_guard = client.lock().await;
 
@@ -128,7 +128,7 @@ pub(crate) async fn update_issue_impl(
         .get_issue(backlog_issue::GetIssueParams::new(parsed_issue_id_or_key))
         .await?;
 
-    access_control.check_project_access(&issue.project_id.to_string())?;
+    access_control.check_project_access_by_id(&issue.project_id)?;
 
     let updated_issue = client_guard.issue().update_issue(update_params).await?;
     Ok(updated_issue)
@@ -150,7 +150,7 @@ pub(crate) async fn get_issue_comments_impl(
         .get_issue(backlog_issue::GetIssueParams::new(parsed_issue_id_or_key))
         .await?;
 
-    access_control.check_project_access(&issue.project_id.to_string())?;
+    access_control.check_project_access_by_id(&issue.project_id)?;
 
     let comments = client_guard
         .issue()
@@ -182,7 +182,7 @@ pub(crate) async fn get_attachment_list_impl(
         ))
         .await?;
 
-    access_control.check_project_access(&issue.project_id.to_string())?;
+    access_control.check_project_access_by_id(&issue.project_id)?;
 
     let attachments = client_guard
         .issue()
@@ -211,7 +211,7 @@ pub(crate) async fn download_issue_attachment_file(
         ))
         .await?;
 
-    access_control.check_project_access(&issue.project_id.to_string())?;
+    access_control.check_project_access_by_id(&issue.project_id)?;
 
     let params =
         backlog_issue::GetAttachmentFileParams::new(parsed_issue_id_or_key, parsed_attachment_id);
@@ -236,7 +236,7 @@ pub(crate) async fn add_comment_impl(
         .get_issue(backlog_issue::GetIssueParams::new(parsed_issue_id_or_key))
         .await?;
 
-    access_control.check_project_access(&issue.project_id.to_string())?;
+    access_control.check_project_access_by_id(&issue.project_id)?;
 
     let comment = client_guard.issue().add_comment(add_comment_params).await?;
     Ok(comment)
@@ -264,7 +264,7 @@ pub(crate) async fn update_comment_impl(
         ))
         .await?;
 
-    access_control.check_project_access(&issue.project_id.to_string())?;
+    access_control.check_project_access_by_id(&issue.project_id)?;
 
     let params = UpdateCommentParams {
         issue_id_or_key: parsed_issue_id_or_key,
@@ -293,7 +293,7 @@ pub(crate) async fn get_issue_shared_files_impl(
         ))
         .await?;
 
-    access_control.check_project_access(&issue.project_id.to_string())?;
+    access_control.check_project_access_by_id(&issue.project_id)?;
 
     let shared_files = client_guard
         .issue()
@@ -310,10 +310,10 @@ pub(crate) async fn add_issue_impl(
     req: AddIssueRequest,
     access_control: &AccessControl,
 ) -> Result<Issue> {
-    // Check project access
-    access_control.check_project_access(&req.project_id)?;
-
     let project_id = ProjectId::from_str(req.project_id.trim())?;
+
+    // Check project access with parsed type
+    access_control.check_project_access_by_id(&project_id)?;
     let issue_type_id = IssueTypeId::new(req.issue_type_id);
     let priority_id = PriorityId::new(req.priority_id);
 

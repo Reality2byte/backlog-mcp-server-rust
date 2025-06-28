@@ -54,7 +54,7 @@ pub(crate) async fn get_wiki_list(
 
     // Check project access for each wiki in the response
     for wiki in &wikis {
-        access_control.check_project_access(&wiki.project_id.to_string())?;
+        access_control.check_project_access_by_id(&wiki.project_id)?;
     }
 
     Ok(serde_json::to_value(wikis)?)
@@ -73,7 +73,7 @@ pub(crate) async fn get_wiki_detail(
         .await?;
 
     // Check project access from the response
-    access_control.check_project_access(&wiki_detail.project_id.to_string())?;
+    access_control.check_project_access_by_id(&wiki_detail.project_id)?;
 
     Ok(serde_json::to_value(wiki_detail)?)
 }
@@ -91,7 +91,7 @@ pub(crate) async fn get_wiki_attachment_list(
         .get_wiki_detail(GetWikiDetailParams::new(wiki_id))
         .await?;
 
-    access_control.check_project_access(&wiki_detail.project_id.to_string())?;
+    access_control.check_project_access_by_id(&wiki_detail.project_id)?;
 
     let attachments = wiki_api
         .get_wiki_attachment_list(GetWikiAttachmentListParams::new(wiki_id))
@@ -113,7 +113,7 @@ pub(crate) async fn download_wiki_attachment(
         .get_wiki_detail(GetWikiDetailParams::new(wiki_id))
         .await?;
 
-    access_control.check_project_access(&wiki_detail.project_id.to_string())?;
+    access_control.check_project_access_by_id(&wiki_detail.project_id)?;
 
     let attachment_id = WikiAttachmentId::new(request.attachment_id);
     let downloaded_file = wiki_api
@@ -137,7 +137,7 @@ pub(crate) async fn update_wiki(
         .get_wiki_detail(GetWikiDetailParams::new(wiki_id))
         .await?;
 
-    access_control.check_project_access(&wiki_detail_before.project_id.to_string())?;
+    access_control.check_project_access_by_id(&wiki_detail_before.project_id)?;
 
     // Build UpdateWikiParams from request
     let mut params = UpdateWikiParams::new(wiki_id);

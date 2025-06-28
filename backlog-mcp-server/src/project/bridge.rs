@@ -17,12 +17,12 @@ pub(crate) async fn get_project_status_list_tool(
     req: GetProjectStatusListRequest,
     access_control: &AccessControl,
 ) -> Result<Vec<Status>> {
-    // Check project access before parsing
-    access_control.check_project_access(&req.project_id_or_key)?;
-
     // Parse the project_id_or_key from the request string.
     // This will use From<CoreError> for Error if parsing fails.
     let project_id = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+
+    // Check project access with parsed type
+    access_control.check_project_access_id_or_key(&project_id)?;
 
     let client_guard = client.lock().await;
     // This will use From<ApiError> for Error if the API call fails.
@@ -37,10 +37,10 @@ pub(crate) async fn get_project_issue_types_tool(
     req: GetProjectIssueTypesRequest,
     access_control: &AccessControl,
 ) -> Result<Vec<IssueType>> {
-    // Check project access before parsing
-    access_control.check_project_access(&req.project_id_or_key)?;
-
     let project_id = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+
+    // Check project access with parsed type
+    access_control.check_project_access_id_or_key(&project_id)?;
 
     let client_guard = client.lock().await;
     let params = backlog_project::GetIssueTypeListParams::new(project_id);

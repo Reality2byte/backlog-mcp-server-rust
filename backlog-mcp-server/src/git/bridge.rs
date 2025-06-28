@@ -30,7 +30,7 @@ pub(crate) async fn get_repository_list(
     let project_id = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
 
     // Check project access with converted type
-    access_control.check_project_access(&req.project_id_or_key)?;
+    access_control.check_project_access_id_or_key(&project_id)?;
 
     let params = GetRepositoryListParams::new(project_id);
 
@@ -47,7 +47,7 @@ pub(crate) async fn get_repository(
     let proj_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
 
     // Check project access
-    access_control.check_project_access(&req.project_id_or_key)?;
+    access_control.check_project_access_id_or_key(&proj_id_or_key)?;
 
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
     let params = GetRepositoryParams::new(proj_id_or_key, repo_id_or_name);
@@ -65,7 +65,7 @@ pub(crate) async fn get_pull_request_list(
     let proj_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
 
     // Check project access
-    access_control.check_project_access(&req.project_id_or_key)?;
+    access_control.check_project_access_id_or_key(&proj_id_or_key)?;
 
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
     let params = GetPullRequestListParams::new(proj_id_or_key, repo_id_or_name);
@@ -83,7 +83,7 @@ pub(crate) async fn get_pull_request(
     let proj_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
 
     // Check project access
-    access_control.check_project_access(&req.project_id_or_key)?;
+    access_control.check_project_access_id_or_key(&proj_id_or_key)?;
 
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
     let pr_number = PullRequestNumber::from(req.pr_number);
@@ -102,7 +102,7 @@ pub(crate) async fn get_pull_request_attachment_list_tool(
     let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
 
     // Check project access
-    access_control.check_project_access(&req.project_id_or_key)?;
+    access_control.check_project_access_id_or_key(&project_id_or_key)?;
 
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
     let pr_number = PullRequestNumber::from(req.pr_number);
@@ -124,7 +124,7 @@ pub(crate) async fn download_pr_attachment_bridge(
     let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
 
     // Check project access
-    access_control.check_project_access(&req.project_id_or_key)?;
+    access_control.check_project_access_id_or_key(&project_id_or_key)?;
 
     let repo_id_or_name = RepositoryIdOrName::from_str(req.repo_id_or_name.trim())?;
     let pr_number = PullRequestNumber::from(req.pr_number);
@@ -152,8 +152,11 @@ pub(crate) async fn get_pull_request_comment_list_tool(
     req: GetPullRequestCommentListRequest,
     access_control: &AccessControl,
 ) -> Result<Vec<PullRequestComment>> {
-    // Check project access before conversion
-    access_control.check_project_access(&req.project_id_or_key)?;
+    // Parse project ID first
+    let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+
+    // Check project access with parsed type
+    access_control.check_project_access_id_or_key(&project_id_or_key)?;
 
     let params = GetPullRequestCommentListParams::try_from(req)?;
 
@@ -170,8 +173,11 @@ pub(crate) async fn add_pull_request_comment_bridge(
     req: AddPullRequestCommentRequest,
     access_control: &AccessControl,
 ) -> Result<PullRequestComment> {
-    // Check project access before conversion
-    access_control.check_project_access(&req.project_id_or_key)?;
+    // Parse project ID first
+    let project_id_or_key = req.project_id_or_key.parse::<ProjectIdOrKey>()?;
+
+    // Check project access with parsed type
+    access_control.check_project_access_id_or_key(&project_id_or_key)?;
 
     let params = AddPullRequestCommentParams::try_from(req)?;
 

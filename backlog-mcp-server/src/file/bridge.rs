@@ -13,15 +13,15 @@ pub(crate) async fn get_shared_files_list_tool(
     request: GetSharedFilesListRequest,
     access_control: &AccessControl,
 ) -> Result<Vec<SharedFile>, McpError> {
-    // Check project access
-    access_control
-        .check_project_access(&request.project_id_or_key)
-        .map_err(|e| McpError::invalid_request(format!("Access denied: {e}"), None))?;
-
     let client_guard = client.lock().await;
 
     let project_id_or_key = ProjectIdOrKey::from_str(&request.project_id_or_key)
         .map_err(|e| McpError::invalid_request(format!("Invalid project ID or key: {e}"), None))?;
+
+    // Check project access with parsed type
+    access_control
+        .check_project_access_id_or_key(&project_id_or_key)
+        .map_err(|e| McpError::invalid_request(format!("Access denied: {e}"), None))?;
 
     let params = GetSharedFilesListParams {
         project_id_or_key,
@@ -45,15 +45,15 @@ pub(crate) async fn download_shared_file_bridge(
     request: DownloadSharedFileRequest,
     access_control: &AccessControl,
 ) -> Result<DownloadedFile, McpError> {
-    // Check project access
-    access_control
-        .check_project_access(&request.project_id_or_key)
-        .map_err(|e| McpError::invalid_request(format!("Access denied: {e}"), None))?;
-
     let client_guard = client.lock().await;
 
     let project_id_or_key = ProjectIdOrKey::from_str(&request.project_id_or_key)
         .map_err(|e| McpError::invalid_request(format!("Invalid project ID or key: {e}"), None))?;
+
+    // Check project access with parsed type
+    access_control
+        .check_project_access_id_or_key(&project_id_or_key)
+        .map_err(|e| McpError::invalid_request(format!("Access denied: {e}"), None))?;
 
     let shared_file_id = SharedFileId::new(request.shared_file_id);
     let params = GetFileParams::new(project_id_or_key, shared_file_id);
