@@ -91,9 +91,11 @@ impl AccessControl {
         client: &BacklogApiClient,
     ) -> Result<(), Error> {
         // If no allow list is set, allow access to all projects
-        let Some(raw_list) = &self.allowed_projects_raw else {
+        if !self.is_enabled() {
             return Ok(());
-        };
+        }
+
+        let raw_list = self.allowed_projects_raw.as_ref().unwrap();
 
         // Check in resolved projects
         {
@@ -136,9 +138,11 @@ impl AccessControl {
         client: &BacklogApiClient,
     ) -> Result<(), Error> {
         // If no allow list is set, allow access to all projects
-        let Some(raw_list) = &self.allowed_projects_raw else {
+        if !self.is_enabled() {
             return Ok(());
-        };
+        }
+
+        let raw_list = self.allowed_projects_raw.as_ref().unwrap();
 
         // Check in resolved projects
         {
@@ -194,19 +198,16 @@ impl AccessControl {
         self.allowed_projects_raw.is_some()
     }
 
-    /// Get the list of allowed projects (for debugging)
-    pub fn allowed_projects_raw(&self) -> Option<&Vec<String>> {
-        self.allowed_projects_raw.as_ref()
-    }
-
     // Synchronous versions for backward compatibility (will be removed)
 
     /// Check access permissions for the specified project ID (synchronous - for tests only)
     pub fn check_project_access_by_id(&self, project_id: &ProjectId) -> Result<(), Error> {
         // If no allow list is set, allow access to all projects
-        let Some(raw_list) = &self.allowed_projects_raw else {
+        if !self.is_enabled() {
             return Ok(());
-        };
+        }
+
+        let raw_list = self.allowed_projects_raw.as_ref().unwrap();
 
         // In sync version, we can only check if the ID matches a numeric entry
         for raw_project in raw_list {
@@ -226,9 +227,11 @@ impl AccessControl {
     /// Check access permissions for the specified project key (synchronous - for tests only)
     pub fn check_project_access_by_key(&self, project_key: &ProjectKey) -> Result<(), Error> {
         // If no allow list is set, allow access to all projects
-        let Some(raw_list) = &self.allowed_projects_raw else {
+        if !self.is_enabled() {
             return Ok(());
-        };
+        }
+
+        let raw_list = self.allowed_projects_raw.as_ref().unwrap();
 
         // In sync version, we can only check if the key matches a string entry
         for raw_project in raw_list {

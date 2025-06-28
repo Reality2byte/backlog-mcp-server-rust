@@ -1,0 +1,1 @@
+Do refactoring in Kent Beck's Tidy-First style.
