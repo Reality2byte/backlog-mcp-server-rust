@@ -34,6 +34,12 @@ pub enum Error {
         pr_number: PullRequestNumber,
         attachment_id: u32,
     },
+
+    #[error("Access denied to project '{project}'. Allowed projects: {allowed_projects:?}")]
+    ProjectAccessDenied {
+        project: String,
+        allowed_projects: Vec<String>,
+    },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -65,17 +71,16 @@ impl From<Error> for McpError {
                     } => {
                         // errors_summary already contains a good summary from ApiError's Display
                         McpError::invalid_request(
-                            format!("Backlog API Error (HTTP {}): {}", status, errors_summary),
+                            format!("Backlog API Error (HTTP {status}): {errors_summary}"),
                             None,
                         )
                     }
                     ApiError::Json(serde_error) => {
                         let detailed_message = format!(
-                            "Failed to parse a successful response from Backlog API: {}. \
+                            "Failed to parse a successful response from Backlog API: {serde_error}. \
                             This might indicate an unexpected API format change or a misconfiguration \
                             (e.g., wrong server URL pointing to a non-Backlog service that returned 200 OK with different JSON). \
-                            Please verify settings.",
-                            serde_error
+                            Please verify settings."
                         );
                         McpError::internal_error(detailed_message, None) // Internal because the server got a 200 OK but couldn't parse it.
                     }
@@ -88,15 +93,14 @@ impl From<Error> for McpError {
                 suggestions,
             } => {
                 let mut message = format!(
-                    "Milestone named '{}' not found in project '{}'.",
-                    original_name, project_id_or_key
+                    "Milestone named '{original_name}' not found in project '{project_id_or_key}'.",
                 );
                 if let Some(suggs) = suggestions {
                     if !suggs.is_empty() {
-                        message.push_str(&format!(" Did you mean one of: {:?}?", suggs));
+                        message.push_str(&format!(" Did you mean one of: {suggs:?}?"));
                     }
                 }
-                message.push_str(&format!(" You can list all available milestones using the 'get_version_milestone_list' tool for project '{}'.", project_id_or_key));
+                message.push_str(&format!(" You can list all available milestones using the 'get_version_milestone_list' tool for project '{project_id_or_key}'."));
                 McpError::invalid_params(message, None)
             }
             Error::NothingToUpdate => McpError::invalid_params(err.to_string(), None),
@@ -104,18 +108,19 @@ impl From<Error> for McpError {
                 // The Display impl from ThisError will format the message
                 McpError::invalid_request(err.to_string(), None) // Or invalid_params
             }
+            Error::ProjectAccessDenied { .. } => McpError::invalid_params(err.to_string(), None),
         }
     }
 }
 
 impl From<std::string::FromUtf8Error> for Error {
     fn from(err: std::string::FromUtf8Error) -> Self {
-        Error::Server(format!("Failed to decode UTF-8 string: {}", err))
+        Error::Server(format!("Failed to decode UTF-8 string: {err}"))
     }
 }
 
 impl From<serde_json::Error> for Error {
     fn from(err: serde_json::Error) -> Self {
-        Error::Server(format!("JSON serialization/deserialization error: {}", err))
+        Error::Server(format!("JSON serialization/deserialization error: {err}"))
     }
 }
