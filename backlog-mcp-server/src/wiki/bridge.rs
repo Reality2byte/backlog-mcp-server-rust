@@ -1,3 +1,4 @@
+use crate::access_control::AccessControl;
 use crate::error::{Error as McpError, Result};
 use crate::wiki::request::{
     DownloadWikiAttachmentRequest, GetWikiAttachmentListRequest, GetWikiDetailRequest,
@@ -24,6 +25,7 @@ use std::str::FromStr;
 pub(crate) async fn get_wiki_list(
     client: &BacklogApiClient,
     request: GetWikiListRequest,
+    access_control: &AccessControl,
 ) -> Result<serde_json::Value> {
     let wiki_api = client.wiki();
 
@@ -50,12 +52,19 @@ pub(crate) async fn get_wiki_list(
 
     let wikis = wiki_api.get_wiki_list(params).await?;
 
+    // Phase 2: Post-check project access from response
+    // Wiki list might contain wikis from multiple projects
+    for wiki in wikis.iter() {
+        access_control.check_project_access(&wiki.project_id.to_string())?;
+    }
+
     Ok(serde_json::to_value(wikis)?)
 }
 
 pub(crate) async fn get_wiki_detail(
     client: &BacklogApiClient,
     request: GetWikiDetailRequest,
+    access_control: &AccessControl,
 ) -> Result<serde_json::Value> {
     let wiki_api = client.wiki();
     let wiki_id = WikiId::new(request.wiki_id);
@@ -64,15 +73,26 @@ pub(crate) async fn get_wiki_detail(
         .get_wiki_detail(GetWikiDetailParams::new(wiki_id))
         .await?;
 
+    // Phase 2: Post-check project access from response
+    access_control.check_project_access(&wiki_detail.project_id.to_string())?;
+
     Ok(serde_json::to_value(wiki_detail)?)
 }
 
 pub(crate) async fn get_wiki_attachment_list(
     client: &BacklogApiClient,
     request: GetWikiAttachmentListRequest,
+    access_control: &AccessControl,
 ) -> Result<serde_json::Value> {
     let wiki_api = client.wiki();
     let wiki_id = WikiId::new(request.wiki_id);
+
+    // Phase 2: First get wiki details to check project access
+    let wiki_detail = wiki_api
+        .get_wiki_detail(GetWikiDetailParams::new(wiki_id))
+        .await?;
+
+    access_control.check_project_access(&wiki_detail.project_id.to_string())?;
 
     let attachments = wiki_api
         .get_wiki_attachment_list(GetWikiAttachmentListParams::new(wiki_id))
@@ -84,10 +104,18 @@ pub(crate) async fn get_wiki_attachment_list(
 pub(crate) async fn download_wiki_attachment(
     client: &BacklogApiClient,
     request: DownloadWikiAttachmentRequest,
+    access_control: &AccessControl,
 ) -> Result<DownloadedFile> {
     let wiki_api = client.wiki();
     let wiki_id = WikiId::new(request.wiki_id);
     let attachment_id = WikiAttachmentId::new(request.attachment_id);
+
+    // Phase 2: First get wiki details to check project access
+    let wiki_detail = wiki_api
+        .get_wiki_detail(GetWikiDetailParams::new(wiki_id))
+        .await?;
+
+    access_control.check_project_access(&wiki_detail.project_id.to_string())?;
 
     let downloaded_file = wiki_api
         .download_wiki_attachment(DownloadWikiAttachmentParams::new(wiki_id, attachment_id))
@@ -100,9 +128,17 @@ pub(crate) async fn download_wiki_attachment(
 pub(crate) async fn update_wiki(
     client: &BacklogApiClient,
     request: UpdateWikiRequest,
+    access_control: &AccessControl,
 ) -> Result<serde_json::Value> {
     let wiki_api = client.wiki();
     let wiki_id = WikiId::new(request.wiki_id);
+
+    // Phase 2: First get wiki details to check project access
+    let wiki_detail = wiki_api
+        .get_wiki_detail(GetWikiDetailParams::new(wiki_id))
+        .await?;
+
+    access_control.check_project_access(&wiki_detail.project_id.to_string())?;
 
     // Build UpdateWikiParams from request
     let mut params = UpdateWikiParams::new(wiki_id);

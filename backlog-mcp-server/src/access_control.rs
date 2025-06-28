@@ -184,4 +184,47 @@ mod tests {
         assert!(access_control.check_project_access("PROJECT_A").is_ok());
         assert!(access_control.check_project_access("PROJECT_B").is_ok());
     }
+
+    #[test]
+    fn test_access_control_phase2_document_api() {
+        let _lock = TEST_MUTEX.lock().unwrap();
+        unsafe {
+            env::set_var("BACKLOG_PROJECTS", "123456,PROJECT_X");
+        }
+        let access_control = AccessControl::new().unwrap();
+
+        // Simulate checking access after retrieving document with project_id
+        assert!(access_control.check_project_access("123456").is_ok());
+        assert!(access_control.check_project_access("PROJECT_X").is_ok());
+        assert!(access_control.check_project_access("999999").is_err());
+        assert!(access_control.check_project_access("PROJECT_Y").is_err());
+    }
+
+    #[test]
+    fn test_access_control_phase2_wiki_api() {
+        let _lock = TEST_MUTEX.lock().unwrap();
+        unsafe {
+            env::set_var("BACKLOG_PROJECTS", "WIKI_PROJ");
+        }
+        let access_control = AccessControl::new().unwrap();
+
+        // Simulate checking access after retrieving wiki with project_id
+        assert!(access_control.check_project_access("WIKI_PROJ").is_ok());
+        assert!(access_control.check_project_access("OTHER_PROJ").is_err());
+
+        // Check error message contains allowed projects
+        let err = access_control
+            .check_project_access("OTHER_PROJ")
+            .unwrap_err();
+        match err {
+            crate::error::Error::ProjectAccessDenied {
+                project,
+                allowed_projects,
+            } => {
+                assert_eq!(project, "OTHER_PROJ");
+                assert_eq!(allowed_projects, vec!["WIKI_PROJ"]);
+            }
+            _ => panic!("Expected ProjectAccessDenied error"),
+        }
+    }
 }

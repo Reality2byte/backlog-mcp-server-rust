@@ -139,7 +139,12 @@ impl Server {
         &self,
         #[tool(aggr)] request: GetDocumentDetailsRequest,
     ) -> McpResult {
-        let document = document::bridge::get_document_details(self.client.clone(), request).await?;
+        let document = document::bridge::get_document_details(
+            self.client.clone(),
+            request,
+            &self.access_control,
+        )
+        .await?;
         Ok(CallToolResult::success(vec![Content::json(document)?]))
     }
 
@@ -156,9 +161,12 @@ impl Server {
             .map(str::parse::<FileFormat>)
             .transpose()?;
 
-        let file =
-            document::bridge::download_document_attachment_bridge(self.client.clone(), request)
-                .await?;
+        let file = document::bridge::download_document_attachment_bridge(
+            self.client.clone(),
+            request,
+            &self.access_control,
+        )
+        .await?;
 
         let response_data = SerializableFile::new(file, explicit_format)?;
         Ok(CallToolResult::success(vec![response_data.try_into()?]))
@@ -404,14 +412,14 @@ impl Server {
     #[tool(description = "Get detailed information about a specific wiki page.")]
     async fn get_wiki_detail(&self, #[tool(aggr)] request: GetWikiDetailRequest) -> McpResult {
         let client = self.client.lock().await;
-        let detail = wiki::bridge::get_wiki_detail(&client, request).await?;
+        let detail = wiki::bridge::get_wiki_detail(&client, request, &self.access_control).await?;
         Ok(CallToolResult::success(vec![Content::json(detail)?]))
     }
 
     #[tool(description = "Get a list of wiki pages. Can be filtered by project and keyword.")]
     async fn get_wiki_list(&self, #[tool(aggr)] request: GetWikiListRequest) -> McpResult {
         let client = self.client.lock().await;
-        let wikis = wiki::bridge::get_wiki_list(&client, request).await?;
+        let wikis = wiki::bridge::get_wiki_list(&client, request, &self.access_control).await?;
         Ok(CallToolResult::success(vec![Content::json(wikis)?]))
     }
 
@@ -421,7 +429,8 @@ impl Server {
         #[tool(aggr)] request: GetWikiAttachmentListRequest,
     ) -> McpResult {
         let client = self.client.lock().await;
-        let attachments = wiki::bridge::get_wiki_attachment_list(&client, request).await?;
+        let attachments =
+            wiki::bridge::get_wiki_attachment_list(&client, request, &self.access_control).await?;
         Ok(CallToolResult::success(vec![Content::json(attachments)?]))
     }
 
@@ -439,7 +448,8 @@ impl Server {
             .transpose()?;
 
         let client = self.client.lock().await;
-        let file = wiki::bridge::download_wiki_attachment(&client, request).await?;
+        let file =
+            wiki::bridge::download_wiki_attachment(&client, request, &self.access_control).await?;
 
         let response_data = SerializableFile::new(file, explicit_format)?;
         Ok(CallToolResult::success(vec![response_data.try_into()?]))
@@ -451,7 +461,7 @@ impl Server {
     )]
     async fn update_wiki(&self, #[tool(aggr)] request: UpdateWikiRequest) -> McpResult {
         let client = self.client.lock().await;
-        let wiki_detail = wiki::bridge::update_wiki(&client, request).await?;
+        let wiki_detail = wiki::bridge::update_wiki(&client, request, &self.access_control).await?;
         Ok(CallToolResult::success(vec![Content::json(wiki_detail)?]))
     }
 
