@@ -15,10 +15,10 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Write operations** (requires `writable` feature): add_category(), update_category(), delete_category(), add_issue_type(), delete_issue_type(), update_issue_type(), add_version(), update_version(), delete_version(), add_status(), update_status(), delete_status(), update_status_order()
 
 ### backlog-issue (IssueApi)
-- **Implemented**: 18/26 endpoints (69%)
+- **Implemented**: 21/26 endpoints (81%)
 - **Read operations**: get_issue(), get_issue_list(), count_issue(), get_comment_list(), get_comment(), count_comment(), get_attachment_list(), get_attachment_file(), get_shared_file_list(), get_participant_list(), get_comment_notifications()
-- **Write operations** (requires `writable` feature): add_issue(), delete_issue(), update_issue(), add_comment(), delete_comment(), link_shared_files_to_issue(), add_comment_notification()
-- **Custom fields**: add_issue() supports custom fields, update_issue() supports custom fields
+- **Write operations** (requires `writable` feature): add_issue(), delete_issue(), update_issue(), add_comment(), update_comment(), delete_comment(), link_shared_files_to_issue(), add_comment_notification()
+- **Custom fields**: Full type-safe support for all custom field types in add_issue() and update_issue()
 
 ### backlog-file (FileApi)
 - **Implemented**: 2/2 endpoints (100%)
@@ -63,7 +63,9 @@ The Backlog API client now includes comprehensive support for custom fields in i
 ### Supported Operations
 - `add_issue()` supports custom fields through the `custom_fields` parameter in `AddIssueParams`
 - `update_issue()` supports custom fields through the `custom_fields` parameter in `UpdateIssueParams`
+- `get_custom_field_list()` retrieves available custom fields for a project
 - Custom fields are automatically deserialized with proper type safety when retrieving issues
+- MCP server provides AI-friendly custom field transformation
 
 ### Supported custom field types:
 - **Text** - Single-line text field

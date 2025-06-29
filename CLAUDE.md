@@ -229,13 +229,16 @@ cargo fmt --all
 - Update API.md counts after adding endpoints
 
 ## Recent Updates
-- Custom field implementation with type-safe handling
-- ToFormParams macro for automated form serialization
-- Unified file download system in MCP server
-- Comprehensive wiki API support (create, delete, attach files)
-- Issue comment update functionality
-- User management in MCP server
-- MCP server custom field support: get_custom_field_list tool and custom_fields in issue creation/update
+- **Custom Field System**: Full type-safe implementation with `CustomFieldValue`/`CustomFieldInput` enums
+- **ToFormParams Macro**: Procedural macro for automated form parameter serialization
+- **Unified File Downloads**: Intelligent format detection (Image/Text/Raw) across all file operations
+- **Wiki API**: Complete implementation with create/update/delete and file attachment support
+- **Issue API Enhancements**: Comment updates, participant lists, and comment notifications
+- **Date Range Filtering**: Added date-based filtering for issue lists
+- **MCP Server Improvements**: 
+  - AI-friendly custom field transformation
+  - Project-level access control via `BACKLOG_PROJECTS` environment variable
+  - Extended to Document and Wiki modules with access control
 
 ## MCP Server
 - Domain modules: `issue/`, `git/`, `document/`, `project/`, `file/`, `user/`, `wiki/`

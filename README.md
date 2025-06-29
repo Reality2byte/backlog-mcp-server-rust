@@ -5,11 +5,12 @@ This project provides a comprehensive Rust client library, command-line interfac
 ## Key Features
 
 - **Type Safety**: Strongly-typed identifiers and domain-specific enums throughout
-- **Comprehensive API Coverage**: 78+ API endpoints across 8 domain modules
-- **Unified File Downloads**: Intelligent format detection for attachments and shared files
+- **Comprehensive API Coverage**: 80+ API endpoints across 8 domain modules
+- **Custom Field Support**: Full type-safe implementation for all Backlog custom field types
+- **Unified File Downloads**: Intelligent format detection (Image/Text/Raw) for all file operations
 - **Write Operations Support**: Create, update, and delete operations with feature flags
-- **MCP Integration**: AI-friendly tools via Model Context Protocol server
-- **CLI Tool**: Full-featured command-line interface for Backlog operations
+- **MCP Integration**: AI-friendly tools via Model Context Protocol server with custom field transformation
+- **CLI Tool**: Full-featured command-line interface with custom field support
 - **Test-Driven Development**: Comprehensive test coverage with 250+ tests
 
 ## Project Structure
@@ -71,12 +72,12 @@ Model Context Protocol server that exposes Backlog API functionalities as AI-fri
 The library uses Cargo feature flags to enable specific API modules and functionalities:
 
 ### API Module Features
-- **`issue`**: Enable Issue API support (comments, attachments)
-- **`project`**: Enable Project API support (categories, statuses, milestones)
+- **`issue`**: Enable Issue API support (comments, attachments, custom fields)
+- **`project`**: Enable Project API support (categories, statuses, milestones, custom fields)
 - **`space`**: Enable Space API support
 - **`user`**: Enable User API support
 - **`document`**: Enable Document API support
-- **`wiki`**: Enable Wiki API support
+- **`wiki`**: Enable Wiki API support (full CRUD operations)
 - **`git`**: Enable Git repository and Pull Request API support
 - **`file`**: Enable Shared File API support
 
@@ -100,19 +101,22 @@ The project implements **78+ API endpoints** across 8 domain modules with varyin
 
 | Domain | Endpoints | Read Ops | Write Ops | Coverage |
 |--------|-----------|----------|-----------|----------|
-| **Project** | 22 | ✅ Complete | ✅ Full CRUD | 🟢 Extensive |
-| **Git/PR** | 16 | ✅ Complete | ✅ Full CRUD | 🟢 Complete |
-| **Issue** | 14 | ✅ Complete | ✅ Full CRUD | 🟢 Complete |
-| **Wiki** | 8 | ✅ Complete | ✅ Create/Update/Delete | 🟢 Extensive |
-| **Document** | 4 | ✅ Complete | (Read-only API) | 🟢 Read-only |
+| **Project** | 23 | ✅ Complete | ✅ Full CRUD | 🟢 Extensive |
+| **Issue** | 21 | ✅ Complete | ✅ Full CRUD + Custom Fields | 🟢 Complete |
+| **Git/PR** | 15 | ✅ Complete | ✅ Full CRUD | 🟢 Complete |
+| **Wiki** | 15 | ✅ Complete | ✅ Full CRUD | 🟢 Complete |
+| **Document** | 4 | ✅ Complete | (Read-only API) | 🟢 Complete |
 | **User** | 4 | ✅ Complete | ❌ Planned | 🟡 Read-only |
 | **File** | 2 | ✅ Complete | (Read-only API) | 🟢 Complete |
-| **Space** | 2 | ✅ Complete | ❌ Planned | 🟡 Read-only |
+| **Space** | 3 | ✅ Complete | ✅ Attachment upload | 🟡 Limited |
 
 ### Advanced Features
-- **Shared File Integration**: Issues can link to project shared files with type-safe APIs
+- **Custom Field System**: Type-safe handling of all Backlog custom field types with AI-friendly transformation
+- **Shared File Integration**: Issues and wikis can link to project shared files with type-safe APIs
 - **Intelligent Downloads**: Automatic format detection (Image/Text/Raw) for all file operations
-- **Form-Encoded Writes**: Proper `application/x-www-form-urlencoded` handling for all write operations
+- **Form-Encoded Writes**: Proper `application/x-www-form-urlencoded` handling with ToFormParams macro
+- **Access Control**: Project-level access control in MCP server via environment variables
+- **Date Range Filtering**: Advanced date-based filtering for issue lists
 - **Unified Error Handling**: Consistent error types across all domains
 
 ### Example Usage
@@ -201,21 +205,13 @@ blg issue update TEST-123 \
   --custom-field "4:numeric:123.45"
 ```
 
-#### JSON Format for Custom Fields
+## Requirements
 
-Create a `custom_fields.json` file:
-
-```json
-{
-  "1": {"type": "text", "value": "Sample text"},
-  "2": {"type": "numeric", "value": 123.45},
-  "3": {"type": "date", "value": "2024-06-24"},
-  "4": {"type": "single_list", "id": 100, "other_value": "Other"},
-  "5": {"type": "multiple_list", "ids": [100, 200], "other_value": "Other"},
-  "6": {"type": "checkbox", "ids": [10, 20, 30]},
-  "7": {"type": "radio", "id": 400, "other_value": "Other"}
-}
-```
+- **Rust**: MSRV (Minimum Supported Rust Version) is **1.85.0**
+  - Uses Rust 2024 edition features
+  - Required for async/await, procedural macros, and other modern Rust features
+  - The project includes `rust-toolchain.toml` for automatic toolchain management
+- **macOS**: 11.0+ for pre-built binaries (or build from source for older versions)
 
 ## Building and Testing
 
@@ -248,8 +244,11 @@ For specific instructions on building and running the `blg` CLI or the MCP serve
 - **Base64 handling**: Proper encoding for JSON responses containing binary data
 
 ### AI Integration (MCP Server)
-- **30+ AI-friendly tools** for comprehensive Backlog automation
+- **34 AI-friendly tools** for comprehensive Backlog automation
+- **Custom Field Support**: AI-friendly transformation of complex custom field structures
+- **Access Control**: Project-level restrictions via `BACKLOG_PROJECTS` environment variable
 - **JSON Schema**: Full parameter validation and documentation
 - **Writable by default**: Enables AI agents to perform actions, not just queries
+- **Unified File Handling**: Intelligent format detection for all file downloads
 
 This project represents a mature, production-ready Backlog API ecosystem suitable for both direct integration and AI-powered automation workflows.

@@ -36,12 +36,12 @@ The following tools are grouped by their respective modules:
 
 ### Tool Summary
 
-With the default configuration, you'll have access to **33 tools** for comprehensive Backlog automation:
+With the default configuration, you'll have access to **34 tools** for comprehensive Backlog automation:
 
 - **Documents** (3 tools): View document trees, get details, download attachments
 - **Git/Pull Requests** (8 tools): Manage repositories, PRs, comments, and attachments
 - **Issues** (12 tools): View, create, update issues, manage comments, attachments, shared files, and priorities
-- **Projects** (2 tools): Get project status and issue type information
+- **Projects** (3 tools): Get project status, issue types, and custom field definitions
 - **Shared Files** (2 tools): Browse and download project shared files
 - **Users** (1 tool): List space users
 - **Wikis** (5 tools): Manage wiki pages, attachments, and content updates
@@ -131,11 +131,12 @@ The server includes both **read operations** for information gathering and **wri
         -   `project_id_or_key` (Project ID or project key)
         -   `milestone_name` (Milestone name)
 -   **`update_issue`**
-    -   Description: Updates the summary (title) and/or description of a Backlog issue. This tool is only available if the `issue_writable` feature is enabled.
+    -   Description: Updates a Backlog issue including summary, description, and custom fields. This tool is only available if the `issue_writable` feature is enabled.
     -   Input:
         -   `issue_id_or_key` (Issue ID or issue key, e.g., "MYPROJECTKEY-123", "12345")
         -   `summary` (Optional: New summary)
         -   `description` (Optional: New description)
+        -   `custom_fields` (object, optional): Custom field values in AI-friendly format. Each key is the custom field ID, and the value is an object containing the field value in a simplified format.
 -   **`get_issue_comments`**
     -   Description: Gets comments for a specific issue.
     -   Input:
@@ -165,7 +166,7 @@ The server includes both **read operations** for information gathering and **wri
         -   `comment_id` (number, required): The ID of the comment to update.
         -   `content` (string, required): The new content for the comment.
 -   **`add_issue_to_project`**
-    -   Description: Create a new issue in a Backlog project. This tool is only available if the `issue_writable` feature is enabled.
+    -   Description: Create a new issue in a Backlog project with support for custom fields. This tool is only available if the `issue_writable` feature is enabled.
     -   Input:
         -   `project_id` (string, required): The project ID or project key.
         -   `summary` (string, required): The issue title/summary.
@@ -180,6 +181,7 @@ The server includes both **read operations** for information gathering and **wri
         -   `milestone_ids` (array of numbers, optional): List of milestone IDs.
         -   `parent_issue_id` (number, optional): The parent issue ID.
         -   `notified_user_ids` (array of numbers, optional): List of user IDs to notify.
+        -   `custom_fields` (object, optional): Custom field values in AI-friendly format. Each key is the custom field ID, and the value is an object containing the field value in a simplified format.
 -   **`add_comment_to_issue`**
     -   Description: Add a comment to a specific issue. This tool is only available if the `issue_writable` feature is enabled.
     -   Input:
@@ -196,6 +198,9 @@ The server includes both **read operations** for information gathering and **wri
     -   Input: `project_id_or_key` (Project ID or project key)
 -   **`get_project_issue_types`**
     -   Description: Get a list of issue types for a specified project.
+    -   Input: `project_id_or_key` (Project ID or project key)
+-   **`get_custom_field_list`**
+    -   Description: Get a list of custom fields defined for a specified project. Returns details about each custom field including its ID, name, type, and available options.
     -   Input: `project_id_or_key` (Project ID or project key)
 
 ### Shared File Tools
