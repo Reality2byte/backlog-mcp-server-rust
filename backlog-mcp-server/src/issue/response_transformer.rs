@@ -1,6 +1,6 @@
 use backlog_core::identifier::Identifier;
 use backlog_core::{IssueKey, Star, User};
-use backlog_issue::models::{Attachment, CustomFieldTypeId, ExternalFileLink, Issue, SharedFile};
+use backlog_issue::models::{Attachment, ExternalFileLink, Issue, SharedFile};
 use backlog_project::{Category, IssueType, Milestone, Priority, Resolution, Status};
 use serde::Serialize;
 use serde_json::Value;
@@ -56,20 +56,6 @@ pub struct CustomFieldInfo {
     pub other_value: Option<Value>,
 }
 
-/// Convert CustomFieldTypeId enum to readable string
-pub fn custom_field_type_to_string(field_type: &CustomFieldTypeId) -> &'static str {
-    match field_type {
-        CustomFieldTypeId::Text => "text",
-        CustomFieldTypeId::TextArea => "textarea",
-        CustomFieldTypeId::Numeric => "number",
-        CustomFieldTypeId::Date => "date",
-        CustomFieldTypeId::SingleList => "single_list",
-        CustomFieldTypeId::MultipleList => "multiple_list",
-        CustomFieldTypeId::CheckBox => "checkbox",
-        CustomFieldTypeId::Radio => "radio",
-    }
-}
-
 impl From<Issue> for IssueResponse {
     fn from(issue: Issue) -> Self {
         // Transform custom fields array to map
@@ -79,7 +65,7 @@ impl From<Issue> for IssueResponse {
             .map(|cf| {
                 let field_info = CustomFieldInfo {
                     id: cf.id.value(),
-                    field_type_id: custom_field_type_to_string(&cf.field_type_id).to_string(),
+                    field_type_id: cf.field_type_id.to_string(),
                     value: cf.value.clone(),
                     other_value: cf.other_value.clone(),
                 };

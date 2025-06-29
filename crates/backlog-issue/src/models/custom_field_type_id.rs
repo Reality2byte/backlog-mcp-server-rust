@@ -1,4 +1,5 @@
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use std::fmt;
 
 #[cfg(feature = "schemars")]
 use schemars::JsonSchema;
@@ -15,4 +16,20 @@ pub enum CustomFieldTypeId {
     MultipleList = 6,
     CheckBox = 7,
     Radio = 8,
+}
+
+impl fmt::Display for CustomFieldTypeId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            CustomFieldTypeId::Text => "text",
+            CustomFieldTypeId::TextArea => "textarea",
+            CustomFieldTypeId::Numeric => "number",
+            CustomFieldTypeId::Date => "date",
+            CustomFieldTypeId::SingleList => "single_list",
+            CustomFieldTypeId::MultipleList => "multiple_list",
+            CustomFieldTypeId::CheckBox => "checkbox",
+            CustomFieldTypeId::Radio => "radio",
+        };
+        write!(f, "{s}")
+    }
 }

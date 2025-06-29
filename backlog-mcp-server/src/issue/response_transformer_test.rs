@@ -67,39 +67,15 @@ fn create_test_issue() -> Issue {
 }
 
 #[test]
-fn test_custom_field_type_to_string() {
-    assert_eq!(
-        custom_field_type_to_string(&CustomFieldTypeId::Text),
-        "text"
-    );
-    assert_eq!(
-        custom_field_type_to_string(&CustomFieldTypeId::TextArea),
-        "textarea"
-    );
-    assert_eq!(
-        custom_field_type_to_string(&CustomFieldTypeId::Numeric),
-        "number"
-    );
-    assert_eq!(
-        custom_field_type_to_string(&CustomFieldTypeId::Date),
-        "date"
-    );
-    assert_eq!(
-        custom_field_type_to_string(&CustomFieldTypeId::SingleList),
-        "single_list"
-    );
-    assert_eq!(
-        custom_field_type_to_string(&CustomFieldTypeId::MultipleList),
-        "multiple_list"
-    );
-    assert_eq!(
-        custom_field_type_to_string(&CustomFieldTypeId::CheckBox),
-        "checkbox"
-    );
-    assert_eq!(
-        custom_field_type_to_string(&CustomFieldTypeId::Radio),
-        "radio"
-    );
+fn test_custom_field_type_id_display() {
+    assert_eq!(CustomFieldTypeId::Text.to_string(), "text");
+    assert_eq!(CustomFieldTypeId::TextArea.to_string(), "textarea");
+    assert_eq!(CustomFieldTypeId::Numeric.to_string(), "number");
+    assert_eq!(CustomFieldTypeId::Date.to_string(), "date");
+    assert_eq!(CustomFieldTypeId::SingleList.to_string(), "single_list");
+    assert_eq!(CustomFieldTypeId::MultipleList.to_string(), "multiple_list");
+    assert_eq!(CustomFieldTypeId::CheckBox.to_string(), "checkbox");
+    assert_eq!(CustomFieldTypeId::Radio.to_string(), "radio");
 }
 
 #[test]
