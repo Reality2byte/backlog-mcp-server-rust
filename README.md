@@ -135,6 +135,88 @@ cargo build --package mcp-backlog-server
 # backlog-api-client = { path = "path/to/crates/backlog-api-client" }
 ```
 
+### Custom Fields
+
+The Backlog API client provides comprehensive support for custom fields in issues:
+
+#### Library Usage
+
+```rust
+use backlog_api_client::{BacklogApiClient, AddIssueParamsBuilder};
+use backlog_issue::models::CustomFieldInput;
+use backlog_core::identifier::{CustomFieldId, ProjectId};
+use std::collections::HashMap;
+use chrono::NaiveDate;
+
+// Create custom fields map
+let mut custom_fields = HashMap::new();
+
+// Text field
+custom_fields.insert(
+    CustomFieldId::new(1),
+    CustomFieldInput::Text("Sample text".to_string())
+);
+
+// Date field
+custom_fields.insert(
+    CustomFieldId::new(2),
+    CustomFieldInput::Date(NaiveDate::from_ymd_opt(2024, 6, 24).unwrap())
+);
+
+// Single selection list
+custom_fields.insert(
+    CustomFieldId::new(3),
+    CustomFieldInput::SingleList {
+        id: 100,
+        other_value: Some("Additional info".to_string())
+    }
+);
+
+// Create issue with custom fields
+let params = AddIssueParamsBuilder::default()
+    .project_id(ProjectId::new(1))
+    .summary("Issue with custom fields")
+    .custom_fields(custom_fields)
+    .build()?;
+
+let issue = client.issue().add_issue(params).await?;
+```
+
+#### CLI Usage
+
+```bash
+# Create issue with custom fields using individual arguments
+blg issue create --project-id 1 --summary "Test Issue" \
+  --custom-field "1:text:Sample text" \
+  --custom-field "2:date:2024-06-24" \
+  --custom-field "3:single_list:100:Other description"
+
+# Create issue with custom fields using JSON file
+blg issue create --project-id 1 --summary "Test Issue" \
+  --custom-fields-json custom_fields.json
+
+# Update issue with custom fields
+blg issue update TEST-123 \
+  --custom-field "1:text:Updated text" \
+  --custom-field "4:numeric:123.45"
+```
+
+#### JSON Format for Custom Fields
+
+Create a `custom_fields.json` file:
+
+```json
+{
+  "1": {"type": "text", "value": "Sample text"},
+  "2": {"type": "numeric", "value": 123.45},
+  "3": {"type": "date", "value": "2024-06-24"},
+  "4": {"type": "single_list", "id": 100, "other_value": "Other"},
+  "5": {"type": "multiple_list", "ids": [100, 200], "other_value": "Other"},
+  "6": {"type": "checkbox", "ids": [10, 20, 30]},
+  "7": {"type": "radio", "id": 400, "other_value": "Other"}
+}
+```
+
 ## Building and Testing
 
 To build all crates and run tests, you can use the standard Cargo commands from the workspace root:

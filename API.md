@@ -18,6 +18,7 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Implemented**: 18/26 endpoints (69%)
 - **Read operations**: get_issue(), get_issue_list(), count_issue(), get_comment_list(), get_comment(), count_comment(), get_attachment_list(), get_attachment_file(), get_shared_file_list(), get_participant_list(), get_comment_notifications()
 - **Write operations** (requires `writable` feature): add_issue(), delete_issue(), update_issue(), add_comment(), delete_comment(), link_shared_files_to_issue(), add_comment_notification()
+- **Custom fields**: add_issue() supports custom fields, update_issue() supports custom fields
 
 ### backlog-file (FileApi)
 - **Implemented**: 2/2 endpoints (100%)
@@ -52,6 +53,44 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 - **Webhooks**: 0/5 endpoints
 - **Rate Limit**: 0/1 endpoints
 - **OAuth 2.0**: 0/1 endpoints
+
+---
+
+## Custom Field Support
+
+The Backlog API client now includes comprehensive support for custom fields in issues. Custom fields allow you to extend issue tracking with project-specific data.
+
+### Supported Operations
+- `add_issue()` supports custom fields through the `custom_fields` parameter in `AddIssueParams`
+- `update_issue()` supports custom fields through the `custom_fields` parameter in `UpdateIssueParams`
+- Custom fields are automatically deserialized with proper type safety when retrieving issues
+
+### Supported custom field types:
+- **Text** - Single-line text field
+- **TextArea** - Multi-line text field
+- **Numeric** - Numeric values (integers and decimals)
+- **Date** - Date values in YYYY-MM-DD format
+- **SingleList** - Single selection from a predefined list
+- **MultipleList** - Multiple selections from a predefined list
+- **CheckBox** - Multiple checkbox selections
+- **Radio** - Single radio button selection
+
+### Type-Safe Implementation
+The implementation replaces the generic `serde_json::Value` with strongly-typed enums:
+- `CustomFieldValue` for response data (includes full item details)
+- `CustomFieldInput` for request data (uses item IDs)
+
+This ensures compile-time type safety and prevents runtime errors from invalid custom field values.
+
+### CLI Integration
+The CLI supports custom fields through:
+- Individual field arguments: `--custom-field "id:type:value[:other]"`
+- JSON file input: `--custom-fields-json path/to/fields.json`
+
+Example:
+```bash
+blg issue create --project-id 1 --summary "Test" --custom-field "1:text:Sample text" --custom-field "2:date:2024-06-24"
+```
 
 ---
 

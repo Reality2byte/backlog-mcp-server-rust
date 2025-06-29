@@ -49,3 +49,16 @@ backlog-file = { path = "../backlog-file", optional = true }
 backlog-wiki = { path = "../backlog-wiki", optional = true }
 tokio = { workspace = true }
 url = { workspace = true }
+
+# For examples
+chrono = { workspace = true }
+
+[[example]]
+name = "custom_fields_example"
+path = "../../examples/custom_fields_example.rs"
+required-features = ["issue", "issue_writable"]
+
+[[example]]
+name = "custom_fields_simple"
+path = "../../examples/custom_fields_simple.rs"
+required-features = ["issue", "issue_writable"]

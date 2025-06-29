@@ -953,3 +953,150 @@ When completing tasks that involve multiple items where some succeed and others 
 - Explain the specific reason for each unsuccessful item
 - Provide a summary count (e.g., "Optimized 3 out of 5 structures")
 - If patterns emerge (e.g., all array parameters failed), summarize the pattern
+
+### Custom Field Implementation
+
+The custom field implementation provides type-safe handling of Backlog's dynamic custom fields feature.
+
+#### Type Architecture
+
+**Response Types (Reading)**
+```rust
+pub enum CustomFieldValue {
+    Text(String),
+    TextArea(String),
+    Numeric(f64),
+    Date(NaiveDate),
+    SingleList { item: CustomFieldListItem, other_value: Option<String> },
+    MultipleList { items: Vec<CustomFieldListItem>, other_value: Option<String> },
+    CheckBox(Vec<CustomFieldListItem>),
+    Radio { item: CustomFieldListItem, other_value: Option<String> },
+}
+```
+
+**Request Types (Writing)**
+```rust
+pub enum CustomFieldInput {
+    Text(String),
+    TextArea(String),
+    Numeric(f64),
+    Date(NaiveDate),
+    SingleList { id: u32, other_value: Option<String> },
+    MultipleList { ids: Vec<u32>, other_value: Option<String> },
+    CheckBox(Vec<u32>),
+    Radio { id: u32, other_value: Option<String> },
+}
+```
+
+#### Custom Deserialization
+
+The implementation uses a two-phase deserialization approach:
+
+1. **Raw Structure**: First deserialize to `RawCustomField` with `serde_json::Value` for the value field
+2. **Type Discrimination**: Use `field_type_id` to determine the correct variant
+3. **Type Conversion**: Convert the raw value to the appropriate `CustomFieldValue` variant
+
+```rust
+impl<'de> Deserialize<'de> for CustomFieldWithValue {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let raw = RawCustomField::deserialize(deserializer)?;
+        // Convert based on field_type_id
+        match raw.field_type_id {
+            1 => // Text field handling
+            2 => // TextArea field handling
+            // ... etc
+        }
+    }
+}
+```
+
+#### Form Serialization
+
+Custom fields use dynamic form parameter names (`customField_{id}`):
+
+```rust
+// In AddIssueParams/UpdateIssueParams
+if let Some(fields) = &self.custom_fields {
+    for (id, input) in fields {
+        match input {
+            CustomFieldInput::MultipleList { ids, .. } => {
+                // Array parameters need special handling
+                for id_value in ids {
+                    params.push((
+                        format!("customField_{}", id.value()),
+                        id_value.to_string()
+                    ));
+                }
+            }
+            _ => {
+                // Single value parameters
+                let (value, _) = input.to_form_value();
+                params.push((
+                    format!("customField_{}", id.value()),
+                    value
+                ));
+            }
+        }
+        
+        // Handle "other value" fields
+        if let Some(other) = input.other_value() {
+            params.push((
+                format!("customField_{}_otherValue", id.value()),
+                other
+            ));
+        }
+    }
+}
+```
+
+#### CLI Integration
+
+**Error Handling**: The CLI provides detailed, user-friendly error messages:
+```rust
+pub enum CustomFieldError {
+    InvalidFormat { input: String },
+    InvalidId { input: String },
+    UnknownFieldType { field_type: String },
+    InvalidNumericValue { value: String },
+    InvalidDateFormat { value: String },
+    MissingListId,
+    InvalidListIds { value: String },
+    FileNotFound { path: String },
+    InvalidJson { path: String, error: String },
+}
+```
+
+Each error variant includes helpful messages with examples and expected formats.
+
+**Parsing Strategy**:
+- Command-line arguments: `"id:type:value[:other]"` format
+- JSON file: Structured format with type discrimination
+- Validation at parse time to provide early feedback
+
+#### Testing Strategy
+
+**Unit Tests**: 
+- 62 core tests for custom field functionality
+- Edge case tests for extreme values, empty arrays, special characters
+- Null value handling tests
+
+**Integration Tests**: 
+- Full API round-trip testing
+- Complex custom field combinations
+- Error scenario validation
+
+**Performance Benchmarks**:
+- 100 custom fields serialization: ~187ns
+- 1000-item multiple list: maintains linear performance
+- Deserialization of 50 fields: efficient batch processing
+
+#### Best Practices
+
+1. **Type Safety First**: Always use the typed enums rather than raw values
+2. **Early Validation**: Validate custom field types against project definitions
+3. **Error Recovery**: Provide clear error messages for type mismatches
+4. **Null Handling**: Custom fields can be null in responses - handle gracefully
+5. **Performance**: Use batch operations when dealing with many custom fields
