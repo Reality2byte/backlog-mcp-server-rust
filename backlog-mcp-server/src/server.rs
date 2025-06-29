@@ -4,6 +4,7 @@ use crate::issue::request::{AddIssueRequest, UpdateCommentRequest};
 use crate::issue::request::{
     GetIssueCommentsRequest, GetIssueSharedFilesRequest, UpdateIssueRequest,
 };
+use crate::issue::response_transformer::IssueResponse;
 use crate::{
     document::{
         self,
@@ -133,7 +134,10 @@ impl Server {
         let issue =
             issue::bridge::get_issue_details(self.client.clone(), request, &self.access_control)
                 .await?;
-        Ok(CallToolResult::success(vec![Content::json(issue)?]))
+        let issue_response = IssueResponse::from(issue);
+        Ok(CallToolResult::success(vec![Content::json(
+            issue_response,
+        )?]))
     }
 
     #[tool(description = "Get details for a specific Backlog document.
@@ -214,7 +218,11 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(issues)?]))
+        let issue_responses: Vec<IssueResponse> =
+            issues.into_iter().map(IssueResponse::from).collect();
+        Ok(CallToolResult::success(vec![Content::json(
+            issue_responses,
+        )?]))
     }
 
     #[cfg(feature = "issue_writable")]
@@ -223,7 +231,10 @@ impl Server {
         let updated_issue =
             issue::bridge::update_issue_impl(self.client.clone(), request, &self.access_control)
                 .await?;
-        Ok(CallToolResult::success(vec![Content::json(updated_issue)?]))
+        let issue_response = IssueResponse::from(updated_issue);
+        Ok(CallToolResult::success(vec![Content::json(
+            issue_response,
+        )?]))
     }
 
     #[cfg(feature = "issue_writable")]
@@ -250,7 +261,10 @@ impl Server {
         let issue =
             issue::bridge::add_issue_impl(self.client.clone(), request, &self.access_control)
                 .await?;
-        Ok(CallToolResult::success(vec![Content::json(issue)?]))
+        let issue_response = IssueResponse::from(issue);
+        Ok(CallToolResult::success(vec![Content::json(
+            issue_response,
+        )?]))
     }
 
     #[tool(
