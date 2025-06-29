@@ -45,6 +45,10 @@ pub(crate) struct UpdateIssueRequest {
         description = "The new description for the issue. Set to null or omit to keep unchanged."
     )]
     pub description: Option<String>,
+    #[schemars(
+        description = "Optional custom fields as a JSON object mapping field names to values. Use get_custom_field_list to see available fields and their expected formats."
+    )]
+    pub custom_fields: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 impl TryFrom<UpdateIssueRequest> for UpdateIssueParams {
@@ -209,4 +213,8 @@ pub(crate) struct AddIssueRequest {
     pub priority_id: u32,
     #[schemars(description = "Optional description of the issue.")]
     pub description: Option<String>,
+    #[schemars(
+        description = "Optional custom fields as a JSON object mapping field names to values. Use get_custom_field_list to see available fields and their expected formats."
+    )]
+    pub custom_fields: Option<std::collections::HashMap<String, serde_json::Value>>,
 }

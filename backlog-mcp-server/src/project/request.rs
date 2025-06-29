@@ -21,3 +21,11 @@ pub struct GetProjectIssueTypesRequest {
 pub struct GetPrioritiesRequest {
     // No parameters needed for priorities - they are global
 }
+
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct GetCustomFieldListRequest {
+    /// The project ID or project key to retrieve custom fields for.
+    /// Examples: "MYPROJECTKEY", "123".
+    /// Ensure there are no leading or trailing spaces.
+    pub project_id_or_key: String,
+}

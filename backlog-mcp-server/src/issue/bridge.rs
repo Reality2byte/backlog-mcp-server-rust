@@ -119,11 +119,9 @@ pub(crate) async fn update_issue_impl(
     req: UpdateIssueRequest,
     access_control: &AccessControl,
 ) -> Result<Issue> {
-    if req.summary.is_none() && req.description.is_none() {
+    if req.summary.is_none() && req.description.is_none() && req.custom_fields.is_none() {
         return Err(McpError::NothingToUpdate);
     }
-
-    let update_params = UpdateIssueParams::try_from(req.clone())?;
 
     let client_guard = client.lock().await;
 
@@ -131,12 +129,31 @@ pub(crate) async fn update_issue_impl(
     let parsed_issue_id_or_key = IssueIdOrKey::from_str(req.issue_id_or_key.trim())?;
     let issue = client_guard
         .issue()
-        .get_issue(backlog_issue::GetIssueParams::new(parsed_issue_id_or_key))
+        .get_issue(backlog_issue::GetIssueParams::new(
+            parsed_issue_id_or_key.clone(),
+        ))
         .await?;
 
     access_control
         .check_project_access_by_id_async(&issue.project_id, &client_guard)
         .await?;
+
+    // Convert base params
+    let mut update_params = UpdateIssueParams::try_from(req.clone())?;
+
+    // Handle custom fields if provided
+    if let Some(custom_fields_by_name) = req.custom_fields {
+        let project_id_or_key = ProjectIdOrKey::from(issue.project_id);
+        let custom_fields = crate::issue::custom_field_converter::resolve_custom_fields(
+            &client_guard,
+            &project_id_or_key,
+            custom_fields_by_name,
+        )
+        .await?;
+
+        // Set custom fields on params
+        update_params.custom_fields = Some(custom_fields);
+    }
 
     let updated_issue = client_guard.issue().update_issue(update_params).await?;
     Ok(updated_issue)
@@ -350,6 +367,19 @@ pub(crate) async fn add_issue_impl(
 
     if let Some(description) = req.description {
         builder.description(description);
+    }
+
+    // Handle custom fields if provided
+    if let Some(custom_fields_by_name) = req.custom_fields {
+        let project_id_or_key = ProjectIdOrKey::from(project_id);
+        let custom_fields = crate::issue::custom_field_converter::resolve_custom_fields(
+            &client_guard,
+            &project_id_or_key,
+            custom_fields_by_name,
+        )
+        .await?;
+
+        builder.custom_fields(custom_fields);
     }
 
     let params = builder.build()?;

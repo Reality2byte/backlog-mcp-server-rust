@@ -1340,6 +1340,7 @@ dependencies = [
  "backlog-api-client",
  "backlog-core",
  "backlog-file",
+ "backlog-issue",
  "backlog-project",
  "backlog-user",
  "backlog-wiki",

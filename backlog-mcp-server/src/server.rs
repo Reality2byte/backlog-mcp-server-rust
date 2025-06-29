@@ -33,7 +33,10 @@ use crate::{
     },
     project::{
         self,
-        request::{GetPrioritiesRequest, GetProjectIssueTypesRequest, GetProjectStatusListRequest},
+        request::{
+            GetCustomFieldListRequest, GetPrioritiesRequest, GetProjectIssueTypesRequest,
+            GetProjectStatusListRequest,
+        },
     },
     user::{self, request::GetUserListRequest},
     wiki::{
@@ -363,6 +366,20 @@ impl Server {
     async fn get_priorities(&self, #[tool(aggr)] request: GetPrioritiesRequest) -> McpResult {
         let priorities = project::bridge::get_priorities_tool(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(priorities)?]))
+    }
+
+    #[tool(description = "Get a list of custom fields for a specified project with examples.")]
+    async fn get_custom_field_list(
+        &self,
+        #[tool(aggr)] request: GetCustomFieldListRequest,
+    ) -> McpResult {
+        let custom_fields = project::bridge::get_custom_field_list_tool(
+            self.client.clone(),
+            request,
+            &self.access_control,
+        )
+        .await?;
+        Ok(CallToolResult::success(vec![Content::json(custom_fields)?]))
     }
 
     #[tool(description = "Get a list of shared files for a specified project directory.")]

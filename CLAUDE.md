@@ -235,6 +235,7 @@ cargo fmt --all
 - Comprehensive wiki API support (create, delete, attach files)
 - Issue comment update functionality
 - User management in MCP server
+- MCP server custom field support: get_custom_field_list tool and custom_fields in issue creation/update
 
 ## MCP Server
 - Domain modules: `issue/`, `git/`, `document/`, `project/`, `file/`, `user/`, `wiki/`
