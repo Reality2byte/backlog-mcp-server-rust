@@ -64,13 +64,14 @@ impl CustomFieldValue {
                 (item.id.to_string(), other_value.clone())
             }
             CustomFieldValue::MultipleList { items, other_value } => {
-                // For multiple selection, we need to handle this differently in form serialization
-                let ids: Vec<String> = items.iter().map(|item| item.id.to_string()).collect();
-                (ids.join(","), other_value.clone())
+                let id_strings: Vec<String> =
+                    items.iter().map(|item| item.id.to_string()).collect();
+                (id_strings.join(","), other_value.clone())
             }
             CustomFieldValue::CheckBox(items) => {
-                let ids: Vec<String> = items.iter().map(|item| item.id.to_string()).collect();
-                (ids.join(","), None)
+                let id_strings: Vec<String> =
+                    items.iter().map(|item| item.id.to_string()).collect();
+                (id_strings.join(","), None)
             }
             CustomFieldValue::Radio { item, other_value } => {
                 (item.id.to_string(), other_value.clone())

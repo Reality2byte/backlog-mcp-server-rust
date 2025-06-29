@@ -122,6 +122,33 @@ impl CustomFieldSpec {
     }
 }
 
+// Helper functions for parsing IDs
+fn parse_list_ids(value: &str) -> Result<Vec<u32>, CustomFieldError> {
+    if value.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    value
+        .split(',')
+        .map(|id| id.trim().parse::<u32>())
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|_| CustomFieldError::InvalidListIds {
+            value: value.to_string(),
+        })
+}
+
+fn parse_single_id(value: &str) -> Result<u32, CustomFieldError> {
+    if value.is_empty() {
+        return Err(CustomFieldError::MissingListId);
+    }
+
+    value
+        .parse::<u32>()
+        .map_err(|_| CustomFieldError::InvalidListIds {
+            value: value.to_string(),
+        })
+}
+
 /// Parse custom fields from command line argument
 /// Format: "id:type:value" or "id:type:value:other"
 /// Examples:
@@ -173,51 +200,25 @@ pub fn parse_custom_field_arg(
             CustomFieldInput::Date(date)
         }
         "single_list" => {
-            if value.is_empty() {
-                return Err(CustomFieldError::MissingListId);
-            }
-            let id = value
-                .parse::<u32>()
-                .map_err(|_| CustomFieldError::InvalidListIds {
-                    value: value.to_string(),
-                })?;
+            let id = parse_single_id(value)?;
             CustomFieldInput::SingleList {
                 id: CustomFieldItemId::new(id),
                 other_value,
             }
         }
         "multiple_list" => {
-            let ids: Result<Vec<u32>, _> = value
-                .split(',')
-                .map(|id| id.trim().parse::<u32>())
-                .collect();
-            let ids = ids.map_err(|_| CustomFieldError::InvalidListIds {
-                value: value.to_string(),
-            })?;
+            let ids = parse_list_ids(value)?;
             CustomFieldInput::MultipleList {
                 ids: ids.into_iter().map(CustomFieldItemId::new).collect(),
                 other_value,
             }
         }
         "checkbox" => {
-            let ids: Result<Vec<u32>, _> = value
-                .split(',')
-                .map(|id| id.trim().parse::<u32>())
-                .collect();
-            let ids = ids.map_err(|_| CustomFieldError::InvalidListIds {
-                value: value.to_string(),
-            })?;
+            let ids = parse_list_ids(value)?;
             CustomFieldInput::CheckBox(ids.into_iter().map(CustomFieldItemId::new).collect())
         }
         "radio" => {
-            if value.is_empty() {
-                return Err(CustomFieldError::MissingListId);
-            }
-            let id = value
-                .parse::<u32>()
-                .map_err(|_| CustomFieldError::InvalidListIds {
-                    value: value.to_string(),
-                })?;
+            let id = parse_single_id(value)?;
             CustomFieldInput::Radio {
                 id: CustomFieldItemId::new(id),
                 other_value,

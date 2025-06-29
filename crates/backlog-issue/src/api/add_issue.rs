@@ -115,22 +115,26 @@ impl IntoRequest for AddIssueParams {
             for (field_id, input) in custom_fields {
                 let (value, other_value) = input.to_form_value();
 
-                match input {
-                    CustomFieldInput::MultipleList { ids, .. } => {
-                        // Multiple values need to be added as separate parameters
-                        for id in ids {
-                            params.push((format!("customField_{field_id}"), id.to_string()));
-                        }
+                // Handle multiple values differently from single values
+                let requires_multiple_params = matches!(
+                    input,
+                    CustomFieldInput::MultipleList { .. } | CustomFieldInput::CheckBox(_)
+                );
+
+                if requires_multiple_params {
+                    // Extract IDs for multiple value fields
+                    let ids = match input {
+                        CustomFieldInput::MultipleList { ids, .. } => ids,
+                        CustomFieldInput::CheckBox(ids) => ids,
+                        _ => unreachable!(),
+                    };
+
+                    // Add each ID as a separate parameter
+                    for id in ids {
+                        params.push((format!("customField_{field_id}"), id.to_string()));
                     }
-                    CustomFieldInput::CheckBox(ids) => {
-                        // Multiple values need to be added as separate parameters
-                        for id in ids {
-                            params.push((format!("customField_{field_id}"), id.to_string()));
-                        }
-                    }
-                    _ => {
-                        params.push((format!("customField_{field_id}"), value));
-                    }
+                } else {
+                    params.push((format!("customField_{field_id}"), value));
                 }
 
                 if let Some(other) = other_value {
