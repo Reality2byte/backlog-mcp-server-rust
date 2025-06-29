@@ -1,3 +1,4 @@
+use backlog_core::identifier::CustomFieldItemId;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
@@ -9,7 +10,7 @@ use schemars::JsonSchema;
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 pub struct CustomFieldListItem {
     /// The ID of the list item.
-    pub id: u32,
+    pub id: CustomFieldItemId,
     /// The name of the list item.
     pub name: String,
 }
@@ -94,23 +95,23 @@ pub enum CustomFieldInput {
     /// Single selection list field input (TypeId: 5)
     SingleList {
         /// The ID of the selected item
-        id: u32,
+        id: CustomFieldItemId,
         /// Optional "other" value
         other_value: Option<String>,
     },
     /// Multiple selection list field input (TypeId: 6)
     MultipleList {
         /// The IDs of the selected items
-        ids: Vec<u32>,
+        ids: Vec<CustomFieldItemId>,
         /// Optional "other" value
         other_value: Option<String>,
     },
     /// Checkbox field input (TypeId: 7)
-    CheckBox(Vec<u32>),
+    CheckBox(Vec<CustomFieldItemId>),
     /// Radio button field input (TypeId: 8)
     Radio {
         /// The ID of the selected item
-        id: u32,
+        id: CustomFieldItemId,
         /// Optional "other" value
         other_value: Option<String>,
     },
@@ -150,10 +151,10 @@ mod tests {
     #[test]
     fn test_custom_field_list_item() {
         let item = CustomFieldListItem {
-            id: 123,
+            id: CustomFieldItemId::new(123),
             name: "Option A".to_string(),
         };
-        assert_eq!(item.id, 123);
+        assert_eq!(item.id, CustomFieldItemId::new(123));
         assert_eq!(item.name, "Option A");
     }
 
@@ -185,7 +186,7 @@ mod tests {
     #[test]
     fn test_custom_field_value_single_list() {
         let item = CustomFieldListItem {
-            id: 456,
+            id: CustomFieldItemId::new(456),
             name: "Selected Option".to_string(),
         };
         let value = CustomFieldValue::SingleList {
@@ -201,11 +202,11 @@ mod tests {
     fn test_custom_field_value_multiple_list() {
         let items = vec![
             CustomFieldListItem {
-                id: 100,
+                id: CustomFieldItemId::new(100),
                 name: "Option 1".to_string(),
             },
             CustomFieldListItem {
-                id: 200,
+                id: CustomFieldItemId::new(200),
                 name: "Option 2".to_string(),
             },
         ];
@@ -238,7 +239,7 @@ mod tests {
     #[test]
     fn test_custom_field_input_single_list() {
         let input = CustomFieldInput::SingleList {
-            id: 789,
+            id: CustomFieldItemId::new(789),
             other_value: Some("Other description".to_string()),
         };
         let (form_value, other) = input.to_form_value();
@@ -248,7 +249,11 @@ mod tests {
 
     #[test]
     fn test_custom_field_input_checkbox() {
-        let input = CustomFieldInput::CheckBox(vec![10, 20, 30]);
+        let input = CustomFieldInput::CheckBox(vec![
+            CustomFieldItemId::new(10),
+            CustomFieldItemId::new(20),
+            CustomFieldItemId::new(30),
+        ]);
         let (form_value, other) = input.to_form_value();
         assert_eq!(form_value, "10,20,30");
         assert_eq!(other, None);

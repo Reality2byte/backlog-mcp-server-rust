@@ -150,6 +150,7 @@ impl CustomFieldWithValue {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use backlog_core::identifier::CustomFieldItemId;
     use chrono::NaiveDate;
 
     #[test]
@@ -225,7 +226,7 @@ mod tests {
 
         match &field.value {
             CustomFieldValue::SingleList { item, other_value } => {
-                assert_eq!(item.id, 123);
+                assert_eq!(item.id, CustomFieldItemId::new(123));
                 assert_eq!(item.name, "選択肢A");
                 assert_eq!(other_value, &Some("その他の説明".to_string()));
             }
@@ -251,8 +252,8 @@ mod tests {
         match &field.value {
             CustomFieldValue::MultipleList { items, other_value } => {
                 assert_eq!(items.len(), 2);
-                assert_eq!(items[0].id, 100);
-                assert_eq!(items[1].id, 200);
+                assert_eq!(items[0].id, CustomFieldItemId::new(100));
+                assert_eq!(items[1].id, CustomFieldItemId::new(200));
                 assert_eq!(other_value, &None);
             }
             _ => panic!("Expected MultipleList variant"),

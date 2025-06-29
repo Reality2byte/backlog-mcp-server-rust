@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod additional_tests {
     use crate::models::{CustomFieldInput, CustomFieldListItem, CustomFieldValue};
+    use backlog_core::identifier::CustomFieldItemId;
     use chrono::NaiveDate;
 
     // Edge case tests for CustomFieldValue
@@ -67,7 +68,7 @@ mod additional_tests {
     #[test]
     fn test_custom_field_value_single_item_multiple_list() {
         let item = CustomFieldListItem {
-            id: 999,
+            id: CustomFieldItemId::new(999),
             name: "Single Item".to_string(),
         };
         let value = CustomFieldValue::MultipleList {
@@ -82,7 +83,7 @@ mod additional_tests {
     #[test]
     fn test_custom_field_value_list_item_with_empty_name() {
         let item = CustomFieldListItem {
-            id: 123,
+            id: CustomFieldItemId::new(123),
             name: String::new(),
         };
         let value = CustomFieldValue::SingleList {
@@ -97,7 +98,7 @@ mod additional_tests {
     #[test]
     fn test_custom_field_value_radio_with_empty_other() {
         let item = CustomFieldListItem {
-            id: 456,
+            id: CustomFieldItemId::new(456),
             name: "Radio Option".to_string(),
         };
         let value = CustomFieldValue::Radio {
@@ -146,7 +147,11 @@ mod additional_tests {
 
     #[test]
     fn test_custom_field_input_large_id_list() {
-        let ids = vec![u32::MAX, u32::MAX - 1, u32::MAX - 2];
+        let ids = vec![
+            CustomFieldItemId::new(u32::MAX),
+            CustomFieldItemId::new(u32::MAX - 1),
+            CustomFieldItemId::new(u32::MAX - 2),
+        ];
         let input = CustomFieldInput::MultipleList {
             ids,
             other_value: None,
@@ -161,7 +166,7 @@ mod additional_tests {
 
     #[test]
     fn test_custom_field_input_single_checkbox_item() {
-        let input = CustomFieldInput::CheckBox(vec![42]);
+        let input = CustomFieldInput::CheckBox(vec![CustomFieldItemId::new(42)]);
         let (form_value, other) = input.to_form_value();
         assert_eq!(form_value, "42");
         assert_eq!(other, None);
@@ -170,7 +175,7 @@ mod additional_tests {
     #[test]
     fn test_custom_field_input_radio_id_zero() {
         let input = CustomFieldInput::Radio {
-            id: 0,
+            id: CustomFieldItemId::new(0),
             other_value: Some("Zero ID".to_string()),
         };
         let (form_value, other) = input.to_form_value();
@@ -195,7 +200,7 @@ mod additional_tests {
     #[test]
     fn test_custom_field_list_item_clone() {
         let original = CustomFieldListItem {
-            id: 123,
+            id: CustomFieldItemId::new(123),
             name: "Item".to_string(),
         };
         let cloned = original.clone();

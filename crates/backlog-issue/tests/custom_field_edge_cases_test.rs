@@ -1,6 +1,8 @@
 #[cfg(all(test, feature = "writable"))]
 mod custom_field_edge_cases_tests {
-    use backlog_core::identifier::{CustomFieldId, IssueTypeId, PriorityId, ProjectId};
+    use backlog_core::identifier::{
+        CustomFieldId, CustomFieldItemId, IssueTypeId, PriorityId, ProjectId,
+    };
     use backlog_issue::api::{AddIssueParamsBuilder, IssueApi};
     use backlog_issue::models::CustomFieldInput;
     use chrono::NaiveDate;
@@ -384,7 +386,7 @@ mod custom_field_edge_cases_tests {
         let api = IssueApi::new(client);
 
         // Create a list with 100 items
-        let large_ids: Vec<u32> = (1..=100).collect();
+        let large_ids: Vec<CustomFieldItemId> = (1..=100).map(CustomFieldItemId::new).collect();
 
         let response_json = r##"{
             "id": 1,
@@ -508,14 +510,14 @@ mod custom_field_edge_cases_tests {
         custom_fields.insert(
             CustomFieldId::new(14),
             CustomFieldInput::SingleList {
-                id: 100,
+                id: CustomFieldItemId::new(100),
                 other_value: Some("".to_string()),
             },
         );
         custom_fields.insert(
             CustomFieldId::new(15),
             CustomFieldInput::Radio {
-                id: 200,
+                id: CustomFieldItemId::new(200),
                 other_value: Some(
                     "Very long other value text that exceeds normal expectations...".to_string(),
                 ),

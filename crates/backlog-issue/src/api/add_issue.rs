@@ -146,6 +146,7 @@ impl IntoRequest for AddIssueParams {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use backlog_core::identifier::CustomFieldItemId;
     use chrono::{NaiveDate, TimeZone};
 
     // Helper function to get form params including custom fields
@@ -268,7 +269,7 @@ mod tests {
             .custom_field(
                 CustomFieldId::new(30),
                 CustomFieldInput::SingleList {
-                    id: 123,
+                    id: CustomFieldItemId::new(123),
                     other_value: Some("Other description".to_string()),
                 },
             );
@@ -298,7 +299,11 @@ mod tests {
             .custom_field(
                 CustomFieldId::new(40),
                 CustomFieldInput::MultipleList {
-                    ids: vec![100, 200, 300],
+                    ids: vec![
+                        CustomFieldItemId::new(100),
+                        CustomFieldItemId::new(200),
+                        CustomFieldItemId::new(300),
+                    ],
                     other_value: None,
                 },
             );

@@ -1,4 +1,4 @@
-use backlog_core::identifier::CustomFieldId;
+use backlog_core::identifier::{CustomFieldId, CustomFieldItemId};
 use backlog_issue::models::CustomFieldInput;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
@@ -102,18 +102,20 @@ impl CustomFieldSpec {
                 Ok(CustomFieldInput::Date(date))
             }
             CustomFieldSpec::SingleList { id, other_value } => Ok(CustomFieldInput::SingleList {
-                id: *id,
+                id: CustomFieldItemId::new(*id),
                 other_value: other_value.clone(),
             }),
             CustomFieldSpec::MultipleList { ids, other_value } => {
                 Ok(CustomFieldInput::MultipleList {
-                    ids: ids.clone(),
+                    ids: ids.iter().map(|&id| CustomFieldItemId::new(id)).collect(),
                     other_value: other_value.clone(),
                 })
             }
-            CustomFieldSpec::CheckBox { ids } => Ok(CustomFieldInput::CheckBox(ids.clone())),
+            CustomFieldSpec::CheckBox { ids } => Ok(CustomFieldInput::CheckBox(
+                ids.iter().map(|&id| CustomFieldItemId::new(id)).collect(),
+            )),
             CustomFieldSpec::Radio { id, other_value } => Ok(CustomFieldInput::Radio {
-                id: *id,
+                id: CustomFieldItemId::new(*id),
                 other_value: other_value.clone(),
             }),
         }
@@ -179,7 +181,10 @@ pub fn parse_custom_field_arg(
                 .map_err(|_| CustomFieldError::InvalidListIds {
                     value: value.to_string(),
                 })?;
-            CustomFieldInput::SingleList { id, other_value }
+            CustomFieldInput::SingleList {
+                id: CustomFieldItemId::new(id),
+                other_value,
+            }
         }
         "multiple_list" => {
             let ids: Result<Vec<u32>, _> = value
@@ -189,7 +194,10 @@ pub fn parse_custom_field_arg(
             let ids = ids.map_err(|_| CustomFieldError::InvalidListIds {
                 value: value.to_string(),
             })?;
-            CustomFieldInput::MultipleList { ids, other_value }
+            CustomFieldInput::MultipleList {
+                ids: ids.into_iter().map(CustomFieldItemId::new).collect(),
+                other_value,
+            }
         }
         "checkbox" => {
             let ids: Result<Vec<u32>, _> = value
@@ -199,7 +207,7 @@ pub fn parse_custom_field_arg(
             let ids = ids.map_err(|_| CustomFieldError::InvalidListIds {
                 value: value.to_string(),
             })?;
-            CustomFieldInput::CheckBox(ids)
+            CustomFieldInput::CheckBox(ids.into_iter().map(CustomFieldItemId::new).collect())
         }
         "radio" => {
             if value.is_empty() {
@@ -210,7 +218,10 @@ pub fn parse_custom_field_arg(
                 .map_err(|_| CustomFieldError::InvalidListIds {
                     value: value.to_string(),
                 })?;
-            CustomFieldInput::Radio { id, other_value }
+            CustomFieldInput::Radio {
+                id: CustomFieldItemId::new(id),
+                other_value,
+            }
         }
         _ => {
             return Err(CustomFieldError::UnknownFieldType {
@@ -331,7 +342,7 @@ mod tests {
         assert_eq!(id.value(), 4);
         match input {
             CustomFieldInput::SingleList { id, other_value } => {
-                assert_eq!(id, 100);
+                assert_eq!(id, CustomFieldItemId::new(100));
                 assert_eq!(other_value, Some("Other description".to_string()));
             }
             _ => panic!("Expected SingleList variant"),
@@ -346,7 +357,14 @@ mod tests {
         assert_eq!(id.value(), 5);
         match input {
             CustomFieldInput::MultipleList { ids, other_value } => {
-                assert_eq!(ids, vec![100, 200, 300]);
+                assert_eq!(
+                    ids,
+                    vec![
+                        CustomFieldItemId::new(100),
+                        CustomFieldItemId::new(200),
+                        CustomFieldItemId::new(300)
+                    ]
+                );
                 assert_eq!(other_value, None);
             }
             _ => panic!("Expected MultipleList variant"),

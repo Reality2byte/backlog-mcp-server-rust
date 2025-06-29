@@ -1,7 +1,9 @@
 #[cfg(all(test, feature = "writable"))]
 mod custom_field_integration_tests {
     use backlog_core::IssueKey;
-    use backlog_core::identifier::{CustomFieldId, IssueTypeId, PriorityId, ProjectId};
+    use backlog_core::identifier::{
+        CustomFieldId, CustomFieldItemId, IssueTypeId, PriorityId, ProjectId,
+    };
     use backlog_issue::api::{AddIssueParamsBuilder, IssueApi, UpdateIssueParamsBuilder};
     use backlog_issue::models::CustomFieldInput;
     use chrono::NaiveDate;
@@ -92,7 +94,7 @@ mod custom_field_integration_tests {
         custom_fields.insert(
             CustomFieldId::new(30),
             CustomFieldInput::SingleList {
-                id: 123,
+                id: CustomFieldItemId::new(123),
                 other_value: Some("Other description".to_string()),
             },
         );
@@ -188,13 +190,17 @@ mod custom_field_integration_tests {
         custom_fields.insert(
             CustomFieldId::new(40),
             CustomFieldInput::MultipleList {
-                ids: vec![100, 200],
+                ids: vec![CustomFieldItemId::new(100), CustomFieldItemId::new(200)],
                 other_value: None,
             },
         );
         custom_fields.insert(
             CustomFieldId::new(50),
-            CustomFieldInput::CheckBox(vec![10, 20, 30]),
+            CustomFieldInput::CheckBox(vec![
+                CustomFieldItemId::new(10),
+                CustomFieldItemId::new(20),
+                CustomFieldItemId::new(30),
+            ]),
         );
 
         let params = UpdateIssueParamsBuilder::default()
@@ -296,22 +302,25 @@ mod custom_field_integration_tests {
             .custom_field(
                 CustomFieldId::new(5),
                 CustomFieldInput::SingleList {
-                    id: 100,
+                    id: CustomFieldItemId::new(100),
                     other_value: None,
                 },
             )
             .custom_field(
                 CustomFieldId::new(6),
                 CustomFieldInput::MultipleList {
-                    ids: vec![200, 201],
+                    ids: vec![CustomFieldItemId::new(200), CustomFieldItemId::new(201)],
                     other_value: None,
                 },
             )
-            .custom_field(CustomFieldId::new(7), CustomFieldInput::CheckBox(vec![300]))
+            .custom_field(
+                CustomFieldId::new(7),
+                CustomFieldInput::CheckBox(vec![CustomFieldItemId::new(300)]),
+            )
             .custom_field(
                 CustomFieldId::new(8),
                 CustomFieldInput::Radio {
-                    id: 400,
+                    id: CustomFieldItemId::new(400),
                     other_value: None,
                 },
             )

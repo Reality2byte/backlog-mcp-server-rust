@@ -3,7 +3,9 @@ use chrono::NaiveDate;
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 
 #[cfg(feature = "writable")]
-use backlog_core::identifier::{CustomFieldId, IssueTypeId, PriorityId, ProjectId};
+use backlog_core::identifier::{
+    CustomFieldId, CustomFieldItemId, IssueTypeId, PriorityId, ProjectId,
+};
 #[cfg(feature = "writable")]
 use backlog_issue::api::AddIssueParamsBuilder;
 #[cfg(feature = "writable")]
@@ -32,7 +34,11 @@ fn benchmark_custom_field_serialization(c: &mut Criterion) {
             custom_fields.insert(
                 CustomFieldId::new(base_id + 4),
                 CustomFieldInput::MultipleList {
-                    ids: vec![i, i + 100, i + 200],
+                    ids: vec![
+                        CustomFieldItemId::new(i),
+                        CustomFieldItemId::new(i + 100),
+                        CustomFieldItemId::new(i + 200),
+                    ],
                     other_value: None,
                 },
             );
@@ -57,7 +63,7 @@ fn benchmark_custom_field_serialization(c: &mut Criterion) {
         let mut custom_fields = HashMap::new();
 
         // Create a multiple list with 1000 items
-        let large_ids: Vec<u32> = (1..=1000).collect();
+        let large_ids: Vec<CustomFieldItemId> = (1..=1000).map(CustomFieldItemId::new).collect();
         custom_fields.insert(
             CustomFieldId::new(1),
             CustomFieldInput::MultipleList {
@@ -169,16 +175,26 @@ fn benchmark_custom_field_operations(c: &mut Criterion) {
             CustomFieldInput::Numeric(123.456),
             CustomFieldInput::Date(NaiveDate::from_ymd_opt(2024, 6, 24).unwrap()),
             CustomFieldInput::SingleList {
-                id: 100,
+                id: CustomFieldItemId::new(100),
                 other_value: Some("Other".to_string()),
             },
             CustomFieldInput::MultipleList {
-                ids: vec![1, 2, 3, 4, 5],
+                ids: vec![
+                    CustomFieldItemId::new(1),
+                    CustomFieldItemId::new(2),
+                    CustomFieldItemId::new(3),
+                    CustomFieldItemId::new(4),
+                    CustomFieldItemId::new(5),
+                ],
                 other_value: None,
             },
-            CustomFieldInput::CheckBox(vec![10, 20, 30]),
+            CustomFieldInput::CheckBox(vec![
+                CustomFieldItemId::new(10),
+                CustomFieldItemId::new(20),
+                CustomFieldItemId::new(30),
+            ]),
             CustomFieldInput::Radio {
-                id: 200,
+                id: CustomFieldItemId::new(200),
                 other_value: Some("Radio other".to_string()),
             },
         ];

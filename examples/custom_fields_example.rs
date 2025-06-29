@@ -7,7 +7,9 @@
 
 use backlog_api_client::IssueKey;
 use backlog_api_client::client::BacklogApiClient;
-use backlog_core::identifier::{CustomFieldId, Identifier, IssueTypeId, PriorityId, ProjectId};
+use backlog_core::identifier::{
+    CustomFieldId, CustomFieldItemId, Identifier, IssueTypeId, PriorityId, ProjectId,
+};
 use backlog_issue::api::{AddIssueParamsBuilder, UpdateIssueParamsBuilder};
 use backlog_issue::models::{CustomFieldInput, CustomFieldTypeId};
 use chrono::NaiveDate;
@@ -77,7 +79,7 @@ async fn create_issue_with_custom_fields(
     custom_fields.insert(
         CustomFieldId::new(5),
         CustomFieldInput::SingleList {
-            id: 100,
+            id: CustomFieldItemId::new(100),
             other_value: Some("Additional information".to_string()),
         },
     );
@@ -87,7 +89,11 @@ async fn create_issue_with_custom_fields(
     custom_fields.insert(
         CustomFieldId::new(6),
         CustomFieldInput::MultipleList {
-            ids: vec![200, 201, 202],
+            ids: vec![
+                CustomFieldItemId::new(200),
+                CustomFieldItemId::new(201),
+                CustomFieldItemId::new(202),
+            ],
             other_value: Some("Other notes".to_string()),
         },
     );
@@ -96,7 +102,10 @@ async fn create_issue_with_custom_fields(
     // Assuming option IDs 300, 301 exist in your custom field definition
     custom_fields.insert(
         CustomFieldId::new(7),
-        CustomFieldInput::CheckBox(vec![300, 301]),
+        CustomFieldInput::CheckBox(vec![
+            CustomFieldItemId::new(300),
+            CustomFieldItemId::new(301),
+        ]),
     );
 
     // Radio button field (ID: 8)
@@ -104,7 +113,7 @@ async fn create_issue_with_custom_fields(
     custom_fields.insert(
         CustomFieldId::new(8),
         CustomFieldInput::Radio {
-            id: 400,
+            id: CustomFieldItemId::new(400),
             other_value: None,
         },
     );

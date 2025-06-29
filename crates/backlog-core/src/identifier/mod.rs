@@ -87,6 +87,7 @@ impl_identifier!(
     (StarId, u32),
     (SharedFileId, u32),
     (CustomFieldId, u32),
+    (CustomFieldItemId, u32),
     (RepositoryId, u32),
     (PullRequestId, u32),
     (PullRequestCommentId, u32),

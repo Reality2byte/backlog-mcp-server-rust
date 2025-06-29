@@ -3,7 +3,7 @@ mod additional_tests {
     use crate::models::{
         CustomFieldListItem, CustomFieldTypeId, CustomFieldValue, CustomFieldWithValue,
     };
-    use backlog_core::identifier::CustomFieldId;
+    use backlog_core::identifier::{CustomFieldId, CustomFieldItemId};
     use chrono::NaiveDate;
 
     #[test]
@@ -145,7 +145,7 @@ mod additional_tests {
         match &field.value {
             CustomFieldValue::CheckBox(items) => {
                 assert_eq!(items.len(), 1);
-                assert_eq!(items[0].id, 1);
+                assert_eq!(items[0].id, CustomFieldItemId::new(1));
                 assert_eq!(items[0].name, "Option 1");
             }
             _ => panic!("Expected CheckBox variant"),
@@ -164,7 +164,7 @@ mod additional_tests {
         let field: CustomFieldWithValue = serde_json::from_str(json).unwrap();
         match &field.value {
             CustomFieldValue::Radio { item, other_value } => {
-                assert_eq!(item.id, 789);
+                assert_eq!(item.id, CustomFieldItemId::new(789));
                 assert_eq!(item.name, "Selected");
                 assert_eq!(other_value, &None);
             }
@@ -209,7 +209,7 @@ mod additional_tests {
 
         // Test SingleList with other
         let item = CustomFieldListItem {
-            id: 100,
+            id: CustomFieldItemId::new(100),
             name: "Item".to_string(),
         };
         let single_list_field = CustomFieldWithValue {
@@ -239,7 +239,7 @@ mod additional_tests {
         let field: CustomFieldWithValue = serde_json::from_str(json).unwrap();
         match &field.value {
             CustomFieldValue::SingleList { item, other_value } => {
-                assert_eq!(item.id, 123);
+                assert_eq!(item.id, CustomFieldItemId::new(123));
                 assert_eq!(other_value, &None);
             }
             _ => panic!("Expected SingleList variant"),
@@ -259,7 +259,7 @@ mod additional_tests {
         let field: CustomFieldWithValue = serde_json::from_str(json).unwrap();
         match &field.value {
             CustomFieldValue::Radio { item, other_value } => {
-                assert_eq!(item.id, 456);
+                assert_eq!(item.id, CustomFieldItemId::new(456));
                 assert_eq!(other_value, &None);
             }
             _ => panic!("Expected Radio variant"),
