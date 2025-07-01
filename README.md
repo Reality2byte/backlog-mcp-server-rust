@@ -1,254 +1,199 @@
-# Backlog API Client (Rust)
+# Backlog MCP Server (`mcp-backlog-server`)
 
-This project provides a comprehensive Rust client library, command-line interface (CLI), and Model Context Protocol (MCP) server for interacting with the Backlog API.
+`mcp-backlog-server` is a Model Context Protocol (MCP) server for interacting with the Backlog API.
+This server allows MCP-compatible clients (such as AI assistants) to utilize Backlog functionalities.
 
-## Key Features
+## Example Configuration for MCP Client
 
-- **Type Safety**: Strongly-typed identifiers and domain-specific enums throughout
-- **Comprehensive API Coverage**: 80+ API endpoints across 8 domain modules
-- **Custom Field Support**: Full type-safe implementation for all Backlog custom field types
-- **Unified File Downloads**: Intelligent format detection (Image/Text/Raw) for all file operations
-- **Write Operations Support**: Create, update, and delete operations with feature flags
-- **MCP Integration**: AI-friendly tools via Model Context Protocol server with custom field transformation
-- **CLI Tool**: Full-featured command-line interface with custom field support
-- **Test-Driven Development**: Comprehensive test coverage with 250+ tests
+### Claude Desktop Configuration
 
-## Project Structure
+Add the following to your Claude Desktop MCP configuration:
 
-The workspace follows a clear separation between deliverables and internal libraries:
-
-```
-cli/                        # CLI application (`blg` binary)
-backlog-mcp-server/         # Model Context Protocol server for AI integration
-crates/                     # Internal library crates
-├── backlog-api-client/     # Main library facade (aggregates all API modules)
-├── backlog-core/           # Core types and identifiers shared across all modules
-├── backlog-api-core/       # Common API utilities and error types
-├── backlog-api-macros/     # Procedural macros for API parameter serialization
-├── backlog-domain-models/  # Shared domain models (Priority, Status, Category, etc.)
-├── backlog-issue/          # Issue management API
-├── backlog-project/        # Project management API
-├── backlog-space/          # Space management API
-├── backlog-user/           # User management API
-├── backlog-document/       # Document API
-├── backlog-wiki/           # Wiki API (full CRUD operations and file attachment)
-├── backlog-git/            # Git repository and Pull Request API
-├── backlog-file/           # Shared file API
-└── client/                 # Generic HTTP client wrapper
-```
-
-### Applications
-
-#### CLI (`cli/`)
-Command-line interface for Backlog API operations. The `blg` binary provides a user-friendly way to interact with Backlog from the terminal.
-
-#### MCP Server (`backlog-mcp-server/`)
-Model Context Protocol server that exposes Backlog API functionalities as AI-friendly tools with unified file download capabilities.
-
-### Internal Libraries (`crates/`)
-
-#### Main Library
-- **`backlog-api-client/`**: The primary library crate that aggregates all API modules and provides a unified client interface.
-
-#### Core Libraries
-- **`backlog-core/`**: Defines fundamental data structures, newtype identifiers (e.g., `ProjectId`, `IssueKey`, `SharedFileId`), and shared enums (`FileType`, etc.).
-- **`backlog-api-core/`**: Provides core utilities shared across API client modules, such as common error types and result aliases.
-- **`backlog-domain-models/`**: Contains shared domain models (e.g., `Priority`, `Resolution`, `Status`, `Category`, `IssueType`, `Milestone`).
-- **`client/`**: A foundational crate providing a generic HTTP client wrapper (around `reqwest`) and shared test utilities.
-- **`backlog-api-macros/`**: Procedural macros for API parameter serialization
-
-#### API Domain Modules
-- **`backlog-document/`**: Document API endpoints (4 endpoints) - document tree navigation and attachment downloads.
-- **`backlog-file/`**: Shared File API endpoints (2 endpoints) - project file management with type-safe directory/file distinction.
-- **`backlog-git/`**: Git repository and Pull Request API endpoints (16 endpoints) - complete Git workflow including PR management.
-- **`backlog-issue/`**: Issue management API endpoints (14 endpoints) - comprehensive issue lifecycle and shared file linking.
-- **`backlog-project/`**: Project management API endpoints (22 endpoints) - most extensive API covering categories, statuses, versions, issue types.
-- **`backlog-space/`**: Space API endpoints (2 endpoints) - basic space information.
-- **`backlog-user/`**: User management API endpoints (4 endpoints) - user information and icons.
-- **`backlog-wiki/`**: Wiki API endpoints (8 endpoints) - wiki pages with full CRUD operations, attachment management, and file attachment capabilities.
-
-## Feature Flags
-
-The library uses Cargo feature flags to enable specific API modules and functionalities:
-
-### API Module Features
-- **`issue`**: Enable Issue API support (comments, attachments, custom fields)
-- **`project`**: Enable Project API support (categories, statuses, milestones, custom fields)
-- **`space`**: Enable Space API support
-- **`user`**: Enable User API support
-- **`document`**: Enable Document API support
-- **`wiki`**: Enable Wiki API support (full CRUD operations)
-- **`git`**: Enable Git repository and Pull Request API support
-- **`file`**: Enable Shared File API support
-
-### Writable Features
-By default, only read operations are enabled. To enable write operations (create, update, delete), use the corresponding `*_writable` features:
-- **`issue_writable`**: Enable write operations for issues (add, update, delete issues and comments, link shared files)
-- **`project_writable`**: Enable write operations for projects (add, update, delete categories, statuses, versions, issue types)
-- **`git_writable`**: Enable write operations for Git/PR (add, update pull requests and comments, delete attachments)
-- **`wiki_writable`**: Enable write operations for wikis (update wiki pages with name, content, and email notifications)
-- **`space_writable`**: Enable write operations for space (planned feature)
-- **`user_writable`**: Enable write operations for users (planned feature)
-- **`all_writable`**: Enable all write operations
-
-### Additional Features
-- **`schemars`**: Enable JSON Schema generation support (useful for MCP server)
-
-## API Implementation Status
-
-### Comprehensive API Coverage
-The project implements **78+ API endpoints** across 8 domain modules with varying levels of completeness:
-
-| Domain | Endpoints | Read Ops | Write Ops | Coverage |
-|--------|-----------|----------|-----------|----------|
-| **Project** | 23 | ✅ Complete | ✅ Full CRUD | 🟢 Extensive |
-| **Issue** | 21 | ✅ Complete | ✅ Full CRUD + Custom Fields | 🟢 Complete |
-| **Git/PR** | 15 | ✅ Complete | ✅ Full CRUD | 🟢 Complete |
-| **Wiki** | 15 | ✅ Complete | ✅ Full CRUD | 🟢 Complete |
-| **Document** | 4 | ✅ Complete | (Read-only API) | 🟢 Complete |
-| **User** | 4 | ✅ Complete | ❌ Planned | 🟡 Read-only |
-| **File** | 2 | ✅ Complete | (Read-only API) | 🟢 Complete |
-| **Space** | 3 | ✅ Complete | ✅ Attachment upload | 🟡 Limited |
-
-### Advanced Features
-- **Custom Field System**: Type-safe handling of all Backlog custom field types with AI-friendly transformation
-- **Shared File Integration**: Issues and wikis can link to project shared files with type-safe APIs
-- **Intelligent Downloads**: Automatic format detection (Image/Text/Raw) for all file operations
-- **Form-Encoded Writes**: Proper `application/x-www-form-urlencoded` handling with ToFormParams macro
-- **Access Control**: Project-level access control in MCP server via environment variables
-- **Date Range Filtering**: Advanced date-based filtering for issue lists
-- **Unified Error Handling**: Consistent error types across all domains
-
-### Example Usage
-
-```bash
-# Build CLI with default features (includes all writable operations)
-cargo build --package blg
-
-# Build CLI with specific features only
-cargo build --package blg --features "git issue project space wiki"
-
-# Build CLI with specific writable operations
-cargo build --package blg --features "git git_writable issue issue_writable project project_writable wiki wiki_writable"
-
-# Build MCP server (includes issue_writable, git_writable, wiki_writable by default)
-cargo build --package mcp-backlog-server
-
-# Use the library in your own project
-# Add to Cargo.toml:
-# backlog-api-client = { path = "path/to/crates/backlog-api-client" }
-```
-
-### Custom Fields
-
-The Backlog API client provides comprehensive support for custom fields in issues:
-
-#### Library Usage
-
-```rust
-use backlog_api_client::{BacklogApiClient, AddIssueParamsBuilder};
-use backlog_issue::models::CustomFieldInput;
-use backlog_core::identifier::{CustomFieldId, ProjectId};
-use std::collections::HashMap;
-use chrono::NaiveDate;
-
-// Create custom fields map
-let mut custom_fields = HashMap::new();
-
-// Text field
-custom_fields.insert(
-    CustomFieldId::new(1),
-    CustomFieldInput::Text("Sample text".to_string())
-);
-
-// Date field
-custom_fields.insert(
-    CustomFieldId::new(2),
-    CustomFieldInput::Date(NaiveDate::from_ymd_opt(2024, 6, 24).unwrap())
-);
-
-// Single selection list
-custom_fields.insert(
-    CustomFieldId::new(3),
-    CustomFieldInput::SingleList {
-        id: 100,
-        other_value: Some("Additional info".to_string())
+```json
+{
+  "mcpServers": {
+    "backlog_mcp_server": {
+      "autoApprove": [],
+      "disabled": false,
+      "timeout": 60,
+      "command": "/path/to/target/release/mcp-backlog-server",
+      "args": [],
+      "env": {
+        "BACKLOG_BASE_URL": "https://your-space.backlog.com",
+        "BACKLOG_API_KEY": "YOUR_BACKLOG_API_KEY",
+        "BACKLOG_PROJECTS": "PROJ,DEMO"
+      },
+      "transportType": "stdio"
     }
-);
-
-// Create issue with custom fields
-let params = AddIssueParamsBuilder::default()
-    .project_id(ProjectId::new(1))
-    .summary("Issue with custom fields")
-    .custom_fields(custom_fields)
-    .build()?;
-
-let issue = client.issue().add_issue(params).await?;
+  }
+}
 ```
 
-#### CLI Usage
+### Gemini CLI
+
+`~/.gemini/settings.json`:
+```
+
+{
+  "mcpServers": {
+    "backlog_mcp_server": {
+      "command": "/path/to/target/release/mcp-backlog-server",
+      "timeout": 10000,
+      "args": [],
+      "env": {
+        "BACKLOG_BASE_URL": "https://your-space.backlog.com",
+        "BACKLOG_API_KEY": "YOUR_BACKLOG_API_KEY",
+        "BACKLOG_PROJECTS": "PROJ,DEMO"
+      }
+    }
+  }
+}
+```
+
+Note: Domain name must be: `backlog.com`, `backlog.jp` or `backlogtool.com`
+
+## Available Tools
+
+The following tools are grouped by their respective modules:
+
+### Tool Summary
+
+With the default configuration, you have access to **34 tools** for Backlog automation:
+
+- **Documents** (3 tools): View document trees, get details, download attachments
+- **Git/Pull Requests** (8 tools): Manage repositories, PRs, comments, and attachments
+- **Issues** (12 tools): View, create, update issues, manage comments, attachments, shared files, and priorities
+- **Projects** (3 tools): Get project status, issue types, and custom field definitions
+- **Shared Files** (2 tools): Browse and download project shared files
+- **Users** (1 tool): List space users
+- **Wikis** (5 tools): Manage wiki pages, attachments, and content updates
+
+The server includes both **read operations** for information gathering and **write operations** for taking actions.
+
+### Document Tools
+-   **`get_document_details`**: Retrieves details for a specific Backlog document
+-   **`download_document_attachment`**: Download a document attachment
+-   **`get_document_tree`**: Get the document tree for a specified project
+
+### Git Tools
+-   **`get_repository_list`**: Get a list of Git repositories for a specified project
+-   **`get_repository_details`**: Get details for a specific Git repository
+-   **`get_pull_request_list`**: Get a list of pull requests for a specified repository
+-   **`get_pull_request_details`**: Get details for a specific pull request
+-   **`get_pull_request_attachment_list`**: Get a list of attachments for a specific pull request
+-   **`get_pull_request_comment_list`**: Get a list of comments for a specific pull request
+-   **`download_pull_request_attachment`**: Download a pull request attachment
+-   **`add_pull_request_comment`**: Add a comment to a specific pull request
+
+### Issue Tools
+-   **`get_issue_details`**: Retrieves details for a specific Backlog issue
+-   **`get_version_milestone_list`**: Retrieves a list of versions (milestones) for a specified project
+-   **`get_issues_by_milestone_name`**: Retrieves a list of issues associated with a specified milestone
+-   **`update_issue`**: Updates a Backlog issue including summary, description, and custom fields
+-   **`get_issue_comments`**: Gets comments for a specific issue
+-   **`get_issue_attachment_list`**: Get a list of attachments for a specified issue
+-   **`download_issue_attachment`**: Download an issue attachment
+-   **`get_issue_shared_files`**: Get a list of shared files linked to a specified issue
+-   **`update_issue_comment`**: Update an existing comment on a Backlog issue
+-   **`add_issue_to_project`**: Create a new issue in a Backlog project with support for custom fields
+-   **`add_comment_to_issue`**: Add a comment to a specific issue
+-   **`get_priorities`**: Get a list of priority types available in the space
+
+### Project Tools
+-   **`get_project_status_list`**: Get a list of statuses for a specified project
+-   **`get_project_issue_types`**: Get a list of issue types for a specified project
+-   **`get_custom_field_list`**: Get a list of custom fields defined for a specified project
+
+### Shared File Tools
+-   **`get_shared_files_list`**: Get a list of shared files for a specified project directory
+-   **`download_shared_file`**: Download a shared file
+
+### User Tools
+-   **`get_user_list`**: Get a list of users in the space
+
+### Wiki Tools
+-   **`get_wiki_list`**: Get a list of wiki pages
+-   **`get_wiki_detail`**: Get detailed information about a specific wiki page
+-   **`get_wiki_attachment_list`**: Get a list of attachments for a specified wiki page
+-   **`download_wiki_attachment`**: Download an attachment from a wiki page
+-   **`update_wiki`**: Update a wiki page
+
+## File Download Features
+
+All file download tools (`download_document_attachment`, `download_issue_attachment`, `download_pull_request_attachment`, `download_wiki_attachment`, and `download_shared_file`) support format detection and handling:
+
+### Format Detection
+- **Images**: Files with `image/*` content type are detected and returned as base64-encoded images via `rmcp::model::Content::image`
+- **Text**: Files with text-based content types (`text/*`, `application/json`, `application/xml`, etc.) or files that contain valid UTF-8 text are returned as plain text via `rmcp::model::Content::text`
+- **Raw bytes**: All other files are returned as JSON objects with base64-encoded content, filename, and MIME type
+
+### Manual Format Override
+You can explicitly specify the format using the optional `format` parameter:
+- `"image"`: Force treatment as an image (validates content type)
+- `"text"`: Force treatment as text (validates UTF-8 encoding)
+- `"raw"`: Force treatment as raw bytes (no validation)
+
+### Content Type Detection
+The system uses multiple strategies to determine if a file is text:
+- Content-Type header analysis
+- UTF-8 validity checking
+- Character composition analysis (graphic, whitespace, and valid UTF-8 characters)
+
+## How to Build
 
 ```bash
-# Create issue with custom fields using individual arguments
-blg issue create --project-id 1 --summary "Test Issue" \
-  --custom-field "1:text:Sample text" \
-  --custom-field "2:date:2024-06-24" \
-  --custom-field "3:single_list:100:Other description"
-
-# Create issue with custom fields using JSON file
-blg issue create --project-id 1 --summary "Test Issue" \
-  --custom-fields-json custom_fields.json
-
-# Update issue with custom fields
-blg issue update TEST-123 \
-  --custom-field "1:text:Updated text" \
-  --custom-field "4:numeric:123.45"
+# Default build (includes all writable features)
+cargo build --package mcp-backlog-server
 ```
 
-## Requirements
+### Feature Flags
 
-- **Rust**: MSRV (Minimum Supported Rust Version) is **1.85.0**
-  - Uses Rust 2024 edition features
-  - Required for async/await, procedural macros, and other modern Rust features
-  - The project includes `rust-toolchain.toml` for automatic toolchain management
-- **macOS**: 11.0+ for pre-built binaries (or build from source for older versions)
+The MCP server supports multiple feature flags to enable different write operations:
 
-## Building and Testing
+-   **`issue_writable`** (enabled by default)
+    -   Enables: `update_issue`, `update_issue_comment`, `add_issue_to_project`, and `add_comment_to_issue` tools
+    -   Allows AI agents to create issues, modify issue content, and manage comments
 
-To build all crates and run tests, you can use the standard Cargo commands from the workspace root:
+-   **`git_writable`** (enabled by default)
+    -   Enables: `add_pull_request_comment` tool
+    -   Allows AI agents to add comments to pull requests
+
+-   **`wiki_writable`** (enabled by default)
+    -   Enables: `update_wiki` tool
+    -   Allows AI agents to update wiki page content, names, and notification settings
+
+### Build Configuration
 
 ```bash
-cargo check --all-targets --all-features
-cargo test --all-features --all-targets
-cargo clippy --all-features --all-targets -- -D warnings 
-cargo fmt --all
+# Read-only mode (no write operations)
+cargo build --package mcp-backlog-server --no-default-features
+
+# Selective features
+cargo build --package mcp-backlog-server --features issue_writable
+cargo build --package mcp-backlog-server --features "issue_writable,git_writable"
+cargo build --package mcp-backlog-server --features "issue_writable,git_writable,wiki_writable"
 ```
 
-For specific instructions on building and running the `blg` CLI or the MCP server, please refer to the README files within their respective directories (`cli/README.md` and `backlog-mcp-server/README.md`).
+## Configuration
 
-## Architecture Highlights
+To run this server, the following environment variables must be set:
 
-### Type Safety & Domain Design
-- **Strongly-typed identifiers**: `ProjectId`, `IssueKey`, `SharedFileId`, `WikiId`, etc.
-- **Domain separation**: Each API domain is its own crate with clear boundaries
-- **Shared models**: Common domain models centralized to avoid duplication
+-   `BACKLOG_BASE_URL`: The URL of your Backlog space (e.g., `https://your-space.backlog.com`)
+-   `BACKLOG_API_KEY`: Your Backlog API key. You can issue one from your personal settings page in Backlog.
 
-### Test-Driven Development
-- **250+ comprehensive tests** covering success, error, and edge cases
-- **Mock-based testing** using `wiremock` for reliable unit tests
-- **Integration testing** with real Backlog API instances
+Optional environment variables:
 
-### File Management Innovation
-- **Unified download system**: Single API for all file types with automatic format detection
-- **Content-type analysis**: Intelligent Image/Text/Raw classification
-- **Base64 handling**: Proper encoding for JSON responses containing binary data
+-   `BACKLOG_PROJECTS`: Comma-separated list of allowed project keys (e.g., `MFP,DEMO,TEST`). When set, the server will only allow access to the specified projects. If not set, all projects accessible with the API key are available.
 
-### AI Integration (MCP Server)
-- **34 AI-friendly tools** for comprehensive Backlog automation
-- **Custom Field Support**: AI-friendly transformation of complex custom field structures
-- **Access Control**: Project-level restrictions via `BACKLOG_PROJECTS` environment variable
-- **JSON Schema**: Full parameter validation and documentation
-- **Writable by default**: Enables AI agents to perform actions, not just queries
-- **Unified File Handling**: Intelligent format detection for all file downloads
+These environment variables are expected to be passed by the MCP client system when launching the server.
 
-This project represents a mature, production-ready Backlog API ecosystem suitable for both direct integration and AI-powered automation workflows.
+### Run (for local testing)
+
+After setting the environment variables, you can run the server directly with the following command:
+
+```bash
+# Default run with all features
+BACKLOG_BASE_URL="https://your-space.backlog.com" \
+BACKLOG_API_KEY="your_backlog_api_key" \
+cargo run --package mcp-backlog-server
+```
