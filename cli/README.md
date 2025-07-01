@@ -30,7 +30,7 @@ cargo build --features "git issue project space"
 cargo build --features "git git_writable issue issue_writable project project_writable space wiki wiki_writable" 
 ```
 
-The `git`, `issue`, `project`, `space`, and `wiki` features are required to build the `blg` binary with full functionality. Add `project_writable` for project management operations like category creation/deletion, `issue_writable` for issue operations like linking shared files, `git_writable` for pull request update operations, and `wiki_writable` for wiki page update operations. The executable will be located at `target/debug/blg` (or `target/release/blg` if you add `--release`).
+The `git`, `issue`, `project`, `space`, and `wiki` features are required to build the `blg` binary with functionality. Add `project_writable` for project management operations like category creation/deletion, `issue_writable` for issue operations like linking shared files, `git_writable` for pull request update operations, and `wiki_writable` for wiki page update operations. The executable will be located at `target/debug/blg` (or `target/release/blg` if you add `--release`).
 
 ## Configuration
 
