@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct Issue {
     pub id: IssueId,
-    pub projectId: ProjectId,
+    pub project_id: ProjectId,
     pub issue_key: IssueKey,
     pub key_id: u32,
     pub issue_type: Box<IssueType>,
