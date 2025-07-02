@@ -48,6 +48,7 @@ use backlog_project::{
     UpdateCategoryParams, UpdateIssueTypeParams, UpdateStatusOrderParams, UpdateStatusParams,
     UpdateVersionParams,
 };
+use backlog_space::GetLicenceParams;
 use backlog_space::GetSpaceDiskUsageParams;
 use backlog_space::GetSpaceLogoParams;
 #[cfg(feature = "space_writable")]
@@ -648,6 +649,12 @@ enum SpaceCommands {
     },
     /// Get space disk usage
     DiskUsage {
+        /// Output format (table or json)
+        #[clap(short, long, default_value = "table")]
+        format: String,
+    },
+    /// Get licence information
+    Licence {
         /// Output format (table or json)
         #[clap(short, long, default_value = "table")]
         format: String,
@@ -2522,9 +2529,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 } else {
                                     format!("{:.2} {}", size, UNITS[unit_index])
                                 };
-                                
+
                                 if bytes < 0 {
-                                    format!("-{}", formatted)
+                                    format!("-{formatted}")
                                 } else {
                                     formatted
                                 }
@@ -2601,6 +2608,74 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         if e.to_string().contains("403") {
                             eprintln!(
                                 "Note: Administrator permissions are required to access disk usage information."
+                            );
+                        }
+                    }
+                }
+            }
+            SpaceCommands::Licence { format } => {
+                match client.space().get_licence(GetLicenceParams::new()).await {
+                    Ok(licence) => {
+                        if format == "json" {
+                            println!("{}", serde_json::to_string_pretty(&licence).unwrap());
+                        } else {
+                            // Table format
+                            println!("Space Licence Information");
+                            println!("========================");
+                            println!(
+                                "Status: {}",
+                                if licence.active { "Active" } else { "Inactive" }
+                            );
+                            println!("Licence Type ID: {}", licence.licence_type_id);
+                            println!();
+                            println!("Limits:");
+                            println!("- Users:         {} users", licence.user_limit);
+                            println!("- Projects:      {} projects", licence.project_limit);
+                            println!("- Issues:        {} issues", licence.issue_limit);
+                            println!(
+                                "- Storage:       {} GB",
+                                licence.storage_limit / 1_073_741_824
+                            );
+                            println!();
+                            println!("Features:");
+                            println!("- Git:           {}", if licence.git { "✓" } else { "✗" });
+                            println!(
+                                "- Subversion:    {}",
+                                if licence.subversion { "✓" } else { "✗" }
+                            );
+                            println!("- Gantt Chart:   {}", if licence.gantt { "✓" } else { "✗" });
+                            println!(
+                                "- Burndown:      {}",
+                                if licence.burndown { "✓" } else { "✗" }
+                            );
+                            println!(
+                                "- Wiki:          {}",
+                                if licence.wiki_attachment {
+                                    "✓"
+                                } else {
+                                    "✗"
+                                }
+                            );
+                            println!(
+                                "- File Sharing:  {}",
+                                if licence.file_sharing { "✓" } else { "✗" }
+                            );
+                            println!();
+                            if let Some(started_on) = licence.started_on {
+                                println!("Started On:  {}", started_on.format("%Y-%m-%d"));
+                            }
+                            if let Some(limit_date) = licence.limit_date {
+                                println!("Expires On:  {}", limit_date.format("%Y-%m-%d"));
+                            } else {
+                                println!("Expires On:  Unlimited");
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error getting licence information: {e}");
+                        if e.to_string().contains("401") {
+                            eprintln!(
+                                "Note: Authentication is required to access licence information."
                             );
                         }
                     }

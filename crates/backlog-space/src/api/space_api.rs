@@ -2,8 +2,8 @@ use backlog_api_core::Result;
 use client::Client;
 
 use crate::api::{
-    GetSpaceDiskUsageParams, GetSpaceDiskUsageResponse, GetSpaceLogoParams, GetSpaceLogoResponse,
-    GetSpaceParams, GetSpaceResponse,
+    GetLicenceParams, GetLicenceResponse, GetSpaceDiskUsageParams, GetSpaceDiskUsageResponse,
+    GetSpaceLogoParams, GetSpaceLogoResponse, GetSpaceParams, GetSpaceResponse,
 };
 #[cfg(feature = "writable")]
 use crate::api::{UploadAttachmentParams, UploadAttachmentResponse};
@@ -33,6 +33,12 @@ impl SpaceApi {
         &self,
         params: GetSpaceDiskUsageParams,
     ) -> Result<GetSpaceDiskUsageResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Get licence information
+    /// Corresponds to `GET /api/v2/space/licence`.
+    pub async fn get_licence(&self, params: GetLicenceParams) -> Result<GetLicenceResponse> {
         self.0.execute(params).await
     }
 

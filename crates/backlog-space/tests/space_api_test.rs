@@ -1,7 +1,9 @@
 mod common;
 
 use backlog_core::identifier::Identifier;
-use backlog_space::api::{GetSpaceDiskUsageParams, GetSpaceLogoParams, GetSpaceParams};
+use backlog_space::api::{
+    GetLicenceParams, GetSpaceDiskUsageParams, GetSpaceLogoParams, GetSpaceParams,
+};
 use common::*;
 use wiremock::MockServer;
 
@@ -185,4 +187,140 @@ async fn test_get_space_disk_usage_with_negative_values() {
     let disk_usage = result.unwrap();
     assert_eq!(disk_usage.issue, -2610477);
     assert_eq!(disk_usage.details[0].issue, -1000000);
+}
+
+#[tokio::test]
+async fn test_get_licence_success() {
+    let server = MockServer::start().await;
+    let space_api = setup_space_api(&server).await;
+
+    let mock_response = serde_json::json!({
+        "active": true,
+        "attachmentLimit": 1073741824i64,
+        "attachmentLimitPerFile": 268435456i64,
+        "attachmentNumLimit": 1000,
+        "attribute": true,
+        "attributeLimit": 100,
+        "burndown": true,
+        "commentLimit": 100000,
+        "componentLimit": 1000,
+        "fileSharing": true,
+        "gantt": true,
+        "git": true,
+        "issueLimit": 1000000,
+        "licenceTypeId": 1,
+        "limitDate": "2025-12-31T23:59:59Z",
+        "nulabAccount": true,
+        "parentChildIssue": true,
+        "postIssueByMail": false,
+        "projectLimit": 100,
+        "pullRequestAttachmentLimitPerFile": 268435456i64,
+        "pullRequestAttachmentNumLimit": 100,
+        "remoteAddress": true,
+        "remoteAddressLimit": 10,
+        "startedOn": "2024-01-01T00:00:00Z",
+        "storageLimit": 10737418240i64,
+        "subversion": false,
+        "subversionExternal": false,
+        "userLimit": 500,
+        "versionLimit": 100,
+        "wikiAttachment": true,
+        "wikiAttachmentLimitPerFile": 268435456i64,
+        "wikiAttachmentNumLimit": 100
+    });
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/space/licence"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&mock_response))
+        .mount(&server)
+        .await;
+
+    let result = space_api.get_licence(GetLicenceParams::new()).await;
+    assert!(result.is_ok());
+    let licence = result.unwrap();
+    assert!(licence.active);
+    assert_eq!(licence.licence_type_id, 1);
+    assert_eq!(licence.user_limit, 500);
+    assert_eq!(licence.project_limit, 100);
+    assert!(licence.git);
+    assert!(!licence.subversion);
+}
+
+#[tokio::test]
+async fn test_get_licence_minimal_response() {
+    let server = MockServer::start().await;
+    let space_api = setup_space_api(&server).await;
+
+    let mock_response = serde_json::json!({
+        "active": false,
+        "attachmentLimit": 0,
+        "attachmentLimitPerFile": 0,
+        "attachmentNumLimit": 0,
+        "attribute": false,
+        "attributeLimit": 0,
+        "burndown": false,
+        "commentLimit": 0,
+        "componentLimit": 0,
+        "fileSharing": false,
+        "gantt": false,
+        "git": false,
+        "issueLimit": 0,
+        "licenceTypeId": 0,
+        "limitDate": "2024-01-01T00:00:00Z",
+        "nulabAccount": false,
+        "parentChildIssue": false,
+        "postIssueByMail": false,
+        "projectLimit": 0,
+        "pullRequestAttachmentLimitPerFile": 0,
+        "pullRequestAttachmentNumLimit": 0,
+        "remoteAddress": false,
+        "remoteAddressLimit": 0,
+        "startedOn": "2024-01-01T00:00:00Z",
+        "storageLimit": 0,
+        "subversion": false,
+        "subversionExternal": false,
+        "userLimit": 0,
+        "versionLimit": 0,
+        "wikiAttachment": false,
+        "wikiAttachmentLimitPerFile": 0,
+        "wikiAttachmentNumLimit": 0
+    });
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/space/licence"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&mock_response))
+        .mount(&server)
+        .await;
+
+    let result = space_api.get_licence(GetLicenceParams::new()).await;
+    assert!(result.is_ok());
+    let licence = result.unwrap();
+    assert!(!licence.active);
+    assert_eq!(licence.licence_type_id, 0);
+    assert_eq!(licence.user_limit, 0);
+}
+
+#[tokio::test]
+async fn test_get_licence_unauthorized() {
+    let server = MockServer::start().await;
+    let space_api = setup_space_api(&server).await;
+
+    let error_response = serde_json::json!({
+        "errors": [
+            {
+                "message": "Authenticate error",
+                "code": 6,
+                "moreInfo": ""
+            }
+        ]
+    });
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/space/licence"))
+        .respond_with(ResponseTemplate::new(401).set_body_json(&error_response))
+        .mount(&server)
+        .await;
+
+    let result = space_api.get_licence(GetLicenceParams::new()).await;
+    assert!(result.is_err());
 }
