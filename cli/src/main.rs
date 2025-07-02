@@ -50,7 +50,7 @@ use backlog_project::{
 };
 use backlog_space::GetSpaceLogoParams;
 #[cfg(feature = "space_writable")]
-use backlog_space::UploadAttachmentParams;
+use backlog_space::{UpdateSpaceNotificationParams, UploadAttachmentParams};
 use backlog_user::GetOwnUserParams;
 use backlog_user::GetUserIconParams;
 use backlog_user::GetUserListParams;
@@ -651,6 +651,13 @@ enum SpaceCommands {
         /// File path to upload
         #[clap(short, long, value_name = "FILE_PATH")]
         file: PathBuf,
+    },
+    /// Update space notification
+    #[cfg(feature = "space_writable")]
+    UpdateNotification {
+        /// Notification content
+        #[clap(short, long, value_name = "CONTENT")]
+        content: String,
     },
 }
 
@@ -2517,6 +2524,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             SpaceCommands::UploadAttachment { .. } => {
                 eprintln!(
                     "Attachment upload is not available. Please build with 'space_writable' feature."
+                );
+            }
+            #[cfg(feature = "space_writable")]
+            SpaceCommands::UpdateNotification { content } => {
+                println!("Updating space notification...");
+
+                let params = UpdateSpaceNotificationParams::new(content.clone());
+
+                match client.space().update_space_notification(params).await {
+                    Ok(notification) => {
+                        println!("✅ Space notification updated successfully");
+                        println!("Content: {}", notification.content);
+                        println!(
+                            "Updated: {}",
+                            notification.updated.format("%Y-%m-%d %H:%M:%S UTC")
+                        );
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to update space notification: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(not(feature = "space_writable"))]
+            SpaceCommands::UpdateNotification { .. } => {
+                eprintln!(
+                    "Update notification is not available. Please build with 'space_writable' feature."
                 );
             }
         },

@@ -5,9 +5,9 @@ This document tracks the implementation status of Backlog API endpoints. Items m
 ## Implementation Summary by Domain
 
 ### backlog-space (SpaceApi)
-- **Implemented**: 4/9 endpoints (44%)
+- **Implemented**: 5/9 endpoints (56%)
 - **Read operations**: get_space(), get_space_logo(), get_space_notification()
-- **Write operations**: upload_attachment()
+- **Write operations**: update_space_notification(), upload_attachment()
 
 ### backlog-project (ProjectApi)
 - **Implemented**: 23/36 endpoints (64%)
@@ -102,7 +102,7 @@ blg issue create --project-id 1 --summary "Test" --custom-field "1:text:Sample t
 - ✅ GetSpace: Returns information about your space: GET /api/v2/space
 - ✅ GetSpaceLogo: Returns logo image of your space: GET /api/v2/space/image
 - ✅ GetSpaceNotification: Returns space notification: GET /api/v2/space/notification
-- ❌ UpdateSpaceNotification: Updates space notification: PUT /api/v2/space/notification
+- ✅ UpdateSpaceNotification: Updates space notification: PUT /api/v2/space/notification
 - ❌ GetLicence: Returns licence: GET /api/v2/space/licence
 - ❌ GetSpaceDiskUsage: Returns information about space disk usage: GET /api/v2/space/diskUsage
 - ✅ PostAttachmentFile: Posts an attachment file for issue or wiki. Returns id of the attachment file: POST /api/v2/space/attachment

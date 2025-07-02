@@ -1,16 +1,9 @@
+use crate::models::SpaceNotification;
 use backlog_api_core::IntoRequest;
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 /// Response type for getting space notification
 pub type GetSpaceNotificationResponse = SpaceNotification;
-
-/// Space notification information
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub struct SpaceNotification {
-    pub content: String,
-    pub updated: DateTime<Utc>,
-}
 
 /// Parameters for getting space notification.
 ///

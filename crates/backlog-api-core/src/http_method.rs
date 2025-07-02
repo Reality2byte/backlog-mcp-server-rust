@@ -3,6 +3,7 @@
 pub enum HttpMethod {
     Get,
     Post,
+    Put,
     Patch,
     Delete,
 }
@@ -14,6 +15,7 @@ impl HttpMethod {
         match self {
             HttpMethod::Get => reqwest::Method::GET,
             HttpMethod::Post => reqwest::Method::POST,
+            HttpMethod::Put => reqwest::Method::PUT,
             HttpMethod::Patch => reqwest::Method::PATCH,
             HttpMethod::Delete => reqwest::Method::DELETE,
         }
