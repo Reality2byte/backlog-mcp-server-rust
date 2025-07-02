@@ -82,7 +82,7 @@ pub use backlog_project;
 
 // Space module (from backlog_space)
 #[cfg(feature = "space")]
-pub use backlog_space::SpaceApi;
+pub use backlog_space::{GetSpaceNotificationParams, GetSpaceNotificationResponse, SpaceApi};
 
 // User module (from backlog_user)
 #[cfg(feature = "user")]
