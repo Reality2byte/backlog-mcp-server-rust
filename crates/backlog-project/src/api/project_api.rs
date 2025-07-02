@@ -8,8 +8,9 @@ use crate::api::{
     GetCustomFieldListResponse, GetIssueTypeListParams, GetIssueTypeListResponse,
     GetMilestoneListParams, GetMilestoneListResponse, GetPriorityListParams,
     GetPriorityListResponse, GetProjectDetailParams, GetProjectDetailResponse,
-    GetProjectIconParams, GetProjectUserListParams, GetProjectUserListResponse,
-    GetResolutionListParams, GetResolutionListResponse, GetStatusListParams, GetStatusListResponse,
+    GetProjectIconParams, GetProjectRecentUpdatesParams, GetProjectRecentUpdatesResponse,
+    GetProjectUserListParams, GetProjectUserListResponse, GetResolutionListParams,
+    GetResolutionListResponse, GetStatusListParams, GetStatusListResponse,
     get_project_list::{GetProjectListParams, GetProjectListResponse},
 };
 #[cfg(feature = "writable")]
@@ -129,6 +130,16 @@ impl ProjectApi {
         &self,
         params: GetCustomFieldListParams,
     ) -> Result<GetCustomFieldListResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Gets recent updates in the project.
+    ///
+    /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/activities`.
+    pub async fn get_project_recent_updates(
+        &self,
+        params: GetProjectRecentUpdatesParams,
+    ) -> Result<GetProjectRecentUpdatesResponse> {
         self.0.execute(params).await
     }
 

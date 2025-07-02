@@ -7,13 +7,3 @@ pub async fn setup_project_api(mock_server: &MockServer) -> ProjectApi {
     let client = setup_client(mock_server).await;
     ProjectApi::new(client)
 }
-
-/// Common imports for tests
-pub use backlog_core::identifier::{
-    CategoryId, CustomFieldId, IssueTypeId, MilestoneId, PriorityId, ProjectId, ResolutionId,
-    StatusId, UserId,
-};
-pub use backlog_domain_models::Milestone;
-pub use chrono::TimeZone;
-pub use wiremock::matchers::{method, path};
-pub use wiremock::{Mock, ResponseTemplate};

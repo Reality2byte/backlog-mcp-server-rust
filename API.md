@@ -1,5 +1,10 @@
 # Backlog API Implementation Status
 
+## Summary
+- Total APIs: 149
+- Implemented: 92 (62%)
+- Not implemented: 57 (38%)
+
 ### Spaces
 - ✅ GetSpace: Returns information about your space: GET /api/v2/space
 - ✅ GetSpaceLogo: Returns logo image of your space: GET /api/v2/space/image
@@ -155,7 +160,7 @@
 ### Activities
 - ❌ GetActivity: Returns an activity: GET /api/v2/activities/:activityId
 - ❌ GetUserRecentUpdates: Returns user’s recent updates: GET /api/v2/users/:userId/activities
-- ❌ GetProjectRecentUpdates: Returns recent update in the project: GET /api/v2/projects/:projectIdOrKey/activities
+- ✅ GetProjectRecentUpdates: Returns recent update in the project: GET /api/v2/projects/:projectIdOrKey/activities
 - ❌ GetRecentUpdates: Returns recent updates in your space: GET /api/v2/space/activities
 
 ### Notifications

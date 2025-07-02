@@ -1,3 +1,4 @@
+use backlog_core::identifier::SvnRevision;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

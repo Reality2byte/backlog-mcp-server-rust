@@ -1,5 +1,9 @@
 use blg::custom_fields;
 
+mod activity_commands;
+#[cfg(feature = "project")]
+use activity_commands::{ActivityArgs, ActivityCommands};
+
 #[cfg(feature = "git_writable")]
 use backlog_api_client::AddPullRequestParams;
 #[cfg(feature = "issue_writable")]
@@ -16,6 +20,8 @@ use backlog_api_client::{
     PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber, RepositoryIdOrName, StatusId,
     UserId, WikiId, backlog_issue, client::BacklogApiClient,
 };
+#[cfg(feature = "project")]
+use backlog_core::identifier::ActivityTypeId;
 #[cfg(any(feature = "git_writable", feature = "issue_writable"))]
 use backlog_core::identifier::IssueId;
 #[cfg(feature = "issue_writable")]
@@ -41,6 +47,8 @@ use backlog_issue::UnlinkSharedFileParams;
 #[cfg(feature = "issue_writable")]
 use backlog_issue::{AddIssueParamsBuilder, UpdateIssueParamsBuilder};
 use backlog_project::GetProjectListParams;
+#[cfg(feature = "project")]
+use backlog_project::GetProjectRecentUpdatesParams;
 #[cfg(feature = "project_writable")]
 use backlog_project::{
     AddCategoryParams, AddIssueTypeParams, AddMilestoneParams, AddStatusParams,
@@ -94,6 +102,9 @@ enum Commands {
     /// Manage wikis
     #[cfg(feature = "wiki")]
     Wiki(WikiArgs),
+    /// View activities
+    #[cfg(feature = "project")]
+    Activity(ActivityArgs),
 }
 
 #[derive(Parser)]
@@ -4191,6 +4202,100 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to get wiki history: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+        },
+        #[cfg(feature = "project")]
+        Commands::Activity(activity_args) => match activity_args.command {
+            ActivityCommands::Project {
+                project_id,
+                type_ids,
+                count,
+                order,
+            } => {
+                println!("Getting recent activities for project: {project_id}");
+
+                let proj_id_or_key = project_id.parse::<ProjectIdOrKey>()?;
+                let mut params = GetProjectRecentUpdatesParams::new(proj_id_or_key);
+
+                // Parse activity type IDs
+                if let Some(type_ids_str) = type_ids {
+                    let type_ids: Result<Vec<ActivityTypeId>, _> = type_ids_str
+                        .split(',')
+                        .map(|s| s.trim().parse::<u32>().map(ActivityTypeId::new))
+                        .collect();
+                    match type_ids {
+                        Ok(ids) => params.activity_type_ids = Some(ids),
+                        Err(e) => {
+                            eprintln!("❌ Failed to parse type_ids: {e}");
+                            std::process::exit(1);
+                        }
+                    };
+                }
+
+                if let Some(count) = count {
+                    params.count = Some(count);
+                }
+
+                if let Some(order) = order {
+                    params.order = Some(order);
+                }
+
+                match client.project().get_project_recent_updates(params).await {
+                    Ok(activities) => {
+                        if activities.is_empty() {
+                            println!("No activities found.");
+                        } else {
+                            println!("Found {} activities:", activities.len());
+                            for activity in activities {
+                                println!("---");
+                                println!("ID: {}", activity.id.value());
+                                println!("Type: {}", activity.type_id);
+                                println!("Project: {}", activity.project.name);
+                                println!("Created by: {}", activity.created_user.name);
+                                println!(
+                                    "Created at: {}",
+                                    activity.created.format("%Y-%m-%d %H:%M:%S")
+                                );
+
+                                // Display content based on type
+                                match &activity.content {
+                                    backlog_project::Content::Standard {
+                                        summary,
+                                        description,
+                                        ..
+                                    } => {
+                                        if let Some(summary) = summary {
+                                            println!("Summary: {summary}");
+                                        }
+                                        if let Some(description) = description {
+                                            let preview = if description.len() > 100 {
+                                                format!("{}...", &description[..100])
+                                            } else {
+                                                description.clone()
+                                            };
+                                            println!("Description: {preview}");
+                                        }
+                                    }
+                                    backlog_project::Content::UserManagement { users, .. } => {
+                                        if let Some(users) = users {
+                                            println!("Users involved: {}", users.len());
+                                            for user in users.iter().take(3) {
+                                                println!("  - {}", user.name);
+                                            }
+                                            if users.len() > 3 {
+                                                println!("  ... and {} more", users.len() - 3);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to get project activities: {e}");
                         std::process::exit(1);
                     }
                 }

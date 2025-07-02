@@ -14,6 +14,7 @@ mod get_priority_list;
 mod get_project_detail;
 mod get_project_icon;
 mod get_project_list;
+mod get_project_recent_updates;
 mod get_project_user_list;
 mod get_resolution_list;
 mod get_status_list;
@@ -90,4 +91,7 @@ pub use get_status_list::{GetStatusListParams, GetStatusListResponse};
 
 pub use get_category_list::{GetCategoryListParams, GetCategoryListResponse};
 pub use get_custom_field_list::{GetCustomFieldListParams, GetCustomFieldListResponse};
+pub use get_project_recent_updates::{
+    GetProjectRecentUpdatesParams, GetProjectRecentUpdatesResponse,
+};
 pub use get_resolution_list::{GetResolutionListParams, GetResolutionListResponse};

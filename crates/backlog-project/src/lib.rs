@@ -7,12 +7,16 @@ pub use backlog_domain_models::{
     Category, IssueType, Milestone, Priority, Project, Resolution, Status,
 };
 
+// re-export activity models
+pub use models::activity::{Activity, ActivityContent, Content, ReasonId, TypeId};
+
 pub use api::{
     GetCategoryListParams, GetCategoryListResponse, GetCustomFieldListParams,
     GetCustomFieldListResponse, GetIssueTypeListParams, GetIssueTypeListResponse,
     GetMilestoneListParams, GetMilestoneListResponse, GetPriorityListParams,
     GetPriorityListResponse, GetProjectDetailParams, GetProjectDetailResponse,
-    GetProjectIconParams, GetProjectListParams, GetProjectListResponse, GetProjectUserListParams,
+    GetProjectIconParams, GetProjectListParams, GetProjectListResponse,
+    GetProjectRecentUpdatesParams, GetProjectRecentUpdatesResponse, GetProjectUserListParams,
     GetProjectUserListResponse, GetResolutionListParams, GetResolutionListResponse,
     GetStatusListParams, GetStatusListResponse, ProjectApi,
 };

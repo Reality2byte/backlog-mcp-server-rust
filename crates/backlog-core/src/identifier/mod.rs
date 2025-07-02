@@ -94,6 +94,8 @@ impl_identifier!(
     (CustomListItemId, u32),
     (WikiId, u32),
     (WikiTagId, u32),
+    (ActivityTypeId, u32),
+    (ActivityId, u32),
     // u64 identifiers
     (SvnRevision, u64),
     (PullRequestNumber, u64)
@@ -101,3 +103,6 @@ impl_identifier!(
 
 mod document_id;
 pub use document_id::DocumentId;
+
+#[cfg(test)]
+mod activity_id_test;
