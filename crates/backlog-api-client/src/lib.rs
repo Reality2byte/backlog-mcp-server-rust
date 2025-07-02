@@ -82,7 +82,13 @@ pub use backlog_project;
 
 // Space module (from backlog_space)
 #[cfg(feature = "space")]
-pub use backlog_space::SpaceApi;
+pub use backlog_space::{
+    GetSpaceNotificationParams, GetSpaceNotificationResponse, SpaceApi, SpaceNotification,
+};
+
+// Space writable operations (from backlog_space)
+#[cfg(all(feature = "space", feature = "space_writable"))]
+pub use backlog_space::{UpdateSpaceNotificationParams, UploadAttachmentParams};
 
 // User module (from backlog_user)
 #[cfg(feature = "user")]

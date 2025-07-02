@@ -54,7 +54,7 @@ pub trait IntoRequest {
                 let query = IntoRequest::to_query(&self);
                 request_builder.query(&query).build()?
             }
-            HttpMethod::Post | HttpMethod::Patch => {
+            HttpMethod::Post | HttpMethod::Put | HttpMethod::Patch => {
                 let form = IntoRequest::to_form(&self);
                 request_builder.form(&form).build()?
             }

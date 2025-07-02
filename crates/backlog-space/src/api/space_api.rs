@@ -3,10 +3,14 @@ use client::Client;
 
 use crate::api::{
     GetLicenceParams, GetLicenceResponse, GetSpaceDiskUsageParams, GetSpaceDiskUsageResponse,
-    GetSpaceLogoParams, GetSpaceLogoResponse, GetSpaceParams, GetSpaceResponse,
+    GetSpaceLogoParams, GetSpaceLogoResponse, GetSpaceNotificationParams,
+    GetSpaceNotificationResponse, GetSpaceParams, GetSpaceResponse,
 };
 #[cfg(feature = "writable")]
-use crate::api::{UploadAttachmentParams, UploadAttachmentResponse};
+use crate::api::{
+    UpdateSpaceNotificationParams, UpdateSpaceNotificationResponse, UploadAttachmentParams,
+    UploadAttachmentResponse,
+};
 
 pub struct SpaceApi(Client);
 
@@ -39,6 +43,25 @@ impl SpaceApi {
     /// Get licence information
     /// Corresponds to `GET /api/v2/space/licence`.
     pub async fn get_licence(&self, params: GetLicenceParams) -> Result<GetLicenceResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Get space notification
+    /// Corresponds to `GET /api/v2/space/notification`.
+    pub async fn get_space_notification(
+        &self,
+        params: GetSpaceNotificationParams,
+    ) -> Result<GetSpaceNotificationResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Update space notification
+    /// Corresponds to `PUT /api/v2/space/notification`.
+    #[cfg(feature = "writable")]
+    pub async fn update_space_notification(
+        &self,
+        params: UpdateSpaceNotificationParams,
+    ) -> Result<UpdateSpaceNotificationResponse> {
         self.0.execute(params).await
     }
 

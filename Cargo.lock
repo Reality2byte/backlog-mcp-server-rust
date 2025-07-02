@@ -322,6 +322,7 @@ name = "backlog-space"
 version = "0.1.0"
 dependencies = [
  "backlog-api-core",
+ "backlog-api-macros",
  "backlog-core",
  "chrono",
  "client",

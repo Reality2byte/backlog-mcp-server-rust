@@ -2,7 +2,8 @@ mod common;
 
 use backlog_core::identifier::Identifier;
 use backlog_space::api::{
-    GetLicenceParams, GetSpaceDiskUsageParams, GetSpaceLogoParams, GetSpaceParams,
+    GetLicenceParams, GetSpaceDiskUsageParams, GetSpaceLogoParams, GetSpaceNotificationParams,
+    GetSpaceParams,
 };
 use common::*;
 use wiremock::MockServer;
@@ -121,6 +122,34 @@ async fn test_get_space_disk_usage_success() {
 }
 
 #[tokio::test]
+async fn test_get_space_notification_success() {
+    let server = MockServer::start().await;
+    let space_api = setup_space_api(&server).await;
+
+    let mock_response = serde_json::json!({
+        "content": "This is a space notification",
+        "updated": "2024-01-15T10:30:00Z"
+    });
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/space/notification"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&mock_response))
+        .mount(&server)
+        .await;
+
+    let result = space_api
+        .get_space_notification(GetSpaceNotificationParams::new())
+        .await;
+    assert!(result.is_ok());
+    let notification = result.unwrap();
+    assert_eq!(notification.content, "This is a space notification");
+    assert_eq!(
+        notification.updated.to_rfc3339(),
+        "2024-01-15T10:30:00+00:00"
+    );
+}
+
+#[tokio::test]
 async fn test_get_space_disk_usage_forbidden() {
     let server = MockServer::start().await;
     let space_api = setup_space_api(&server).await;
@@ -143,6 +172,33 @@ async fn test_get_space_disk_usage_forbidden() {
 
     let result = space_api
         .get_space_disk_usage(GetSpaceDiskUsageParams::new())
+        .await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_space_notification_error() {
+    let server = MockServer::start().await;
+    let space_api = setup_space_api(&server).await;
+
+    let error_response = serde_json::json!({
+        "errors": [
+            {
+                "message": "No permission to access this resource",
+                "code": 3,
+                "moreInfo": ""
+            }
+        ]
+    });
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/space/notification"))
+        .respond_with(ResponseTemplate::new(403).set_body_json(&error_response))
+        .mount(&server)
+        .await;
+
+    let result = space_api
+        .get_space_notification(GetSpaceNotificationParams::new())
         .await;
     assert!(result.is_err());
 }
