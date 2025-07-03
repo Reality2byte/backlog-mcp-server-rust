@@ -236,6 +236,7 @@ The `blg` CLI currently supports the following commands:
   - `--description <NEW_DESCRIPTION>` - Update the custom field description
   - `--required <true|false>` - Update whether the field is required
   - `--applicable-issue-types <ID1,ID2>` - Update applicable issue types (comma-separated IDs)
+- `project custom-field-delete <PROJECT_ID_OR_KEY> --custom-field-id <CUSTOM_FIELD_ID>` - Delete a custom field from a project (requires `project_writable` feature)
 - `project issue-type-add <PROJECT_ID_OR_KEY> --name <ISSUE_TYPE_NAME> --color <COLOR> [--template-summary <SUMMARY>] [--template-description <DESCRIPTION>]` - Add an issue type to a project (requires `project_writable` feature). COLOR can be a name (red, dark-red, purple, violet, blue, teal, green, orange, pink, gray) or hex code.
 - `project issue-type-update <PROJECT_ID_OR_KEY> --issue-type-id <ISSUE_TYPE_ID> [--name <NEW_NAME>] [--color <NEW_COLOR>] [--template-summary <NEW_SUMMARY>] [--template-description <NEW_DESCRIPTION>]` - Update an issue type in a project (requires `project_writable` feature). All parameters except issue-type-id are optional.
 - `project issue-type-delete <PROJECT_ID_OR_KEY> --issue-type-id <ISSUE_TYPE_ID> --substitute-issue-type-id <SUBSTITUTE_ID>` - Delete an issue type from a project (requires `project_writable` feature). Existing issues will be moved to the substitute issue type.
