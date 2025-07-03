@@ -1,3 +1,5 @@
+#![allow(unused_imports, dead_code)]
+
 pub mod access_control;
 pub mod document;
 mod error;
