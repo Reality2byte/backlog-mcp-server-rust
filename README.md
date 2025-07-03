@@ -111,6 +111,12 @@ The server includes both **read operations** for information gathering and **wri
 ### User Tools
 -   **`get_user_list`**: Get a list of users in the space
 
+### Activity Tools
+-   **`get_activity`**: Get details of a specific activity by ID
+-   **`get_project_activities`**: Get recent activities in a project
+-   **`get_space_activities`**: Get recent activities across the entire space
+-   **`get_user_activities`**: Get recent activities by a specific user
+
 ### Wiki Tools
 -   **`get_wiki_list`**: Get a list of wiki pages
 -   **`get_wiki_detail`**: Get detailed information about a specific wiki page

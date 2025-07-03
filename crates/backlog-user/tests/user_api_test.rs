@@ -1,8 +1,10 @@
 mod common;
 
+use backlog_core::identifier::{Identifier, UserId};
 use backlog_user::api::{GetOwnUserParams, GetUserIconParams, GetUserListParams, GetUserParams};
 use common::*;
-use wiremock::MockServer;
+use wiremock::matchers::{method, path};
+use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[tokio::test]
 async fn test_get_user_success() {

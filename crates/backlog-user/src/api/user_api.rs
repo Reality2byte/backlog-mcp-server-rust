@@ -3,7 +3,8 @@ use client::Client;
 
 use crate::api::{
     GetOwnUserParams, GetOwnUserResponse, GetUserIconParams, GetUserIconResponse,
-    GetUserListParams, GetUserListResponse, GetUserParams, GetUserResponse,
+    GetUserListParams, GetUserListResponse, GetUserParams, GetUserRecentUpdatesParams,
+    GetUserRecentUpdatesResponse, GetUserResponse,
 };
 
 pub struct UserApi(Client);
@@ -36,5 +37,15 @@ impl UserApi {
     /// Corresponds to `GET /api/v2/users/:userId/icon`.
     pub async fn get_user_icon(&self, params: GetUserIconParams) -> Result<GetUserIconResponse> {
         self.0.download_file(params).await
+    }
+
+    /// Gets recent activities for a specific user.
+    ///
+    /// Corresponds to `GET /api/v2/users/:userId/activities`.
+    pub async fn get_user_recent_updates(
+        &self,
+        params: GetUserRecentUpdatesParams,
+    ) -> Result<GetUserRecentUpdatesResponse> {
+        self.0.execute(params).await
     }
 }

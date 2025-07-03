@@ -64,4 +64,9 @@ impl BacklogApiClient {
     pub fn wiki(&self) -> backlog_wiki::WikiApi {
         backlog_wiki::WikiApi::new(self.client.clone())
     }
+
+    #[cfg(feature = "activity")]
+    pub fn activity(&self) -> backlog_activity::ActivityApi {
+        backlog_activity::ActivityApi::new(self.client.clone())
+    }
 }

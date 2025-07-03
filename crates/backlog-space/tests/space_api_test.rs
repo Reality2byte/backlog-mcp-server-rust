@@ -6,7 +6,8 @@ use backlog_space::api::{
     GetSpaceParams,
 };
 use common::*;
-use wiremock::MockServer;
+use wiremock::matchers::{method, path};
+use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[tokio::test]
 async fn test_get_space_success() {

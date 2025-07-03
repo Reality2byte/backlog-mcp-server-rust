@@ -59,6 +59,8 @@ use backlog_project::{
 use backlog_space::GetLicenceParams;
 use backlog_space::GetSpaceDiskUsageParams;
 use backlog_space::GetSpaceLogoParams;
+#[cfg(feature = "space")]
+use backlog_space::GetSpaceRecentUpdatesParams;
 #[cfg(feature = "space_writable")]
 use backlog_space::{UpdateSpaceNotificationParams, UploadAttachmentParams};
 use backlog_user::GetOwnUserParams;
@@ -1151,6 +1153,19 @@ struct IssueListCliParams {
     #[clap(long)]
     due_date_until: Option<String>,
     // TODO: Add more filters like sort, order, offset, issue_type_id, etc.
+}
+
+/// Truncates a string to a maximum length, ensuring UTF-8 character boundary safety
+fn truncate_text(text: &str, max_length: usize) -> String {
+    if text.len() <= max_length {
+        text.to_string()
+    } else {
+        let mut end = max_length;
+        while !text.is_char_boundary(end) && end > 0 {
+            end -= 1;
+        }
+        format!("{}...", &text[..end])
+    }
 }
 
 #[tokio::main]
@@ -4190,11 +4205,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     entry.created.format("%Y-%m-%d %H:%M:%S")
                                 );
                                 if !entry.content.is_empty() {
-                                    let preview = if entry.content.len() > 100 {
-                                        format!("{}...", &entry.content[..100])
-                                    } else {
-                                        entry.content.clone()
-                                    };
+                                    let preview = truncate_text(&entry.content, 100);
                                     println!("  Content: {preview}");
                                 }
                             }
@@ -4271,11 +4282,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                             println!("Summary: {summary}");
                                         }
                                         if let Some(description) = description {
-                                            let preview = if description.len() > 100 {
-                                                format!("{}...", &description[..100])
-                                            } else {
-                                                description.clone()
-                                            };
+                                            let preview = truncate_text(description, 100);
                                             println!("Description: {preview}");
                                         }
                                     }
@@ -4296,6 +4303,92 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to get project activities: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "space")]
+            ActivityCommands::Space {
+                type_ids,
+                count,
+                order,
+            } => {
+                println!("Getting recent activities for space");
+
+                let mut params = GetSpaceRecentUpdatesParams::default();
+
+                // Parse activity type IDs
+                if let Some(type_ids_str) = type_ids {
+                    let type_ids: Result<Vec<ActivityTypeId>, _> = type_ids_str
+                        .split(',')
+                        .map(|s| s.trim().parse::<u32>().map(ActivityTypeId::new))
+                        .collect();
+                    match type_ids {
+                        Ok(ids) => params.activity_type_ids = Some(ids),
+                        Err(e) => {
+                            eprintln!("❌ Failed to parse type_ids: {e}");
+                            std::process::exit(1);
+                        }
+                    };
+                }
+
+                if let Some(count) = count {
+                    params.count = Some(count);
+                }
+
+                if let Some(order) = order {
+                    params.order = Some(order);
+                }
+
+                match client.space().get_space_recent_updates(params).await {
+                    Ok(activities) => {
+                        if activities.is_empty() {
+                            println!("No activities found.");
+                        } else {
+                            println!("Found {} activities:", activities.len());
+                            for activity in activities {
+                                println!("---");
+                                println!("ID: {}", activity.id.value());
+                                println!("Type: {}", activity.type_id);
+                                println!("Project: {}", activity.project.name);
+                                println!("Created by: {}", activity.created_user.name);
+                                println!(
+                                    "Created at: {}",
+                                    activity.created.format("%Y-%m-%d %H:%M:%S")
+                                );
+
+                                // Display content based on type
+                                match &activity.content {
+                                    backlog_project::Content::Standard {
+                                        summary,
+                                        description,
+                                        ..
+                                    } => {
+                                        if let Some(summary) = summary {
+                                            println!("Summary: {summary}");
+                                        }
+                                        if let Some(description) = description {
+                                            let preview = truncate_text(description, 100);
+                                            println!("Description: {preview}");
+                                        }
+                                    }
+                                    backlog_project::Content::UserManagement { users, .. } => {
+                                        if let Some(users) = users {
+                                            println!("Users involved: {}", users.len());
+                                            for user in users.iter().take(3) {
+                                                println!("  - {}", user.name);
+                                            }
+                                            if users.len() > 3 {
+                                                println!("  ... and {} more", users.len() - 3);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to get space activities: {e}");
                         std::process::exit(1);
                     }
                 }

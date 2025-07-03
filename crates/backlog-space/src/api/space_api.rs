@@ -4,7 +4,8 @@ use client::Client;
 use crate::api::{
     GetLicenceParams, GetLicenceResponse, GetSpaceDiskUsageParams, GetSpaceDiskUsageResponse,
     GetSpaceLogoParams, GetSpaceLogoResponse, GetSpaceNotificationParams,
-    GetSpaceNotificationResponse, GetSpaceParams, GetSpaceResponse,
+    GetSpaceNotificationResponse, GetSpaceParams, GetSpaceRecentUpdatesParams,
+    GetSpaceRecentUpdatesResponse, GetSpaceResponse,
 };
 #[cfg(feature = "writable")]
 use crate::api::{
@@ -73,5 +74,14 @@ impl SpaceApi {
         params: UploadAttachmentParams,
     ) -> Result<UploadAttachmentResponse> {
         self.0.upload_file(params).await
+    }
+
+    /// Get recent updates in the space
+    /// Corresponds to `GET /api/v2/space/activities`.
+    pub async fn get_space_recent_updates(
+        &self,
+        params: GetSpaceRecentUpdatesParams,
+    ) -> Result<GetSpaceRecentUpdatesResponse> {
+        self.0.execute(params).await
     }
 }

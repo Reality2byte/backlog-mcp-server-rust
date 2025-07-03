@@ -36,10 +36,14 @@ pub use backlog_file::{FileApi, GetSharedFilesListParams, GetSharedFilesListResp
 // Issue module (from backlog_issue)
 #[cfg(feature = "issue")]
 pub use backlog_issue::{
-    AddCommentParams, AddCommentParamsBuilder, Attachment, ChangeLogEntry, Comment, CommentOrder,
-    GetCommentListParams, GetCommentListParamsBuilder, GetCommentNotificationsParams,
-    GetIssueListParams, GetIssueListParamsBuilder, Issue, IssueApi, SharedFile as IssueSharedFile,
-    UpdateIssueParams, UpdateIssueParamsBuilder,
+    Attachment, ChangeLogEntry, Comment, CommentOrder, GetCommentListParams,
+    GetCommentListParamsBuilder, GetCommentNotificationsParams, GetIssueListParams,
+    GetIssueListParamsBuilder, Issue, IssueApi, SharedFile as IssueSharedFile,
+};
+
+#[cfg(all(feature = "issue", feature = "issue_writable"))]
+pub use backlog_issue::{
+    AddCommentParams, AddCommentParamsBuilder, UpdateIssueParams, UpdateIssueParamsBuilder,
 };
 
 // Re-export backlog_issue module for parameter access
@@ -93,6 +97,10 @@ pub use backlog_space::{UpdateSpaceNotificationParams, UploadAttachmentParams};
 // User module (from backlog_user)
 #[cfg(feature = "user")]
 pub use backlog_user::UserApi;
+
+// Activity module (from backlog_activity)
+#[cfg(feature = "activity")]
+pub use backlog_activity::{Activity, ActivityApi};
 
 // Wiki module (from backlog_wiki)
 #[cfg(feature = "wiki")]

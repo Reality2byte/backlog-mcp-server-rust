@@ -2,8 +2,8 @@
 
 ## Summary
 - Total APIs: 149
-- Implemented: 92 (62%)
-- Not implemented: 57 (38%)
+- Implemented: 95 (64%)
+- Not implemented: 54 (36%)
 
 ### Spaces
 - ✅ GetSpace: Returns information about your space: GET /api/v2/space
@@ -158,10 +158,10 @@
 
 
 ### Activities
-- ❌ GetActivity: Returns an activity: GET /api/v2/activities/:activityId
-- ❌ GetUserRecentUpdates: Returns user’s recent updates: GET /api/v2/users/:userId/activities
+- ✅ GetActivity: Returns an activity: GET /api/v2/activities/:activityId
+- ✅ GetUserRecentUpdates: Returns user’s recent updates: GET /api/v2/users/:userId/activities
 - ✅ GetProjectRecentUpdates: Returns recent update in the project: GET /api/v2/projects/:projectIdOrKey/activities
-- ❌ GetRecentUpdates: Returns recent updates in your space: GET /api/v2/space/activities
+- ✅ GetRecentUpdates: Returns recent updates in your space: GET /api/v2/space/activities
 
 ### Notifications
 - ❌ CountNotification: Returns number of Notifications: GET /api/v2/notifications/count

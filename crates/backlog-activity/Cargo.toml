@@ -1,0 +1,26 @@
+[package]
+name = "backlog-activity"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+# Internal crates
+backlog-api-core = { path = "../backlog-api-core" }
+backlog-core = { path = "../backlog-core" }
+backlog-domain-models = { path = "../backlog-domain-models" }
+backlog-project = { path = "../backlog-project" }
+backlog-api-macros = { path = "../backlog-api-macros" }
+client = { path = "../client" }
+
+# External dependencies
+serde = { version = "1.0", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+[dev-dependencies]
+tokio = { version = "1.45", features = ["macros", "rt"] }
+serde_json = "1.0"
+wiremock = "0.6"
+
+[features]
+default = []

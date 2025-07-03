@@ -27,6 +27,7 @@ crates/
 ├── backlog-wiki/           # Wiki API
 ├── backlog-git/            # Git repository API
 ├── backlog-file/           # Shared file API
+├── backlog-activity/       # Activity API
 └── client/                 # Generic HTTP client wrapper
 ```
 
