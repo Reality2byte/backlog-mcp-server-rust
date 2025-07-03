@@ -1,4 +1,5 @@
 mod add_category;
+mod add_custom_field;
 mod add_issue_type;
 mod add_milestone;
 mod add_status;
@@ -28,50 +29,67 @@ mod update_version;
 
 #[cfg(feature = "writable")]
 pub use add_category::AddCategoryParams;
+#[cfg(feature = "writable")]
 pub use add_category::AddCategoryResponse;
 
 #[cfg(feature = "writable")]
+pub use add_custom_field::AddCustomFieldParams;
+#[cfg(feature = "writable")]
+pub use add_custom_field::AddCustomFieldResponse;
+
+#[cfg(feature = "writable")]
 pub use update_category::UpdateCategoryParams;
+#[cfg(feature = "writable")]
 pub use update_category::UpdateCategoryResponse;
 
 #[cfg(feature = "writable")]
 pub use delete_category::DeleteCategoryParams;
+#[cfg(feature = "writable")]
 pub use delete_category::DeleteCategoryResponse;
 
 #[cfg(feature = "writable")]
 pub use add_issue_type::AddIssueTypeParams;
+#[cfg(feature = "writable")]
 pub use add_issue_type::AddIssueTypeResponse;
 
 #[cfg(feature = "writable")]
 pub use delete_issue_type::DeleteIssueTypeParams;
+#[cfg(feature = "writable")]
 pub use delete_issue_type::DeleteIssueTypeResponse;
 
 #[cfg(feature = "writable")]
 pub use update_issue_type::UpdateIssueTypeParams;
+#[cfg(feature = "writable")]
 pub use update_issue_type::UpdateIssueTypeResponse;
 
 #[cfg(feature = "writable")]
 pub use add_milestone::AddMilestoneParams;
+#[cfg(feature = "writable")]
 pub use add_milestone::AddMilestoneResponse;
 
 #[cfg(feature = "writable")]
 pub use update_version::UpdateVersionParams;
+#[cfg(feature = "writable")]
 pub use update_version::UpdateVersionResponse;
 
 #[cfg(feature = "writable")]
 pub use delete_version::DeleteVersionParams;
+#[cfg(feature = "writable")]
 pub use delete_version::DeleteVersionResponse;
 
 #[cfg(feature = "writable")]
 pub use add_status::AddStatusParams;
+#[cfg(feature = "writable")]
 pub use add_status::AddStatusResponse;
 
 #[cfg(feature = "writable")]
 pub use update_status::UpdateStatusParams;
+#[cfg(feature = "writable")]
 pub use update_status::UpdateStatusResponse;
 
 #[cfg(feature = "writable")]
 pub use delete_status::DeleteStatusParams;
+#[cfg(feature = "writable")]
 pub use delete_status::DeleteStatusResponse;
 
 pub use get_priority_list::{GetPriorityListParams, GetPriorityListResponse};
@@ -79,10 +97,12 @@ pub use get_project_icon::GetProjectIconParams;
 pub use project_api::ProjectApi;
 #[cfg(feature = "writable")]
 pub use update_status_order::UpdateStatusOrderParams;
+#[cfg(feature = "writable")]
 pub use update_status_order::UpdateStatusOrderResponse;
 
 #[cfg(feature = "writable")]
 pub use update_custom_field::UpdateCustomFieldParams;
+#[cfg(feature = "writable")]
 pub use update_custom_field::UpdateCustomFieldResponse;
 
 pub use get_project_detail::{GetProjectDetailParams, GetProjectDetailResponse};

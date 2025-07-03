@@ -108,10 +108,7 @@ impl Server {
     }
 
     #[tool(description = "Get a list of pull requests for a specified repository.")]
-    async fn git_pr_list_get(
-        &self,
-        #[tool(aggr)] request: ListPullRequestsRequest,
-    ) -> McpResult {
+    async fn git_pr_list_get(&self, #[tool(aggr)] request: ListPullRequestsRequest) -> McpResult {
         let pull_requests =
             git::bridge::get_pull_request_list(self.client.clone(), request, &self.access_control)
                 .await?;
@@ -377,7 +374,10 @@ impl Server {
     }
 
     #[tool(description = "Get a list of priorities available in Backlog.")]
-    async fn issue_priority_list_get(&self, #[tool(aggr)] request: GetPrioritiesRequest) -> McpResult {
+    async fn issue_priority_list_get(
+        &self,
+        #[tool(aggr)] request: GetPrioritiesRequest,
+    ) -> McpResult {
         let priorities = project::bridge::get_priorities_tool(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(priorities)?]))
     }

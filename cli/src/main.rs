@@ -51,10 +51,10 @@ use backlog_project::GetProjectListParams;
 use backlog_project::GetProjectRecentUpdatesParams;
 #[cfg(feature = "project_writable")]
 use backlog_project::{
-    AddCategoryParams, AddIssueTypeParams, AddMilestoneParams, AddStatusParams,
-    DeleteCategoryParams, DeleteIssueTypeParams, DeleteStatusParams, DeleteVersionParams,
-    UpdateCategoryParams, UpdateCustomFieldParams, UpdateIssueTypeParams, UpdateStatusOrderParams,
-    UpdateStatusParams, UpdateVersionParams,
+    AddCategoryParams, AddCustomFieldParams, AddIssueTypeParams, AddMilestoneParams,
+    AddStatusParams, DeleteCategoryParams, DeleteIssueTypeParams, DeleteStatusParams,
+    DeleteVersionParams, UpdateCategoryParams, UpdateCustomFieldParams, UpdateIssueTypeParams,
+    UpdateStatusOrderParams, UpdateStatusParams, UpdateVersionParams,
 };
 use backlog_space::GetLicenceParams;
 use backlog_space::GetSpaceDiskUsageParams;
@@ -777,6 +777,67 @@ enum ProjectCommands {
         /// Initial shift (days from current date)
         #[clap(long)]
         initial_shift: Option<i32>,
+    },
+    /// Add a custom field to a project
+    #[cfg(feature = "project_writable")]
+    CustomFieldAdd {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Field type (text, textarea, numeric, date, single-list, multiple-list, checkbox, radio)
+        #[clap(short = 't', long)]
+        field_type: String,
+        /// Field name
+        #[clap(short, long)]
+        name: String,
+        /// Field description (optional)
+        #[clap(short = 'd', long)]
+        description: Option<String>,
+        /// Make field required (optional)
+        #[clap(short = 'r', long)]
+        required: Option<bool>,
+        /// Applicable issue type IDs (comma-separated)
+        #[clap(long)]
+        applicable_issue_types: Option<String>,
+        // Numeric field parameters
+        /// Minimum value (for numeric fields)
+        #[clap(long)]
+        min: Option<f64>,
+        /// Maximum value (for numeric fields)
+        #[clap(long)]
+        max: Option<f64>,
+        /// Initial value (for numeric fields)
+        #[clap(long)]
+        initial_value: Option<f64>,
+        /// Unit (for numeric fields)
+        #[clap(long)]
+        unit: Option<String>,
+        // Date field parameters
+        /// Minimum date (YYYY-MM-DD format)
+        #[clap(long)]
+        min_date: Option<String>,
+        /// Maximum date (YYYY-MM-DD format)
+        #[clap(long)]
+        max_date: Option<String>,
+        /// Initial value type (1-3)
+        #[clap(long)]
+        initial_value_type: Option<i32>,
+        /// Initial date (YYYY-MM-DD format)
+        #[clap(long)]
+        initial_date: Option<String>,
+        /// Initial shift (days from current date)
+        #[clap(long)]
+        initial_shift: Option<i32>,
+        // List field parameters
+        /// List items (comma-separated)
+        #[clap(long)]
+        items: Option<String>,
+        /// Allow direct input
+        #[clap(long)]
+        allow_input: Option<bool>,
+        /// Allow adding new items
+        #[clap(long)]
+        allow_add_item: Option<bool>,
     },
     /// Add a category to a project
     CategoryAdd {
@@ -3155,6 +3216,163 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             #[cfg(feature = "project_writable")]
+            ProjectCommands::CustomFieldAdd {
+                project_id_or_key,
+                field_type,
+                name,
+                description,
+                required,
+                applicable_issue_types,
+                min,
+                max,
+                initial_value,
+                unit,
+                min_date,
+                max_date,
+                initial_value_type,
+                initial_date,
+                initial_shift,
+                items,
+                allow_input,
+                allow_add_item,
+            } => {
+                println!("Adding custom field '{name}' to project: {project_id_or_key}");
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+
+                // Create params based on field type
+                let mut params = match field_type.as_str() {
+                    "text" => AddCustomFieldParams::text(proj_id_or_key, name.clone()),
+                    "textarea" => AddCustomFieldParams::textarea(proj_id_or_key, name.clone()),
+                    "numeric" => AddCustomFieldParams::numeric(proj_id_or_key, name.clone()),
+                    "date" => AddCustomFieldParams::date(proj_id_or_key, name.clone()),
+                    "single-list" => {
+                        if let Some(items_str) = items.as_ref() {
+                            let items_vec: Vec<String> =
+                                items_str.split(',').map(|s| s.trim().to_string()).collect();
+                            AddCustomFieldParams::single_list(
+                                proj_id_or_key,
+                                name.clone(),
+                                items_vec,
+                            )
+                        } else {
+                            eprintln!("Error: --items is required for single-list field type");
+                            std::process::exit(1);
+                        }
+                    }
+                    "multiple-list" => {
+                        if let Some(items_str) = items.as_ref() {
+                            let items_vec: Vec<String> =
+                                items_str.split(',').map(|s| s.trim().to_string()).collect();
+                            AddCustomFieldParams::multiple_list(
+                                proj_id_or_key,
+                                name.clone(),
+                                items_vec,
+                            )
+                        } else {
+                            eprintln!("Error: --items is required for multiple-list field type");
+                            std::process::exit(1);
+                        }
+                    }
+                    "checkbox" => AddCustomFieldParams::checkbox(proj_id_or_key, name.clone()),
+                    "radio" => AddCustomFieldParams::radio(proj_id_or_key, name.clone()),
+                    _ => {
+                        eprintln!("Error: Invalid field type '{field_type}'");
+                        eprintln!(
+                            "Valid types: text, textarea, numeric, date, single-list, multiple-list, checkbox, radio"
+                        );
+                        std::process::exit(1);
+                    }
+                };
+
+                // Set common optional parameters
+                if let Some(d) = description {
+                    params = params.with_description(d);
+                }
+                if let Some(r) = required {
+                    params = params.with_required(r);
+                }
+                if let Some(types) = applicable_issue_types {
+                    let type_ids: Vec<IssueTypeId> = types
+                        .split(',')
+                        .filter_map(|s| s.trim().parse::<u32>().ok())
+                        .map(IssueTypeId::new)
+                        .collect();
+                    if !type_ids.is_empty() {
+                        params = params.with_applicable_issue_types(type_ids);
+                    }
+                }
+
+                // Set field-type specific parameters
+                match field_type.as_str() {
+                    "numeric" => {
+                        params =
+                            params.with_numeric_settings(min, max, initial_value, unit.clone());
+                    }
+                    "date" => {
+                        let min_date_parsed = min_date
+                            .as_ref()
+                            .and_then(|d| backlog_core::Date::from_str(d).ok());
+                        let max_date_parsed = max_date
+                            .as_ref()
+                            .and_then(|d| backlog_core::Date::from_str(d).ok());
+                        let initial_date_parsed = initial_date
+                            .as_ref()
+                            .and_then(|d| backlog_core::Date::from_str(d).ok());
+
+                        params = params.with_date_settings(
+                            min_date_parsed,
+                            max_date_parsed,
+                            initial_value_type,
+                            initial_date_parsed,
+                            initial_shift,
+                        );
+                    }
+                    "single-list" | "multiple-list" => {
+                        if let Some(allow_input_val) = allow_input {
+                            params = params.with_allow_input(allow_input_val);
+                        }
+                        if let Some(allow_add_item_val) = allow_add_item {
+                            params = params.with_allow_add_item(allow_add_item_val);
+                        }
+                    }
+                    _ => {}
+                }
+
+                match client.project().add_custom_field(params).await {
+                    Ok(field) => {
+                        println!("✅ Custom field added successfully:");
+                        println!("[{}] {}", field.id, field.name);
+                        let field_type = match &field.settings {
+                            backlog_issue::CustomFieldSettings::Text => "Text",
+                            backlog_issue::CustomFieldSettings::TextArea => "TextArea",
+                            backlog_issue::CustomFieldSettings::Numeric(_) => "Numeric",
+                            backlog_issue::CustomFieldSettings::Date(_) => "Date",
+                            backlog_issue::CustomFieldSettings::SingleList(_) => "SingleList",
+                            backlog_issue::CustomFieldSettings::MultipleList(_) => "MultipleList",
+                            backlog_issue::CustomFieldSettings::Checkbox(_) => "Checkbox",
+                            backlog_issue::CustomFieldSettings::Radio(_) => "Radio",
+                        };
+                        println!("Type: {field_type}");
+                        if !field.description.is_empty() {
+                            println!("Description: {}", field.description);
+                        }
+                        println!("Required: {}", field.required);
+                        if let Some(issue_types) = &field.applicable_issue_types {
+                            if !issue_types.is_empty() {
+                                let ids: Vec<String> =
+                                    issue_types.iter().map(|id| id.to_string()).collect();
+                                println!("Applicable Issue Types: {}", ids.join(", "));
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Error adding custom field: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
             ProjectCommands::CategoryAdd {
                 project_id_or_key,
                 name,
@@ -3661,6 +3879,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             | ProjectCommands::CategoryUpdate { .. }
             | ProjectCommands::CategoryDelete { .. }
             | ProjectCommands::CustomFieldUpdate { .. }
+            | ProjectCommands::CustomFieldAdd { .. }
             | ProjectCommands::IssueTypeAdd { .. }
             | ProjectCommands::IssueTypeDelete { .. }
             | ProjectCommands::IssueTypeUpdate { .. }

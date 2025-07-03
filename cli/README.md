@@ -210,6 +210,27 @@ The `blg` CLI currently supports the following commands:
 - `project category-add <PROJECT_ID_OR_KEY> --name <CATEGORY_NAME>` - Add a category to a project (requires `project_writable` feature)
 - `project category-update <PROJECT_ID_OR_KEY> --category-id <CATEGORY_ID> --name <NEW_NAME>` - Update a category in a project (requires `project_writable` feature)
 - `project category-delete <PROJECT_ID_OR_KEY> --category-id <CATEGORY_ID>` - Delete a category from a project (requires `project_writable` feature)
+- `project custom-field-add <PROJECT_ID_OR_KEY> --field-type <TYPE> --name <NAME> [OPTIONS]` - Add a custom field to a project (requires `project_writable` feature)
+  - `--field-type <TYPE>` - Field type (text, textarea, numeric, date, single-list, multiple-list, checkbox, radio)
+  - `--name <NAME>` - Field name
+  - `--description <DESCRIPTION>` - Field description (optional)
+  - `--required <true|false>` - Make field required (optional)
+  - `--applicable-issue-types <ID1,ID2>` - Applicable issue type IDs (comma-separated)
+  - Numeric field options:
+    - `--min <VALUE>` - Minimum value
+    - `--max <VALUE>` - Maximum value
+    - `--initial-value <VALUE>` - Initial value
+    - `--unit <UNIT>` - Unit (e.g., "%", "hours")
+  - Date field options:
+    - `--min-date <YYYY-MM-DD>` - Minimum date
+    - `--max-date <YYYY-MM-DD>` - Maximum date
+    - `--initial-value-type <1-3>` - Initial value type (1: current day, 2: current day + shift, 3: specified date)
+    - `--initial-date <YYYY-MM-DD>` - Initial date (when initial-value-type is 3)
+    - `--initial-shift <DAYS>` - Days from current date (when initial-value-type is 2)
+  - List field options:
+    - `--items <ITEM1,ITEM2>` - List items (comma-separated, required for list types)
+    - `--allow-input <true|false>` - Allow direct input
+    - `--allow-add-item <true|false>` - Allow adding new items
 - `project custom-field-update <PROJECT_ID_OR_KEY> --custom-field-id <CUSTOM_FIELD_ID> [OPTIONS]` - Update a custom field in a project (requires `project_writable` feature)
   - `--name <NEW_NAME>` - Update the custom field name
   - `--description <NEW_DESCRIPTION>` - Update the custom field description

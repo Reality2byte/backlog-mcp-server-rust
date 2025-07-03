@@ -15,15 +15,15 @@ use crate::api::{
 };
 #[cfg(feature = "writable")]
 use crate::{
-    AddCategoryParams, AddIssueTypeParams, AddMilestoneParams, AddStatusParams,
-    DeleteCategoryParams, DeleteIssueTypeParams, DeleteVersionParams, UpdateCategoryParams,
-    UpdateIssueTypeParams, UpdateVersionParams,
+    AddCategoryParams, AddCustomFieldParams, AddIssueTypeParams, AddMilestoneParams,
+    AddStatusParams, DeleteCategoryParams, DeleteIssueTypeParams, DeleteVersionParams,
+    UpdateCategoryParams, UpdateIssueTypeParams, UpdateVersionParams,
     api::{
-        AddCategoryResponse, AddIssueTypeResponse, AddStatusResponse, DeleteCategoryResponse,
-        DeleteIssueTypeResponse, DeleteStatusParams, DeleteStatusResponse, DeleteVersionResponse,
-        UpdateCategoryResponse, UpdateCustomFieldParams, UpdateCustomFieldResponse,
-        UpdateIssueTypeResponse, UpdateStatusOrderParams, UpdateStatusOrderResponse,
-        UpdateStatusParams, UpdateStatusResponse, UpdateVersionResponse,
+        AddCategoryResponse, AddCustomFieldResponse, AddIssueTypeResponse, AddStatusResponse,
+        DeleteCategoryResponse, DeleteIssueTypeResponse, DeleteStatusParams, DeleteStatusResponse,
+        DeleteVersionResponse, UpdateCategoryResponse, UpdateCustomFieldParams,
+        UpdateCustomFieldResponse, UpdateIssueTypeResponse, UpdateStatusOrderParams,
+        UpdateStatusOrderResponse, UpdateStatusParams, UpdateStatusResponse, UpdateVersionResponse,
     },
 };
 
@@ -276,6 +276,17 @@ impl ProjectApi {
         &self,
         params: UpdateCustomFieldParams,
     ) -> Result<UpdateCustomFieldResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Adds a custom field to a project.
+    ///
+    /// Corresponds to `POST /api/v2/projects/:projectIdOrKey/customFields`.
+    #[cfg(feature = "writable")]
+    pub async fn add_custom_field(
+        &self,
+        params: AddCustomFieldParams,
+    ) -> Result<AddCustomFieldResponse> {
         self.0.execute(params).await
     }
 }

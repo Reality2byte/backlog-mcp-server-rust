@@ -2,8 +2,8 @@
 
 ## Summary
 - Total APIs: 149
-- Implemented: 96 (64%)
-- Not implemented: 53 (36%)
+- Implemented: 97 (65%)
+- Not implemented: 52 (35%)
 
 ### Spaces
 - ✅ GetSpace: Returns information about your space: GET /api/v2/space
@@ -81,9 +81,9 @@
 - ✅ GetCategoryList: Returns list of Categories in the project: GET /api/v2/projects/:projectIdOrKey/categories
 
 ### Custom Fields
+- ✅ AddCustomField: Adds new Custom Field to the project: POST /api/v2/projects/:projectIdOrKey/customFields
 - ✅ UpdateCustomField: Updates Custom Field: PATCH /api/v2/projects/:projectIdOrKey/customFields/:id
 - ✅ GetCustomFieldList: Returns list of Custom Fields in the project: GET /api/v2/projects/:projectIdOrKey/customFields
-- ❌ AddCustomField: Adds new Custom Field to the project: POST /api/v2/projects/:projectIdOrKey/customFields
 - ❌ AddListItemForListTypeCustomField: Adds new list item for list type custom field. Only administrator can call this API if the option “Add items in adding or editing issues” is disabled in settings. Calling API fails if specified custom field’s type is not a list: POST /api/v2/projects/:projectIdOrKey/customFields/:id/items
 - ❌ DeleteCustomField: Deletes Custom Field: DELETE /api/v2/projects/:projectIdOrKey/customFields/:id
 - ❌ DeleteListItemForListTypeCustomField: Deletes list item for list type custom field. Calling API fails if specified custom field’s type is not a list: DELETE /api/v2/projects/:projectIdOrKey/customFields/:id/items/:itemId
