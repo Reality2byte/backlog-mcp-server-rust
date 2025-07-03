@@ -24,12 +24,13 @@ pub use api::{
 #[cfg(feature = "writable")]
 pub use api::{
     AddCategoryParams, AddCategoryResponse, AddCustomFieldParams, AddCustomFieldResponse,
-    AddIssueTypeParams, AddIssueTypeResponse, AddMilestoneParams, AddMilestoneResponse,
-    AddStatusParams, AddStatusResponse, DeleteCategoryParams, DeleteCategoryResponse,
-    DeleteCustomFieldParams, DeleteCustomFieldResponse, DeleteIssueTypeParams,
-    DeleteIssueTypeResponse, DeleteStatusParams, DeleteStatusResponse, DeleteVersionParams,
-    DeleteVersionResponse, UpdateCategoryParams, UpdateCategoryResponse, UpdateCustomFieldParams,
-    UpdateCustomFieldResponse, UpdateIssueTypeParams, UpdateIssueTypeResponse,
-    UpdateStatusOrderParams, UpdateStatusOrderResponse, UpdateStatusParams, UpdateStatusResponse,
-    UpdateVersionParams, UpdateVersionResponse,
+    AddIssueTypeParams, AddIssueTypeResponse, AddListItemToCustomFieldParams,
+    AddListItemToCustomFieldResponse, AddMilestoneParams, AddMilestoneResponse, AddStatusParams,
+    AddStatusResponse, DeleteCategoryParams, DeleteCategoryResponse, DeleteCustomFieldParams,
+    DeleteCustomFieldResponse, DeleteIssueTypeParams, DeleteIssueTypeResponse, DeleteStatusParams,
+    DeleteStatusResponse, DeleteVersionParams, DeleteVersionResponse, UpdateCategoryParams,
+    UpdateCategoryResponse, UpdateCustomFieldParams, UpdateCustomFieldResponse,
+    UpdateIssueTypeParams, UpdateIssueTypeResponse, UpdateStatusOrderParams,
+    UpdateStatusOrderResponse, UpdateStatusParams, UpdateStatusResponse, UpdateVersionParams,
+    UpdateVersionResponse,
 };

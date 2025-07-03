@@ -1,6 +1,7 @@
 mod add_category;
 mod add_custom_field;
 mod add_issue_type;
+mod add_list_item_to_custom_field;
 mod add_milestone;
 mod add_status;
 mod delete_category;
@@ -110,6 +111,11 @@ pub use update_custom_field::UpdateCustomFieldResponse;
 pub use delete_custom_field::DeleteCustomFieldParams;
 #[cfg(feature = "writable")]
 pub use delete_custom_field::DeleteCustomFieldResponse;
+
+#[cfg(feature = "writable")]
+pub use add_list_item_to_custom_field::AddListItemToCustomFieldParams;
+#[cfg(feature = "writable")]
+pub use add_list_item_to_custom_field::AddListItemToCustomFieldResponse;
 
 pub use get_project_detail::{GetProjectDetailParams, GetProjectDetailResponse};
 

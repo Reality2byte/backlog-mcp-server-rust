@@ -87,6 +87,12 @@ blg project category-delete MFP --category-id 12345
 # Update a custom field in a project (requires project_writable feature)
 blg project custom-field-update MFP --custom-field-id 12345 --name "Updated Field Name" --description "New description" --required true
 
+# Delete a custom field from a project (requires project_writable feature)
+blg project custom-field-delete MFP --custom-field-id 12345
+
+# Add a list item to a custom field (requires project_writable feature)
+blg project custom-field-add-item MFP --custom-field-id 12345 --name "New Option"
+
 # Add an issue type to a project (requires project_writable feature)
 blg project issue-type-add MFP --name "Bug Report" --color "dark-red" --template-summary "Bug: [Title]" --template-description "## Description\n\n## Steps to reproduce"
 
@@ -237,6 +243,7 @@ The `blg` CLI currently supports the following commands:
   - `--required <true|false>` - Update whether the field is required
   - `--applicable-issue-types <ID1,ID2>` - Update applicable issue types (comma-separated IDs)
 - `project custom-field-delete <PROJECT_ID_OR_KEY> --custom-field-id <CUSTOM_FIELD_ID>` - Delete a custom field from a project (requires `project_writable` feature)
+- `project custom-field-add-item <PROJECT_ID_OR_KEY> --custom-field-id <CUSTOM_FIELD_ID> --name <ITEM_NAME>` - Add a list item to a list type custom field (requires `project_writable` feature)
 - `project issue-type-add <PROJECT_ID_OR_KEY> --name <ISSUE_TYPE_NAME> --color <COLOR> [--template-summary <SUMMARY>] [--template-description <DESCRIPTION>]` - Add an issue type to a project (requires `project_writable` feature). COLOR can be a name (red, dark-red, purple, violet, blue, teal, green, orange, pink, gray) or hex code.
 - `project issue-type-update <PROJECT_ID_OR_KEY> --issue-type-id <ISSUE_TYPE_ID> [--name <NEW_NAME>] [--color <NEW_COLOR>] [--template-summary <NEW_SUMMARY>] [--template-description <NEW_DESCRIPTION>]` - Update an issue type in a project (requires `project_writable` feature). All parameters except issue-type-id are optional.
 - `project issue-type-delete <PROJECT_ID_OR_KEY> --issue-type-id <ISSUE_TYPE_ID> --substitute-issue-type-id <SUBSTITUTE_ID>` - Delete an issue type from a project (requires `project_writable` feature). Existing issues will be moved to the substitute issue type.

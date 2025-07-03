@@ -2,8 +2,8 @@
 
 ## Summary
 - Total APIs: 149
-- Implemented: 98 (66%)
-- Not implemented: 51 (34%)
+- Implemented: 99 (66%)
+- Not implemented: 50 (34%)
 
 ### Spaces
 - ✅ GetSpace: Returns information about your space: GET /api/v2/space
@@ -84,7 +84,7 @@
 - ✅ AddCustomField: Adds new Custom Field to the project: POST /api/v2/projects/:projectIdOrKey/customFields
 - ✅ UpdateCustomField: Updates Custom Field: PATCH /api/v2/projects/:projectIdOrKey/customFields/:id
 - ✅ GetCustomFieldList: Returns list of Custom Fields in the project: GET /api/v2/projects/:projectIdOrKey/customFields
-- ❌ AddListItemForListTypeCustomField: Adds new list item for list type custom field. Only administrator can call this API if the option “Add items in adding or editing issues” is disabled in settings. Calling API fails if specified custom field’s type is not a list: POST /api/v2/projects/:projectIdOrKey/customFields/:id/items
+- ✅ AddListItemForListTypeCustomField: Adds new list item for list type custom field. Only administrator can call this API if the option “Add items in adding or editing issues” is disabled in settings. Calling API fails if specified custom field’s type is not a list: POST /api/v2/projects/:projectIdOrKey/customFields/:id/items
 - ✅ DeleteCustomField: Deletes Custom Field: DELETE /api/v2/projects/:projectIdOrKey/customFields/:id
 - ❌ DeleteListItemForListTypeCustomField: Deletes list item for list type custom field. Calling API fails if specified custom field’s type is not a list: DELETE /api/v2/projects/:projectIdOrKey/customFields/:id/items/:itemId
 - ❌ UpdateListItemForListTypeCustomField: Updates list item for list type custom field. Calling API fails if specified custom field’s type is not a list: PATCH /api/v2/projects/:projectIdOrKey/customFields/:id/items/:itemId

@@ -15,13 +15,15 @@ use crate::api::{
 };
 #[cfg(feature = "writable")]
 use crate::{
-    AddCategoryParams, AddCustomFieldParams, AddIssueTypeParams, AddMilestoneParams,
-    AddStatusParams, DeleteCategoryParams, DeleteCustomFieldParams, DeleteIssueTypeParams,
-    DeleteVersionParams, UpdateCategoryParams, UpdateIssueTypeParams, UpdateVersionParams,
+    AddCategoryParams, AddCustomFieldParams, AddIssueTypeParams, AddListItemToCustomFieldParams,
+    AddMilestoneParams, AddStatusParams, DeleteCategoryParams, DeleteCustomFieldParams,
+    DeleteIssueTypeParams, DeleteVersionParams, UpdateCategoryParams, UpdateIssueTypeParams,
+    UpdateVersionParams,
     api::{
-        AddCategoryResponse, AddCustomFieldResponse, AddIssueTypeResponse, AddStatusResponse,
-        DeleteCategoryResponse, DeleteCustomFieldResponse, DeleteIssueTypeResponse,
-        DeleteStatusParams, DeleteStatusResponse, DeleteVersionResponse, UpdateCategoryResponse,
+        AddCategoryResponse, AddCustomFieldResponse, AddIssueTypeResponse,
+        AddListItemToCustomFieldResponse, AddStatusResponse, DeleteCategoryResponse,
+        DeleteCustomFieldResponse, DeleteIssueTypeResponse, DeleteStatusParams,
+        DeleteStatusResponse, DeleteVersionResponse, UpdateCategoryResponse,
         UpdateCustomFieldParams, UpdateCustomFieldResponse, UpdateIssueTypeResponse,
         UpdateStatusOrderParams, UpdateStatusOrderResponse, UpdateStatusParams,
         UpdateStatusResponse, UpdateVersionResponse,
@@ -299,6 +301,20 @@ impl ProjectApi {
         &self,
         params: DeleteCustomFieldParams,
     ) -> Result<DeleteCustomFieldResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Adds a new item to a list type custom field.
+    ///
+    /// Only administrators can call this API if the option "Add items in adding or editing issues"
+    /// is disabled in settings. Calling API fails if specified custom field's type is not a list.
+    ///
+    /// Corresponds to `POST /api/v2/projects/:projectIdOrKey/customFields/:id/items`.
+    #[cfg(feature = "writable")]
+    pub async fn add_list_item_to_custom_field(
+        &self,
+        params: AddListItemToCustomFieldParams,
+    ) -> Result<AddListItemToCustomFieldResponse> {
         self.0.execute(params).await
     }
 }

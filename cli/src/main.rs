@@ -51,10 +51,11 @@ use backlog_project::GetProjectListParams;
 use backlog_project::GetProjectRecentUpdatesParams;
 #[cfg(feature = "project_writable")]
 use backlog_project::{
-    AddCategoryParams, AddCustomFieldParams, AddIssueTypeParams, AddMilestoneParams,
-    AddStatusParams, DeleteCategoryParams, DeleteCustomFieldParams, DeleteIssueTypeParams,
-    DeleteStatusParams, DeleteVersionParams, UpdateCategoryParams, UpdateCustomFieldParams,
-    UpdateIssueTypeParams, UpdateStatusOrderParams, UpdateStatusParams, UpdateVersionParams,
+    AddCategoryParams, AddCustomFieldParams, AddIssueTypeParams, AddListItemToCustomFieldParams,
+    AddMilestoneParams, AddStatusParams, DeleteCategoryParams, DeleteCustomFieldParams,
+    DeleteIssueTypeParams, DeleteStatusParams, DeleteVersionParams, UpdateCategoryParams,
+    UpdateCustomFieldParams, UpdateIssueTypeParams, UpdateStatusOrderParams, UpdateStatusParams,
+    UpdateVersionParams,
 };
 use backlog_space::GetLicenceParams;
 use backlog_space::GetSpaceDiskUsageParams;
@@ -848,6 +849,19 @@ enum ProjectCommands {
         /// Custom Field ID
         #[clap(short, long)]
         custom_field_id: u32,
+    },
+    /// Add a list item to a list type custom field
+    #[cfg(feature = "project_writable")]
+    CustomFieldAddItem {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Custom Field ID
+        #[clap(short, long)]
+        custom_field_id: u32,
+        /// Name of the new list item
+        #[clap(short, long)]
+        name: String,
     },
     /// Add a category to a project
     CategoryAdd {
@@ -3416,6 +3430,62 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Error deleting custom field: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::CustomFieldAddItem {
+                project_id_or_key,
+                custom_field_id,
+                name,
+            } => {
+                println!(
+                    "Adding list item '{name}' to custom field {custom_field_id} in project: {project_id_or_key}"
+                );
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let field_id = CustomFieldId::new(custom_field_id);
+                let params =
+                    AddListItemToCustomFieldParams::new(proj_id_or_key, field_id, name.clone());
+
+                match client.project().add_list_item_to_custom_field(params).await {
+                    Ok(field) => {
+                        println!("✅ List item added successfully to custom field:");
+                        println!("[{}] {}", field.id, field.name);
+
+                        // Display list items if it's a list type field
+                        match &field.settings {
+                            backlog_issue::CustomFieldSettings::SingleList(settings) => {
+                                println!("Type: Single Selection List");
+                                println!("List items:");
+                                for item in &settings.items {
+                                    println!(
+                                        "  - [{}] {} (order: {})",
+                                        item.id, item.name, item.display_order
+                                    );
+                                }
+                                println!("Allow add item: {}", settings.allow_add_item);
+                            }
+                            backlog_issue::CustomFieldSettings::MultipleList(settings) => {
+                                println!("Type: Multiple Selection List");
+                                println!("List items:");
+                                for item in &settings.items {
+                                    println!(
+                                        "  - [{}] {} (order: {})",
+                                        item.id, item.name, item.display_order
+                                    );
+                                }
+                                println!("Allow add item: {}", settings.allow_add_item);
+                                println!("Allow input: {}", settings.allow_input);
+                            }
+                            _ => {
+                                eprintln!("⚠️  Warning: Custom field is not a list type");
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Error adding list item to custom field: {e}");
                         std::process::exit(1);
                     }
                 }
