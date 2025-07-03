@@ -27,7 +27,8 @@ pub use api::{
     AddMilestoneParams, AddMilestoneResponse, AddStatusParams, AddStatusResponse,
     DeleteCategoryParams, DeleteCategoryResponse, DeleteIssueTypeParams, DeleteIssueTypeResponse,
     DeleteStatusParams, DeleteStatusResponse, DeleteVersionParams, DeleteVersionResponse,
-    UpdateCategoryParams, UpdateCategoryResponse, UpdateIssueTypeParams, UpdateIssueTypeResponse,
+    UpdateCategoryParams, UpdateCategoryResponse, UpdateCustomFieldParams,
+    UpdateCustomFieldResponse, UpdateIssueTypeParams, UpdateIssueTypeResponse,
     UpdateStatusOrderParams, UpdateStatusOrderResponse, UpdateStatusParams, UpdateStatusResponse,
     UpdateVersionParams, UpdateVersionResponse,
 };

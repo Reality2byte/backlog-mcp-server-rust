@@ -32,7 +32,7 @@ use backlog_core::identifier::{CommentId, Identifier};
 #[cfg(any(feature = "issue_writable", feature = "project_writable"))]
 use backlog_core::{
     ApiDate, IssueKey,
-    identifier::{CategoryId, IssueTypeId, MilestoneId, PriorityId, ResolutionId},
+    identifier::{CategoryId, CustomFieldId, IssueTypeId, MilestoneId, PriorityId, ResolutionId},
 };
 #[cfg(feature = "project_writable")]
 use backlog_domain_models::{IssueTypeColor, StatusColor};
@@ -53,8 +53,8 @@ use backlog_project::GetProjectRecentUpdatesParams;
 use backlog_project::{
     AddCategoryParams, AddIssueTypeParams, AddMilestoneParams, AddStatusParams,
     DeleteCategoryParams, DeleteIssueTypeParams, DeleteStatusParams, DeleteVersionParams,
-    UpdateCategoryParams, UpdateIssueTypeParams, UpdateStatusOrderParams, UpdateStatusParams,
-    UpdateVersionParams,
+    UpdateCategoryParams, UpdateCustomFieldParams, UpdateIssueTypeParams, UpdateStatusOrderParams,
+    UpdateStatusParams, UpdateVersionParams,
 };
 use backlog_space::GetLicenceParams;
 use backlog_space::GetSpaceDiskUsageParams;
@@ -739,6 +739,44 @@ enum ProjectCommands {
         /// Project ID or Key
         #[clap(name = "PROJECT_ID_OR_KEY")]
         project_id_or_key: String,
+    },
+    /// Update a custom field in a project
+    #[cfg(feature = "project_writable")]
+    CustomFieldUpdate {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Custom field ID
+        #[clap(long)]
+        custom_field_id: u32,
+        /// Update the name
+        #[clap(long)]
+        name: Option<String>,
+        /// Update the description
+        #[clap(long)]
+        description: Option<String>,
+        /// Update whether field is required
+        #[clap(long)]
+        required: Option<bool>,
+        /// Update applicable issue types (comma-separated IDs)
+        #[clap(long)]
+        applicable_issue_types: Option<String>,
+        // Date field specific parameters
+        /// Minimum date (YYYY-MM-DD format)
+        #[clap(long)]
+        min_date: Option<String>,
+        /// Maximum date (YYYY-MM-DD format)
+        #[clap(long)]
+        max_date: Option<String>,
+        /// Initial value type (1-7)
+        #[clap(long)]
+        initial_value_type: Option<i32>,
+        /// Initial date (YYYY-MM-DD format)
+        #[clap(long)]
+        initial_date: Option<String>,
+        /// Initial shift (days from current date)
+        #[clap(long)]
+        initial_shift: Option<i32>,
     },
     /// Add a category to a project
     CategoryAdd {
@@ -3029,6 +3067,94 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             #[cfg(feature = "project_writable")]
+            ProjectCommands::CustomFieldUpdate {
+                project_id_or_key,
+                custom_field_id,
+                name,
+                description,
+                required,
+                applicable_issue_types,
+                min_date,
+                max_date,
+                initial_value_type,
+                initial_date,
+                initial_shift,
+            } => {
+                println!("Updating custom field {custom_field_id} in project: {project_id_or_key}");
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let field_id = CustomFieldId::new(custom_field_id);
+                let mut params = UpdateCustomFieldParams::new(proj_id_or_key, field_id);
+
+                // Set optional parameters
+                if let Some(n) = name {
+                    params = params.with_name(n);
+                }
+                if let Some(d) = description {
+                    params = params.with_description(d);
+                }
+                if let Some(r) = required {
+                    params = params.with_required(r);
+                }
+                if let Some(types) = applicable_issue_types {
+                    let type_ids: Vec<IssueTypeId> = types
+                        .split(',')
+                        .filter_map(|s| s.trim().parse::<u32>().ok())
+                        .map(IssueTypeId::new)
+                        .collect();
+                    if !type_ids.is_empty() {
+                        params = params.with_applicable_issue_types(type_ids);
+                    }
+                }
+
+                // Handle date field specific parameters
+                if min_date.is_some()
+                    || max_date.is_some()
+                    || initial_value_type.is_some()
+                    || initial_date.is_some()
+                    || initial_shift.is_some()
+                {
+                    let min_date_parsed = min_date
+                        .as_ref()
+                        .and_then(|d| backlog_core::Date::from_str(d).ok());
+                    let max_date_parsed = max_date
+                        .as_ref()
+                        .and_then(|d| backlog_core::Date::from_str(d).ok());
+                    let initial_date_parsed = initial_date
+                        .as_ref()
+                        .and_then(|d| backlog_core::Date::from_str(d).ok());
+
+                    params = params.with_date_settings(
+                        min_date_parsed,
+                        max_date_parsed,
+                        initial_value_type,
+                        initial_date_parsed,
+                        initial_shift,
+                    );
+                }
+
+                match client.project().update_custom_field(params).await {
+                    Ok(field) => {
+                        println!("Custom field updated successfully:");
+                        println!("[{}] {}", field.id, field.name);
+                        if !field.description.is_empty() {
+                            println!("Description: {}", field.description);
+                        }
+                        println!("Required: {}", field.required);
+                        if let Some(issue_types) = &field.applicable_issue_types {
+                            if !issue_types.is_empty() {
+                                let ids: Vec<String> =
+                                    issue_types.iter().map(|id| id.to_string()).collect();
+                                println!("Applicable Issue Types: {}", ids.join(", "));
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error updating custom field: {e}");
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
             ProjectCommands::CategoryAdd {
                 project_id_or_key,
                 name,
@@ -3534,6 +3660,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             ProjectCommands::CategoryAdd { .. }
             | ProjectCommands::CategoryUpdate { .. }
             | ProjectCommands::CategoryDelete { .. }
+            | ProjectCommands::CustomFieldUpdate { .. }
             | ProjectCommands::IssueTypeAdd { .. }
             | ProjectCommands::IssueTypeDelete { .. }
             | ProjectCommands::IssueTypeUpdate { .. }
@@ -3545,7 +3672,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             | ProjectCommands::StatusDelete { .. }
             | ProjectCommands::StatusOrderUpdate { .. } => {
                 eprintln!(
-                    "Category, issue type, version, and status management is not available. Please build with 'project_writable' feature."
+                    "Category, issue type, version, status, and custom field management is not available. Please build with 'project_writable' feature."
                 );
             }
             ProjectCommands::PriorityList => {

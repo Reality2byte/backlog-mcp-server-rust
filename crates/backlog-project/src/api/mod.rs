@@ -20,6 +20,7 @@ mod get_resolution_list;
 mod get_status_list;
 mod project_api;
 mod update_category;
+mod update_custom_field;
 mod update_issue_type;
 mod update_status;
 mod update_status_order;
@@ -79,6 +80,10 @@ pub use project_api::ProjectApi;
 #[cfg(feature = "writable")]
 pub use update_status_order::UpdateStatusOrderParams;
 pub use update_status_order::UpdateStatusOrderResponse;
+
+#[cfg(feature = "writable")]
+pub use update_custom_field::UpdateCustomFieldParams;
+pub use update_custom_field::UpdateCustomFieldResponse;
 
 pub use get_project_detail::{GetProjectDetailParams, GetProjectDetailResponse};
 

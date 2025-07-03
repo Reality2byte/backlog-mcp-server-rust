@@ -1,5 +1,6 @@
 use chrono::{DateTime, NaiveDate, TimeZone, Utc};
 use serde::{self, Deserializer, Serializer};
+use std::fmt;
 use std::str::FromStr;
 
 #[cfg(feature = "schemars")]
@@ -53,6 +54,12 @@ impl<'de> serde::Deserialize<'de> for Date {
     {
         let s = String::deserialize(deserializer)?;
         Date::from_str(&s).map_err(serde::de::Error::custom)
+    }
+}
+
+impl fmt::Display for Date {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0.format("%Y-%m-%d"))
     }
 }
 

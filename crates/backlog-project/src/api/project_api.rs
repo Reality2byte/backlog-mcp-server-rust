@@ -21,8 +21,9 @@ use crate::{
     api::{
         AddCategoryResponse, AddIssueTypeResponse, AddStatusResponse, DeleteCategoryResponse,
         DeleteIssueTypeResponse, DeleteStatusParams, DeleteStatusResponse, DeleteVersionResponse,
-        UpdateCategoryResponse, UpdateIssueTypeResponse, UpdateStatusOrderParams,
-        UpdateStatusOrderResponse, UpdateStatusParams, UpdateStatusResponse, UpdateVersionResponse,
+        UpdateCategoryResponse, UpdateCustomFieldParams, UpdateCustomFieldResponse,
+        UpdateIssueTypeResponse, UpdateStatusOrderParams, UpdateStatusOrderResponse,
+        UpdateStatusParams, UpdateStatusResponse, UpdateVersionResponse,
     },
 };
 
@@ -264,6 +265,17 @@ impl ProjectApi {
         &self,
         params: UpdateStatusOrderParams,
     ) -> Result<UpdateStatusOrderResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Updates a custom field in a project.
+    ///
+    /// Corresponds to `PATCH /api/v2/projects/:projectIdOrKey/customFields/:id`.
+    #[cfg(feature = "writable")]
+    pub async fn update_custom_field(
+        &self,
+        params: UpdateCustomFieldParams,
+    ) -> Result<UpdateCustomFieldResponse> {
         self.0.execute(params).await
     }
 }
