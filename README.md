@@ -70,63 +70,65 @@ With the default configuration, you have access to **34 tools** for Backlog auto
 
 The server includes both **read operations** for information gathering and **write operations** for taking actions.
 
+**Note**: Tool names follow a `category_resource_action` pattern (e.g., `issue_details_get`, `wiki_update`) to enable category-based filtering with `--allowedTools` (e.g., `claude --allowedTools "mcp__backlog__issue_*"`).
+
 ### Document Tools
--   **`get_document_details`**: Retrieves details for a specific Backlog document
--   **`download_document_attachment`**: Download a document attachment
--   **`get_document_tree`**: Get the document tree for a specified project
+-   **`document_details_get`**: Retrieves details for a specific Backlog document
+-   **`document_attachment_download`**: Download a document attachment
+-   **`document_tree_get`**: Get the document tree for a specified project
 
 ### Git Tools
--   **`get_repository_list`**: Get a list of Git repositories for a specified project
--   **`get_repository_details`**: Get details for a specific Git repository
--   **`get_pull_request_list`**: Get a list of pull requests for a specified repository
--   **`get_pull_request_details`**: Get details for a specific pull request
--   **`get_pull_request_attachment_list`**: Get a list of attachments for a specific pull request
--   **`get_pull_request_comment_list`**: Get a list of comments for a specific pull request
--   **`download_pull_request_attachment`**: Download a pull request attachment
--   **`add_pull_request_comment`**: Add a comment to a specific pull request
+-   **`git_repository_list_get`**: Get a list of Git repositories for a specified project
+-   **`git_repository_details_get`**: Get details for a specific Git repository
+-   **`git_pr_list_get`**: Get a list of pull requests for a specified repository
+-   **`git_pr_details_get`**: Get details for a specific pull request
+-   **`git_pr_attachment_list_get`**: Get a list of attachments for a specific pull request
+-   **`git_pr_comment_list_get`**: Get a list of comments for a specific pull request
+-   **`git_pr_attachment_download`**: Download a pull request attachment
+-   **`git_pr_comment_add`**: Add a comment to a specific pull request
 
 ### Issue Tools
--   **`get_issue_details`**: Retrieves details for a specific Backlog issue
--   **`get_version_milestone_list`**: Retrieves a list of versions (milestones) for a specified project
--   **`get_issues_by_milestone_name`**: Retrieves a list of issues associated with a specified milestone
--   **`update_issue`**: Updates a Backlog issue including summary, description, and custom fields
--   **`get_issue_comments`**: Gets comments for a specific issue
--   **`get_issue_attachment_list`**: Get a list of attachments for a specified issue
--   **`download_issue_attachment`**: Download an issue attachment
--   **`get_issue_shared_files`**: Get a list of shared files linked to a specified issue
--   **`update_issue_comment`**: Update an existing comment on a Backlog issue
--   **`add_issue_to_project`**: Create a new issue in a Backlog project with support for custom fields
--   **`add_comment_to_issue`**: Add a comment to a specific issue
--   **`get_priorities`**: Get a list of priority types available in the space
+-   **`issue_details_get`**: Retrieves details for a specific Backlog issue
+-   **`issue_milestone_list_get`**: Retrieves a list of versions (milestones) for a specified project
+-   **`issue_list_by_milestone_get`**: Retrieves a list of issues associated with a specified milestone
+-   **`issue_update`**: Updates a Backlog issue including summary, description, and custom fields
+-   **`issue_comment_list_get`**: Gets comments for a specific issue
+-   **`issue_attachment_list_get`**: Get a list of attachments for a specified issue
+-   **`issue_attachment_download`**: Download an issue attachment
+-   **`issue_shared_file_list_get`**: Get a list of shared files linked to a specified issue
+-   **`issue_comment_update`**: Update an existing comment on a Backlog issue
+-   **`issue_add`**: Create a new issue in a Backlog project with support for custom fields
+-   **`issue_comment_add`**: Add a comment to a specific issue
+-   **`issue_priority_list_get`**: Get a list of priority types available in the space
 
 ### Project Tools
--   **`get_project_status_list`**: Get a list of statuses for a specified project
--   **`get_project_issue_types`**: Get a list of issue types for a specified project
--   **`get_custom_field_list`**: Get a list of custom fields defined for a specified project
+-   **`project_status_list_get`**: Get a list of statuses for a specified project
+-   **`project_issue_type_list_get`**: Get a list of issue types for a specified project
+-   **`project_custom_field_list_get`**: Get a list of custom fields defined for a specified project
 
 ### Shared File Tools
--   **`get_shared_files_list`**: Get a list of shared files for a specified project directory
--   **`download_shared_file`**: Download a shared file
+-   **`file_shared_list_get`**: Get a list of shared files for a specified project directory
+-   **`file_shared_download`**: Download a shared file
 
 ### User Tools
--   **`get_user_list`**: Get a list of users in the space
+-   **`user_list_get`**: Get a list of users in the space
 
-### Activity Tools
--   **`get_activity`**: Get details of a specific activity by ID
--   **`get_project_activities`**: Get recent activities in a project
--   **`get_space_activities`**: Get recent activities across the entire space
--   **`get_user_activities`**: Get recent activities by a specific user
+### Activity Tools (Not yet implemented in MCP server)
+-   **`activity_details_get`**: Get details of a specific activity by ID
+-   **`activity_project_list_get`**: Get recent activities in a project
+-   **`activity_space_list_get`**: Get recent activities across the entire space
+-   **`activity_user_list_get`**: Get recent activities by a specific user
 
 ### Wiki Tools
--   **`get_wiki_list`**: Get a list of wiki pages
--   **`get_wiki_detail`**: Get detailed information about a specific wiki page
--   **`get_wiki_attachment_list`**: Get a list of attachments for a specified wiki page
--   **`download_wiki_attachment`**: Download an attachment from a wiki page
--   **`update_wiki`**: Update a wiki page
+-   **`wiki_list_get`**: Get a list of wiki pages
+-   **`wiki_details_get`**: Get detailed information about a specific wiki page
+-   **`wiki_attachment_list_get`**: Get a list of attachments for a specified wiki page
+-   **`wiki_attachment_download`**: Download an attachment from a wiki page
+-   **`wiki_update`**: Update a wiki page
 
 ## File Download Features
 
-All file download tools (`download_document_attachment`, `download_issue_attachment`, `download_pull_request_attachment`, `download_wiki_attachment`, and `download_shared_file`) support format detection and handling:
+All file download tools (`document_attachment_download`, `issue_attachment_download`, `git_pr_attachment_download`, `wiki_attachment_download`, and `file_shared_download`) support format detection and handling:
 
 ### Format Detection
 - **Images**: Files with `image/*` content type are detected and returned as base64-encoded images via `rmcp::model::Content::image`
@@ -157,15 +159,15 @@ cargo build --package mcp-backlog-server
 The MCP server supports multiple feature flags to enable different write operations:
 
 -   **`issue_writable`** (enabled by default)
-    -   Enables: `update_issue`, `update_issue_comment`, `add_issue_to_project`, and `add_comment_to_issue` tools
+    -   Enables: `issue_update`, `issue_comment_update`, `issue_add`, and `issue_comment_add` tools
     -   Allows AI agents to create issues, modify issue content, and manage comments
 
 -   **`git_writable`** (enabled by default)
-    -   Enables: `add_pull_request_comment` tool
+    -   Enables: `git_pr_comment_add` tool
     -   Allows AI agents to add comments to pull requests
 
 -   **`wiki_writable`** (enabled by default)
-    -   Enables: `update_wiki` tool
+    -   Enables: `wiki_update` tool
     -   Allows AI agents to update wiki page content, names, and notification settings
 
 ### Build Configuration

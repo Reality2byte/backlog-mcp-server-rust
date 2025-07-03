@@ -87,7 +87,7 @@ impl Server {
     }
 
     #[tool(description = "Get a list of Git repositories for a specified project.")]
-    async fn get_repository_list(
+    async fn git_repository_list_get(
         &self,
         #[tool(aggr)] request: GetRepositoryListRequest,
     ) -> McpResult {
@@ -98,7 +98,7 @@ impl Server {
     }
 
     #[tool(description = "Get details for a specific Git repository.")]
-    async fn get_repository(
+    async fn git_repository_details_get(
         &self,
         #[tool(aggr)] request: GetRepositoryDetailsRequest,
     ) -> McpResult {
@@ -108,7 +108,7 @@ impl Server {
     }
 
     #[tool(description = "Get a list of pull requests for a specified repository.")]
-    async fn get_pull_request_list(
+    async fn git_pr_list_get(
         &self,
         #[tool(aggr)] request: ListPullRequestsRequest,
     ) -> McpResult {
@@ -119,7 +119,7 @@ impl Server {
     }
 
     #[tool(description = "Get details for a specific pull request.")]
-    async fn get_pull_request(
+    async fn git_pr_details_get(
         &self,
         #[tool(aggr)] request: GetPullRequestDetailsRequest,
     ) -> McpResult {
@@ -130,7 +130,7 @@ impl Server {
     }
 
     #[tool(description = "Get details for a specific Backlog issue.")]
-    async fn get_issue(&self, #[tool(aggr)] request: GetIssueDetailsRequest) -> McpResult {
+    async fn issue_details_get(&self, #[tool(aggr)] request: GetIssueDetailsRequest) -> McpResult {
         let issue =
             issue::bridge::get_issue_details(self.client.clone(), request, &self.access_control)
                 .await?;
@@ -142,7 +142,7 @@ impl Server {
 
     #[tool(description = "Get details for a specific Backlog document.
      This API returns the document details including its title, `plain` as Markdown and `json` as ProseMirror json, and other metadata.")]
-    async fn get_document_details(
+    async fn document_details_get(
         &self,
         #[tool(aggr)] request: GetDocumentDetailsRequest,
     ) -> McpResult {
@@ -159,7 +159,7 @@ impl Server {
     #[tool(
         description = "Download a document attachment. Automatically detects format (image, text, or raw bytes) or you can specify the format parameter. Returns the file content in the appropriate format."
     )]
-    async fn download_document_attachment(
+    async fn document_attachment_download(
         &self,
         #[tool(aggr)] request: DownloadDocumentAttachmentRequest,
     ) -> McpResult {
@@ -181,7 +181,7 @@ impl Server {
     }
 
     #[tool(description = "Get the document tree for a specified project.")]
-    async fn get_document_tree(&self, #[tool(aggr)] request: GetDocumentTreeRequest) -> McpResult {
+    async fn document_tree_get(&self, #[tool(aggr)] request: GetDocumentTreeRequest) -> McpResult {
         let document_tree = document::bridge::get_document_tree_tool(
             self.client.clone(),
             request,
@@ -194,7 +194,7 @@ impl Server {
     }
 
     #[tool(description = "Get a list of versions (milestones) for a specified project.")]
-    async fn get_version_milestone_list(
+    async fn issue_milestone_list_get(
         &self,
         #[tool(aggr)] request: GetVersionMilestoneListRequest,
     ) -> McpResult {
@@ -208,7 +208,7 @@ impl Server {
     }
 
     #[tool(description = "Get a list of issues for a specified milestone name within a project.")]
-    async fn get_issues_by_milestone_name(
+    async fn issue_list_by_milestone_get(
         &self,
         #[tool(aggr)] request: GetIssuesByMilestoneNameRequest,
     ) -> McpResult {
@@ -227,7 +227,7 @@ impl Server {
 
     #[cfg(feature = "issue_writable")]
     #[tool(description = "Update the summary and/or description of a Backlog issue.")]
-    async fn update_issue(&self, #[tool(aggr)] request: UpdateIssueRequest) -> McpResult {
+    async fn issue_update(&self, #[tool(aggr)] request: UpdateIssueRequest) -> McpResult {
         let updated_issue =
             issue::bridge::update_issue_impl(self.client.clone(), request, &self.access_control)
                 .await?;
@@ -239,7 +239,7 @@ impl Server {
 
     #[cfg(feature = "issue_writable")]
     #[tool(description = "Add a comment to a Backlog issue.")]
-    async fn add_comment_to_issue(&self, #[tool(aggr)] request: AddCommentRequest) -> McpResult {
+    async fn issue_comment_add(&self, #[tool(aggr)] request: AddCommentRequest) -> McpResult {
         let comment =
             issue::bridge::add_comment_impl(self.client.clone(), request, &self.access_control)
                 .await?;
@@ -248,7 +248,7 @@ impl Server {
 
     #[cfg(feature = "issue_writable")]
     #[tool(description = "Update an existing comment on a Backlog issue.")]
-    async fn update_issue_comment(&self, #[tool(aggr)] request: UpdateCommentRequest) -> McpResult {
+    async fn issue_comment_update(&self, #[tool(aggr)] request: UpdateCommentRequest) -> McpResult {
         let comment =
             issue::bridge::update_comment_impl(self.client.clone(), request, &self.access_control)
                 .await?;
@@ -257,7 +257,7 @@ impl Server {
 
     #[cfg(feature = "issue_writable")]
     #[tool(description = "Create a new issue in a Backlog project.")]
-    async fn add_issue_to_project(&self, #[tool(aggr)] request: AddIssueRequest) -> McpResult {
+    async fn issue_add(&self, #[tool(aggr)] request: AddIssueRequest) -> McpResult {
         let issue =
             issue::bridge::add_issue_impl(self.client.clone(), request, &self.access_control)
                 .await?;
@@ -268,10 +268,10 @@ impl Server {
     }
 
     #[tool(
-        name = "get_issue_comments",
+        name = "issue_comment_list_get",
         description = "Gets comments for a specific issue. Takes 'issue_id_or_key' (string, required) and optional 'min_id', 'max_id', 'count', 'order' parameters."
     )]
-    async fn get_issue_comments(
+    async fn issue_comment_list_get(
         &self,
         #[tool(aggr)] request: GetIssueCommentsRequest,
     ) -> McpResult {
@@ -285,10 +285,10 @@ impl Server {
     }
 
     #[tool(
-        name = "get_issue_attachment_list",
+        name = "issue_attachment_list_get",
         description = "Get a list of attachments for a specified issue."
     )]
-    async fn get_issue_attachment_list(
+    async fn issue_attachment_list_get(
         &self,
         #[tool(aggr)] request: GetAttachmentListRequest,
     ) -> McpResult {
@@ -302,10 +302,10 @@ impl Server {
     }
 
     #[tool(
-        name = "get_issue_shared_files",
+        name = "issue_shared_file_list_get",
         description = "Get a list of shared files linked to a specified issue."
     )]
-    async fn get_issue_shared_files(
+    async fn issue_shared_file_list_get(
         &self,
         #[tool(aggr)] request: GetIssueSharedFilesRequest,
     ) -> McpResult {
@@ -319,7 +319,7 @@ impl Server {
     }
 
     #[tool(description = "Get a list of users in the space.")]
-    async fn get_user_list(&self, #[tool(aggr)] request: GetUserListRequest) -> McpResult {
+    async fn user_list_get(&self, #[tool(aggr)] request: GetUserListRequest) -> McpResult {
         let users = user::bridge::get_user_list_bridge(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(users)?]))
     }
@@ -327,7 +327,7 @@ impl Server {
     #[tool(
         description = "Download an issue attachment. Automatically detects format (image, text, or raw bytes) or you can specify the format parameter. Returns the file content in the appropriate format."
     )]
-    async fn download_issue_attachment(
+    async fn issue_attachment_download(
         &self,
         #[tool(aggr)] request: DownloadAttachmentRequest,
     ) -> McpResult {
@@ -349,7 +349,7 @@ impl Server {
     }
 
     #[tool(description = "Get a list of statuses for a specified project.")]
-    async fn get_project_status_list(
+    async fn project_status_list_get(
         &self,
         #[tool(aggr)] request: GetProjectStatusListRequest,
     ) -> McpResult {
@@ -363,7 +363,7 @@ impl Server {
     }
 
     #[tool(description = "Get a list of issue types for a specified project.")]
-    async fn get_project_issue_types(
+    async fn project_issue_type_list_get(
         &self,
         #[tool(aggr)] request: GetProjectIssueTypesRequest,
     ) -> McpResult {
@@ -377,13 +377,13 @@ impl Server {
     }
 
     #[tool(description = "Get a list of priorities available in Backlog.")]
-    async fn get_priorities(&self, #[tool(aggr)] request: GetPrioritiesRequest) -> McpResult {
+    async fn issue_priority_list_get(&self, #[tool(aggr)] request: GetPrioritiesRequest) -> McpResult {
         let priorities = project::bridge::get_priorities_tool(self.client.clone(), request).await?;
         Ok(CallToolResult::success(vec![Content::json(priorities)?]))
     }
 
     #[tool(description = "Get a list of custom fields for a specified project with examples.")]
-    async fn get_custom_field_list(
+    async fn project_custom_field_list_get(
         &self,
         #[tool(aggr)] request: GetCustomFieldListRequest,
     ) -> McpResult {
@@ -397,7 +397,7 @@ impl Server {
     }
 
     #[tool(description = "Get a list of shared files for a specified project directory.")]
-    async fn get_shared_files_list(
+    async fn file_shared_list_get(
         &self,
         #[tool(aggr)] request: GetSharedFilesListRequest,
     ) -> McpResult {
@@ -413,7 +413,7 @@ impl Server {
     #[tool(
         description = "Download a shared file. Automatically detects format (image, text, or raw bytes) or you can specify the format parameter. Returns the file content in the appropriate format."
     )]
-    async fn download_shared_file(
+    async fn file_shared_download(
         &self,
         #[tool(aggr)] request: DownloadSharedFileRequest,
     ) -> McpResult {
@@ -435,7 +435,7 @@ impl Server {
     }
 
     #[tool(description = "Get a list of attachments for a specific pull request.")]
-    async fn get_pull_request_attachment_list(
+    async fn git_pr_attachment_list_get(
         &self,
         #[tool(aggr)] request: GetPullRequestAttachmentListRequest,
     ) -> McpResult {
@@ -451,7 +451,7 @@ impl Server {
     #[tool(
         description = "Download a pull request attachment. Automatically detects format (image, text, or raw bytes) or you can specify the format parameter. Returns the file content in the appropriate format."
     )]
-    async fn download_pull_request_attachment(
+    async fn git_pr_attachment_download(
         &self,
         #[tool(aggr)] request: DownloadPullRequestAttachmentRequest,
     ) -> McpResult {
@@ -473,7 +473,7 @@ impl Server {
     }
 
     #[tool(description = "Get a list of comments for a specific pull request.")]
-    async fn get_pull_request_comment_list(
+    async fn git_pr_comment_list_get(
         &self,
         #[tool(aggr)] request: GetPullRequestCommentListRequest,
     ) -> McpResult {
@@ -487,7 +487,7 @@ impl Server {
     }
 
     #[tool(description = "Get detailed information about a specific wiki page.")]
-    async fn get_wiki_detail(&self, #[tool(aggr)] request: GetWikiDetailRequest) -> McpResult {
+    async fn wiki_details_get(&self, #[tool(aggr)] request: GetWikiDetailRequest) -> McpResult {
         let client = self.client.lock().await;
         let detail = wiki::bridge::get_wiki_detail(&client, request, &self.access_control).await?;
 
@@ -495,7 +495,7 @@ impl Server {
     }
 
     #[tool(description = "Get a list of wiki pages. Can be filtered by project and keyword.")]
-    async fn get_wiki_list(&self, #[tool(aggr)] request: GetWikiListRequest) -> McpResult {
+    async fn wiki_list_get(&self, #[tool(aggr)] request: GetWikiListRequest) -> McpResult {
         let client = self.client.lock().await;
         let wikis = wiki::bridge::get_wiki_list(&client, request, &self.access_control).await?;
 
@@ -503,7 +503,7 @@ impl Server {
     }
 
     #[tool(description = "Get a list of attachments for a specified wiki page.")]
-    async fn get_wiki_attachment_list(
+    async fn wiki_attachment_list_get(
         &self,
         #[tool(aggr)] request: GetWikiAttachmentListRequest,
     ) -> McpResult {
@@ -516,7 +516,7 @@ impl Server {
     #[tool(
         description = "Download an attachment from a wiki page. Automatically detects format (image, text, or raw bytes) or you can specify the format parameter. Returns the file content in the appropriate format."
     )]
-    async fn download_wiki_attachment(
+    async fn wiki_attachment_download(
         &self,
         #[tool(aggr)] request: DownloadWikiAttachmentRequest,
     ) -> McpResult {
@@ -538,7 +538,7 @@ impl Server {
     #[tool(
         description = "Update a wiki page. You can update the page name, content, and/or email notification settings."
     )]
-    async fn update_wiki(&self, #[tool(aggr)] request: UpdateWikiRequest) -> McpResult {
+    async fn wiki_update(&self, #[tool(aggr)] request: UpdateWikiRequest) -> McpResult {
         let client = self.client.lock().await;
         let wiki_detail = wiki::bridge::update_wiki(&client, request, &self.access_control).await?;
         Ok(CallToolResult::success(vec![Content::json(wiki_detail)?]))
@@ -548,7 +548,7 @@ impl Server {
     #[tool(
         description = "Add a comment to a specific pull request. Optionally notify specified users."
     )]
-    async fn add_pull_request_comment(
+    async fn git_pr_comment_add(
         &self,
         #[tool(aggr)] request: AddPullRequestCommentRequest,
     ) -> McpResult {
