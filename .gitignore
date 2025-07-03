@@ -1,4 +1,5 @@
 /target
+/backlog-mcp-server/target
 .openapi-tmp/
 .clinerules
 .claude/settings.local.json
