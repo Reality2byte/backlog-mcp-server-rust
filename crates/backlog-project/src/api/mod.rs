@@ -4,6 +4,7 @@ mod add_issue_type;
 mod add_milestone;
 mod add_status;
 mod delete_category;
+mod delete_custom_field;
 mod delete_issue_type;
 mod delete_status;
 mod delete_version;
@@ -104,6 +105,11 @@ pub use update_status_order::UpdateStatusOrderResponse;
 pub use update_custom_field::UpdateCustomFieldParams;
 #[cfg(feature = "writable")]
 pub use update_custom_field::UpdateCustomFieldResponse;
+
+#[cfg(feature = "writable")]
+pub use delete_custom_field::DeleteCustomFieldParams;
+#[cfg(feature = "writable")]
+pub use delete_custom_field::DeleteCustomFieldResponse;
 
 pub use get_project_detail::{GetProjectDetailParams, GetProjectDetailResponse};
 

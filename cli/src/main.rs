@@ -52,9 +52,9 @@ use backlog_project::GetProjectRecentUpdatesParams;
 #[cfg(feature = "project_writable")]
 use backlog_project::{
     AddCategoryParams, AddCustomFieldParams, AddIssueTypeParams, AddMilestoneParams,
-    AddStatusParams, DeleteCategoryParams, DeleteIssueTypeParams, DeleteStatusParams,
-    DeleteVersionParams, UpdateCategoryParams, UpdateCustomFieldParams, UpdateIssueTypeParams,
-    UpdateStatusOrderParams, UpdateStatusParams, UpdateVersionParams,
+    AddStatusParams, DeleteCategoryParams, DeleteCustomFieldParams, DeleteIssueTypeParams,
+    DeleteStatusParams, DeleteVersionParams, UpdateCategoryParams, UpdateCustomFieldParams,
+    UpdateIssueTypeParams, UpdateStatusOrderParams, UpdateStatusParams, UpdateVersionParams,
 };
 use backlog_space::GetLicenceParams;
 use backlog_space::GetSpaceDiskUsageParams;
@@ -838,6 +838,16 @@ enum ProjectCommands {
         /// Allow adding new items
         #[clap(long)]
         allow_add_item: Option<bool>,
+    },
+    /// Delete a custom field from a project
+    #[cfg(feature = "project_writable")]
+    CustomFieldDelete {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Custom Field ID
+        #[clap(short, long)]
+        custom_field_id: u32,
     },
     /// Add a category to a project
     CategoryAdd {
@@ -3373,6 +3383,44 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             #[cfg(feature = "project_writable")]
+            ProjectCommands::CustomFieldDelete {
+                project_id_or_key,
+                custom_field_id,
+            } => {
+                println!(
+                    "Deleting custom field {custom_field_id} from project: {project_id_or_key}"
+                );
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let field_id = CustomFieldId::new(custom_field_id);
+                let params = DeleteCustomFieldParams::new(proj_id_or_key, field_id);
+
+                match client.project().delete_custom_field(params).await {
+                    Ok(field) => {
+                        println!("✅ Custom field deleted successfully:");
+                        println!("[{}] {}", field.id, field.name);
+                        let field_type = match &field.settings {
+                            backlog_issue::CustomFieldSettings::Text => "Text",
+                            backlog_issue::CustomFieldSettings::TextArea => "TextArea",
+                            backlog_issue::CustomFieldSettings::Numeric(_) => "Numeric",
+                            backlog_issue::CustomFieldSettings::Date(_) => "Date",
+                            backlog_issue::CustomFieldSettings::SingleList(_) => "SingleList",
+                            backlog_issue::CustomFieldSettings::MultipleList(_) => "MultipleList",
+                            backlog_issue::CustomFieldSettings::Checkbox(_) => "Checkbox",
+                            backlog_issue::CustomFieldSettings::Radio(_) => "Radio",
+                        };
+                        println!("Type: {field_type}");
+                        if !field.description.is_empty() {
+                            println!("Description: {}", field.description);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Error deleting custom field: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
             ProjectCommands::CategoryAdd {
                 project_id_or_key,
                 name,
@@ -3880,6 +3928,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             | ProjectCommands::CategoryDelete { .. }
             | ProjectCommands::CustomFieldUpdate { .. }
             | ProjectCommands::CustomFieldAdd { .. }
+            | ProjectCommands::CustomFieldDelete { .. }
             | ProjectCommands::IssueTypeAdd { .. }
             | ProjectCommands::IssueTypeDelete { .. }
             | ProjectCommands::IssueTypeUpdate { .. }

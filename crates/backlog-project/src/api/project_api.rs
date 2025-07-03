@@ -16,14 +16,15 @@ use crate::api::{
 #[cfg(feature = "writable")]
 use crate::{
     AddCategoryParams, AddCustomFieldParams, AddIssueTypeParams, AddMilestoneParams,
-    AddStatusParams, DeleteCategoryParams, DeleteIssueTypeParams, DeleteVersionParams,
-    UpdateCategoryParams, UpdateIssueTypeParams, UpdateVersionParams,
+    AddStatusParams, DeleteCategoryParams, DeleteCustomFieldParams, DeleteIssueTypeParams,
+    DeleteVersionParams, UpdateCategoryParams, UpdateIssueTypeParams, UpdateVersionParams,
     api::{
         AddCategoryResponse, AddCustomFieldResponse, AddIssueTypeResponse, AddStatusResponse,
-        DeleteCategoryResponse, DeleteIssueTypeResponse, DeleteStatusParams, DeleteStatusResponse,
-        DeleteVersionResponse, UpdateCategoryResponse, UpdateCustomFieldParams,
-        UpdateCustomFieldResponse, UpdateIssueTypeResponse, UpdateStatusOrderParams,
-        UpdateStatusOrderResponse, UpdateStatusParams, UpdateStatusResponse, UpdateVersionResponse,
+        DeleteCategoryResponse, DeleteCustomFieldResponse, DeleteIssueTypeResponse,
+        DeleteStatusParams, DeleteStatusResponse, DeleteVersionResponse, UpdateCategoryResponse,
+        UpdateCustomFieldParams, UpdateCustomFieldResponse, UpdateIssueTypeResponse,
+        UpdateStatusOrderParams, UpdateStatusOrderResponse, UpdateStatusParams,
+        UpdateStatusResponse, UpdateVersionResponse,
     },
 };
 
@@ -287,6 +288,17 @@ impl ProjectApi {
         &self,
         params: AddCustomFieldParams,
     ) -> Result<AddCustomFieldResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Deletes a custom field from a project.
+    ///
+    /// Corresponds to `DELETE /api/v2/projects/:projectIdOrKey/customFields/:id`.
+    #[cfg(feature = "writable")]
+    pub async fn delete_custom_field(
+        &self,
+        params: DeleteCustomFieldParams,
+    ) -> Result<DeleteCustomFieldResponse> {
         self.0.execute(params).await
     }
 }
