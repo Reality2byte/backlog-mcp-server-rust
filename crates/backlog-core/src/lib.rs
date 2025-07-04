@@ -34,3 +34,15 @@ pub use space_key::SpaceKey;
 pub use star::Star;
 pub use text_formatting_rule::TextFormattingRule;
 pub use user::User;
+
+// Re-export identifiers under `id` namespace
+pub mod id {
+    pub use crate::identifier::{
+        ActivityId, ActivityTypeId, AttachmentId, CategoryId, CommentId, CustomFieldId,
+        CustomFieldItemId, CustomListItemId, DocumentAttachmentId, DocumentId, ExternalFileLinkId,
+        IssueId, IssueTypeId, MilestoneId, NotificationId, PriorityId, ProjectId,
+        PullRequestAttachmentId, PullRequestCommentId, PullRequestId, PullRequestNumber,
+        RepositoryId, ResolutionId, SharedFileId, SpaceId, StarId, StatusId, SvnRevision, TeamId,
+        UserId, WikiAttachmentId, WikiId, WikiTagId,
+    };
+}

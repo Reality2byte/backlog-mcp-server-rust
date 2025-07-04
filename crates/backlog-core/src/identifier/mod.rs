@@ -96,6 +96,7 @@ impl_identifier!(
     (WikiTagId, u32),
     (ActivityTypeId, u32),
     (ActivityId, u32),
+    (TeamId, u32),
     // u64 identifiers
     (SvnRevision, u64),
     (PullRequestNumber, u64)

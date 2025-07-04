@@ -16,7 +16,7 @@ members = [
     "crates/backlog-document",
     "crates/backlog-git",
     "crates/backlog-file",
-    "crates/backlog-wiki", "crates/backlog-activity"]
+    "crates/backlog-wiki", "crates/backlog-activity", "crates/backlog-team"]
 
 [workspace.package]
 version = "0.1.0"
@@ -41,3 +41,4 @@ base64 = "0.22"
 serde_urlencoded = "0.7"
 form_urlencoded = "1.2"
 tempfile = "3.20"
+pretty_assertions = "1.4"

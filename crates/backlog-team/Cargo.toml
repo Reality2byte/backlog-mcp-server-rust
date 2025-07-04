@@ -1,0 +1,29 @@
+[package]
+name = "backlog-team"
+version = "0.1.0"
+edition = "2021"
+authors = ["Yuki Yamada <yuki@example.com>"]
+description = "Backlog team management API client"
+license = "MIT"
+categories = ["api-bindings"]
+keywords = ["backlog", "team", "api"]
+
+[dependencies]
+backlog-api-core = { path = "../backlog-api-core", version = "0.1.0" }
+backlog-core = { path = "../backlog-core", version = "0.1.0" }
+backlog-domain-models = { path = "../backlog-domain-models", version = "0.1.0" }
+client = { path = "../client", version = "0.1.0" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
+wiremock = { workspace = true }
+pretty_assertions = { workspace = true }
+backlog-api-client = { path = "../backlog-api-client", features = ["team"] }
+
+[features]
+default = []
+writable = []
+schemars = ["backlog-core/schemars", "backlog-domain-models/schemars"]

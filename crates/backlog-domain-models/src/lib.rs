@@ -6,6 +6,7 @@ pub mod project;
 pub mod resolution;
 pub mod status;
 pub mod status_color;
+pub mod team;
 
 pub use category::Category;
 pub use issue_type::{IssueType, IssueTypeColor};
@@ -15,3 +16,4 @@ pub use project::Project;
 pub use resolution::Resolution;
 pub use status::Status;
 pub use status_color::StatusColor;
+pub use team::Team;

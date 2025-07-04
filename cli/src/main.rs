@@ -1,8 +1,12 @@
 use blg::custom_fields;
 
 mod activity_commands;
+#[cfg(feature = "team")]
+mod commands;
 #[cfg(feature = "project")]
 use activity_commands::{ActivityArgs, ActivityCommands};
+#[cfg(feature = "team")]
+use commands::team::{TeamArgs, handle_team_command};
 
 #[cfg(feature = "git_writable")]
 use backlog_api_client::AddPullRequestParams;
@@ -112,6 +116,9 @@ enum Commands {
     /// View activities
     #[cfg(feature = "project")]
     Activity(ActivityArgs),
+    /// Manage teams
+    #[cfg(feature = "team")]
+    Team(TeamArgs),
 }
 
 #[derive(Parser)]
@@ -5032,6 +5039,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
         },
+        #[cfg(feature = "team")]
+        Commands::Team(team_args) => {
+            handle_team_command(client.team(), team_args).await;
+        }
     }
 
     Ok(())

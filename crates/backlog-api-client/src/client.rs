@@ -69,4 +69,9 @@ impl BacklogApiClient {
     pub fn activity(&self) -> backlog_activity::ActivityApi {
         backlog_activity::ActivityApi::new(self.client.clone())
     }
+
+    #[cfg(feature = "team")]
+    pub fn team(&self) -> backlog_team::TeamApi {
+        backlog_team::TeamApi::new(self.client.clone())
+    }
 }
