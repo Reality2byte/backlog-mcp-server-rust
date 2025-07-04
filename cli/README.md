@@ -190,6 +190,30 @@ blg pr update -p MYPROJ -r my-repo --pr-number 42 --summary "Updated PR Title" -
 blg pr update -p MYPROJ -r my-repo --pr-number 42 --assignee-id 12345 --issue-id 67890 --notify-user-ids 111,222,333
 ```
 
+**Team Management:**
+```bash
+# Show information about a specific team (requires administrator permission)
+blg team show 123
+
+# List all teams with default settings
+blg team list
+
+# List teams with custom pagination
+blg team list --count 50 --offset 10
+
+# List teams in ascending order
+blg team list --order asc
+
+# Export team list as JSON
+blg team list --format json > teams.json
+
+# Export team list as CSV
+blg team list --format csv > teams.csv
+
+# Using the alias
+blg team ls --order asc --format table
+```
+
 ### Getting Help
 
 -   For a list of all top-level commands:
@@ -295,3 +319,12 @@ The `blg` CLI currently supports the following commands:
 - `wiki list-attachments <WIKI_ID>` - List attachments for a specific wiki page
 - `wiki download-attachment <WIKI_ID> <ATTACHMENT_ID> [--output <FILE_PATH>]` - Download an attachment from a wiki page
 - `wiki update <WIKI_ID> [--name <NEW_NAME>] [--content <NEW_CONTENT>] [--mail-notify <true|false>]` - Update a wiki page (requires `wiki_writable` feature)
+
+### Team Commands
+- `team show <TEAM_ID>` - Show information about a specific team (requires administrator permission)
+- `team list` - List all teams (requires administrator or project administrator permission)
+- `team ls` - Alias for `team list`
+  - `--order <asc|desc>` - Sort order (default: desc)
+  - `--offset <NUMBER>` - Number of items to skip for pagination
+  - `--count <NUMBER>` - Number of items to retrieve (1-100, default: 20)
+  - `--format <table|json|csv>` - Output format (default: table)
