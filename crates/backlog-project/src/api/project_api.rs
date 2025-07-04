@@ -18,13 +18,14 @@ use crate::{
     AddCategoryParams, AddCustomFieldParams, AddIssueTypeParams, AddListItemToCustomFieldParams,
     AddMilestoneParams, AddStatusParams, DeleteCategoryParams, DeleteCustomFieldParams,
     DeleteIssueTypeParams, DeleteVersionParams, UpdateCategoryParams, UpdateIssueTypeParams,
-    UpdateVersionParams,
+    UpdateListItemToCustomFieldParams, UpdateVersionParams,
     api::{
         AddCategoryResponse, AddCustomFieldResponse, AddIssueTypeResponse,
         AddListItemToCustomFieldResponse, AddStatusResponse, DeleteCategoryResponse,
-        DeleteCustomFieldResponse, DeleteIssueTypeResponse, DeleteStatusParams,
-        DeleteStatusResponse, DeleteVersionResponse, UpdateCategoryResponse,
-        UpdateCustomFieldParams, UpdateCustomFieldResponse, UpdateIssueTypeResponse,
+        DeleteCustomFieldResponse, DeleteIssueTypeResponse, DeleteListItemFromCustomFieldParams,
+        DeleteListItemFromCustomFieldResponse, DeleteStatusParams, DeleteStatusResponse,
+        DeleteVersionResponse, UpdateCategoryResponse, UpdateCustomFieldParams,
+        UpdateCustomFieldResponse, UpdateIssueTypeResponse, UpdateListItemToCustomFieldResponse,
         UpdateStatusOrderParams, UpdateStatusOrderResponse, UpdateStatusParams,
         UpdateStatusResponse, UpdateVersionResponse,
     },
@@ -315,6 +316,34 @@ impl ProjectApi {
         &self,
         params: AddListItemToCustomFieldParams,
     ) -> Result<AddListItemToCustomFieldResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Updates an existing item in a list type custom field.
+    ///
+    /// Only administrators and project administrators can call this API.
+    /// Calling API fails if specified custom field's type is not a list.
+    ///
+    /// Corresponds to `PATCH /api/v2/projects/:projectIdOrKey/customFields/:id/items/:itemId`.
+    #[cfg(feature = "writable")]
+    pub async fn update_list_item_to_custom_field(
+        &self,
+        params: UpdateListItemToCustomFieldParams,
+    ) -> Result<UpdateListItemToCustomFieldResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Deletes an item from a list type custom field.
+    ///
+    /// Only administrators and project administrators can call this API.
+    /// Calling API fails if specified custom field's type is not a list.
+    ///
+    /// Corresponds to `DELETE /api/v2/projects/:projectIdOrKey/customFields/:id/items/:itemId`.
+    #[cfg(feature = "writable")]
+    pub async fn delete_list_item_from_custom_field(
+        &self,
+        params: DeleteListItemFromCustomFieldParams,
+    ) -> Result<DeleteListItemFromCustomFieldResponse> {
         self.0.execute(params).await
     }
 }

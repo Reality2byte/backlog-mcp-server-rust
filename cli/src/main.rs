@@ -32,7 +32,10 @@ use backlog_core::identifier::{CommentId, Identifier};
 #[cfg(any(feature = "issue_writable", feature = "project_writable"))]
 use backlog_core::{
     ApiDate, IssueKey,
-    identifier::{CategoryId, CustomFieldId, IssueTypeId, MilestoneId, PriorityId, ResolutionId},
+    identifier::{
+        CategoryId, CustomFieldId, CustomFieldItemId, IssueTypeId, MilestoneId, PriorityId,
+        ResolutionId,
+    },
 };
 #[cfg(feature = "project_writable")]
 use backlog_domain_models::{IssueTypeColor, StatusColor};
@@ -54,8 +57,9 @@ use backlog_project::{
     AddCategoryParams, AddCustomFieldParams, AddIssueTypeParams, AddListItemToCustomFieldParams,
     AddMilestoneParams, AddStatusParams, DeleteCategoryParams, DeleteCustomFieldParams,
     DeleteIssueTypeParams, DeleteStatusParams, DeleteVersionParams, UpdateCategoryParams,
-    UpdateCustomFieldParams, UpdateIssueTypeParams, UpdateStatusOrderParams, UpdateStatusParams,
-    UpdateVersionParams,
+    UpdateCustomFieldParams, UpdateIssueTypeParams, UpdateListItemToCustomFieldParams,
+    UpdateStatusOrderParams, UpdateStatusParams, UpdateVersionParams,
+    api::DeleteListItemFromCustomFieldParams,
 };
 use backlog_space::GetLicenceParams;
 use backlog_space::GetSpaceDiskUsageParams;
@@ -862,6 +866,35 @@ enum ProjectCommands {
         /// Name of the new list item
         #[clap(short, long)]
         name: String,
+    },
+    /// Update a list item in a list type custom field
+    #[cfg(feature = "project_writable")]
+    CustomFieldUpdateItem {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Custom Field ID
+        #[clap(short, long)]
+        custom_field_id: u32,
+        /// List Item ID
+        #[clap(short, long)]
+        item_id: u32,
+        /// New name for the list item
+        #[clap(short, long)]
+        name: String,
+    },
+    /// Delete a list item from a list type custom field
+    #[cfg(feature = "project_writable")]
+    CustomFieldDeleteItem {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Custom Field ID
+        #[clap(short, long)]
+        custom_field_id: u32,
+        /// List Item ID to delete
+        #[clap(short, long)]
+        item_id: u32,
     },
     /// Add a category to a project
     CategoryAdd {
@@ -3486,6 +3519,146 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Error adding list item to custom field: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::CustomFieldUpdateItem {
+                project_id_or_key,
+                custom_field_id,
+                item_id,
+                name,
+            } => {
+                println!(
+                    "Updating list item {item_id} in custom field {custom_field_id} in project: {project_id_or_key}"
+                );
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let field_id = CustomFieldId::new(custom_field_id);
+                let params = UpdateListItemToCustomFieldParams::new(
+                    proj_id_or_key,
+                    field_id,
+                    item_id,
+                    name.clone(),
+                );
+
+                match client
+                    .project()
+                    .update_list_item_to_custom_field(params)
+                    .await
+                {
+                    Ok(field) => {
+                        println!("✅ List item updated successfully in custom field:");
+                        println!("[{}] {}", field.id, field.name);
+
+                        // Display list items if it's a list type field
+                        match &field.settings {
+                            backlog_issue::CustomFieldSettings::SingleList(settings) => {
+                                println!("Type: Single Selection List");
+                                println!("List items:");
+                                for item in &settings.items {
+                                    if item.id.value() == item_id {
+                                        println!(
+                                            "  - [{}] {} (order: {}) ← UPDATED",
+                                            item.id, item.name, item.display_order
+                                        );
+                                    } else {
+                                        println!(
+                                            "  - [{}] {} (order: {})",
+                                            item.id, item.name, item.display_order
+                                        );
+                                    }
+                                }
+                                println!("Allow add item: {}", settings.allow_add_item);
+                            }
+                            backlog_issue::CustomFieldSettings::MultipleList(settings) => {
+                                println!("Type: Multiple Selection List");
+                                println!("List items:");
+                                for item in &settings.items {
+                                    if item.id.value() == item_id {
+                                        println!(
+                                            "  - [{}] {} (order: {}) ← UPDATED",
+                                            item.id, item.name, item.display_order
+                                        );
+                                    } else {
+                                        println!(
+                                            "  - [{}] {} (order: {})",
+                                            item.id, item.name, item.display_order
+                                        );
+                                    }
+                                }
+                                println!("Allow add item: {}", settings.allow_add_item);
+                                println!("Allow input: {}", settings.allow_input);
+                            }
+                            _ => {
+                                eprintln!("⚠️  Warning: Custom field is not a list type");
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Error updating list item in custom field: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::CustomFieldDeleteItem {
+                project_id_or_key,
+                custom_field_id,
+                item_id,
+            } => {
+                println!(
+                    "Deleting list item {item_id} from custom field {custom_field_id} in project: {project_id_or_key}"
+                );
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let field_id = CustomFieldId::new(custom_field_id);
+                let item_id = CustomFieldItemId::new(item_id);
+                let params =
+                    DeleteListItemFromCustomFieldParams::new(proj_id_or_key, field_id, item_id);
+
+                match client
+                    .project()
+                    .delete_list_item_from_custom_field(params)
+                    .await
+                {
+                    Ok(field) => {
+                        println!("✅ List item deleted successfully from custom field:");
+                        println!("[{}] {}", field.id, field.name);
+
+                        // Display remaining list items
+                        match &field.settings {
+                            backlog_issue::CustomFieldSettings::SingleList(settings) => {
+                                println!("Type: Single Selection List");
+                                println!("Remaining list items:");
+                                for item in &settings.items {
+                                    println!(
+                                        "  - [{}] {} (order: {})",
+                                        item.id, item.name, item.display_order
+                                    );
+                                }
+                                println!("Allow add item: {}", settings.allow_add_item);
+                            }
+                            backlog_issue::CustomFieldSettings::MultipleList(settings) => {
+                                println!("Type: Multiple Selection List");
+                                println!("Remaining list items:");
+                                for item in &settings.items {
+                                    println!(
+                                        "  - [{}] {} (order: {})",
+                                        item.id, item.name, item.display_order
+                                    );
+                                }
+                                println!("Allow add item: {}", settings.allow_add_item);
+                                println!("Allow input: {}", settings.allow_input);
+                            }
+                            _ => {
+                                eprintln!("⚠️  Warning: Custom field is not a list type");
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Error deleting list item from custom field: {e}");
                         std::process::exit(1);
                     }
                 }

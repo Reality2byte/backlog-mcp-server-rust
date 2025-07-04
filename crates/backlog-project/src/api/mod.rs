@@ -7,6 +7,7 @@ mod add_status;
 mod delete_category;
 mod delete_custom_field;
 mod delete_issue_type;
+mod delete_list_item_from_custom_field;
 mod delete_status;
 mod delete_version;
 mod get_category_list;
@@ -25,6 +26,7 @@ mod project_api;
 mod update_category;
 mod update_custom_field;
 mod update_issue_type;
+mod update_list_item_to_custom_field;
 mod update_status;
 mod update_status_order;
 mod update_version;
@@ -116,6 +118,16 @@ pub use delete_custom_field::DeleteCustomFieldResponse;
 pub use add_list_item_to_custom_field::AddListItemToCustomFieldParams;
 #[cfg(feature = "writable")]
 pub use add_list_item_to_custom_field::AddListItemToCustomFieldResponse;
+
+#[cfg(feature = "writable")]
+pub use update_list_item_to_custom_field::UpdateListItemToCustomFieldParams;
+#[cfg(feature = "writable")]
+pub use update_list_item_to_custom_field::UpdateListItemToCustomFieldResponse;
+
+#[cfg(feature = "writable")]
+pub use delete_list_item_from_custom_field::DeleteListItemFromCustomFieldParams;
+#[cfg(feature = "writable")]
+pub use delete_list_item_from_custom_field::DeleteListItemFromCustomFieldResponse;
 
 pub use get_project_detail::{GetProjectDetailParams, GetProjectDetailResponse};
 

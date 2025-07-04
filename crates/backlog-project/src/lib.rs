@@ -30,7 +30,7 @@ pub use api::{
     DeleteCustomFieldResponse, DeleteIssueTypeParams, DeleteIssueTypeResponse, DeleteStatusParams,
     DeleteStatusResponse, DeleteVersionParams, DeleteVersionResponse, UpdateCategoryParams,
     UpdateCategoryResponse, UpdateCustomFieldParams, UpdateCustomFieldResponse,
-    UpdateIssueTypeParams, UpdateIssueTypeResponse, UpdateStatusOrderParams,
-    UpdateStatusOrderResponse, UpdateStatusParams, UpdateStatusResponse, UpdateVersionParams,
-    UpdateVersionResponse,
+    UpdateIssueTypeParams, UpdateIssueTypeResponse, UpdateListItemToCustomFieldParams,
+    UpdateListItemToCustomFieldResponse, UpdateStatusOrderParams, UpdateStatusOrderResponse,
+    UpdateStatusParams, UpdateStatusResponse, UpdateVersionParams, UpdateVersionResponse,
 };
