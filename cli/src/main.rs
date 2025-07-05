@@ -76,12 +76,14 @@ use backlog_space::GetSpaceRecentUpdatesParams;
 #[cfg(feature = "space_writable")]
 use backlog_space::{UpdateSpaceNotificationParams, UploadAttachmentParams};
 use backlog_user::GetNotificationCountParams;
+use backlog_user::GetNotificationsParams;
 use backlog_user::GetOwnUserParams;
 use backlog_user::GetUserIconParams;
 use backlog_user::GetUserListParams;
 use backlog_user::GetUserParams;
 use backlog_user::GetUserStarCountParams;
 use backlog_user::GetUserStarsParams;
+use backlog_user::NotificationOrder;
 use backlog_user::api::StarOrder;
 #[cfg(feature = "wiki_writable")]
 use backlog_wiki::{
@@ -1207,6 +1209,25 @@ enum UserCommands {
         /// Include notifications where resource is already read
         #[clap(long)]
         resource_already_read: Option<bool>,
+    },
+    /// Get list of notifications for authenticated user
+    #[clap(alias = "notif")]
+    Notifications {
+        /// Show notifications with ID greater than this value
+        #[clap(long)]
+        min_id: Option<u64>,
+        /// Show notifications with ID less than this value
+        #[clap(long)]
+        max_id: Option<u64>,
+        /// Maximum number of results to return (1-100)
+        #[clap(long, short = 'n')]
+        count: Option<u8>,
+        /// Sort order (asc or desc)
+        #[clap(long, short = 'o')]
+        order: Option<String>,
+        /// Filter by sender user ID
+        #[clap(long)]
+        sender_id: Option<u32>,
     },
 }
 
@@ -3203,6 +3224,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     backlog_core::Role::User => "User",
                                     backlog_core::Role::Reporter => "Reporter",
                                     backlog_core::Role::Viewer => "Viewer",
+                                    backlog_core::Role::Guest => "Guest",
                                 };
                                 let last_login = match user.last_login_time {
                                     Some(time) => time.format("%Y-%m-%d %H:%M:%S").to_string(),
@@ -4658,6 +4680,102 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to get notification count: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            UserCommands::Notifications {
+                min_id,
+                max_id,
+                count,
+                order,
+                sender_id,
+            } => {
+                println!("Getting notifications for authenticated user");
+
+                let mut params = GetNotificationsParams::new();
+
+                if let Some(min_id) = min_id {
+                    params = params.with_min_id(min_id);
+                }
+
+                if let Some(max_id) = max_id {
+                    params = params.with_max_id(max_id);
+                }
+
+                if let Some(count) = count {
+                    params = params.with_count(count);
+                }
+
+                if let Some(order_str) = order {
+                    let notification_order = match order_str.to_lowercase().as_str() {
+                        "asc" => NotificationOrder::Asc,
+                        "desc" => NotificationOrder::Desc,
+                        _ => {
+                            eprintln!("❌ Invalid order. Use 'asc' or 'desc'");
+                            std::process::exit(1);
+                        }
+                    };
+                    params = params.with_order(notification_order);
+                }
+
+                if let Some(sender_id) = sender_id {
+                    params = params.with_sender_id(UserId::new(sender_id));
+                }
+
+                match client.user().get_notifications(params).await {
+                    Ok(notifications) => {
+                        if notifications.is_empty() {
+                            println!("No notifications found");
+                        } else {
+                            println!("Found {} notification(s):", notifications.len());
+                            println!();
+
+                            for (index, notification) in notifications.iter().enumerate() {
+                                println!(
+                                    "{}. Notification #{}",
+                                    index + 1,
+                                    notification.id.value()
+                                );
+                                println!(
+                                    "   Status: {}",
+                                    if notification.already_read {
+                                        "Read"
+                                    } else {
+                                        "Unread"
+                                    }
+                                );
+                                println!("   Reason: {:?}", notification.reason);
+                                println!(
+                                    "   Project: {} ({})",
+                                    notification.project.name, notification.project.project_key
+                                );
+                                println!(
+                                    "   From: {} ({})",
+                                    notification.sender.name, notification.sender.mail_address
+                                );
+
+                                if let Some(issue) = &notification.issue {
+                                    println!("   Issue: {} - {}", issue.issue_key, issue.summary);
+                                }
+
+                                if let Some(comment) = &notification.comment {
+                                    if let Some(content) = &comment.content {
+                                        let preview = content.chars().take(100).collect::<String>();
+                                        println!("   Comment: {preview}");
+                                    }
+                                }
+
+                                println!(
+                                    "   Created: {}",
+                                    notification.created.format("%Y-%m-%d %H:%M:%S")
+                                );
+                                println!();
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to get notifications: {e}");
                         std::process::exit(1);
                     }
                 }

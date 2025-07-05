@@ -2,8 +2,9 @@ use backlog_api_core::Result;
 use client::Client;
 
 use crate::api::{
-    GetNotificationCountParams, GetNotificationCountResponse, GetOwnUserParams, GetOwnUserResponse,
-    GetUserIconParams, GetUserIconResponse, GetUserListParams, GetUserListResponse, GetUserParams,
+    GetNotificationCountParams, GetNotificationCountResponse, GetNotificationsParams,
+    GetNotificationsResponse, GetOwnUserParams, GetOwnUserResponse, GetUserIconParams,
+    GetUserIconResponse, GetUserListParams, GetUserListResponse, GetUserParams,
     GetUserRecentUpdatesParams, GetUserRecentUpdatesResponse, GetUserResponse,
     GetUserStarCountParams, GetUserStarCountResponse, GetUserStarsParams, GetUserStarsResponse,
 };
@@ -74,6 +75,16 @@ impl UserApi {
         &self,
         params: GetNotificationCountParams,
     ) -> Result<GetNotificationCountResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Gets the list of notifications for the authenticated user.
+    ///
+    /// Corresponds to `GET /api/v2/notifications`.
+    pub async fn get_notifications(
+        &self,
+        params: GetNotificationsParams,
+    ) -> Result<GetNotificationsResponse> {
         self.0.execute(params).await
     }
 }

@@ -400,6 +400,7 @@ dependencies = [
  "backlog-api-macros",
  "backlog-core",
  "backlog-domain-models",
+ "backlog-issue",
  "backlog-project",
  "chrono",
  "client",

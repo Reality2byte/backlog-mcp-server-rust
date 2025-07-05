@@ -3,8 +3,9 @@ mod common;
 use backlog_core::ApiDate;
 use backlog_core::identifier::{Identifier, UserId};
 use backlog_user::api::{
-    GetNotificationCountParams, GetOwnUserParams, GetUserIconParams, GetUserListParams,
-    GetUserParams, GetUserStarCountParams, GetUserStarsParams, StarOrder,
+    GetNotificationCountParams, GetNotificationsParams, GetOwnUserParams, GetUserIconParams,
+    GetUserListParams, GetUserParams, GetUserStarCountParams, GetUserStarsParams,
+    NotificationOrder, StarOrder,
 };
 use chrono::{DateTime, NaiveDate, Utc};
 use common::*;
@@ -574,5 +575,227 @@ async fn test_get_notification_count_rate_limit() {
 
     let params = GetNotificationCountParams::new();
     let result = api.get_notification_count(params).await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_notifications_success() {
+    let mock_server = MockServer::start().await;
+    let api = setup_user_api(&mock_server).await;
+
+    // Use a minimal valid response that will deserialize correctly
+    let expected_response = serde_json::json!([
+        {
+            "id": 22,
+            "alreadyRead": false,
+            "reason": 2,
+            "resourceAlreadyRead": false,
+            "project": {
+                "id": 92,
+                "projectKey": "SUB",
+                "name": "Subtasking",
+                "chartEnabled": false,
+                "subtaskingEnabled": true,
+                "projectLeaderCanEditProjectLeader": false,
+                "useWiki": true,
+                "useFileSharing": true,
+                "useWikiTreeView": true,
+                "useOriginalImageSizeAtWiki": false,
+                "textFormattingRule": "markdown",
+                "archived": false,
+                "displayOrder": 0,
+                "useDevAttributes": true
+            },
+            "issue": null,
+            "comment": null,
+            "pullRequest": null,
+            "pullRequestComment": null,
+            "sender": {
+                "id": 2,
+                "userId": "user1",
+                "name": "Test User",
+                "roleType": 2,
+                "lang": "en",
+                "mailAddress": "user@example.com",
+                "lastLoginTime": "2024-01-01T00:00:00Z"
+            },
+            "created": "2024-12-01T10:00:00Z"
+        }
+    ]);
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/notifications"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_response))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetNotificationsParams::new();
+    let result = api.get_notifications(params).await;
+    assert!(result.is_ok());
+    let notifications = result.unwrap();
+    assert_eq!(notifications.len(), 1);
+    assert_eq!(notifications[0].id.value(), 22);
+    assert!(!notifications[0].already_read);
+    assert!(matches!(
+        notifications[0].reason,
+        backlog_issue::NotificationReason::IssueCommented
+    ));
+    assert_eq!(notifications[0].project.name, "Subtasking");
+    assert!(notifications[0].issue.is_none());
+    assert!(notifications[0].comment.is_none());
+    assert_eq!(notifications[0].sender.name, "Test User");
+}
+
+#[tokio::test]
+async fn test_get_notifications_with_pagination() {
+    let mock_server = MockServer::start().await;
+    let api = setup_user_api(&mock_server).await;
+
+    let expected_response = serde_json::json!([]);
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/notifications"))
+        .and(query_param("minId", "100"))
+        .and(query_param("maxId", "200"))
+        .and(query_param("count", "50"))
+        .and(query_param("order", "asc"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_response))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetNotificationsParams::new()
+        .with_min_id(100)
+        .with_max_id(200)
+        .with_count(50)
+        .with_order(NotificationOrder::Asc);
+
+    let result = api.get_notifications(params).await;
+    assert!(result.is_ok());
+    let notifications = result.unwrap();
+    assert_eq!(notifications.len(), 0);
+}
+
+#[tokio::test]
+async fn test_get_notifications_with_sender_filter() {
+    let mock_server = MockServer::start().await;
+    let api = setup_user_api(&mock_server).await;
+
+    let expected_response = serde_json::json!([
+        {
+            "id": 33,
+            "alreadyRead": true,
+            "reason": 3,
+            "resourceAlreadyRead": true,
+            "project": {
+                "id": 1,
+                "projectKey": "TEST",
+                "name": "Test Project",
+                "chartEnabled": false,
+                "subtaskingEnabled": false,
+                "projectLeaderCanEditProjectLeader": false,
+                "useWiki": false,
+                "useFileSharing": false,
+                "useWikiTreeView": false,
+                "useOriginalImageSizeAtWiki": false,
+                "textFormattingRule": "markdown",
+                "archived": false,
+                "displayOrder": 0,
+                "useDevAttributes": false
+            },
+            "issue": null,
+            "comment": null,
+            "pullRequest": null,
+            "pullRequestComment": null,
+            "sender": {
+                "id": 5,
+                "userId": "creator",
+                "name": "Creator",
+                "roleType": 2,
+                "lang": "ja",
+                "mailAddress": "creator@example.com",
+                "lastLoginTime": null
+            },
+            "created": "2024-12-01T08:00:00Z"
+        }
+    ]);
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/notifications"))
+        .and(query_param("senderId", "5"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_response))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetNotificationsParams::new().with_sender_id(UserId::new(5));
+
+    let result = api.get_notifications(params).await;
+    assert!(result.is_ok());
+    let notifications = result.unwrap();
+    assert_eq!(notifications.len(), 1);
+    assert_eq!(notifications[0].id.value(), 33);
+    assert_eq!(notifications[0].sender.id.value(), 5);
+    assert!(notifications[0].comment.is_none());
+}
+
+#[tokio::test]
+async fn test_get_notifications_count_validation() {
+    let mock_server = MockServer::start().await;
+    let api = setup_user_api(&mock_server).await;
+
+    let expected_response = serde_json::json!([]);
+
+    // Test that count is clamped to 100
+    Mock::given(method("GET"))
+        .and(path("/api/v2/notifications"))
+        .and(query_param("count", "100"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_response))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetNotificationsParams::new().with_count(150); // Should be clamped to 100
+
+    let result = api.get_notifications(params).await;
+    assert!(result.is_ok());
+}
+
+#[tokio::test]
+async fn test_get_notifications_empty_response() {
+    let mock_server = MockServer::start().await;
+    let api = setup_user_api(&mock_server).await;
+
+    let expected_response = serde_json::json!([]);
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/notifications"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_response))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetNotificationsParams::new();
+    let result = api.get_notifications(params).await;
+    assert!(result.is_ok());
+    let notifications = result.unwrap();
+    assert_eq!(notifications.len(), 0);
+}
+
+#[tokio::test]
+async fn test_get_notifications_unauthorized() {
+    let mock_server = MockServer::start().await;
+    let api = setup_user_api(&mock_server).await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/notifications"))
+        .respond_with(ResponseTemplate::new(401).set_body_json(serde_json::json!({
+            "errors": [{
+                "message": "Unauthorized",
+                "code": 11,
+                "moreInfo": ""
+            }]
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetNotificationsParams::new();
+    let result = api.get_notifications(params).await;
     assert!(result.is_err());
 }

@@ -217,6 +217,42 @@ blg team ls --order asc --format table
 blg team icon 123 --output team_123_icon.png
 ```
 
+**User Management:**
+```bash
+# List all users in the space
+blg user list
+
+# Get information about the authenticated user
+blg user me
+
+# Show details of a specific user
+blg user show 12345
+
+# Download user icon
+blg user icon 12345 --output user_icon.png
+
+# Get notification count for authenticated user
+blg user notification-count
+
+# Get unread notification count only
+blg user notification-count --already-read false
+
+# List recent notifications
+blg user notifications
+
+# List notifications with pagination
+blg user notifications --count 20 --max-id 1000
+
+# List notifications from a specific sender
+blg user notifications --sender-id 12345
+
+# List notifications in ascending order
+blg user notifications --order asc
+
+# Using the alias for notifications
+blg user notif --count 10
+```
+
 ### Getting Help
 
 -   For a list of all top-level commands:
@@ -320,6 +356,12 @@ The `blg` CLI currently supports the following commands:
 - `user notification-count [OPTIONS]` - Get notification count for authenticated user
   - `--already-read <true|false>` - Include already read notifications
   - `--resource-already-read <true|false>` - Include notifications where resource is already read
+- `user notifications [OPTIONS]` - List notifications for authenticated user (alias: `notif`)
+  - `--min-id <ID>` - Show notifications with ID greater than this value
+  - `--max-id <ID>` - Show notifications with ID less than this value
+  - `-n, --count <NUMBER>` - Maximum number of results to return (1-100)
+  - `--order <asc|desc>` - Sort order for notifications
+  - `--sender-id <USER_ID>` - Filter notifications by sender
 
 ### Wiki Commands
 - `wiki list-attachments <WIKI_ID>` - List attachments for a specific wiki page

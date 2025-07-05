@@ -16,11 +16,18 @@ pub enum Role {
     User = 2,
     Reporter = 3,
     Viewer = 4,
+    Guest = 5, // FIXME: classic plan only
 }
 
 impl Role {
     pub fn all() -> Vec<Role> {
-        vec![Role::Admin, Role::User, Role::Reporter, Role::Viewer]
+        vec![
+            Role::Admin,
+            Role::User,
+            Role::Reporter,
+            Role::Viewer,
+            Role::Guest,
+        ]
     }
 }
 
@@ -33,6 +40,7 @@ impl FromStr for Role {
             "user" => Ok(Role::User),
             "reporter" => Ok(Role::Reporter),
             "viewer" => Ok(Role::Viewer),
+            "guest" => Ok(Role::Guest),
             _ => Err(Error::InvalidRole(s.to_string())),
         }
     }
@@ -47,6 +55,7 @@ impl TryFrom<i32> for Role {
             x if x == Role::User as i32 => Ok(Role::User),
             x if x == Role::Reporter as i32 => Ok(Role::Reporter),
             x if x == Role::Viewer as i32 => Ok(Role::Viewer),
+            x if x == Role::Guest as i32 => Ok(Role::Guest),
             _ => Err(()),
         }
     }
@@ -59,6 +68,7 @@ impl fmt::Display for Role {
             Role::User => write!(f, "user"),
             Role::Reporter => write!(f, "reporter"),
             Role::Viewer => write!(f, "viewer"),
+            Role::Guest => write!(f, "guest"),
         }
     }
 }
