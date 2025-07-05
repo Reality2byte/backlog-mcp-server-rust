@@ -129,3 +129,10 @@ pub use backlog_team::{
     TeamApi,
     api::{GetTeamParams, GetTeamResponse, ListTeamsOrder, ListTeamsParams, ListTeamsResponse},
 };
+
+// Star module (from backlog_star)
+#[cfg(feature = "star")]
+pub use backlog_star::StarApi;
+
+#[cfg(all(feature = "star", feature = "star_writable"))]
+pub use backlog_star::AddStarParams;

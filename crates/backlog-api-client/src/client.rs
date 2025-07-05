@@ -74,4 +74,9 @@ impl BacklogApiClient {
     pub fn team(&self) -> backlog_team::TeamApi {
         backlog_team::TeamApi::new(self.client.clone())
     }
+
+    #[cfg(feature = "star")]
+    pub fn star(&self) -> backlog_star::StarApi {
+        backlog_star::StarApi::new(self.client.clone())
+    }
 }

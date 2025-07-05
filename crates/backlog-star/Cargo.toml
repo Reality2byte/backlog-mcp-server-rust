@@ -1,0 +1,21 @@
+[package]
+name = "backlog-star"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Star management API for Backlog"
+
+[features]
+default = []
+writable = []
+
+[dependencies]
+backlog-api-core = { path = "../backlog-api-core" }
+backlog-core = { path = "../backlog-core" }
+client = { path = "../client" }
+serde = { workspace = true }
+
+[dev-dependencies]
+client = { path = "../client", features = ["test-utils"] }
+wiremock = { workspace = true }
+tokio = { workspace = true, features = ["full"] }

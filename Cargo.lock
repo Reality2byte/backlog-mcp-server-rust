@@ -98,6 +98,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.98"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e16d2d3311acee920a9eb8d33b8cbc1787ce4a264e85f964c2404b969bdcd487"
+
+[[package]]
 name = "assert-json-diff"
 version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -183,6 +189,7 @@ dependencies = [
  "backlog-issue",
  "backlog-project",
  "backlog-space",
+ "backlog-star",
  "backlog-team",
  "backlog-user",
  "backlog-wiki",
@@ -357,6 +364,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "backlog-star"
+version = "0.1.0"
+dependencies = [
+ "backlog-api-core",
+ "backlog-core",
+ "client",
+ "serde",
+ "tokio",
+ "wiremock",
+]
+
+[[package]]
 name = "backlog-team"
 version = "0.1.0"
 dependencies = [
@@ -442,12 +461,14 @@ checksum = "1b8e56985ec62d17e9c1001dc89c88ecd7dc08e47eba5ec7c29c7b5eeecde967"
 name = "blg"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "backlog-api-client",
  "backlog-core",
  "backlog-domain-models",
  "backlog-issue",
  "backlog-project",
  "backlog-space",
+ "backlog-star",
  "backlog-team",
  "backlog-user",
  "backlog-wiki",

@@ -1,10 +1,12 @@
 use blg::custom_fields;
 
 mod activity_commands;
-#[cfg(feature = "team")]
+#[cfg(any(feature = "team", feature = "star"))]
 mod commands;
 #[cfg(feature = "project")]
 use activity_commands::{ActivityArgs, ActivityCommands};
+#[cfg(feature = "star")]
+use commands::star::{StarArgs, handle_star_command};
 #[cfg(feature = "team")]
 use commands::team::{TeamArgs, handle_team_command};
 
@@ -122,6 +124,9 @@ enum Commands {
     /// Manage teams
     #[cfg(feature = "team")]
     Team(TeamArgs),
+    /// Manage stars
+    #[cfg(feature = "star")]
+    Star(StarArgs),
 }
 
 #[derive(Parser)]
@@ -5242,6 +5247,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         #[cfg(feature = "team")]
         Commands::Team(team_args) => {
             handle_team_command(client.team(), team_args).await;
+        }
+        #[cfg(feature = "star")]
+        Commands::Star(star_args) => {
+            handle_star_command(&client.star(), &star_args.command).await?;
         }
     }
 

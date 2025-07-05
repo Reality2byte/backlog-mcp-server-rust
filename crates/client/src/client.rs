@@ -59,6 +59,29 @@ pub struct DownloadedFile {
 #[derive(Debug)]
 pub struct FileResponse;
 
+/// Response handler for 204 No Content responses
+#[derive(Debug)]
+pub struct NoContentResponse;
+
+impl IntoResponse for NoContentResponse {
+    type Output = ();
+
+    async fn from_response(self, response: reqwest::Response) -> Result<Self::Output> {
+        match response.status() {
+            reqwest::StatusCode::NO_CONTENT => Ok(()),
+            status => {
+                let error_body = response
+                    .text()
+                    .await
+                    .unwrap_or_else(|e| format!("Failed to read error body: {e}"));
+                Err(ApiError::InvalidBuildParameter(format!(
+                    "Expected 204 No Content, got {status}: {error_body}"
+                )))
+            }
+        }
+    }
+}
+
 impl IntoResponse for FileResponse {
     type Output = DownloadedFile;
 
@@ -148,6 +171,15 @@ impl Client {
     {
         let request = params.into_request(&self.client, &self.base_url)?;
         self.execute_unified(request, FileResponse).await
+    }
+
+    /// Executes a request that returns 204 No Content
+    pub async fn execute_no_content<P>(&self, params: P) -> Result<()>
+    where
+        P: IntoRequest,
+    {
+        let request = params.into_request(&self.client, &self.base_url)?;
+        self.execute_unified(request, NoContentResponse).await
     }
 
     /// Uploads a file using the IntoUploadRequest trait
