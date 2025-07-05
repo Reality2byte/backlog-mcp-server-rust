@@ -9,8 +9,8 @@ use crate::api::{
     DownloadWikiAttachmentParams, GetWikiAttachmentListParams, GetWikiAttachmentListResponse,
     GetWikiCountParams, GetWikiCountResponse, GetWikiDetailParams, GetWikiDetailResponse,
     GetWikiHistoryParams, GetWikiHistoryResponse, GetWikiListParams, GetWikiListResponse,
-    GetWikiSharedFileListParams, GetWikiSharedFileListResponse, GetWikiTagListParams,
-    GetWikiTagListResponse,
+    GetWikiSharedFileListParams, GetWikiSharedFileListResponse, GetWikiStarsParams,
+    GetWikiStarsResponse, GetWikiTagListParams, GetWikiTagListResponse,
 };
 use backlog_api_core::Result;
 use client::Client;
@@ -86,6 +86,12 @@ impl WikiApi {
         &self,
         params: GetWikiSharedFileListParams,
     ) -> Result<GetWikiSharedFileListResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Get the list of stars received by a wiki page.
+    /// Corresponds to `GET /api/v2/wikis/:wikiId/stars`.
+    pub async fn get_wiki_stars(&self, params: GetWikiStarsParams) -> Result<GetWikiStarsResponse> {
         self.0.execute(params).await
     }
 

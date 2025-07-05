@@ -2,8 +2,8 @@
 
 ## Summary
 - Total APIs: 149
-- Implemented: 106 (71%)
-- Not implemented: 43 (29%)
+- Implemented: 107 (72%)
+- Not implemented: 42 (28%)
 
 ### Spaces
 - ✅ GetSpace: Returns information about your space: GET /api/v2/space
@@ -180,7 +180,7 @@
 
 ### Star
 - ❌ AddStar: Adds star: POST /api/v2/stars
-- ❌ GetWikiPageStar: Returns list of stars received on the Wiki page: GET /api/v2/wikis/:wikiId/stars
+- ✅ GetWikiPageStar: Returns list of stars received on the Wiki page: GET /api/v2/wikis/:wikiId/stars
 - ✅ CountUserReceivedStars: Returns number of stars that user received: GET /api/v2/users/:userId/stars/count
 - ✅ GetReceivedStarList: Returns the list of stars that user received: GET /api/v2/users/:userId/stars
 

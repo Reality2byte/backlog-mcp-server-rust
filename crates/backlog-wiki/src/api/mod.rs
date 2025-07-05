@@ -5,6 +5,7 @@ mod get_wiki_detail;
 mod get_wiki_history;
 mod get_wiki_list;
 mod get_wiki_shared_file_list;
+mod get_wiki_stars;
 mod get_wiki_tag_list;
 mod wiki_api;
 
@@ -31,6 +32,7 @@ pub use get_wiki_detail::{GetWikiDetailParams, GetWikiDetailResponse};
 pub use get_wiki_history::{GetWikiHistoryParams, GetWikiHistoryResponse};
 pub use get_wiki_list::{GetWikiListParams, GetWikiListResponse};
 pub use get_wiki_shared_file_list::{GetWikiSharedFileListParams, GetWikiSharedFileListResponse};
+pub use get_wiki_stars::{GetWikiStarsParams, GetWikiStarsResponse};
 pub use get_wiki_tag_list::{GetWikiTagListParams, GetWikiTagListResponse};
 
 // Export writable types with feature gates

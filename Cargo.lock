@@ -399,6 +399,7 @@ dependencies = [
  "backlog-api-core",
  "backlog-api-macros",
  "backlog-core",
+ "backlog-domain-models",
  "backlog-file",
  "chrono",
  "client",

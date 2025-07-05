@@ -1189,6 +1189,12 @@ enum WikiCommands {
         #[clap(name = "WIKI_ID")]
         wiki_id: u32,
     },
+    /// List stars for a wiki page
+    Stars {
+        /// Wiki ID
+        #[clap(name = "WIKI_ID")]
+        wiki_id: u32,
+    },
     /// Link shared files to a wiki page
     #[cfg(feature = "wiki_writable")]
     LinkSharedFiles {
@@ -4590,6 +4596,45 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to list wiki shared files: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            WikiCommands::Stars { wiki_id } => {
+                println!("Getting stars for wiki ID: {wiki_id}");
+
+                match client
+                    .wiki()
+                    .get_wiki_stars(backlog_wiki::GetWikiStarsParams::new(WikiId::new(wiki_id)))
+                    .await
+                {
+                    Ok(stars) => {
+                        if stars.is_empty() {
+                            println!("No stars found for this wiki page");
+                        } else {
+                            println!("Found {} star(s):", stars.len());
+                            println!();
+                            for star in stars {
+                                println!("Star ID: {}", star.id);
+                                println!("Title: {}", star.title);
+                                println!("URL: {}", star.url);
+                                if let Some(comment) = &star.comment {
+                                    println!("Comment: {comment}");
+                                }
+                                println!(
+                                    "Presenter: {} (ID: {})",
+                                    star.presenter.name, star.presenter.id
+                                );
+                                println!(
+                                    "Created: {}",
+                                    star.created.format("%Y-%m-%d %H:%M:%S UTC")
+                                );
+                                println!("---");
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to get wiki stars: {e}");
                         std::process::exit(1);
                     }
                 }

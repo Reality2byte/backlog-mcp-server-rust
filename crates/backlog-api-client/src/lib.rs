@@ -116,8 +116,8 @@ pub use backlog_activity::{Activity, ActivityApi};
 pub use backlog_wiki::{
     DownloadWikiAttachmentParams, GetWikiAttachmentListParams, GetWikiAttachmentListResponse,
     GetWikiCountParams, GetWikiCountResponse, GetWikiDetailParams, GetWikiDetailResponse,
-    GetWikiListParams, GetWikiListResponse, Wiki, WikiApi, WikiAttachment, WikiCount, WikiDetail,
-    WikiTag,
+    GetWikiListParams, GetWikiListResponse, GetWikiStarsParams, GetWikiStarsResponse, Wiki,
+    WikiApi, WikiAttachment, WikiCount, WikiDetail, WikiTag,
 };
 
 #[cfg(all(feature = "wiki", feature = "wiki_writable"))]

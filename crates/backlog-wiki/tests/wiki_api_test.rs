@@ -6,7 +6,7 @@ use backlog_wiki::WikiCount;
 use backlog_wiki::api::{
     DownloadWikiAttachmentParams, GetWikiAttachmentListParams, GetWikiCountParams,
     GetWikiDetailParams, GetWikiHistoryParams, GetWikiListParams, GetWikiSharedFileListParams,
-    GetWikiTagListParams,
+    GetWikiStarsParams, GetWikiTagListParams,
 };
 use wiremock::MockServer;
 use wiremock::matchers::{method, path, query_param};
@@ -706,6 +706,166 @@ async fn test_get_wiki_shared_file_list_server_error() {
 
     let result = wiki_api
         .get_wiki_shared_file_list(GetWikiSharedFileListParams::new(WikiId::new(888)))
+        .await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_wiki_stars_success() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    let expected_stars = serde_json::json!([
+        {
+            "id": 75,
+            "comment": null,
+            "url": "https://xx.backlog.jp/alias/wiki/1",
+            "title": "[TEST1] Home | Wiki - Backlog",
+            "presenter": {
+                "id": 1,
+                "userId": "admin",
+                "name": "admin",
+                "roleType": 1,
+                "lang": "ja",
+                "mailAddress": "admin@example.com",
+                "lastLoginTime": "2024-01-01T00:00:00Z"
+            },
+            "created": "2014-01-23T10:55:19Z"
+        },
+        {
+            "id": 80,
+            "comment": "Great documentation!",
+            "url": "https://xx.backlog.jp/alias/wiki/2",
+            "title": "[TEST2] API Guide | Wiki - Backlog",
+            "presenter": {
+                "id": 2,
+                "userId": "user1",
+                "name": "Test User",
+                "roleType": 2,
+                "lang": "en",
+                "mailAddress": "user@example.com",
+                "lastLoginTime": null
+            },
+            "created": "2014-02-01T15:30:00Z"
+        }
+    ]);
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/123/stars"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_stars))
+        .mount(&mock_server)
+        .await;
+
+    let result = wiki_api
+        .get_wiki_stars(GetWikiStarsParams::new(WikiId::new(123)))
+        .await;
+    assert!(result.is_ok());
+    let stars = result.unwrap();
+    assert_eq!(stars.len(), 2);
+    assert_eq!(stars[0].id, 75);
+    assert_eq!(stars[0].comment, None);
+    assert_eq!(stars[0].url, "https://xx.backlog.jp/alias/wiki/1");
+    assert_eq!(stars[0].title, "[TEST1] Home | Wiki - Backlog");
+    assert_eq!(stars[0].presenter.name, "admin");
+    assert_eq!(stars[1].id, 80);
+    assert_eq!(stars[1].comment, Some("Great documentation!".to_string()));
+}
+
+#[tokio::test]
+async fn test_get_wiki_stars_empty() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    let expected_stars: Vec<serde_json::Value> = vec![];
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/456/stars"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_stars))
+        .mount(&mock_server)
+        .await;
+
+    let result = wiki_api
+        .get_wiki_stars(GetWikiStarsParams::new(WikiId::new(456)))
+        .await;
+    assert!(result.is_ok());
+    let stars = result.unwrap();
+    assert_eq!(stars.len(), 0);
+}
+
+#[tokio::test]
+async fn test_get_wiki_stars_with_u32_id() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    let expected_stars = serde_json::json!([
+        {
+            "id": 100,
+            "comment": "Excellent!",
+            "url": "https://xx.backlog.jp/alias/wiki/789",
+            "title": "Technical Specs | Wiki - Backlog",
+            "presenter": {
+                "id": 3,
+                "userId": "reviewer",
+                "name": "Reviewer",
+                "roleType": 2,
+                "lang": "ja",
+                "mailAddress": "reviewer@example.com",
+                "lastLoginTime": "2024-03-01T09:00:00Z"
+            },
+            "created": "2024-03-15T14:20:00Z"
+        }
+    ]);
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/789/stars"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_stars))
+        .mount(&mock_server)
+        .await;
+
+    let result = wiki_api
+        .get_wiki_stars(GetWikiStarsParams::new(789u32))
+        .await;
+    assert!(result.is_ok());
+    let stars = result.unwrap();
+    assert_eq!(stars.len(), 1);
+    assert_eq!(stars[0].id, 100);
+    assert_eq!(stars[0].comment, Some("Excellent!".to_string()));
+}
+
+#[tokio::test]
+async fn test_get_wiki_stars_not_found() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/999/stars"))
+        .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
+            "errors": [{"message": "Wiki not found"}]
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let result = wiki_api
+        .get_wiki_stars(GetWikiStarsParams::new(WikiId::new(999)))
+        .await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_wiki_stars_access_forbidden() {
+    let mock_server = MockServer::start().await;
+    let wiki_api = setup_wiki_api(&mock_server).await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/wikis/403/stars"))
+        .respond_with(ResponseTemplate::new(403).set_body_json(serde_json::json!({
+            "errors": [{"message": "You do not have permission to access this wiki"}]
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let result = wiki_api
+        .get_wiki_stars(GetWikiStarsParams::new(WikiId::new(403)))
         .await;
     assert!(result.is_err());
 }

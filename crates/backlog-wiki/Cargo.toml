@@ -13,6 +13,7 @@ schemars = ["backlog-core/schemars", "dep:schemars"]
 backlog-core = { path = "../backlog-core" }
 backlog-api-core = { path = "../backlog-api-core" }
 backlog-api-macros = { path = "../backlog-api-macros" }
+backlog-domain-models = { path = "../backlog-domain-models" }
 backlog-file = { path = "../backlog-file" }
 client = { path = "../client" }
 serde = { workspace = true }
