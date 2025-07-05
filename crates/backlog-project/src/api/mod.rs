@@ -3,11 +3,13 @@ mod add_custom_field;
 mod add_issue_type;
 mod add_list_item_to_custom_field;
 mod add_milestone;
+mod add_project_team;
 mod add_status;
 mod delete_category;
 mod delete_custom_field;
 mod delete_issue_type;
 mod delete_list_item_from_custom_field;
+mod delete_project_team;
 mod delete_status;
 mod delete_version;
 mod get_category_list;
@@ -19,6 +21,7 @@ mod get_project_detail;
 mod get_project_icon;
 mod get_project_list;
 mod get_project_recent_updates;
+mod get_project_team_list;
 mod get_project_user_list;
 mod get_resolution_list;
 mod get_status_list;
@@ -144,3 +147,11 @@ pub use get_project_recent_updates::{
     GetProjectRecentUpdatesParams, GetProjectRecentUpdatesResponse,
 };
 pub use get_resolution_list::{GetResolutionListParams, GetResolutionListResponse};
+
+pub use get_project_team_list::{GetProjectTeamListParams, GetProjectTeamListResponse};
+
+#[cfg(feature = "writable")]
+pub use add_project_team::{AddProjectTeamParams, AddProjectTeamResponse};
+
+#[cfg(feature = "writable")]
+pub use delete_project_team::{DeleteProjectTeamParams, DeleteProjectTeamResponse};

@@ -4,7 +4,7 @@ pub mod models;
 
 // re-export domain models
 pub use backlog_domain_models::{
-    Category, IssueType, Milestone, Priority, Project, Resolution, Status,
+    Category, IssueType, Milestone, Priority, Project, Resolution, Status, Team,
 };
 
 // re-export activity models
@@ -16,21 +16,24 @@ pub use api::{
     GetMilestoneListParams, GetMilestoneListResponse, GetPriorityListParams,
     GetPriorityListResponse, GetProjectDetailParams, GetProjectDetailResponse,
     GetProjectIconParams, GetProjectListParams, GetProjectListResponse,
-    GetProjectRecentUpdatesParams, GetProjectRecentUpdatesResponse, GetProjectUserListParams,
-    GetProjectUserListResponse, GetResolutionListParams, GetResolutionListResponse,
-    GetStatusListParams, GetStatusListResponse, ProjectApi,
+    GetProjectRecentUpdatesParams, GetProjectRecentUpdatesResponse, GetProjectTeamListParams,
+    GetProjectTeamListResponse, GetProjectUserListParams, GetProjectUserListResponse,
+    GetResolutionListParams, GetResolutionListResponse, GetStatusListParams, GetStatusListResponse,
+    ProjectApi,
 };
 
 #[cfg(feature = "writable")]
 pub use api::{
     AddCategoryParams, AddCategoryResponse, AddCustomFieldParams, AddCustomFieldResponse,
     AddIssueTypeParams, AddIssueTypeResponse, AddListItemToCustomFieldParams,
-    AddListItemToCustomFieldResponse, AddMilestoneParams, AddMilestoneResponse, AddStatusParams,
-    AddStatusResponse, DeleteCategoryParams, DeleteCategoryResponse, DeleteCustomFieldParams,
-    DeleteCustomFieldResponse, DeleteIssueTypeParams, DeleteIssueTypeResponse, DeleteStatusParams,
-    DeleteStatusResponse, DeleteVersionParams, DeleteVersionResponse, UpdateCategoryParams,
-    UpdateCategoryResponse, UpdateCustomFieldParams, UpdateCustomFieldResponse,
-    UpdateIssueTypeParams, UpdateIssueTypeResponse, UpdateListItemToCustomFieldParams,
+    AddListItemToCustomFieldResponse, AddMilestoneParams, AddMilestoneResponse,
+    AddProjectTeamParams, AddProjectTeamResponse, AddStatusParams, AddStatusResponse,
+    DeleteCategoryParams, DeleteCategoryResponse, DeleteCustomFieldParams,
+    DeleteCustomFieldResponse, DeleteIssueTypeParams, DeleteIssueTypeResponse,
+    DeleteProjectTeamParams, DeleteProjectTeamResponse, DeleteStatusParams, DeleteStatusResponse,
+    DeleteVersionParams, DeleteVersionResponse, UpdateCategoryParams, UpdateCategoryResponse,
+    UpdateCustomFieldParams, UpdateCustomFieldResponse, UpdateIssueTypeParams,
+    UpdateIssueTypeResponse, UpdateListItemToCustomFieldParams,
     UpdateListItemToCustomFieldResponse, UpdateStatusOrderParams, UpdateStatusOrderResponse,
     UpdateStatusParams, UpdateStatusResponse, UpdateVersionParams, UpdateVersionResponse,
 };

@@ -9,25 +9,27 @@ use crate::api::{
     GetMilestoneListParams, GetMilestoneListResponse, GetPriorityListParams,
     GetPriorityListResponse, GetProjectDetailParams, GetProjectDetailResponse,
     GetProjectIconParams, GetProjectRecentUpdatesParams, GetProjectRecentUpdatesResponse,
-    GetProjectUserListParams, GetProjectUserListResponse, GetResolutionListParams,
-    GetResolutionListResponse, GetStatusListParams, GetStatusListResponse,
+    GetProjectTeamListParams, GetProjectTeamListResponse, GetProjectUserListParams,
+    GetProjectUserListResponse, GetResolutionListParams, GetResolutionListResponse,
+    GetStatusListParams, GetStatusListResponse,
     get_project_list::{GetProjectListParams, GetProjectListResponse},
 };
 #[cfg(feature = "writable")]
 use crate::{
     AddCategoryParams, AddCustomFieldParams, AddIssueTypeParams, AddListItemToCustomFieldParams,
-    AddMilestoneParams, AddStatusParams, DeleteCategoryParams, DeleteCustomFieldParams,
-    DeleteIssueTypeParams, DeleteVersionParams, UpdateCategoryParams, UpdateIssueTypeParams,
-    UpdateListItemToCustomFieldParams, UpdateVersionParams,
+    AddMilestoneParams, AddProjectTeamParams, AddStatusParams, DeleteCategoryParams,
+    DeleteCustomFieldParams, DeleteIssueTypeParams, DeleteProjectTeamParams, DeleteVersionParams,
+    UpdateCategoryParams, UpdateIssueTypeParams, UpdateListItemToCustomFieldParams,
+    UpdateVersionParams,
     api::{
         AddCategoryResponse, AddCustomFieldResponse, AddIssueTypeResponse,
-        AddListItemToCustomFieldResponse, AddStatusResponse, DeleteCategoryResponse,
-        DeleteCustomFieldResponse, DeleteIssueTypeResponse, DeleteListItemFromCustomFieldParams,
-        DeleteListItemFromCustomFieldResponse, DeleteStatusParams, DeleteStatusResponse,
-        DeleteVersionResponse, UpdateCategoryResponse, UpdateCustomFieldParams,
-        UpdateCustomFieldResponse, UpdateIssueTypeResponse, UpdateListItemToCustomFieldResponse,
-        UpdateStatusOrderParams, UpdateStatusOrderResponse, UpdateStatusParams,
-        UpdateStatusResponse, UpdateVersionResponse,
+        AddListItemToCustomFieldResponse, AddProjectTeamResponse, AddStatusResponse,
+        DeleteCategoryResponse, DeleteCustomFieldResponse, DeleteIssueTypeResponse,
+        DeleteListItemFromCustomFieldParams, DeleteListItemFromCustomFieldResponse,
+        DeleteProjectTeamResponse, DeleteStatusParams, DeleteStatusResponse, DeleteVersionResponse,
+        UpdateCategoryResponse, UpdateCustomFieldParams, UpdateCustomFieldResponse,
+        UpdateIssueTypeResponse, UpdateListItemToCustomFieldResponse, UpdateStatusOrderParams,
+        UpdateStatusOrderResponse, UpdateStatusParams, UpdateStatusResponse, UpdateVersionResponse,
     },
 };
 
@@ -344,6 +346,38 @@ impl ProjectApi {
         &self,
         params: DeleteListItemFromCustomFieldParams,
     ) -> Result<DeleteListItemFromCustomFieldResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Gets the list of teams in a project.
+    ///
+    /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/teams`.
+    pub async fn get_project_team_list(
+        &self,
+        params: GetProjectTeamListParams,
+    ) -> Result<GetProjectTeamListResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Adds a team to a project.
+    ///
+    /// Corresponds to `POST /api/v2/projects/:projectIdOrKey/teams`.
+    #[cfg(feature = "writable")]
+    pub async fn add_project_team(
+        &self,
+        params: AddProjectTeamParams,
+    ) -> Result<AddProjectTeamResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Removes a team from a project.
+    ///
+    /// Corresponds to `DELETE /api/v2/projects/:projectIdOrKey/teams`.
+    #[cfg(feature = "writable")]
+    pub async fn delete_project_team(
+        &self,
+        params: DeleteProjectTeamParams,
+    ) -> Result<DeleteProjectTeamResponse> {
         self.0.execute(params).await
     }
 }

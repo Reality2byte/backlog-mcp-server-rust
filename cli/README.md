@@ -317,6 +317,9 @@ The `blg` CLI currently supports the following commands:
 - `user me` - Get information about the authenticated user
 - `user show <USER_ID>` - Show detailed information about a specific user (requires `user` feature)
 - `user icon <USER_ID> --output <FILE_PATH>` - Download user icon to a file
+- `user notification-count [OPTIONS]` - Get notification count for authenticated user
+  - `--already-read <true|false>` - Include already read notifications
+  - `--resource-already-read <true|false>` - Include notifications where resource is already read
 
 ### Wiki Commands
 - `wiki list-attachments <WIKI_ID>` - List attachments for a specific wiki page

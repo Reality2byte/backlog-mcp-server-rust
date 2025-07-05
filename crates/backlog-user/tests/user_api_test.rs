@@ -3,8 +3,8 @@ mod common;
 use backlog_core::ApiDate;
 use backlog_core::identifier::{Identifier, UserId};
 use backlog_user::api::{
-    GetOwnUserParams, GetUserIconParams, GetUserListParams, GetUserParams, GetUserStarCountParams,
-    GetUserStarsParams, StarOrder,
+    GetNotificationCountParams, GetOwnUserParams, GetUserIconParams, GetUserListParams,
+    GetUserParams, GetUserStarCountParams, GetUserStarsParams, StarOrder,
 };
 use chrono::{DateTime, NaiveDate, Utc};
 use common::*;
@@ -414,5 +414,165 @@ async fn test_get_user_stars_not_found() {
 
     let params = GetUserStarsParams::new(user_id);
     let result = api.get_user_stars(params).await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_notification_count_success() {
+    let mock_server = MockServer::start().await;
+    let api = setup_user_api(&mock_server).await;
+
+    let expected_response = serde_json::json!({
+        "count": 138
+    });
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/notifications/count"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_response))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetNotificationCountParams::new();
+    let result = api.get_notification_count(params).await;
+    assert!(result.is_ok());
+    let notification_count = result.unwrap();
+    assert_eq!(notification_count.count, 138);
+}
+
+#[tokio::test]
+async fn test_get_notification_count_with_already_read() {
+    let mock_server = MockServer::start().await;
+    let api = setup_user_api(&mock_server).await;
+
+    let expected_response = serde_json::json!({
+        "count": 250
+    });
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/notifications/count"))
+        .and(query_param("alreadyRead", "true"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_response))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetNotificationCountParams::new().with_already_read(true);
+    let result = api.get_notification_count(params).await;
+    assert!(result.is_ok());
+    let notification_count = result.unwrap();
+    assert_eq!(notification_count.count, 250);
+}
+
+#[tokio::test]
+async fn test_get_notification_count_with_resource_already_read() {
+    let mock_server = MockServer::start().await;
+    let api = setup_user_api(&mock_server).await;
+
+    let expected_response = serde_json::json!({
+        "count": 75
+    });
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/notifications/count"))
+        .and(query_param("resourceAlreadyRead", "true"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_response))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetNotificationCountParams::new().with_resource_already_read(true);
+    let result = api.get_notification_count(params).await;
+    assert!(result.is_ok());
+    let notification_count = result.unwrap();
+    assert_eq!(notification_count.count, 75);
+}
+
+#[tokio::test]
+async fn test_get_notification_count_with_both_parameters() {
+    let mock_server = MockServer::start().await;
+    let api = setup_user_api(&mock_server).await;
+
+    let expected_response = serde_json::json!({
+        "count": 300
+    });
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/notifications/count"))
+        .and(query_param("alreadyRead", "true"))
+        .and(query_param("resourceAlreadyRead", "true"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_response))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetNotificationCountParams::new()
+        .with_already_read(true)
+        .with_resource_already_read(true);
+    let result = api.get_notification_count(params).await;
+    assert!(result.is_ok());
+    let notification_count = result.unwrap();
+    assert_eq!(notification_count.count, 300);
+}
+
+#[tokio::test]
+async fn test_get_notification_count_zero() {
+    let mock_server = MockServer::start().await;
+    let api = setup_user_api(&mock_server).await;
+
+    let expected_response = serde_json::json!({
+        "count": 0
+    });
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/notifications/count"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_response))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetNotificationCountParams::new();
+    let result = api.get_notification_count(params).await;
+    assert!(result.is_ok());
+    let notification_count = result.unwrap();
+    assert_eq!(notification_count.count, 0);
+}
+
+#[tokio::test]
+async fn test_get_notification_count_unauthorized() {
+    let mock_server = MockServer::start().await;
+    let api = setup_user_api(&mock_server).await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/notifications/count"))
+        .respond_with(ResponseTemplate::new(401).set_body_json(serde_json::json!({
+            "errors": [{
+                "message": "Unauthorized",
+                "code": 11,
+                "moreInfo": ""
+            }]
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetNotificationCountParams::new();
+    let result = api.get_notification_count(params).await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_notification_count_rate_limit() {
+    let mock_server = MockServer::start().await;
+    let api = setup_user_api(&mock_server).await;
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/notifications/count"))
+        .respond_with(ResponseTemplate::new(429).set_body_json(serde_json::json!({
+            "errors": [{
+                "message": "Rate limit exceeded",
+                "code": 9,
+                "moreInfo": ""
+            }]
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetNotificationCountParams::new();
+    let result = api.get_notification_count(params).await;
     assert!(result.is_err());
 }

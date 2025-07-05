@@ -26,6 +26,7 @@ use backlog_api_client::{
     PullRequestAttachmentId, PullRequestCommentId, PullRequestNumber, RepositoryIdOrName, StatusId,
     UserId, WikiId, backlog_issue, client::BacklogApiClient,
 };
+use backlog_core::ApiDate;
 #[cfg(feature = "project")]
 use backlog_core::identifier::ActivityTypeId;
 #[cfg(any(feature = "git_writable", feature = "issue_writable"))]
@@ -37,10 +38,10 @@ use backlog_core::identifier::WikiAttachmentId;
 use backlog_core::identifier::{CommentId, Identifier};
 #[cfg(any(feature = "issue_writable", feature = "project_writable"))]
 use backlog_core::{
-    ApiDate, IssueKey,
+    IssueKey,
     identifier::{
         CategoryId, CustomFieldId, CustomFieldItemId, IssueTypeId, MilestoneId, PriorityId,
-        ResolutionId,
+        ResolutionId, TeamId,
     },
 };
 #[cfg(feature = "project_writable")]
@@ -61,11 +62,11 @@ use backlog_project::GetProjectRecentUpdatesParams;
 #[cfg(feature = "project_writable")]
 use backlog_project::{
     AddCategoryParams, AddCustomFieldParams, AddIssueTypeParams, AddListItemToCustomFieldParams,
-    AddMilestoneParams, AddStatusParams, DeleteCategoryParams, DeleteCustomFieldParams,
-    DeleteIssueTypeParams, DeleteStatusParams, DeleteVersionParams, UpdateCategoryParams,
-    UpdateCustomFieldParams, UpdateIssueTypeParams, UpdateListItemToCustomFieldParams,
-    UpdateStatusOrderParams, UpdateStatusParams, UpdateVersionParams,
-    api::DeleteListItemFromCustomFieldParams,
+    AddMilestoneParams, AddProjectTeamParams, AddStatusParams, DeleteCategoryParams,
+    DeleteCustomFieldParams, DeleteIssueTypeParams, DeleteProjectTeamParams, DeleteStatusParams,
+    DeleteVersionParams, UpdateCategoryParams, UpdateCustomFieldParams, UpdateIssueTypeParams,
+    UpdateListItemToCustomFieldParams, UpdateStatusOrderParams, UpdateStatusParams,
+    UpdateVersionParams, api::DeleteListItemFromCustomFieldParams,
 };
 use backlog_space::GetLicenceParams;
 use backlog_space::GetSpaceDiskUsageParams;
@@ -74,6 +75,7 @@ use backlog_space::GetSpaceLogoParams;
 use backlog_space::GetSpaceRecentUpdatesParams;
 #[cfg(feature = "space_writable")]
 use backlog_space::{UpdateSpaceNotificationParams, UploadAttachmentParams};
+use backlog_user::GetNotificationCountParams;
 use backlog_user::GetOwnUserParams;
 use backlog_user::GetUserIconParams;
 use backlog_user::GetUserListParams;
@@ -86,6 +88,7 @@ use backlog_wiki::{
     AddWikiParams, AttachFilesToWikiParams, DeleteWikiAttachmentParams, DeleteWikiParams,
     UpdateWikiParams,
 };
+use chrono::NaiveDate;
 #[cfg(feature = "project_writable")]
 use chrono::{DateTime, Utc};
 use clap::{Args, Parser};
@@ -1111,6 +1114,32 @@ enum ProjectCommands {
         #[clap(short, long, value_name = "FILE_PATH")]
         output: PathBuf,
     },
+    /// List teams for a project
+    TeamList {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+    },
+    /// Add a team to a project
+    #[cfg(feature = "project_writable")]
+    TeamAdd {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Team ID to add
+        #[clap(short, long)]
+        team_id: u32,
+    },
+    /// Remove a team from a project
+    #[cfg(feature = "project_writable")]
+    TeamDelete {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Team ID to remove
+        #[clap(short, long)]
+        team_id: u32,
+    },
 }
 
 #[derive(Parser)]
@@ -1169,6 +1198,15 @@ enum UserCommands {
         /// Sort order (asc or desc)
         #[clap(long)]
         order: Option<String>,
+    },
+    /// Get notification count for authenticated user
+    NotificationCount {
+        /// Include already read notifications
+        #[clap(long)]
+        already_read: Option<bool>,
+        /// Include notifications where resource is already read
+        #[clap(long)]
+        resource_already_read: Option<bool>,
     },
 }
 
@@ -1912,36 +1950,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 // Handle date range parameters
                 if let Some(start_date_since) = params.start_date_since {
-                    let date = chrono::DateTime::parse_from_str(
-                        &format!("{start_date_since}T00:00:00Z"),
-                        "%Y-%m-%dT%H:%M:%SZ",
-                    )
-                    .map_err(|_| format!("Invalid start-date-since format: {start_date_since}"))?;
-                    builder.start_date_since(ApiDate::from(date.with_timezone(&chrono::Utc)));
+                    let date =
+                        NaiveDate::parse_from_str(&start_date_since, "%Y-%m-%d").map_err(|_| {
+                            format!("Invalid start-date-since format: {start_date_since}")
+                        })?;
+                    let datetime = date.and_hms_opt(0, 0, 0).unwrap().and_utc();
+                    builder.start_date_since(ApiDate::from(datetime));
                 }
                 if let Some(start_date_until) = params.start_date_until {
-                    let date = chrono::DateTime::parse_from_str(
-                        &format!("{start_date_until}T23:59:59Z"),
-                        "%Y-%m-%dT%H:%M:%SZ",
-                    )
-                    .map_err(|_| format!("Invalid start-date-until format: {start_date_until}"))?;
-                    builder.start_date_until(ApiDate::from(date.with_timezone(&chrono::Utc)));
+                    let date =
+                        NaiveDate::parse_from_str(&start_date_until, "%Y-%m-%d").map_err(|_| {
+                            format!("Invalid start-date-until format: {start_date_until}")
+                        })?;
+                    let datetime = date.and_hms_opt(23, 59, 59).unwrap().and_utc();
+                    builder.start_date_until(ApiDate::from(datetime));
                 }
                 if let Some(due_date_since) = params.due_date_since {
-                    let date = chrono::DateTime::parse_from_str(
-                        &format!("{due_date_since}T00:00:00Z"),
-                        "%Y-%m-%dT%H:%M:%SZ",
-                    )
-                    .map_err(|_| format!("Invalid due-date-since format: {due_date_since}"))?;
-                    builder.due_date_since(ApiDate::from(date.with_timezone(&chrono::Utc)));
+                    let date = NaiveDate::parse_from_str(&due_date_since, "%Y-%m-%d")
+                        .map_err(|_| format!("Invalid due-date-since format: {due_date_since}"))?;
+                    let datetime = date.and_hms_opt(0, 0, 0).unwrap().and_utc();
+                    builder.due_date_since(ApiDate::from(datetime));
                 }
                 if let Some(due_date_until) = params.due_date_until {
-                    let date = chrono::DateTime::parse_from_str(
-                        &format!("{due_date_until}T23:59:59Z"),
-                        "%Y-%m-%dT%H:%M:%SZ",
-                    )
-                    .map_err(|_| format!("Invalid due-date-until format: {due_date_until}"))?;
-                    builder.due_date_until(ApiDate::from(date.with_timezone(&chrono::Utc)));
+                    let date = NaiveDate::parse_from_str(&due_date_until, "%Y-%m-%d")
+                        .map_err(|_| format!("Invalid due-date-until format: {due_date_until}"))?;
+                    let datetime = date.and_hms_opt(23, 59, 59).unwrap().and_utc();
+                    builder.due_date_until(ApiDate::from(datetime));
                 }
 
                 let list_params = builder.build()?;
@@ -4223,6 +4257,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             | ProjectCommands::CustomFieldUpdate { .. }
             | ProjectCommands::CustomFieldAdd { .. }
             | ProjectCommands::CustomFieldDelete { .. }
+            | ProjectCommands::CustomFieldAddItem { .. }
+            | ProjectCommands::CustomFieldUpdateItem { .. }
+            | ProjectCommands::CustomFieldDeleteItem { .. }
             | ProjectCommands::IssueTypeAdd { .. }
             | ProjectCommands::IssueTypeDelete { .. }
             | ProjectCommands::IssueTypeUpdate { .. }
@@ -4232,9 +4269,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             | ProjectCommands::StatusAdd { .. }
             | ProjectCommands::StatusUpdate { .. }
             | ProjectCommands::StatusDelete { .. }
-            | ProjectCommands::StatusOrderUpdate { .. } => {
+            | ProjectCommands::StatusOrderUpdate { .. }
+            | ProjectCommands::TeamAdd { .. }
+            | ProjectCommands::TeamDelete { .. } => {
                 eprintln!(
-                    "Category, issue type, version, status, and custom field management is not available. Please build with 'project_writable' feature."
+                    "Category, issue type, version, status, team, and custom field management is not available. Please build with 'project_writable' feature."
                 );
             }
             ProjectCommands::PriorityList => {
@@ -4294,6 +4333,92 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error downloading project icon: {e}");
+                    }
+                }
+            }
+            ProjectCommands::TeamList { project_id_or_key } => {
+                println!("Listing teams for project: {project_id_or_key}");
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let params = backlog_project::GetProjectTeamListParams {
+                    project_id_or_key: proj_id_or_key,
+                };
+                match client.project().get_project_team_list(params).await {
+                    Ok(teams) => {
+                        if teams.is_empty() {
+                            println!("No teams found in this project");
+                        } else {
+                            println!("Teams in this project:");
+                            for team in teams {
+                                println!("[{}] {}", team.id.value(), team.name);
+                                println!("  Members: {} users", team.members.len());
+                                println!(
+                                    "  Created: {} by {}",
+                                    team.created.format("%Y-%m-%d %H:%M"),
+                                    team.created_user.name
+                                );
+                                println!(
+                                    "  Updated: {} by {}",
+                                    team.updated.format("%Y-%m-%d %H:%M"),
+                                    team.updated_user.name
+                                );
+                                println!();
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error listing project teams: {e}");
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::TeamAdd {
+                project_id_or_key,
+                team_id,
+            } => {
+                println!("Adding team {team_id} to project: {project_id_or_key}");
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let params = AddProjectTeamParams {
+                    project_id_or_key: proj_id_or_key,
+                    team_id: TeamId::new(team_id),
+                };
+
+                match client.project().add_project_team(params).await {
+                    Ok(team) => {
+                        println!("✅ Team added successfully:");
+                        println!("ID: {}", team.id.value());
+                        println!("Name: {}", team.name);
+                        println!("Members: {} users", team.members.len());
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to add team to project: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::TeamDelete {
+                project_id_or_key,
+                team_id,
+            } => {
+                println!("Removing team {team_id} from project: {project_id_or_key}");
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let params = DeleteProjectTeamParams {
+                    project_id_or_key: proj_id_or_key,
+                    team_id: TeamId::new(team_id),
+                };
+
+                match client.project().delete_project_team(params).await {
+                    Ok(team) => {
+                        println!("✅ Team removed successfully:");
+                        println!("ID: {}", team.id.value());
+                        println!("Name: {}", team.name);
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to remove team from project: {e}");
+                        std::process::exit(1);
                     }
                 }
             }
@@ -4405,13 +4530,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let mut params = GetUserStarCountParams::new(user_id);
 
                 if let Some(since_str) = since {
-                    match chrono::DateTime::parse_from_str(
-                        &format!("{since_str}T00:00:00Z"),
-                        "%Y-%m-%dT%H:%M:%SZ",
-                    ) {
+                    match NaiveDate::parse_from_str(&since_str, "%Y-%m-%d") {
                         Ok(date) => {
-                            params =
-                                params.with_since(ApiDate::from(date.with_timezone(&chrono::Utc)));
+                            let datetime = date.and_hms_opt(0, 0, 0).unwrap().and_utc();
+                            params = params.with_since(ApiDate::from(datetime));
                             println!("Counting stars from: {since_str}");
                         }
                         Err(_) => {
@@ -4424,13 +4546,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
 
                 if let Some(until_str) = until {
-                    match chrono::DateTime::parse_from_str(
-                        &format!("{until_str}T23:59:59Z"),
-                        "%Y-%m-%dT%H:%M:%SZ",
-                    ) {
+                    match NaiveDate::parse_from_str(&until_str, "%Y-%m-%d") {
                         Ok(date) => {
-                            params =
-                                params.with_until(ApiDate::from(date.with_timezone(&chrono::Utc)));
+                            let datetime = date.and_hms_opt(23, 59, 59).unwrap().and_utc();
+                            params = params.with_until(ApiDate::from(datetime));
                             println!("Counting stars until: {until_str}");
                         }
                         Err(_) => {
@@ -4514,6 +4633,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error getting stars: {e}");
+                    }
+                }
+            }
+            UserCommands::NotificationCount {
+                already_read,
+                resource_already_read,
+            } => {
+                println!("Getting notification count for authenticated user");
+
+                let mut params = GetNotificationCountParams::new();
+
+                if let Some(already_read) = already_read {
+                    params = params.with_already_read(already_read);
+                }
+
+                if let Some(resource_already_read) = resource_already_read {
+                    params = params.with_resource_already_read(resource_already_read);
+                }
+
+                match client.user().get_notification_count(params).await {
+                    Ok(notification_count) => {
+                        println!("✅ Notification count: {}", notification_count.count);
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to get notification count: {e}");
+                        std::process::exit(1);
                     }
                 }
             }

@@ -128,9 +128,7 @@ impl TeamApi {
     /// let icon = api.get_team_icon(params).await?;
     ///
     /// // Save the icon to a file
-    /// if let Some(filename) = &icon.filename {
-    ///     fs::write(filename, &icon.content)?;
-    /// }
+    /// fs::write(&icon.filename, &icon.bytes)?;
     /// # Ok(())
     /// # }
     /// ```

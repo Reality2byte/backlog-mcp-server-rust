@@ -2,8 +2,8 @@
 
 ## Summary
 - Total APIs: 149
-- Implemented: 108 (72%)
-- Not implemented: 41 (28%)
+- Implemented: 112 (75%)
+- Not implemented: 37 (25%)
 
 ### Spaces
 - ✅ GetSpace: Returns information about your space: GET /api/v2/space
@@ -34,9 +34,9 @@
 - ❌ DeleteProjectAdministrator: Removes Project Administrator role from user: DELETE /api/v2/projects/:projectIdOrKey/administrators
 
 #### Teams
-- ❌ AddProjectTeam: Add team to project: POST /api/v2/projects/:projectIdOrKey/teams
-- ❌ DeleteProjectTeam: Removes a team from the project: DELETE /api/v2/projects/:projectIdOrKey/teams
-- ❌ GetProjectTeamList: Returns list of project teams: GET /api/v2/projects/:projectIdOrKey/teams
+- ✅ AddProjectTeam: Add team to project: POST /api/v2/projects/:projectIdOrKey/teams
+- ✅ DeleteProjectTeam: Removes a team from the project: DELETE /api/v2/projects/:projectIdOrKey/teams
+- ✅ GetProjectTeamList: Returns list of project teams: GET /api/v2/projects/:projectIdOrKey/teams
 
 
 ### Issues
@@ -164,7 +164,7 @@
 - ✅ GetRecentUpdates: Returns recent updates in your space: GET /api/v2/space/activities
 
 ### Notifications
-- ❌ CountNotification: Returns number of Notifications: GET /api/v2/notifications/count
+- ✅ CountNotification: Returns number of Notifications: GET /api/v2/notifications/count
 - ❌ GetNotification: Returns own notifications: GET /api/v2/notifications
 - ❌ ReadNotification: Changes notifications read: POST /api/v2/notifications/:id/markAsRead
 - ❌ ResetUnreadNotificationCount: Resets unread Notification count: POST /api/v2/notifications/markAsRead
