@@ -20,6 +20,9 @@ pub use backlog_core::{
     },
 };
 
+// Domain models (from backlog_domain_models)
+pub use backlog_domain_models::Star as UserStar;
+
 // Document module (from backlog_document)
 #[cfg(feature = "document")]
 pub use backlog_document::{
@@ -98,7 +101,10 @@ pub use backlog_space::{UpdateSpaceNotificationParams, UploadAttachmentParams};
 #[cfg(feature = "user")]
 pub use backlog_user::{
     UserApi,
-    api::{GetUserStarCountParams, GetUserStarCountResponse, StarCount},
+    api::{
+        GetUserStarCountParams, GetUserStarCountResponse, GetUserStarsParams, GetUserStarsResponse,
+        StarCount, StarOrder,
+    },
 };
 
 // Activity module (from backlog_activity)

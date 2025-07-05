@@ -44,6 +44,12 @@ pub fn expand_derive_to_form_params(input: DeriveInput) -> Result<TokenStream> {
                 __form_params
             }
         }
+
+        impl #struct_name {
+            pub fn to_form(&self) -> Vec<(String, String)> {
+                self.into()
+            }
+        }
     })
 }
 

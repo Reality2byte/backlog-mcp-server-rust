@@ -5,7 +5,7 @@ use crate::api::{
     GetOwnUserParams, GetOwnUserResponse, GetUserIconParams, GetUserIconResponse,
     GetUserListParams, GetUserListResponse, GetUserParams, GetUserRecentUpdatesParams,
     GetUserRecentUpdatesResponse, GetUserResponse, GetUserStarCountParams,
-    GetUserStarCountResponse,
+    GetUserStarCountResponse, GetUserStarsParams, GetUserStarsResponse,
 };
 
 pub struct UserApi(Client);
@@ -57,6 +57,13 @@ impl UserApi {
         &self,
         params: GetUserStarCountParams,
     ) -> Result<GetUserStarCountResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Gets the list of stars received by a specific user.
+    ///
+    /// Corresponds to `GET /api/v2/users/:userId/stars`.
+    pub async fn get_user_stars(&self, params: GetUserStarsParams) -> Result<GetUserStarsResponse> {
         self.0.execute(params).await
     }
 }

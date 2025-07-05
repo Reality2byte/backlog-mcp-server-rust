@@ -77,6 +77,8 @@ use backlog_user::GetUserIconParams;
 use backlog_user::GetUserListParams;
 use backlog_user::GetUserParams;
 use backlog_user::GetUserStarCountParams;
+use backlog_user::GetUserStarsParams;
+use backlog_user::api::StarOrder;
 #[cfg(feature = "wiki_writable")]
 use backlog_wiki::{
     AddWikiParams, AttachFilesToWikiParams, DeleteWikiAttachmentParams, DeleteWikiParams,
@@ -1144,6 +1146,24 @@ enum UserCommands {
         /// Count stars until this date (YYYY-MM-DD format)
         #[clap(long)]
         until: Option<String>,
+    },
+    /// Get user stars list
+    Stars {
+        /// User ID
+        #[clap(name = "USER_ID")]
+        user_id: u32,
+        /// Get stars with ID greater than this value
+        #[clap(long)]
+        min_id: Option<u64>,
+        /// Get stars with ID less than this value
+        #[clap(long)]
+        max_id: Option<u64>,
+        /// Maximum number of results to return (1-100)
+        #[clap(long)]
+        count: Option<u32>,
+        /// Sort order (asc or desc)
+        #[clap(long)]
+        order: Option<String>,
     },
 }
 
@@ -4417,6 +4437,72 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error getting star count: {e}");
+                    }
+                }
+            }
+            UserCommands::Stars {
+                user_id,
+                min_id,
+                max_id,
+                count,
+                order,
+            } => {
+                println!("Getting stars for user ID: {user_id}");
+
+                let mut params = GetUserStarsParams::new(user_id);
+
+                if let Some(min_id) = min_id {
+                    params = params.with_min_id(min_id);
+                }
+
+                if let Some(max_id) = max_id {
+                    params = params.with_max_id(max_id);
+                }
+
+                if let Some(count) = count {
+                    params = params.with_count(count);
+                }
+
+                if let Some(order_str) = order {
+                    let order_enum = match order_str.to_lowercase().as_str() {
+                        "asc" => StarOrder::Asc,
+                        "desc" => StarOrder::Desc,
+                        _ => {
+                            eprintln!("Invalid order: '{order_str}'. Must be 'asc' or 'desc'");
+                            return Ok(());
+                        }
+                    };
+                    params = params.with_order(order_enum);
+                }
+
+                match client.user().get_user_stars(params).await {
+                    Ok(stars) => {
+                        if stars.is_empty() {
+                            println!("No stars found for this user");
+                        } else {
+                            println!("Found {} star(s):", stars.len());
+                            println!();
+                            for star in stars {
+                                println!("Star ID: {}", star.id);
+                                println!("Title: {}", star.title);
+                                println!("URL: {}", star.url);
+                                if let Some(comment) = &star.comment {
+                                    println!("Comment: {comment}");
+                                }
+                                println!(
+                                    "Presenter: {} (ID: {})",
+                                    star.presenter.name, star.presenter.id
+                                );
+                                println!(
+                                    "Created: {}",
+                                    star.created.format("%Y-%m-%d %H:%M:%S UTC")
+                                );
+                                println!("---");
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error getting stars: {e}");
                     }
                 }
             }
