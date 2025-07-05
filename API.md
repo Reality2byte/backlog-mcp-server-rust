@@ -2,8 +2,8 @@
 
 ## Summary
 - Total APIs: 149
-- Implemented: 103 (69%)
-- Not implemented: 46 (31%)
+- Implemented: 104 (70%)
+- Not implemented: 45 (30%)
 
 ### Spaces
 - ✅ GetSpace: Returns information about your space: GET /api/v2/space
@@ -200,7 +200,7 @@
 - ❌ (Classic) DeleteUser: Deletes user from the space. You can’t use this API at new plan space: DELETE /api/v2/users/:userId
 
 ### Teams
-- ❌ GetTeamIcon: Downloads team icon: GET /api/v2/teams/:teamId/icon
+- ✅ GetTeamIcon: Downloads team icon: GET /api/v2/teams/:teamId/icon
 - ✅ GetTeam: Returns information about team: GET /api/v2/teams/:teamId
 - ✅ GetListOfTeams: Returns list of teams: GET /api/v2/teams
 - ❌ (Classic) AddTeam: Adds new team. You can’t use this API at new plan space: POST /api/v2/teams

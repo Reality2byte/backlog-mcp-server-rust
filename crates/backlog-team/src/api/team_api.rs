@@ -1,6 +1,8 @@
-use crate::api::{GetTeamParams, GetTeamResponse, ListTeamsParams, ListTeamsResponse};
+use crate::api::{
+    GetTeamIconParams, GetTeamParams, GetTeamResponse, ListTeamsParams, ListTeamsResponse,
+};
 use backlog_api_core::Result;
-use client::Client;
+use client::{Client, DownloadedFile};
 
 /// Team API client for interacting with Backlog team endpoints.
 pub struct TeamApi(Client);
@@ -91,5 +93,50 @@ impl TeamApi {
     /// Corresponds to `GET /api/v2/teams`.
     pub async fn list_teams(&self, params: ListTeamsParams) -> Result<ListTeamsResponse> {
         self.0.execute(params).await
+    }
+
+    /// Gets a team icon image.
+    ///
+    /// This API requires all permissions.
+    ///
+    /// # Arguments
+    ///
+    /// * `params` - Parameters for getting a team icon
+    ///
+    /// # Returns
+    ///
+    /// Returns the downloaded team icon image if successful.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if:
+    /// * The user doesn't have necessary permissions (403)
+    /// * The team is not found (404)
+    /// * The API request fails
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use backlog_team::api::{TeamApi, GetTeamIconParams};
+    /// use backlog_core::id::TeamId;
+    /// use std::fs;
+    ///
+    /// # async fn example(api: TeamApi) -> Result<(), Box<dyn std::error::Error>> {
+    /// let params = GetTeamIconParams {
+    ///     team_id: TeamId::new(168),
+    /// };
+    /// let icon = api.get_team_icon(params).await?;
+    ///
+    /// // Save the icon to a file
+    /// if let Some(filename) = &icon.filename {
+    ///     fs::write(filename, &icon.content)?;
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// Corresponds to `GET /api/v2/teams/:teamId/icon`.
+    pub async fn get_team_icon(&self, params: GetTeamIconParams) -> Result<DownloadedFile> {
+        self.0.download_file(params).await
     }
 }

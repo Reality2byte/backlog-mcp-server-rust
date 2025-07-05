@@ -1,7 +1,8 @@
 use backlog_api_client::{ListTeamsOrder, ListTeamsParams, ListTeamsResponse, TeamApi};
 use backlog_core::{id::TeamId, identifier::Identifier};
-use backlog_team::api::GetTeamParams;
+use backlog_team::api::{GetTeamIconParams, GetTeamParams};
 use clap::{Parser, ValueEnum};
+use std::path::PathBuf;
 
 #[derive(Parser)]
 pub struct TeamArgs {
@@ -35,6 +36,16 @@ pub enum TeamCommands {
         /// Output format
         #[clap(short, long, value_enum, default_value = "table")]
         format: OutputFormat,
+    },
+    /// Download team icon image
+    Icon {
+        /// Team ID
+        #[clap(name = "TEAM_ID")]
+        team_id: u32,
+
+        /// Output file path
+        #[clap(short, long)]
+        output: PathBuf,
     },
 }
 
@@ -109,6 +120,27 @@ pub async fn handle_team_command(api: TeamApi, args: TeamArgs) {
                 },
                 Err(e) => {
                     eprintln!("❌ Failed to list teams: {e}");
+                    std::process::exit(1);
+                }
+            }
+        }
+        TeamCommands::Icon { team_id, output } => {
+            let params = GetTeamIconParams {
+                team_id: TeamId::new(team_id),
+            };
+
+            match api.get_team_icon(params).await {
+                Ok(icon) => match std::fs::write(&output, &icon.bytes) {
+                    Ok(_) => {
+                        println!("✅ Team icon saved to: {}", output.display());
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to save team icon: {e}");
+                        std::process::exit(1);
+                    }
+                },
+                Err(e) => {
+                    eprintln!("❌ Failed to download team icon: {e}");
                     std::process::exit(1);
                 }
             }

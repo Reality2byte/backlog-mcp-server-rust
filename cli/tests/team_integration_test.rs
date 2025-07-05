@@ -103,3 +103,53 @@ fn test_team_list_with_pagination() {
 
     assert!(output.status.success() || output.status.code() == Some(1));
 }
+
+#[test]
+#[ignore]
+fn test_team_icon_download() {
+    if std::env::var("BACKLOG_BASE_URL").is_err() || std::env::var("BACKLOG_API_KEY").is_err() {
+        return;
+    }
+
+    // Create a temporary directory for the output
+    let temp_dir = std::env::temp_dir();
+    let output_path = temp_dir.join("test_team_icon.png");
+
+    // If team ID is provided in env, use it
+    let team_id = std::env::var("BACKLOG_TEST_TEAM_ID").unwrap_or_else(|_| "1".to_string());
+
+    let output = Command::new("cargo")
+        .arg("run")
+        .arg("--features")
+        .arg("team")
+        .arg("--")
+        .arg("team")
+        .arg("icon")
+        .arg(&team_id)
+        .arg("--output")
+        .arg(output_path.to_str().unwrap())
+        .output()
+        .expect("Failed to execute command");
+
+    if output.status.success() {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        println!("Team icon download output:\n{stdout}");
+        // Check if file was created
+        assert!(stdout.contains("Team icon saved to:"));
+
+        // Clean up
+        if output_path.exists() {
+            let _ = std::fs::remove_file(&output_path);
+        }
+    } else {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        eprintln!("Command failed: {stderr}");
+        // It might fail if team doesn't have an icon or permission denied
+        assert!(
+            stderr.contains("permission")
+                || stderr.contains("403")
+                || stderr.contains("404")
+                || stderr.contains("Not Found")
+        );
+    }
+}

@@ -117,5 +117,6 @@ pub use backlog_wiki::{UpdateWikiParams, UpdateWikiResponse};
 // Team module (from backlog_team)
 #[cfg(feature = "team")]
 pub use backlog_team::{
-    GetTeamParams, GetTeamResponse, ListTeamsOrder, ListTeamsParams, ListTeamsResponse, TeamApi,
+    TeamApi,
+    api::{GetTeamParams, GetTeamResponse, ListTeamsOrder, ListTeamsParams, ListTeamsResponse},
 };

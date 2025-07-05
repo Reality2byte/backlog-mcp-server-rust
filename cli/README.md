@@ -212,6 +212,9 @@ blg team list --format csv > teams.csv
 
 # Using the alias
 blg team ls --order asc --format table
+
+# Download team icon
+blg team icon 123 --output team_123_icon.png
 ```
 
 ### Getting Help
@@ -328,3 +331,4 @@ The `blg` CLI currently supports the following commands:
   - `--offset <NUMBER>` - Number of items to skip for pagination
   - `--count <NUMBER>` - Number of items to retrieve (1-100, default: 20)
   - `--format <table|json|csv>` - Output format (default: table)
+- `team icon <TEAM_ID> --output <FILE_PATH>` - Download team icon image
