@@ -1,9 +1,13 @@
 mod common;
 
+use backlog_core::ApiDate;
 use backlog_core::identifier::{Identifier, UserId};
-use backlog_user::api::{GetOwnUserParams, GetUserIconParams, GetUserListParams, GetUserParams};
+use backlog_user::api::{
+    GetOwnUserParams, GetUserIconParams, GetUserListParams, GetUserParams, GetUserStarCountParams,
+};
+use chrono::{DateTime, NaiveDate, Utc};
 use common::*;
-use wiremock::matchers::{method, path};
+use wiremock::matchers::{method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[tokio::test]
@@ -153,4 +157,88 @@ async fn test_get_user_icon_success() {
     assert_eq!(downloaded_file.filename, "icon.png");
     assert_eq!(downloaded_file.content_type, "image/png");
     assert_eq!(downloaded_file.bytes.as_ref(), icon_data);
+}
+
+#[tokio::test]
+async fn test_get_user_star_count_success() {
+    let mock_server = MockServer::start().await;
+    let api = setup_user_api(&mock_server).await;
+    let user_id = UserId::new(123);
+
+    let expected_response = serde_json::json!({
+        "count": 54
+    });
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/users/123/stars/count"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_response))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetUserStarCountParams::new(user_id);
+    let result = api.get_user_star_count(params).await;
+    assert!(result.is_ok());
+    let star_count = result.unwrap();
+    assert_eq!(star_count.count, 54);
+}
+
+#[tokio::test]
+async fn test_get_user_star_count_with_date_range() {
+    let mock_server = MockServer::start().await;
+    let api = setup_user_api(&mock_server).await;
+    let user_id = UserId::new(123);
+
+    let expected_response = serde_json::json!({
+        "count": 10
+    });
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/users/123/stars/count"))
+        .and(query_param("since", "2024-01-01"))
+        .and(query_param("until", "2024-12-31"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_response))
+        .mount(&mock_server)
+        .await;
+
+    let since_date = NaiveDate::from_ymd_opt(2024, 1, 1).unwrap();
+    let since_datetime =
+        DateTime::<Utc>::from_naive_utc_and_offset(since_date.and_hms_opt(0, 0, 0).unwrap(), Utc);
+    let since = ApiDate::from(since_datetime);
+
+    let until_date = NaiveDate::from_ymd_opt(2024, 12, 31).unwrap();
+    let until_datetime =
+        DateTime::<Utc>::from_naive_utc_and_offset(until_date.and_hms_opt(0, 0, 0).unwrap(), Utc);
+    let until = ApiDate::from(until_datetime);
+
+    let params = GetUserStarCountParams::new(user_id)
+        .with_since(since)
+        .with_until(until);
+
+    let result = api.get_user_star_count(params).await;
+    assert!(result.is_ok());
+    let star_count = result.unwrap();
+    assert_eq!(star_count.count, 10);
+}
+
+#[tokio::test]
+async fn test_get_user_star_count_zero_stars() {
+    let mock_server = MockServer::start().await;
+    let api = setup_user_api(&mock_server).await;
+    let user_id = UserId::new(456);
+
+    let expected_response = serde_json::json!({
+        "count": 0
+    });
+
+    Mock::given(method("GET"))
+        .and(path("/api/v2/users/456/stars/count"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&expected_response))
+        .mount(&mock_server)
+        .await;
+
+    let params = GetUserStarCountParams::new(user_id);
+    let result = api.get_user_star_count(params).await;
+    assert!(result.is_ok());
+    let star_count = result.unwrap();
+    assert_eq!(star_count.count, 0);
 }

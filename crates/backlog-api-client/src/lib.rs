@@ -96,7 +96,10 @@ pub use backlog_space::{UpdateSpaceNotificationParams, UploadAttachmentParams};
 
 // User module (from backlog_user)
 #[cfg(feature = "user")]
-pub use backlog_user::UserApi;
+pub use backlog_user::{
+    UserApi,
+    api::{GetUserStarCountParams, GetUserStarCountResponse, StarCount},
+};
 
 // Activity module (from backlog_activity)
 #[cfg(feature = "activity")]

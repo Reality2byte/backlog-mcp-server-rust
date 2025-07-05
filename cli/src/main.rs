@@ -76,6 +76,7 @@ use backlog_user::GetOwnUserParams;
 use backlog_user::GetUserIconParams;
 use backlog_user::GetUserListParams;
 use backlog_user::GetUserParams;
+use backlog_user::GetUserStarCountParams;
 #[cfg(feature = "wiki_writable")]
 use backlog_wiki::{
     AddWikiParams, AttachFilesToWikiParams, DeleteWikiAttachmentParams, DeleteWikiParams,
@@ -1131,6 +1132,18 @@ enum UserCommands {
         /// Output file path to save the icon
         #[clap(short, long, value_name = "FILE_PATH")]
         output: PathBuf,
+    },
+    /// Get user star count
+    StarCount {
+        /// User ID
+        #[clap(name = "USER_ID")]
+        user_id: u32,
+        /// Count stars from this date (YYYY-MM-DD format)
+        #[clap(long)]
+        since: Option<String>,
+        /// Count stars until this date (YYYY-MM-DD format)
+        #[clap(long)]
+        until: Option<String>,
     },
 }
 
@@ -4348,6 +4361,62 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error downloading user icon: {e}");
+                    }
+                }
+            }
+            UserCommands::StarCount {
+                user_id,
+                since,
+                until,
+            } => {
+                println!("Getting star count for user ID: {user_id}");
+
+                let mut params = GetUserStarCountParams::new(user_id);
+
+                if let Some(since_str) = since {
+                    match chrono::DateTime::parse_from_str(
+                        &format!("{since_str}T00:00:00Z"),
+                        "%Y-%m-%dT%H:%M:%SZ",
+                    ) {
+                        Ok(date) => {
+                            params =
+                                params.with_since(ApiDate::from(date.with_timezone(&chrono::Utc)));
+                            println!("Counting stars from: {since_str}");
+                        }
+                        Err(_) => {
+                            eprintln!(
+                                "Invalid date format for 'since': {since_str}. Expected format: YYYY-MM-DD"
+                            );
+                            return Ok(());
+                        }
+                    }
+                }
+
+                if let Some(until_str) = until {
+                    match chrono::DateTime::parse_from_str(
+                        &format!("{until_str}T23:59:59Z"),
+                        "%Y-%m-%dT%H:%M:%SZ",
+                    ) {
+                        Ok(date) => {
+                            params =
+                                params.with_until(ApiDate::from(date.with_timezone(&chrono::Utc)));
+                            println!("Counting stars until: {until_str}");
+                        }
+                        Err(_) => {
+                            eprintln!(
+                                "Invalid date format for 'until': {until_str}. Expected format: YYYY-MM-DD"
+                            );
+                            return Ok(());
+                        }
+                    }
+                }
+
+                match client.user().get_user_star_count(params).await {
+                    Ok(star_count) => {
+                        println!("User has received {} star(s)", star_count.count);
+                    }
+                    Err(e) => {
+                        eprintln!("Error getting star count: {e}");
                     }
                 }
             }
