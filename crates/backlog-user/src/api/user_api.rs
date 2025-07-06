@@ -7,7 +7,7 @@ use crate::api::{
     GetUserIconResponse, GetUserListParams, GetUserListResponse, GetUserParams,
     GetUserRecentUpdatesParams, GetUserRecentUpdatesResponse, GetUserResponse,
     GetUserStarCountParams, GetUserStarCountResponse, GetUserStarsParams, GetUserStarsResponse,
-    GetWatchingListParams, GetWatchingListRequest,
+    GetWatchingCountParams, GetWatchingListParams, GetWatchingListRequest,
 };
 
 pub struct UserApi(Client);
@@ -102,6 +102,16 @@ impl UserApi {
             params,
         };
         self.0.execute(request).await
+    }
+
+    /// Gets the count of watchings for a specific user.
+    ///
+    /// Corresponds to `GET /api/v2/users/:userId/watchings/count`.
+    pub async fn get_watching_count(
+        &self,
+        params: GetWatchingCountParams,
+    ) -> Result<crate::models::GetWatchingCountResponse> {
+        self.0.execute(params).await
     }
 
     /// Mark a notification as read.

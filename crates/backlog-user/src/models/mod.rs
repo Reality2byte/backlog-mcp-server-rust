@@ -4,4 +4,6 @@ pub mod watching;
 
 pub use notification::NotificationCount;
 pub use notification_list::Notification;
-pub use watching::{GetWatchingListResponse, Watching, WatchingType};
+pub use watching::{
+    GetWatchingCountResponse, GetWatchingListResponse, Watching, WatchingCount, WatchingType,
+};

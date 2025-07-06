@@ -100,13 +100,10 @@ pub use backlog_space::{UpdateSpaceNotificationParams, UploadAttachmentParams};
 // User module (from backlog_user)
 #[cfg(feature = "user")]
 pub use backlog_user::{
-    UserApi,
-    api::{
-        GetUserStarCountParams, GetUserStarCountResponse, GetUserStarsParams, GetUserStarsResponse,
-        GetWatchingListParams, GetWatchingListParamsBuilder, Order as WatchingOrder, StarCount,
-        StarOrder, WatchingSort,
-    },
-    models::{GetWatchingListResponse, Watching, WatchingType},
+    GetUserStarCountParams, GetUserStarCountResponse, GetUserStarsParams, GetUserStarsResponse,
+    GetWatchingCountParams, GetWatchingCountResponse, GetWatchingListParams,
+    GetWatchingListParamsBuilder, GetWatchingListResponse, Order as WatchingOrder, StarCount,
+    StarOrder, UserApi, Watching, WatchingCount, WatchingSort, WatchingType,
 };
 
 // Activity module (from backlog_activity)

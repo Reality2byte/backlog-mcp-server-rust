@@ -29,6 +29,16 @@ pub struct Watching {
 /// Response type for get watching list API
 pub type GetWatchingListResponse = Vec<Watching>;
 
+/// Count of watchings
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+pub struct WatchingCount {
+    /// The number of watchings
+    pub count: u32,
+}
+
+/// Response type for get watching count API
+pub type GetWatchingCountResponse = WatchingCount;
+
 #[cfg(test)]
 #[path = "watching_test.rs"]
 mod tests;

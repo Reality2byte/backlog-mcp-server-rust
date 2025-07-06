@@ -2,8 +2,8 @@
 
 ## Summary
 - Total APIs: 149
-- Implemented: 117 (78%)
-- Not implemented: 32 (21%)
+- Implemented: 118 (79%)
+- Not implemented: 31 (20%)
 
 ### Spaces
 - ✅ GetSpace: Returns information about your space: GET /api/v2/space
@@ -172,7 +172,7 @@
 ### Watchings
 - ❌ UpdateWatching: Updates a watching. User can update own note: PATCH /api/v2/watchings/:watchingId
 - ❌ AddWatching: Adds a watching. User can add a own watching: POST /api/v2/watchings
-- ❌ CountWatching: Returns the number of your watching issues: GET /api/v2/users/:userId/watchings/count
+- ✅ CountWatching: Returns the number of your watching issues: GET /api/v2/users/:userId/watchings/count
 - ❌ DeleteWatching: Deletes a own watching. User can delete a own watching: DELETE /api/v2/watchings/:watchingId
 - ✅ GetWatchingList: Returns list of your watching issues: GET /api/v2/users/:userId/watchings
 - ❌ GetWatching: Returns the information about a watching: GET /api/v2/watchings/:watchingId

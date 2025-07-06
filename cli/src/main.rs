@@ -76,17 +76,13 @@ use backlog_space::GetSpaceLogoParams;
 use backlog_space::GetSpaceRecentUpdatesParams;
 #[cfg(feature = "space_writable")]
 use backlog_space::{UpdateSpaceNotificationParams, UploadAttachmentParams};
-use backlog_user::GetNotificationCountParams;
-use backlog_user::GetNotificationsParams;
-use backlog_user::GetOwnUserParams;
-use backlog_user::GetUserIconParams;
-use backlog_user::GetUserListParams;
-use backlog_user::GetUserParams;
-use backlog_user::GetUserStarCountParams;
-use backlog_user::GetUserStarsParams;
-use backlog_user::GetWatchingListParams;
-use backlog_user::NotificationOrder;
-use backlog_user::api::{Order as WatchingOrder, StarOrder, WatchingSort};
+#[cfg(feature = "user")]
+use backlog_user::{
+    GetNotificationCountParams, GetNotificationsParams, GetOwnUserParams, GetUserIconParams,
+    GetUserListParams, GetUserParams, GetUserStarCountParams, GetUserStarsParams,
+    GetWatchingCountParams, GetWatchingListParams, NotificationOrder,
+    api::{Order as WatchingOrder, StarOrder, WatchingSort},
+};
 #[cfg(feature = "wiki_writable")]
 use backlog_wiki::{
     AddWikiParams, AttachFilesToWikiParams, DeleteWikiAttachmentParams, DeleteWikiParams,
@@ -1273,6 +1269,18 @@ enum UserCommands {
         /// Filter by issue IDs (comma-separated)
         #[clap(long)]
         issue_ids: Option<String>,
+    },
+    /// Get count of watchings for a user
+    WatchingCount {
+        /// User ID
+        #[clap(name = "USER_ID")]
+        user_id: u32,
+        /// Filter by resource already read status
+        #[clap(long)]
+        resource_already_read: Option<bool>,
+        /// Filter by already read status
+        #[clap(long)]
+        already_read: Option<bool>,
     },
 }
 
@@ -4973,6 +4981,44 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to get watchings: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            UserCommands::WatchingCount {
+                user_id,
+                resource_already_read,
+                already_read,
+            } => {
+                println!("Getting watching count for user {user_id}");
+
+                let mut params = GetWatchingCountParams::new(UserId::from(user_id));
+
+                if let Some(read) = resource_already_read {
+                    params = params.with_resource_already_read(read);
+                }
+
+                if let Some(read) = already_read {
+                    params = params.with_already_read(read);
+                }
+
+                match client.user().get_watching_count(params).await {
+                    Ok(response) => {
+                        println!("✅ Watching count retrieved successfully");
+                        println!("Total watchings: {}", response.count);
+
+                        if resource_already_read.is_some() || already_read.is_some() {
+                            println!("\nFilters applied:");
+                            if let Some(read) = resource_already_read {
+                                println!("  Resource already read: {read}");
+                            }
+                            if let Some(read) = already_read {
+                                println!("  Already read: {read}");
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to get watching count: {e}");
                         std::process::exit(1);
                     }
                 }

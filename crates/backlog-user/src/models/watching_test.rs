@@ -89,4 +89,24 @@ mod watching_tests {
         assert_eq!(watchings[0].id.value(), 1);
         assert_eq!(watchings[1].id.value(), 2);
     }
+
+    #[test]
+    fn test_watching_count_deserialization() {
+        let json = r#"{"count": 138}"#;
+        let result: Result<crate::models::watching::WatchingCount, _> = serde_json::from_str(json);
+        assert!(result.is_ok());
+
+        let watching_count = result.unwrap();
+        assert_eq!(watching_count.count, 138);
+    }
+
+    #[test]
+    fn test_watching_count_zero() {
+        let json = r#"{"count": 0}"#;
+        let result: Result<crate::models::watching::WatchingCount, _> = serde_json::from_str(json);
+        assert!(result.is_ok());
+
+        let watching_count = result.unwrap();
+        assert_eq!(watching_count.count, 0);
+    }
 }
