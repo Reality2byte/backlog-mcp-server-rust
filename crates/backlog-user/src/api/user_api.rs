@@ -87,4 +87,17 @@ impl UserApi {
     ) -> Result<GetNotificationsResponse> {
         self.0.execute(params).await
     }
+
+    /// Mark a notification as read.
+    ///
+    /// Corresponds to `POST /api/v2/notifications/:id/markAsRead`.
+    #[cfg(feature = "writable")]
+    pub async fn mark_notification_as_read(
+        &self,
+        notification_id: impl Into<backlog_core::identifier::NotificationId>,
+    ) -> Result<()> {
+        let params = super::MarkNotificationAsReadParams::new(notification_id);
+        self.0.execute_no_content(params).await?;
+        Ok(())
+    }
 }

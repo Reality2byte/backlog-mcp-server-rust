@@ -7,6 +7,8 @@ mod get_user_list;
 mod get_user_recent_updates;
 mod get_user_star_count;
 mod get_user_stars;
+#[cfg(feature = "writable")]
+mod mark_notification_as_read;
 mod user_api;
 
 pub use user_api::UserApi;
@@ -20,3 +22,5 @@ pub use get_user_list::{GetUserListParams, GetUserListResponse};
 pub use get_user_recent_updates::{GetUserRecentUpdatesParams, GetUserRecentUpdatesResponse};
 pub use get_user_star_count::{GetUserStarCountParams, GetUserStarCountResponse, StarCount};
 pub use get_user_stars::{GetUserStarsParams, GetUserStarsResponse, StarOrder};
+#[cfg(feature = "writable")]
+pub use mark_notification_as_read::MarkNotificationAsReadParams;

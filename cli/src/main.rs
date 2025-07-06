@@ -1229,6 +1229,12 @@ enum UserCommands {
         #[clap(long)]
         sender_id: Option<u32>,
     },
+    /// Mark a notification as read
+    #[cfg(feature = "user_writable")]
+    MarkNotificationRead {
+        /// Notification ID to mark as read
+        notification_id: u32,
+    },
 }
 
 #[cfg(feature = "wiki")]
@@ -4776,6 +4782,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to get notifications: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "user_writable")]
+            UserCommands::MarkNotificationRead { notification_id } => {
+                println!("Marking notification {notification_id} as read");
+
+                match client
+                    .user()
+                    .mark_notification_as_read(notification_id)
+                    .await
+                {
+                    Ok(()) => {
+                        println!("✅ Notification marked as read");
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to mark notification as read: {e}");
                         std::process::exit(1);
                     }
                 }

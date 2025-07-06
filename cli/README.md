@@ -251,6 +251,9 @@ blg user notifications --order asc
 
 # Using the alias for notifications
 blg user notif --count 10
+
+# Mark a notification as read (requires user_writable feature)
+blg user mark-notification-read 12345
 ```
 
 ### Getting Help
@@ -362,6 +365,7 @@ The `blg` CLI currently supports the following commands:
   - `-n, --count <NUMBER>` - Maximum number of results to return (1-100)
   - `--order <asc|desc>` - Sort order for notifications
   - `--sender-id <USER_ID>` - Filter notifications by sender
+- `user mark-notification-read <NOTIFICATION_ID>` - Mark a notification as read (requires `user_writable` feature)
 
 ### Wiki Commands
 - `wiki list-attachments <WIKI_ID>` - List attachments for a specific wiki page
