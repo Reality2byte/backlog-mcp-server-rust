@@ -77,8 +77,13 @@ type McpResult = Result<CallToolResult, McpError>;
 
 impl Server {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        let base_url = env::var("BACKLOG_BASE_URL")?;
-        let api_key = env::var("BACKLOG_API_KEY")?;
+        let base_url = env::var("BACKLOG_BASE_URL")
+            .map_err(|_| "BACKLOG_BASE_URL environment variable not set")?;
+        let api_key = env::var("BACKLOG_API_KEY")
+            .map_err(|_| "BACKLOG_API_KEY environment variable not set")?;
+
+        eprintln!("Initializing with base_url: {base_url}");
+
         let client = BacklogApiClient::new(&base_url)?.with_api_key(api_key);
         let access_control = AccessControl::new()?;
         Ok(Self {
