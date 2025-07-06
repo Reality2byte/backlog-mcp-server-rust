@@ -1235,6 +1235,9 @@ enum UserCommands {
         /// Notification ID to mark as read
         notification_id: u32,
     },
+    /// Reset all unread notifications (mark all as read)
+    #[cfg(feature = "user_writable")]
+    ResetNotifications,
 }
 
 #[cfg(feature = "wiki")]
@@ -4800,6 +4803,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to mark notification as read: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "user_writable")]
+            UserCommands::ResetNotifications => {
+                println!("Marking all unread notifications as read...");
+
+                match client.user().reset_unread_notification_count().await {
+                    Ok(result) => {
+                        println!("✅ All unread notifications marked as read");
+                        println!("   Previously unread count: {}", result.count);
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to reset notifications: {e}");
                         std::process::exit(1);
                     }
                 }

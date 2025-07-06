@@ -254,6 +254,9 @@ blg user notif --count 10
 
 # Mark a notification as read (requires user_writable feature)
 blg user mark-notification-read 12345
+
+# Reset all unread notifications (mark all as read) (requires user_writable feature)
+blg user reset-notifications
 ```
 
 ### Getting Help
@@ -366,6 +369,7 @@ The `blg` CLI currently supports the following commands:
   - `--order <asc|desc>` - Sort order for notifications
   - `--sender-id <USER_ID>` - Filter notifications by sender
 - `user mark-notification-read <NOTIFICATION_ID>` - Mark a notification as read (requires `user_writable` feature)
+- `user reset-notifications` - Reset all unread notifications by marking them as read (requires `user_writable` feature)
 
 ### Wiki Commands
 - `wiki list-attachments <WIKI_ID>` - List attachments for a specific wiki page

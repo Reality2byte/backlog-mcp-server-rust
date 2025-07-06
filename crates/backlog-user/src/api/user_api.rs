@@ -100,4 +100,15 @@ impl UserApi {
         self.0.execute_no_content(params).await?;
         Ok(())
     }
+
+    /// Reset unread notification count by marking all notifications as read.
+    ///
+    /// Corresponds to `POST /api/v2/notifications/markAsRead`.
+    #[cfg(feature = "writable")]
+    pub async fn reset_unread_notification_count(
+        &self,
+    ) -> Result<crate::models::NotificationCount> {
+        let params = super::ResetUnreadNotificationCountParams::new();
+        self.0.execute(params).await
+    }
 }

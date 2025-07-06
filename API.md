@@ -2,8 +2,8 @@
 
 ## Summary
 - Total APIs: 149
-- Implemented: 114 (76%)
-- Not implemented: 35 (24%)
+- Implemented: 115 (77%)
+- Not implemented: 34 (23%)
 
 ### Spaces
 - ✅ GetSpace: Returns information about your space: GET /api/v2/space
@@ -167,7 +167,7 @@
 - ✅ CountNotification: Returns number of Notifications: GET /api/v2/notifications/count
 - ✅ GetNotification: Returns own notifications: GET /api/v2/notifications
 - ✅ ReadNotification: Changes notifications read: POST /api/v2/notifications/:id/markAsRead
-- ❌ ResetUnreadNotificationCount: Resets unread Notification count: POST /api/v2/notifications/markAsRead
+- ✅ ResetUnreadNotificationCount: Resets unread Notification count: POST /api/v2/notifications/markAsRead
 
 ### Watchings
 - ❌ UpdateWatching: Updates a watching. User can update own note: PATCH /api/v2/watchings/:watchingId

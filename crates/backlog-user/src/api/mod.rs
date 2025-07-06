@@ -9,6 +9,8 @@ mod get_user_star_count;
 mod get_user_stars;
 #[cfg(feature = "writable")]
 mod mark_notification_as_read;
+#[cfg(feature = "writable")]
+mod reset_unread_notification_count;
 mod user_api;
 
 pub use user_api::UserApi;
@@ -24,3 +26,5 @@ pub use get_user_star_count::{GetUserStarCountParams, GetUserStarCountResponse, 
 pub use get_user_stars::{GetUserStarsParams, GetUserStarsResponse, StarOrder};
 #[cfg(feature = "writable")]
 pub use mark_notification_as_read::MarkNotificationAsReadParams;
+#[cfg(feature = "writable")]
+pub use reset_unread_notification_count::ResetUnreadNotificationCountParams;
