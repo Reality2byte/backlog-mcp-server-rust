@@ -97,6 +97,7 @@ impl_identifier!(
     (ActivityTypeId, u32),
     (ActivityId, u32),
     (TeamId, u32),
+    (WatchingId, u32),
     // u64 identifiers
     (SvnRevision, u64),
     (PullRequestNumber, u64)

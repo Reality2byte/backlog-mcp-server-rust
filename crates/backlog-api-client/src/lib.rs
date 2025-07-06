@@ -16,7 +16,7 @@ pub use backlog_core::{
     // UserId,
     identifier::{
         AttachmentId, DocumentId, ProjectId, PullRequestAttachmentId, PullRequestCommentId,
-        PullRequestNumber, StatusId, UserId, WikiId, WikiTagId,
+        PullRequestNumber, StatusId, UserId, WatchingId, WikiId, WikiTagId,
     },
 };
 
@@ -103,8 +103,10 @@ pub use backlog_user::{
     UserApi,
     api::{
         GetUserStarCountParams, GetUserStarCountResponse, GetUserStarsParams, GetUserStarsResponse,
-        StarCount, StarOrder,
+        GetWatchingListParams, GetWatchingListParamsBuilder, Order as WatchingOrder, StarCount,
+        StarOrder, WatchingSort,
     },
+    models::{GetWatchingListResponse, Watching, WatchingType},
 };
 
 // Activity module (from backlog_activity)

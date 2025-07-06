@@ -31,7 +31,6 @@ use backlog_api_client::{
 use backlog_core::ApiDate;
 #[cfg(feature = "project")]
 use backlog_core::identifier::ActivityTypeId;
-#[cfg(any(feature = "git_writable", feature = "issue_writable"))]
 use backlog_core::identifier::IssueId;
 #[cfg(feature = "issue_writable")]
 use backlog_core::identifier::SharedFileId;
@@ -85,8 +84,9 @@ use backlog_user::GetUserListParams;
 use backlog_user::GetUserParams;
 use backlog_user::GetUserStarCountParams;
 use backlog_user::GetUserStarsParams;
+use backlog_user::GetWatchingListParams;
 use backlog_user::NotificationOrder;
-use backlog_user::api::StarOrder;
+use backlog_user::api::{Order as WatchingOrder, StarOrder, WatchingSort};
 #[cfg(feature = "wiki_writable")]
 use backlog_wiki::{
     AddWikiParams, AttachFilesToWikiParams, DeleteWikiAttachmentParams, DeleteWikiParams,
@@ -1250,6 +1250,30 @@ enum UserCommands {
     /// Reset all unread notifications (mark all as read)
     #[cfg(feature = "user_writable")]
     ResetNotifications,
+    /// Get list of watchings for a user
+    Watchings {
+        /// User ID
+        #[clap(name = "USER_ID")]
+        user_id: u32,
+        /// Sort order (asc or desc)
+        #[clap(long)]
+        order: Option<String>,
+        /// Sort by (created, updated, issueUpdated)
+        #[clap(long)]
+        sort: Option<String>,
+        /// Maximum number of results to return (1-100)
+        #[clap(long)]
+        count: Option<u8>,
+        /// Offset for pagination
+        #[clap(long)]
+        offset: Option<u64>,
+        /// Filter by resource already read status
+        #[clap(long)]
+        resource_already_read: Option<bool>,
+        /// Filter by issue IDs (comma-separated)
+        #[clap(long)]
+        issue_ids: Option<String>,
+    },
 }
 
 #[cfg(feature = "wiki")]
@@ -4830,6 +4854,125 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Failed to reset notifications: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            UserCommands::Watchings {
+                user_id,
+                order,
+                sort,
+                count,
+                offset,
+                resource_already_read,
+                issue_ids,
+            } => {
+                println!("Getting watchings for user {user_id}");
+
+                let mut params = GetWatchingListParams::builder();
+
+                if let Some(order_str) = order {
+                    let order_enum = match order_str.to_lowercase().as_str() {
+                        "asc" => WatchingOrder::Asc,
+                        "desc" => WatchingOrder::Desc,
+                        _ => {
+                            eprintln!("Invalid order: {order_str}. Use 'asc' or 'desc'");
+                            std::process::exit(1);
+                        }
+                    };
+                    params = params.order(order_enum);
+                }
+
+                if let Some(sort_str) = sort {
+                    let sort_enum = match sort_str.to_lowercase().as_str() {
+                        "created" => WatchingSort::Created,
+                        "updated" => WatchingSort::Updated,
+                        "issueupdated" => WatchingSort::IssueUpdated,
+                        _ => {
+                            eprintln!(
+                                "Invalid sort: {sort_str}. Use 'created', 'updated', or 'issueUpdated'"
+                            );
+                            std::process::exit(1);
+                        }
+                    };
+                    params = params.sort(sort_enum);
+                }
+
+                if let Some(c) = count {
+                    params = params.count(c);
+                }
+
+                if let Some(o) = offset {
+                    params = params.offset(o);
+                }
+
+                if let Some(read) = resource_already_read {
+                    params = params.resource_already_read(read);
+                }
+
+                if let Some(ids_str) = issue_ids {
+                    let ids: Vec<IssueId> = ids_str
+                        .split(',')
+                        .filter_map(|s| s.trim().parse::<u32>().ok())
+                        .map(IssueId::from)
+                        .collect();
+                    if !ids.is_empty() {
+                        params = params.issue_ids(ids);
+                    }
+                }
+
+                let params = params.build().unwrap();
+
+                match client.user().get_watching_list(user_id, params).await {
+                    Ok(watchings) => {
+                        if watchings.is_empty() {
+                            println!("No watchings found");
+                        } else {
+                            println!("Found {} watching(s):", watchings.len());
+                            println!();
+
+                            for (index, watching) in watchings.iter().enumerate() {
+                                println!("{}. Watching #{}", index + 1, watching.id.value());
+                                println!("   Type: {:?}", watching.watching_type);
+                                println!(
+                                    "   Status: {}",
+                                    if watching.resource_already_read {
+                                        "Read"
+                                    } else {
+                                        "Unread"
+                                    }
+                                );
+
+                                if let Some(note) = &watching.note {
+                                    println!("   Note: {note}");
+                                }
+
+                                if let Some(issue) = &watching.issue {
+                                    println!("   Issue: {} - {}", issue.issue_key, issue.summary);
+                                    println!("   Project ID: {}", issue.project_id.value());
+                                    println!("   Status: {}", issue.status.name);
+                                    if let Some(assignee) = &issue.assignee {
+                                        println!("   Assignee: {}", assignee.name);
+                                    }
+                                }
+
+                                if let Some(last_updated) = &watching.last_content_updated {
+                                    println!(
+                                        "   Last Updated: {}",
+                                        last_updated.format("%Y-%m-%d %H:%M:%S")
+                                    );
+                                }
+
+                                println!(
+                                    "   Created: {}",
+                                    watching.created.format("%Y-%m-%d %H:%M:%S")
+                                );
+                                println!();
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to get watchings: {e}");
                         std::process::exit(1);
                     }
                 }

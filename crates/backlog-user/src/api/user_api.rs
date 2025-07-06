@@ -7,6 +7,7 @@ use crate::api::{
     GetUserIconResponse, GetUserListParams, GetUserListResponse, GetUserParams,
     GetUserRecentUpdatesParams, GetUserRecentUpdatesResponse, GetUserResponse,
     GetUserStarCountParams, GetUserStarCountResponse, GetUserStarsParams, GetUserStarsResponse,
+    GetWatchingListParams, GetWatchingListRequest,
 };
 
 pub struct UserApi(Client);
@@ -86,6 +87,21 @@ impl UserApi {
         params: GetNotificationsParams,
     ) -> Result<GetNotificationsResponse> {
         self.0.execute(params).await
+    }
+
+    /// Gets the list of watchings for a specific user.
+    ///
+    /// Corresponds to `GET /api/v2/users/:userId/watchings`.
+    pub async fn get_watching_list(
+        &self,
+        user_id: impl Into<backlog_core::identifier::UserId>,
+        params: GetWatchingListParams,
+    ) -> Result<crate::models::GetWatchingListResponse> {
+        let request = GetWatchingListRequest {
+            user_id: user_id.into(),
+            params,
+        };
+        self.0.execute(request).await
     }
 
     /// Mark a notification as read.

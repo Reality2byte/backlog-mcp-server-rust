@@ -7,6 +7,7 @@ mod get_user_list;
 mod get_user_recent_updates;
 mod get_user_star_count;
 mod get_user_stars;
+mod get_watching_list;
 #[cfg(feature = "writable")]
 mod mark_notification_as_read;
 #[cfg(feature = "writable")]
@@ -24,6 +25,10 @@ pub use get_user_list::{GetUserListParams, GetUserListResponse};
 pub use get_user_recent_updates::{GetUserRecentUpdatesParams, GetUserRecentUpdatesResponse};
 pub use get_user_star_count::{GetUserStarCountParams, GetUserStarCountResponse, StarCount};
 pub use get_user_stars::{GetUserStarsParams, GetUserStarsResponse, StarOrder};
+pub use get_watching_list::{
+    GetWatchingListParams, GetWatchingListParamsBuilder, GetWatchingListRequest, Order,
+    WatchingSort,
+};
 #[cfg(feature = "writable")]
 pub use mark_notification_as_read::MarkNotificationAsReadParams;
 #[cfg(feature = "writable")]
