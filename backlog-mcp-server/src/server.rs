@@ -60,8 +60,9 @@ use crate::git::request::AddPullRequestCommentRequest;
 use backlog_api_client::client::BacklogApiClient;
 use rmcp::{
     Error as McpError,
+    handler::server::tool::{Parameters, ToolRouter},
     model::{CallToolResult, Content, ServerCapabilities, ServerInfo},
-    tool,
+    tool, tool_handler, tool_router,
 };
 use std::env;
 use std::sync::Arc;
@@ -71,10 +72,12 @@ use tokio::sync::Mutex;
 pub struct Server {
     client: Arc<Mutex<BacklogApiClient>>,
     access_control: AccessControl,
+    pub tool_router: ToolRouter<Self>,
 }
 
 type McpResult = Result<CallToolResult, McpError>;
 
+#[tool_router]
 impl Server {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         let base_url = env::var("BACKLOG_BASE_URL")
@@ -89,44 +92,58 @@ impl Server {
         Ok(Self {
             client: Arc::new(Mutex::new(client)),
             access_control,
+            tool_router: Self::tool_router(),
         })
     }
 
     #[tool(description = "Get a list of Git repositories for a specified project.")]
-    async fn git_repository_list_get(&self, request: GetRepositoryListRequest) -> McpResult {
+    async fn git_repository_list_get(
+        &self,
+        request: Parameters<GetRepositoryListRequest>,
+    ) -> McpResult {
         let repositories =
-            git::bridge::get_repository_list(self.client.clone(), request, &self.access_control)
+            git::bridge::get_repository_list(self.client.clone(), request.0, &self.access_control)
                 .await?;
         Ok(CallToolResult::success(vec![Content::json(repositories)?]))
     }
 
     #[tool(description = "Get details for a specific Git repository.")]
-    async fn git_repository_details_get(&self, request: GetRepositoryDetailsRequest) -> McpResult {
+    async fn git_repository_details_get(
+        &self,
+        request: Parameters<GetRepositoryDetailsRequest>,
+    ) -> McpResult {
         let repository =
-            git::bridge::get_repository(self.client.clone(), request, &self.access_control).await?;
+            git::bridge::get_repository(self.client.clone(), request.0, &self.access_control)
+                .await?;
         Ok(CallToolResult::success(vec![Content::json(repository)?]))
     }
 
     #[tool(description = "Get a list of pull requests for a specified repository.")]
-    async fn git_pr_list_get(&self, request: ListPullRequestsRequest) -> McpResult {
-        let pull_requests =
-            git::bridge::get_pull_request_list(self.client.clone(), request, &self.access_control)
-                .await?;
+    async fn git_pr_list_get(&self, request: Parameters<ListPullRequestsRequest>) -> McpResult {
+        let pull_requests = git::bridge::get_pull_request_list(
+            self.client.clone(),
+            request.0,
+            &self.access_control,
+        )
+        .await?;
         Ok(CallToolResult::success(vec![Content::json(pull_requests)?]))
     }
 
     #[tool(description = "Get details for a specific pull request.")]
-    async fn git_pr_details_get(&self, request: GetPullRequestDetailsRequest) -> McpResult {
+    async fn git_pr_details_get(
+        &self,
+        request: Parameters<GetPullRequestDetailsRequest>,
+    ) -> McpResult {
         let pull_request =
-            git::bridge::get_pull_request(self.client.clone(), request, &self.access_control)
+            git::bridge::get_pull_request(self.client.clone(), request.0, &self.access_control)
                 .await?;
         Ok(CallToolResult::success(vec![Content::json(pull_request)?]))
     }
 
     #[tool(description = "Get details for a specific Backlog issue.")]
-    async fn issue_details_get(&self, request: GetIssueDetailsRequest) -> McpResult {
+    async fn issue_details_get(&self, request: Parameters<GetIssueDetailsRequest>) -> McpResult {
         let issue =
-            issue::bridge::get_issue_details(self.client.clone(), request, &self.access_control)
+            issue::bridge::get_issue_details(self.client.clone(), request.0, &self.access_control)
                 .await?;
         let issue_response = IssueResponse::from(issue);
         Ok(CallToolResult::success(vec![Content::json(
@@ -136,10 +153,13 @@ impl Server {
 
     #[tool(description = "Get details for a specific Backlog document.
      This API returns the document details including its title, `plain` as Markdown and `json` as ProseMirror json, and other metadata.")]
-    async fn document_details_get(&self, request: GetDocumentDetailsRequest) -> McpResult {
+    async fn document_details_get(
+        &self,
+        request: Parameters<GetDocumentDetailsRequest>,
+    ) -> McpResult {
         let document = document::bridge::get_document_details(
             self.client.clone(),
-            request,
+            request.0,
             &self.access_control,
         )
         .await?;
@@ -152,9 +172,10 @@ impl Server {
     )]
     async fn document_attachment_download(
         &self,
-        request: DownloadDocumentAttachmentRequest,
+        request: Parameters<DownloadDocumentAttachmentRequest>,
     ) -> McpResult {
         let explicit_format = request
+            .0
             .format
             .as_deref()
             .map(str::parse::<FileFormat>)
@@ -162,7 +183,7 @@ impl Server {
 
         let file = document::bridge::download_document_attachment_bridge(
             self.client.clone(),
-            request,
+            request.0,
             &self.access_control,
         )
         .await?;
@@ -172,10 +193,10 @@ impl Server {
     }
 
     #[tool(description = "Get the document tree for a specified project.")]
-    async fn document_tree_get(&self, request: GetDocumentTreeRequest) -> McpResult {
+    async fn document_tree_get(&self, request: Parameters<GetDocumentTreeRequest>) -> McpResult {
         let document_tree = document::bridge::get_document_tree_tool(
             self.client.clone(),
-            request,
+            request.0,
             &self.access_control,
         )
         .await?;
@@ -185,10 +206,13 @@ impl Server {
     }
 
     #[tool(description = "Get a list of versions (milestones) for a specified project.")]
-    async fn issue_milestone_list_get(&self, request: GetVersionMilestoneListRequest) -> McpResult {
+    async fn issue_milestone_list_get(
+        &self,
+        request: Parameters<GetVersionMilestoneListRequest>,
+    ) -> McpResult {
         let milestones = issue::bridge::get_version_milestone_list(
             self.client.clone(),
-            request,
+            request.0,
             &self.access_control,
         )
         .await?;
@@ -198,11 +222,11 @@ impl Server {
     #[tool(description = "Get a list of issues for a specified milestone name within a project.")]
     async fn issue_list_by_milestone_get(
         &self,
-        request: GetIssuesByMilestoneNameRequest,
+        request: Parameters<GetIssuesByMilestoneNameRequest>,
     ) -> McpResult {
         let issues = issue::bridge::get_issues_by_milestone_name(
             self.client.clone(),
-            request,
+            request.0,
             &self.access_control,
         )
         .await?;
@@ -215,9 +239,9 @@ impl Server {
 
     #[cfg(feature = "issue_writable")]
     #[tool(description = "Update the summary and/or description of a Backlog issue.")]
-    async fn issue_update(&self, request: UpdateIssueRequest) -> McpResult {
+    async fn issue_update(&self, request: Parameters<UpdateIssueRequest>) -> McpResult {
         let updated_issue =
-            issue::bridge::update_issue_impl(self.client.clone(), request, &self.access_control)
+            issue::bridge::update_issue_impl(self.client.clone(), request.0, &self.access_control)
                 .await?;
         let issue_response = IssueResponse::from(updated_issue);
         Ok(CallToolResult::success(vec![Content::json(
@@ -227,27 +251,30 @@ impl Server {
 
     #[cfg(feature = "issue_writable")]
     #[tool(description = "Add a comment to a Backlog issue.")]
-    async fn issue_comment_add(&self, request: AddCommentRequest) -> McpResult {
+    async fn issue_comment_add(&self, request: Parameters<AddCommentRequest>) -> McpResult {
         let comment =
-            issue::bridge::add_comment_impl(self.client.clone(), request, &self.access_control)
+            issue::bridge::add_comment_impl(self.client.clone(), request.0, &self.access_control)
                 .await?;
         Ok(CallToolResult::success(vec![Content::json(comment)?]))
     }
 
     #[cfg(feature = "issue_writable")]
     #[tool(description = "Update an existing comment on a Backlog issue.")]
-    async fn issue_comment_update(&self, request: UpdateCommentRequest) -> McpResult {
-        let comment =
-            issue::bridge::update_comment_impl(self.client.clone(), request, &self.access_control)
-                .await?;
+    async fn issue_comment_update(&self, request: Parameters<UpdateCommentRequest>) -> McpResult {
+        let comment = issue::bridge::update_comment_impl(
+            self.client.clone(),
+            request.0,
+            &self.access_control,
+        )
+        .await?;
         Ok(CallToolResult::success(vec![Content::json(comment)?]))
     }
 
     #[cfg(feature = "issue_writable")]
     #[tool(description = "Create a new issue in a Backlog project.")]
-    async fn issue_add(&self, request: AddIssueRequest) -> McpResult {
+    async fn issue_add(&self, request: Parameters<AddIssueRequest>) -> McpResult {
         let issue =
-            issue::bridge::add_issue_impl(self.client.clone(), request, &self.access_control)
+            issue::bridge::add_issue_impl(self.client.clone(), request.0, &self.access_control)
                 .await?;
         let issue_response = IssueResponse::from(issue);
         Ok(CallToolResult::success(vec![Content::json(
@@ -259,10 +286,13 @@ impl Server {
         name = "issue_comment_list_get",
         description = "Gets comments for a specific issue. Takes 'issue_id_or_key' (string, required) and optional 'min_id', 'max_id', 'count', 'order' parameters."
     )]
-    async fn issue_comment_list_get(&self, request: GetIssueCommentsRequest) -> McpResult {
+    async fn issue_comment_list_get(
+        &self,
+        request: Parameters<GetIssueCommentsRequest>,
+    ) -> McpResult {
         let comments = issue::bridge::get_issue_comments_impl(
             self.client.clone(),
-            request,
+            request.0,
             &self.access_control,
         )
         .await?;
@@ -273,10 +303,13 @@ impl Server {
         name = "issue_attachment_list_get",
         description = "Get a list of attachments for a specified issue."
     )]
-    async fn issue_attachment_list_get(&self, request: GetAttachmentListRequest) -> McpResult {
+    async fn issue_attachment_list_get(
+        &self,
+        request: Parameters<GetAttachmentListRequest>,
+    ) -> McpResult {
         let attachments = issue::bridge::get_attachment_list_impl(
             self.client.clone(),
-            request,
+            request.0,
             &self.access_control,
         )
         .await?;
@@ -287,10 +320,13 @@ impl Server {
         name = "issue_shared_file_list_get",
         description = "Get a list of shared files linked to a specified issue."
     )]
-    async fn issue_shared_file_list_get(&self, request: GetIssueSharedFilesRequest) -> McpResult {
+    async fn issue_shared_file_list_get(
+        &self,
+        request: Parameters<GetIssueSharedFilesRequest>,
+    ) -> McpResult {
         let shared_files = issue::bridge::get_issue_shared_files_impl(
             self.client.clone(),
-            request,
+            request.0,
             &self.access_control,
         )
         .await?;
@@ -298,16 +334,20 @@ impl Server {
     }
 
     #[tool(description = "Get a list of users in the space.")]
-    async fn user_list_get(&self, request: GetUserListRequest) -> McpResult {
-        let users = user::bridge::get_user_list_bridge(self.client.clone(), request).await?;
+    async fn user_list_get(&self, request: Parameters<GetUserListRequest>) -> McpResult {
+        let users = user::bridge::get_user_list_bridge(self.client.clone(), request.0).await?;
         Ok(CallToolResult::success(vec![Content::json(users)?]))
     }
 
     #[tool(
         description = "Download an issue attachment. Automatically detects format (image, text, or raw bytes) or you can specify the format parameter. Returns the file content in the appropriate format."
     )]
-    async fn issue_attachment_download(&self, request: DownloadAttachmentRequest) -> McpResult {
+    async fn issue_attachment_download(
+        &self,
+        request: Parameters<DownloadAttachmentRequest>,
+    ) -> McpResult {
         let explicit_format = request
+            .0
             .format
             .as_deref()
             .map(str::parse::<FileFormat>)
@@ -315,7 +355,7 @@ impl Server {
 
         let file = issue::bridge::download_issue_attachment_file(
             self.client.clone(),
-            request,
+            request.0,
             &self.access_control,
         )
         .await?;
@@ -325,10 +365,13 @@ impl Server {
     }
 
     #[tool(description = "Get a list of statuses for a specified project.")]
-    async fn project_status_list_get(&self, request: GetProjectStatusListRequest) -> McpResult {
+    async fn project_status_list_get(
+        &self,
+        request: Parameters<GetProjectStatusListRequest>,
+    ) -> McpResult {
         let statuses = project::bridge::get_project_status_list_tool(
             self.client.clone(),
-            request,
+            request.0,
             &self.access_control,
         )
         .await?;
@@ -336,10 +379,13 @@ impl Server {
     }
 
     #[tool(description = "Get a list of issue types for a specified project.")]
-    async fn project_issue_type_list_get(&self, request: GetProjectIssueTypesRequest) -> McpResult {
+    async fn project_issue_type_list_get(
+        &self,
+        request: Parameters<GetProjectIssueTypesRequest>,
+    ) -> McpResult {
         let issue_types = project::bridge::get_project_issue_types_tool(
             self.client.clone(),
-            request,
+            request.0,
             &self.access_control,
         )
         .await?;
@@ -347,16 +393,23 @@ impl Server {
     }
 
     #[tool(description = "Get a list of priorities available in Backlog.")]
-    async fn issue_priority_list_get(&self, request: GetPrioritiesRequest) -> McpResult {
-        let priorities = project::bridge::get_priorities_tool(self.client.clone(), request).await?;
+    async fn issue_priority_list_get(
+        &self,
+        request: Parameters<GetPrioritiesRequest>,
+    ) -> McpResult {
+        let priorities =
+            project::bridge::get_priorities_tool(self.client.clone(), request.0).await?;
         Ok(CallToolResult::success(vec![Content::json(priorities)?]))
     }
 
     #[tool(description = "Get a list of custom fields for a specified project with examples.")]
-    async fn project_custom_field_list_get(&self, request: GetCustomFieldListRequest) -> McpResult {
+    async fn project_custom_field_list_get(
+        &self,
+        request: Parameters<GetCustomFieldListRequest>,
+    ) -> McpResult {
         let custom_fields = project::bridge::get_custom_field_list_tool(
             self.client.clone(),
-            request,
+            request.0,
             &self.access_control,
         )
         .await?;
@@ -364,10 +417,13 @@ impl Server {
     }
 
     #[tool(description = "Get a list of shared files for a specified project directory.")]
-    async fn file_shared_list_get(&self, request: GetSharedFilesListRequest) -> McpResult {
+    async fn file_shared_list_get(
+        &self,
+        request: Parameters<GetSharedFilesListRequest>,
+    ) -> McpResult {
         let files = file::bridge::get_shared_files_list_tool(
             self.client.clone(),
-            request,
+            request.0,
             &self.access_control,
         )
         .await?;
@@ -377,8 +433,12 @@ impl Server {
     #[tool(
         description = "Download a shared file. Automatically detects format (image, text, or raw bytes) or you can specify the format parameter. Returns the file content in the appropriate format."
     )]
-    async fn file_shared_download(&self, request: DownloadSharedFileRequest) -> McpResult {
+    async fn file_shared_download(
+        &self,
+        request: Parameters<DownloadSharedFileRequest>,
+    ) -> McpResult {
         let explicit_format = request
+            .0
             .format
             .as_deref()
             .map(str::parse::<FileFormat>)
@@ -386,7 +446,7 @@ impl Server {
 
         let file = file::bridge::download_shared_file_bridge(
             self.client.clone(),
-            request,
+            request.0,
             &self.access_control,
         )
         .await?;
@@ -398,11 +458,11 @@ impl Server {
     #[tool(description = "Get a list of attachments for a specific pull request.")]
     async fn git_pr_attachment_list_get(
         &self,
-        request: GetPullRequestAttachmentListRequest,
+        request: Parameters<GetPullRequestAttachmentListRequest>,
     ) -> McpResult {
         let attachments = git::bridge::get_pull_request_attachment_list_tool(
             self.client.clone(),
-            request,
+            request.0,
             &self.access_control,
         )
         .await?;
@@ -414,9 +474,10 @@ impl Server {
     )]
     async fn git_pr_attachment_download(
         &self,
-        request: DownloadPullRequestAttachmentRequest,
+        request: Parameters<DownloadPullRequestAttachmentRequest>,
     ) -> McpResult {
         let explicit_format = request
+            .0
             .format
             .as_deref()
             .map(str::parse::<FileFormat>)
@@ -424,7 +485,7 @@ impl Server {
 
         let file = git::bridge::download_pr_attachment_bridge(
             self.client.clone(),
-            request,
+            request.0,
             &self.access_control,
         )
         .await?;
@@ -436,11 +497,11 @@ impl Server {
     #[tool(description = "Get a list of comments for a specific pull request.")]
     async fn git_pr_comment_list_get(
         &self,
-        request: GetPullRequestCommentListRequest,
+        request: Parameters<GetPullRequestCommentListRequest>,
     ) -> McpResult {
         let comments = git::bridge::get_pull_request_comment_list_tool(
             self.client.clone(),
-            request,
+            request.0,
             &self.access_control,
         )
         .await?;
@@ -448,42 +509,51 @@ impl Server {
     }
 
     #[tool(description = "Get detailed information about a specific wiki page.")]
-    async fn wiki_details_get(&self, request: GetWikiDetailRequest) -> McpResult {
+    async fn wiki_details_get(&self, request: Parameters<GetWikiDetailRequest>) -> McpResult {
         let client = self.client.lock().await;
-        let detail = wiki::bridge::get_wiki_detail(&client, request, &self.access_control).await?;
+        let detail =
+            wiki::bridge::get_wiki_detail(&client, request.0, &self.access_control).await?;
 
         Ok(CallToolResult::success(vec![Content::json(detail)?]))
     }
 
     #[tool(description = "Get a list of wiki pages. Can be filtered by project and keyword.")]
-    async fn wiki_list_get(&self, request: GetWikiListRequest) -> McpResult {
+    async fn wiki_list_get(&self, request: Parameters<GetWikiListRequest>) -> McpResult {
         let client = self.client.lock().await;
-        let wikis = wiki::bridge::get_wiki_list(&client, request, &self.access_control).await?;
+        let wikis = wiki::bridge::get_wiki_list(&client, request.0, &self.access_control).await?;
 
         Ok(CallToolResult::success(vec![Content::json(wikis)?]))
     }
 
     #[tool(description = "Get a list of attachments for a specified wiki page.")]
-    async fn wiki_attachment_list_get(&self, request: GetWikiAttachmentListRequest) -> McpResult {
+    async fn wiki_attachment_list_get(
+        &self,
+        request: Parameters<GetWikiAttachmentListRequest>,
+    ) -> McpResult {
         let client = self.client.lock().await;
         let attachments =
-            wiki::bridge::get_wiki_attachment_list(&client, request, &self.access_control).await?;
+            wiki::bridge::get_wiki_attachment_list(&client, request.0, &self.access_control)
+                .await?;
         Ok(CallToolResult::success(vec![Content::json(attachments)?]))
     }
 
     #[tool(
         description = "Download an attachment from a wiki page. Automatically detects format (image, text, or raw bytes) or you can specify the format parameter. Returns the file content in the appropriate format."
     )]
-    async fn wiki_attachment_download(&self, request: DownloadWikiAttachmentRequest) -> McpResult {
+    async fn wiki_attachment_download(
+        &self,
+        request: Parameters<DownloadWikiAttachmentRequest>,
+    ) -> McpResult {
         let client = self.client.lock().await;
         let explicit_format = request
+            .0
             .format
             .as_deref()
             .map(str::parse::<FileFormat>)
             .transpose()?;
 
-        let file =
-            wiki::bridge::download_wiki_attachment(&client, request, &self.access_control).await?;
+        let file = wiki::bridge::download_wiki_attachment(&client, request.0, &self.access_control)
+            .await?;
 
         let response_data = SerializableFile::new(file, explicit_format)?;
         Ok(CallToolResult::success(vec![response_data.try_into()?]))
@@ -493,9 +563,10 @@ impl Server {
     #[tool(
         description = "Update a wiki page. You can update the page name, content, and/or email notification settings."
     )]
-    async fn wiki_update(&self, request: UpdateWikiRequest) -> McpResult {
+    async fn wiki_update(&self, request: Parameters<UpdateWikiRequest>) -> McpResult {
         let client = self.client.lock().await;
-        let wiki_detail = wiki::bridge::update_wiki(&client, request, &self.access_control).await?;
+        let wiki_detail =
+            wiki::bridge::update_wiki(&client, request.0, &self.access_control).await?;
         Ok(CallToolResult::success(vec![Content::json(wiki_detail)?]))
     }
 
@@ -503,10 +574,13 @@ impl Server {
     #[tool(
         description = "Add a comment to a specific pull request. Optionally notify specified users."
     )]
-    async fn git_pr_comment_add(&self, request: AddPullRequestCommentRequest) -> McpResult {
+    async fn git_pr_comment_add(
+        &self,
+        request: Parameters<AddPullRequestCommentRequest>,
+    ) -> McpResult {
         let comment = git::bridge::add_pull_request_comment_bridge(
             self.client.clone(),
-            request,
+            request.0,
             &self.access_control,
         )
         .await?;
@@ -514,6 +588,7 @@ impl Server {
     }
 }
 
+#[tool_handler]
 impl rmcp::ServerHandler for Server {
     fn get_info(&self) -> ServerInfo {
         let instructions = "Backlog MCP Server\n\n\
