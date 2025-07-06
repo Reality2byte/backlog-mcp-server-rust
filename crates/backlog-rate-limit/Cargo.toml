@@ -1,0 +1,21 @@
+[package]
+name = "backlog-rate-limit"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["backlog-api-client team"]
+description = "Rate limit API module for Backlog API client"
+repository = "https://github.com/thingsdb/backlog-api-client"
+keywords = ["backlog", "api", "rate-limit"]
+categories = ["api-bindings"]
+
+[dependencies]
+backlog-api-core = { path = "../backlog-api-core" }
+client = { path = "../client" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
+wiremock = { workspace = true }
+backlog-api-client = { path = "../backlog-api-client", features = ["rate-limit"] }

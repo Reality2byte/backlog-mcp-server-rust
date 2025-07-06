@@ -79,4 +79,9 @@ impl BacklogApiClient {
     pub fn star(&self) -> backlog_star::StarApi {
         backlog_star::StarApi::new(self.client.clone())
     }
+
+    #[cfg(feature = "rate-limit")]
+    pub fn rate_limit(&self) -> backlog_rate_limit::RateLimitApi {
+        backlog_rate_limit::RateLimitApi::new(self.client.clone())
+    }
 }

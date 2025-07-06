@@ -1,10 +1,12 @@
 use blg::custom_fields;
 
 mod activity_commands;
-#[cfg(any(feature = "team", feature = "star"))]
+#[cfg(any(feature = "team", feature = "star", feature = "rate-limit"))]
 mod commands;
 #[cfg(feature = "project")]
 use activity_commands::{ActivityArgs, ActivityCommands};
+#[cfg(feature = "rate-limit")]
+use commands::rate_limit::{RateLimitCommand, handle_rate_limit_command};
 #[cfg(feature = "star")]
 use commands::star::{StarArgs, handle_star_command};
 #[cfg(feature = "team")]
@@ -132,6 +134,16 @@ enum Commands {
     /// Manage stars
     #[cfg(feature = "star")]
     Star(StarArgs),
+    /// View rate limit information
+    #[cfg(feature = "rate-limit")]
+    RateLimit(RateLimitArgs),
+}
+
+#[cfg(feature = "rate-limit")]
+#[derive(Args)]
+struct RateLimitArgs {
+    #[clap(subcommand)]
+    command: RateLimitCommand,
 }
 
 #[derive(Parser)]
@@ -5556,6 +5568,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         #[cfg(feature = "star")]
         Commands::Star(star_args) => {
             handle_star_command(&client.star(), &star_args.command).await?;
+        }
+        #[cfg(feature = "rate-limit")]
+        Commands::RateLimit(rate_limit_args) => {
+            handle_rate_limit_command(rate_limit_args.command).await?;
         }
     }
 

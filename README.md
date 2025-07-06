@@ -205,3 +205,91 @@ BACKLOG_BASE_URL="https://your-space.backlog.com" \
 BACKLOG_API_KEY="your_backlog_api_key" \
 cargo run --package mcp-backlog-server
 ```
+
+## CLI Tool (`blg`)
+
+The `blg` command-line tool provides direct access to Backlog API functionality.
+
+### Installation
+
+```bash
+# Install with all features
+cargo install --path cli
+
+# Install with specific features
+cargo install --path cli --features "issue project space rate-limit"
+```
+
+### Configuration
+
+Set the following environment variables:
+
+```bash
+export BACKLOG_BASE_URL="https://your-space.backlog.com"
+export BACKLOG_API_KEY="your_api_key"
+```
+
+### Example Commands
+
+```bash
+# View rate limit information
+blg rate-limit get
+
+# List issues
+blg issue list --project-id PROJECT_KEY
+
+# Show issue details
+blg issue show --issue-id-or-key ISSUE-123
+
+# Create an issue
+blg issue add --project-id PROJECT_ID --issue-type-id 1 --summary "New Issue" --priority-id 3
+
+# Add a comment to an issue
+blg issue comment-add --issue-id-or-key ISSUE-123 --content "This is a comment"
+
+# List projects
+blg project list
+
+# View project details
+blg project show --project-id-or-key PROJECT_KEY
+
+# Get space information
+blg space info
+
+# List teams
+blg team list
+
+# View team details
+blg team get --team-id 123
+```
+
+### Rate Limit Command
+
+The rate limit command displays current API usage information:
+
+```bash
+$ blg rate-limit get
+
+Rate Limit Information:
+======================
+
+Read Operations:
+  Limit:     600
+  Remaining: 598
+  Reset:     2024-01-15 12:30:00 JST
+
+Update Operations:
+  Limit:     150
+  Remaining: 149
+  Reset:     2024-01-15 12:30:00 JST
+
+Search Operations:
+  Limit:     150
+  Remaining: 150
+  Reset:     2024-01-15 12:30:00 JST
+
+Icon Operations:
+  Limit:     60
+  Remaining: 59
+  Reset:     2024-01-15 12:30:00 JST
+```

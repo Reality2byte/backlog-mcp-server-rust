@@ -188,6 +188,7 @@ dependencies = [
  "backlog-git",
  "backlog-issue",
  "backlog-project",
+ "backlog-rate-limit",
  "backlog-space",
  "backlog-star",
  "backlog-team",
@@ -337,6 +338,19 @@ dependencies = [
  "chrono",
  "client",
  "schemars",
+ "serde",
+ "serde_json",
+ "tokio",
+ "wiremock",
+]
+
+[[package]]
+name = "backlog-rate-limit"
+version = "0.1.0"
+dependencies = [
+ "backlog-api-client",
+ "backlog-api-core",
+ "client",
  "serde",
  "serde_json",
  "tokio",

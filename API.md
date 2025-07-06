@@ -2,8 +2,8 @@
 
 ## Summary
 - Total APIs: 149
-- Implemented: 115 (77%)
-- Not implemented: 34 (23%)
+- Implemented: 116 (78%)
+- Not implemented: 33 (22%)
 
 ### Spaces
 - ✅ GetSpace: Returns information about your space: GET /api/v2/space
@@ -215,7 +215,7 @@
 - ❌ AddRecentlyViewedWiki: Add a wiki which the user viewed recently: POST /api/v2/users/myself/recentlyViewedWikis
 
 ### Rate Limit
-- ❌ GetRateLimit: Return information about the rate limit currently applied to you: GET /api/v2/rateLimit
+- ✅ GetRateLimit: Return information about the rate limit currently applied to you: GET /api/v2/rateLimit
 
 ### OAuth 2.0 (Authentication)
 - ❌ POST /api/v2/oauth2/token: Issues an access token.
