@@ -16,12 +16,13 @@ use super::{
 use super::{
     CountCommentParams, CountIssueParams, GetAttachmentFileParams, GetAttachmentListParams,
     GetCommentListParams, GetCommentNotificationsParams, GetCommentParams, GetIssueListParams,
-    GetIssueParams, GetParticipantListParams, GetSharedFileListParams,
+    GetIssueParams, GetParticipantListParams, GetRecentlyViewedIssuesParams,
+    GetSharedFileListParams,
 };
 use super::{
     CountCommentResponse, CountIssueResponse, GetAttachmentListResponse, GetCommentListResponse,
     GetCommentNotificationsResponse, GetCommentResponse, GetIssueListResponse, GetIssueResponse,
-    GetParticipantListResponse, GetSharedFileListResponse,
+    GetParticipantListResponse, GetRecentlyViewedIssuesResponse, GetSharedFileListResponse,
 };
 
 pub struct IssueApi(Client);
@@ -198,5 +199,15 @@ impl IssueApi {
         params: GetAttachmentFileParams,
     ) -> backlog_api_core::Result<DownloadedFile> {
         self.0.download_file(params).await
+    }
+
+    /// Get recently viewed issues for the current user.
+    ///
+    /// Corresponds to `GET /api/v2/users/myself/recentlyViewedIssues`.
+    pub async fn get_recently_viewed_issues(
+        &self,
+        params: GetRecentlyViewedIssuesParams,
+    ) -> Result<GetRecentlyViewedIssuesResponse> {
+        self.0.execute(params).await
     }
 }

@@ -60,6 +60,7 @@ use backlog_issue::AddCommentNotificationParams;
 use backlog_issue::DeleteAttachmentParams;
 #[cfg(feature = "issue_writable")]
 use backlog_issue::DeleteCommentParams;
+use backlog_issue::GetRecentlyViewedIssuesParamsBuilder;
 #[cfg(feature = "issue_writable")]
 use backlog_issue::UnlinkSharedFileParams;
 #[cfg(feature = "issue_writable")]
@@ -475,6 +476,19 @@ enum IssueCommands {
         /// Shared file ID to unlink
         #[clap(short, long)]
         file_id: u32,
+    },
+    /// Get recently viewed issues
+    #[command(about = "Get recently viewed issues for the current user")]
+    RecentlyViewed {
+        /// Sort order (asc or desc, default: desc)
+        #[clap(long, default_value = "desc")]
+        order: String,
+        /// Number of issues to retrieve (1-100, default: 20)
+        #[clap(long, default_value_t = 20)]
+        count: u32,
+        /// Offset for pagination
+        #[clap(long)]
+        offset: Option<u32>,
     },
 }
 
@@ -2681,6 +2695,52 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error listing participants: {e}");
+                    }
+                }
+            }
+            IssueCommands::RecentlyViewed {
+                order,
+                count,
+                offset,
+            } => {
+                println!("Getting recently viewed issues");
+
+                let mut builder = GetRecentlyViewedIssuesParamsBuilder::default();
+                builder.order(order);
+                builder.count(count);
+
+                if let Some(offset_val) = offset {
+                    builder.offset(offset_val);
+                }
+
+                let params = builder.build()?;
+
+                match client.issue().get_recently_viewed_issues(params).await {
+                    Ok(issues) => {
+                        if issues.is_empty() {
+                            println!("No recently viewed issues found.");
+                        } else {
+                            println!("Found {} recently viewed issue(s):", issues.len());
+                            println!();
+
+                            for (index, issue) in issues.iter().enumerate() {
+                                println!("{}. {} - {}", index + 1, issue.issue_key, issue.summary);
+                                println!("   Project ID: {}", issue.project_id);
+                                println!("   Status: {}", issue.status.name);
+                                if let Some(priority) = &issue.priority {
+                                    println!("   Priority: {}", priority.name);
+                                }
+                                println!("   Issue Type: {}", issue.issue_type.name);
+                                if let Some(assignee) = &issue.assignee {
+                                    println!("   Assignee: {}", assignee.name);
+                                }
+                                println!("   Updated: {}", issue.updated);
+                                println!();
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error getting recently viewed issues: {e}");
                     }
                 }
             }
