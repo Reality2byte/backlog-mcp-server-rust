@@ -101,9 +101,8 @@ pub use backlog_space::{UpdateSpaceNotificationParams, UploadAttachmentParams};
 #[cfg(feature = "user")]
 pub use backlog_user::{
     GetUserStarCountParams, GetUserStarCountResponse, GetUserStarsParams, GetUserStarsResponse,
-    GetWatchingCountParams, GetWatchingCountResponse, GetWatchingListParams,
-    GetWatchingListParamsBuilder, GetWatchingListResponse, Order as WatchingOrder, StarCount,
-    StarOrder, UserApi, Watching, WatchingCount, WatchingSort, WatchingType,
+    GetWatchingCountParams, GetWatchingListParams, GetWatchingListParamsBuilder,
+    Order as WatchingOrder, StarCount, StarOrder, UserApi, WatchingSort,
 };
 
 // Activity module (from backlog_activity)
@@ -139,3 +138,13 @@ pub use backlog_star::AddStarParams;
 // Rate Limit module (from backlog_rate_limit)
 #[cfg(feature = "rate-limit")]
 pub use backlog_rate_limit::{GetRateLimitResponse, RateLimitApi, RateLimitInfo};
+
+// Watching module (from backlog_watching)
+#[cfg(feature = "watching")]
+pub use backlog_watching::{
+    GetWatchingCountResponse, GetWatchingListResponse, Watching, WatchingApi, WatchingCount,
+    WatchingType,
+};
+
+#[cfg(all(feature = "watching", feature = "watching_writable"))]
+pub use backlog_watching::{AddWatchingParams, UpdateWatchingParams};

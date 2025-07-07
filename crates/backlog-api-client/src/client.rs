@@ -84,4 +84,9 @@ impl BacklogApiClient {
     pub fn rate_limit(&self) -> backlog_rate_limit::RateLimitApi {
         backlog_rate_limit::RateLimitApi::new(self.client.clone())
     }
+
+    #[cfg(feature = "watching")]
+    pub fn watching(&self) -> backlog_watching::WatchingApi {
+        backlog_watching::WatchingApi::new(self.client.clone())
+    }
 }

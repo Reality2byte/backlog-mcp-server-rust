@@ -4,3 +4,5 @@ pub mod rate_limit;
 pub mod star;
 #[cfg(feature = "team")]
 pub mod team;
+#[cfg(feature = "watching")]
+pub mod watching;

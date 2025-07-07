@@ -1,7 +1,12 @@
 use blg::custom_fields;
 
 mod activity_commands;
-#[cfg(any(feature = "team", feature = "star", feature = "rate-limit"))]
+#[cfg(any(
+    feature = "team",
+    feature = "star",
+    feature = "rate-limit",
+    feature = "watching"
+))]
 mod commands;
 #[cfg(feature = "project")]
 use activity_commands::{ActivityArgs, ActivityCommands};
@@ -11,6 +16,8 @@ use commands::rate_limit::{RateLimitCommand, handle_rate_limit_command};
 use commands::star::{StarArgs, handle_star_command};
 #[cfg(feature = "team")]
 use commands::team::{TeamArgs, handle_team_command};
+#[cfg(feature = "watching")]
+use commands::watching::handle_watching_command;
 
 #[cfg(feature = "git_writable")]
 use backlog_api_client::AddPullRequestParams;
@@ -133,6 +140,9 @@ enum Commands {
     /// View rate limit information
     #[cfg(feature = "rate-limit")]
     RateLimit(RateLimitArgs),
+    /// Manage watchings
+    #[cfg(feature = "watching")]
+    Watching(WatchingArgs),
 }
 
 #[cfg(feature = "rate-limit")]
@@ -140,6 +150,13 @@ enum Commands {
 struct RateLimitArgs {
     #[clap(subcommand)]
     command: RateLimitCommand,
+}
+
+#[cfg(feature = "watching")]
+#[derive(Args)]
+struct WatchingArgs {
+    #[clap(subcommand)]
+    command: commands::watching::WatchingSubcommand,
 }
 
 #[derive(Parser)]
@@ -5761,6 +5778,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         #[cfg(feature = "rate-limit")]
         Commands::RateLimit(rate_limit_args) => {
             handle_rate_limit_command(rate_limit_args.command).await?;
+        }
+        #[cfg(feature = "watching")]
+        Commands::Watching(watching_args) => {
+            handle_watching_command(commands::watching::WatchingCommand {
+                command: watching_args.command,
+            })
+            .await?;
         }
     }
 

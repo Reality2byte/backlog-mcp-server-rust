@@ -1,0 +1,30 @@
+[package]
+name = "backlog-watching"
+version = "0.1.0"
+edition = "2021"
+authors = ["backlog-api-client maintainers"]
+license = "MIT"
+description = "Watching API module for Backlog API client"
+repository = "https://github.com/ttak0422/backlog-api-client"
+keywords = ["backlog", "api", "watching"]
+categories = ["api-bindings"]
+
+[dependencies]
+backlog-api-core = { path = "../backlog-api-core" }
+backlog-core = { path = "../backlog-core" }
+backlog-domain-models = { path = "../backlog-domain-models" }
+backlog-issue = { path = "../backlog-issue" }
+client = { path = "../client" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
+tokio = { workspace = true }
+
+[dev-dependencies]
+client = { path = "../client", features = ["test-utils"] }
+wiremock = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+
+[features]
+default = []
+writable = []

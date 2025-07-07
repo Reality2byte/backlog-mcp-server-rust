@@ -16,7 +16,7 @@ members = [
     "crates/backlog-document",
     "crates/backlog-git",
     "crates/backlog-file",
-    "crates/backlog-wiki", "crates/backlog-activity", "crates/backlog-team", "crates/backlog-star", "crates/backlog-rate-limit"]
+    "crates/backlog-wiki", "crates/backlog-activity", "crates/backlog-team", "crates/backlog-star", "crates/backlog-rate-limit", "crates/backlog-watching"]
 
 [workspace.package]
 version = "0.1.0"

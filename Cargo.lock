@@ -193,6 +193,7 @@ dependencies = [
  "backlog-star",
  "backlog-team",
  "backlog-user",
+ "backlog-watching",
  "backlog-wiki",
  "chrono",
  "client",
@@ -416,12 +417,29 @@ dependencies = [
  "backlog-domain-models",
  "backlog-issue",
  "backlog-project",
+ "backlog-watching",
  "chrono",
  "client",
  "derive_builder",
  "serde",
  "serde_json",
  "thiserror 2.0.12",
+ "tokio",
+ "wiremock",
+]
+
+[[package]]
+name = "backlog-watching"
+version = "0.1.0"
+dependencies = [
+ "backlog-api-core",
+ "backlog-core",
+ "backlog-domain-models",
+ "backlog-issue",
+ "chrono",
+ "client",
+ "serde",
+ "serde_json",
  "tokio",
  "wiremock",
 ]
@@ -486,6 +504,7 @@ dependencies = [
  "backlog-star",
  "backlog-team",
  "backlog-user",
+ "backlog-watching",
  "backlog-wiki",
  "chrono",
  "clap",

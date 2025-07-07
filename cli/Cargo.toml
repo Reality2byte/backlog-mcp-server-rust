@@ -23,6 +23,7 @@ backlog-user = { path = "../crates/backlog-user" }
 backlog-space = { path = "../crates/backlog-space" }
 backlog-team = { path = "../crates/backlog-team" }
 backlog-star = { path = "../crates/backlog-star" }
+backlog-watching = { path = "../crates/backlog-watching" }
 clap = { version = "4.5", features = ["derive"] }
 tokio = { workspace = true, features = ["full", "macros", "rt-multi-thread"] }
 chrono = { workspace = true }
@@ -49,7 +50,8 @@ activity = ["backlog-api-client/activity"]
 team = ["backlog-api-client/team"]
 star = ["backlog-api-client/star"]
 rate-limit = ["backlog-api-client/rate-limit"]
-all = ["git", "issue", "project", "space", "user", "document", "file", "wiki", "activity", "team", "star", "rate-limit"]
+watching = ["backlog-api-client/watching"]
+all = ["git", "issue", "project", "space", "user", "document", "file", "wiki", "activity", "team", "star", "rate-limit", "watching"]
 issue_writable = ["backlog-api-client/issue_writable"]
 project_writable = ["backlog-api-client/project_writable"]
 space_writable = ["backlog-api-client/space_writable"]
@@ -58,4 +60,5 @@ wiki_writable = ["backlog-api-client/wiki_writable"]
 team_writable = ["backlog-api-client/team_writable"]
 star_writable = ["backlog-api-client/star_writable"]
 user_writable = ["backlog-api-client/user_writable"]
-all_writable = ["issue_writable", "project_writable", "space_writable", "git_writable", "wiki_writable", "team_writable", "star_writable", "user_writable"]
+watching_writable = ["backlog-api-client/watching_writable"]
+all_writable = ["issue_writable", "project_writable", "space_writable", "git_writable", "wiki_writable", "team_writable", "star_writable", "user_writable", "watching_writable"]

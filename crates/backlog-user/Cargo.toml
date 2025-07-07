@@ -15,6 +15,7 @@ backlog-api-macros = { path = "../backlog-api-macros" }
 backlog-project = { path = "../backlog-project" }
 backlog-domain-models = { path = "../backlog-domain-models" }
 backlog-issue = { path = "../backlog-issue" }
+backlog-watching = { path = "../backlog-watching" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
