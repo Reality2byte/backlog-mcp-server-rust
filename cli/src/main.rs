@@ -64,8 +64,9 @@ use backlog_issue::GetRecentlyViewedIssuesParamsBuilder;
 #[cfg(feature = "issue_writable")]
 use backlog_issue::UnlinkSharedFileParams;
 #[cfg(feature = "issue_writable")]
-use backlog_issue::{AddIssueParamsBuilder, UpdateIssueParamsBuilder};
-use backlog_project::GetProjectListParams;
+use backlog_issue::{
+    AddIssueParamsBuilder, AddRecentlyViewedIssueParams, UpdateIssueParamsBuilder,
+};
 #[cfg(feature = "project")]
 use backlog_project::GetProjectRecentUpdatesParams;
 #[cfg(feature = "project_writable")]
@@ -77,6 +78,7 @@ use backlog_project::{
     UpdateListItemToCustomFieldParams, UpdateStatusOrderParams, UpdateStatusParams,
     UpdateVersionParams, api::DeleteListItemFromCustomFieldParams,
 };
+use backlog_project::{GetProjectListParams, GetRecentlyViewedProjectsParamsBuilder};
 use backlog_space::GetLicenceParams;
 use backlog_space::GetSpaceDiskUsageParams;
 use backlog_space::GetSpaceLogoParams;
@@ -91,6 +93,8 @@ use backlog_user::{
     GetWatchingCountParams, GetWatchingListParams, NotificationOrder,
     api::{Order as WatchingOrder, StarOrder, WatchingSort},
 };
+#[cfg(feature = "wiki")]
+use backlog_wiki::GetRecentlyViewedWikisParamsBuilder;
 #[cfg(feature = "wiki_writable")]
 use backlog_wiki::{
     AddWikiParams, AttachFilesToWikiParams, DeleteWikiAttachmentParams, DeleteWikiParams,
@@ -490,6 +494,14 @@ enum IssueCommands {
         #[clap(long)]
         offset: Option<u32>,
     },
+    /// Add an issue to recently viewed list
+    #[cfg(feature = "issue_writable")]
+    #[command(about = "Add an issue to recently viewed list")]
+    AddRecentlyViewed {
+        /// Issue ID or Key (e.g., "PROJECT-123" or "12345")
+        #[clap(name = "ISSUE_ID_OR_KEY")]
+        issue_id_or_key: String,
+    },
 }
 
 #[derive(Args, Debug)]
@@ -767,6 +779,18 @@ enum ProjectCommands {
         /// Project ID or Key
         #[clap(name = "PROJECT_ID_OR_KEY")]
         project_id_or_key: String,
+    },
+    /// List recently viewed projects
+    RecentlyViewed {
+        /// Sort order ("asc" or "desc", default: "desc")
+        #[clap(long)]
+        order: Option<String>,
+        /// Number of results to return (1-100, default: 20)
+        #[clap(long)]
+        count: Option<u32>,
+        /// Offset for pagination
+        #[clap(long)]
+        offset: Option<u32>,
     },
     /// List statuses for a project
     StatusList {
@@ -1325,6 +1349,18 @@ struct WikiArgs {
 #[cfg(feature = "wiki")]
 #[derive(Parser)]
 enum WikiCommands {
+    /// List recently viewed wikis
+    RecentlyViewed {
+        /// Sort order (asc or desc)
+        #[clap(short, long)]
+        order: Option<String>,
+        /// Number of items to retrieve (1-100)
+        #[clap(short, long)]
+        count: Option<u32>,
+        /// Offset for pagination
+        #[clap(short = 'O', long)]
+        offset: Option<u32>,
+    },
     /// List attachments for a wiki page
     ListAttachments {
         /// Wiki ID
@@ -2744,6 +2780,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+            #[cfg(feature = "issue_writable")]
+            IssueCommands::AddRecentlyViewed { issue_id_or_key } => {
+                println!("Adding issue {issue_id_or_key} to recently viewed list");
+
+                let issue_id_or_key = if let Ok(id) = issue_id_or_key.parse::<u32>() {
+                    IssueIdOrKey::Id(id.into())
+                } else {
+                    IssueIdOrKey::Key(IssueKey::from_str(&issue_id_or_key)?)
+                };
+                let params = AddRecentlyViewedIssueParams { issue_id_or_key };
+
+                match client.issue().add_recently_viewed_issue(params).await {
+                    Ok(issue) => {
+                        println!("Successfully added issue to recently viewed list:");
+                        println!("  Issue Key: {}", issue.issue_key);
+                        println!("  Summary: {}", issue.summary);
+                        println!("  Status: {}", issue.status.name);
+                        if let Some(priority) = &issue.priority {
+                            println!("  Priority: {}", priority.name);
+                        }
+                        println!("  Issue Type: {}", issue.issue_type.name);
+                        if let Some(assignee) = &issue.assignee {
+                            println!("  Assignee: {}", assignee.name);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error adding issue to recently viewed list: {e}");
+                    }
+                }
+            }
             IssueCommands::ListSharedFiles { issue_id_or_key } => {
                 println!("Listing shared files for issue: {issue_id_or_key}");
 
@@ -3226,6 +3292,57 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error getting project: {e}");
+                    }
+                }
+            }
+            ProjectCommands::RecentlyViewed {
+                order,
+                count,
+                offset,
+            } => {
+                println!("Getting recently viewed projects");
+
+                let mut params_builder = GetRecentlyViewedProjectsParamsBuilder::default();
+
+                if let Some(order) = order {
+                    params_builder.order(order);
+                }
+                if let Some(count) = count {
+                    params_builder.count(count);
+                }
+                if let Some(offset) = offset {
+                    params_builder.offset(offset);
+                }
+
+                let params = params_builder.build()?;
+                match client.project().get_recently_viewed_projects(params).await {
+                    Ok(projects) => {
+                        if projects.is_empty() {
+                            println!("No recently viewed projects found");
+                        } else {
+                            println!("\nRecently Viewed Projects:");
+                            println!("{}", "=".repeat(50));
+                            for (i, project) in projects.iter().enumerate() {
+                                println!(
+                                    "\n{}. [{}] {} ({})",
+                                    i + 1,
+                                    project.id,
+                                    project.name,
+                                    project.project_key
+                                );
+                                println!("   Archived: {}", project.archived);
+                                if project.use_wiki {
+                                    println!("   Features: Wiki enabled");
+                                }
+                                if project.use_file_sharing {
+                                    println!("   Features: File sharing enabled");
+                                }
+                            }
+                            println!();
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error getting recently viewed projects: {e}");
                     }
                 }
             }
@@ -5135,6 +5252,60 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
         #[cfg(feature = "wiki")]
         Commands::Wiki(wiki_args) => match wiki_args.command {
+            WikiCommands::RecentlyViewed {
+                order,
+                count,
+                offset,
+            } => {
+                println!("Getting recently viewed wikis");
+
+                let mut params_builder = GetRecentlyViewedWikisParamsBuilder::default();
+
+                if let Some(order) = order {
+                    params_builder.order(order);
+                }
+                if let Some(count) = count {
+                    params_builder.count(count);
+                }
+                if let Some(offset) = offset {
+                    params_builder.offset(offset);
+                }
+
+                let params = params_builder.build()?;
+
+                match client.wiki().get_recently_viewed_wikis(params).await {
+                    Ok(wikis) => {
+                        if wikis.is_empty() {
+                            println!("No recently viewed wikis found");
+                        } else {
+                            println!("Recently viewed wikis ({} total):", wikis.len());
+                            for wiki in wikis {
+                                println!("\n[{}] {}", wiki.id.value(), wiki.name);
+                                println!("  Project ID: {}", wiki.project_id.value());
+                                if !wiki.tags.is_empty() {
+                                    let tag_names: Vec<String> =
+                                        wiki.tags.iter().map(|t| t.name.clone()).collect();
+                                    println!("  Tags: {}", tag_names.join(", "));
+                                }
+                                println!(
+                                    "  Created by: {} at {}",
+                                    wiki.created_user.name,
+                                    wiki.created.format("%Y-%m-%d %H:%M:%S")
+                                );
+                                println!(
+                                    "  Updated by: {} at {}",
+                                    wiki.updated_user.name,
+                                    wiki.updated.format("%Y-%m-%d %H:%M:%S")
+                                );
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to get recently viewed wikis: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
             WikiCommands::ListAttachments { wiki_id } => {
                 println!("Listing attachments for wiki ID: {wiki_id}");
 

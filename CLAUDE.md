@@ -117,6 +117,45 @@ crates/backlog-{domain}/
 ```
 
 ### API Implementation Pattern
+
+#### Using derive_builder
+For read-only APIs with optional parameters, use `derive_builder`:
+```rust
+use backlog_api_core::{Error as ApiError, IntoRequest};
+use backlog_api_macros::ToFormParams;
+use derive_builder::Builder;
+use serde::Serialize;
+
+#[derive(Debug, Clone, Builder, ToFormParams)]
+#[builder(build_fn(error = "ApiError"))]
+pub struct GetRecentlyViewedWikisParams {
+    #[builder(default, setter(into, strip_option))]
+    pub order: Option<String>,
+    #[builder(default, setter(into, strip_option))]
+    pub count: Option<u32>,
+}
+
+impl IntoRequest for GetRecentlyViewedWikisParams {
+    fn path(&self) -> String {
+        "/api/v2/users/myself/recentlyViewedWikis".to_string()
+    }
+    
+    fn to_query(&self) -> impl Serialize {
+        let params: Vec<(String, String)> = self.into();
+        params
+    }
+}
+```
+
+Important: When using `derive_builder`, export the builder type in `mod.rs`:
+```rust
+pub use get_recently_viewed_wikis::{
+    GetRecentlyViewedWikisParams, GetRecentlyViewedWikisParamsBuilder,
+    GetRecentlyViewedWikisResponse,
+};
+```
+
+#### Manual implementation for write operations
 ```rust
 // Parameter struct
 #[cfg(feature = "writable")]
@@ -236,6 +275,7 @@ cargo fmt --all
 - **Wiki API**: Complete implementation with create/update/delete and file attachment support
 - **Issue API Enhancements**: Comment updates, participant lists, and comment notifications
 - **Date Range Filtering**: Added date-based filtering for issue lists
+- **Recently Viewed APIs**: Added support for recently viewed issues and wikis
 - **MCP Server Improvements**: 
   - AI-friendly custom field transformation
   - Project-level access control via `BACKLOG_PROJECTS` environment variable

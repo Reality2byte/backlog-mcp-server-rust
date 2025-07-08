@@ -2,8 +2,8 @@
 
 ## Summary
 - Total APIs: 149
-- Implemented: 124 (83%)
-- Not implemented: 25 (17%)
+- Implemented: 128 (86%)
+- Not implemented: 21 (14%)
 
 ### Spaces
 - ✅ GetSpace: Returns information about your space: GET /api/v2/space
@@ -208,11 +208,11 @@
 - ❌ (Classic) DeleteTeam: Deletes team. You can’t use this API at new plan space: DELETE /api/v2/teams/:teamId
 
 ### Recent
-- ❌ AddRecentlyViewedIssue: Add an issue which the user viewed recently: POST /api/v2/users/myself/recentlyViewedIssues
+- ✅ AddRecentlyViewedIssue: Add an issue which the user viewed recently: POST /api/v2/users/myself/recentlyViewedIssues
 - ✅ GetListOfRecentlyViewedIssues: Returns list of issues which the user viewed recently: GET /api/v2/users/myself/recentlyViewedIssues
-- ❌ GetListOfRecentlyViewedProjects: Returns list of projects which the user viewed recently: GET /api/v2/users/myself/recentlyViewedProjects
-- ❌ GetListOfRecentlyViewedWikis: Returns list of Wikis which the user viewed recently: GET /api/v2/users/myself/recentlyViewedWikis
-- ❌ AddRecentlyViewedWiki: Add a wiki which the user viewed recently: POST /api/v2/users/myself/recentlyViewedWikis
+- ✅ GetListOfRecentlyViewedProjects: Returns list of projects which the user viewed recently: GET /api/v2/users/myself/recentlyViewedProjects
+- ✅ GetListOfRecentlyViewedWikis: Returns list of Wikis which the user viewed recently: GET /api/v2/users/myself/recentlyViewedWikis
+- ✅ AddRecentlyViewedWiki: Add a wiki which the user viewed recently: POST /api/v2/users/myself/recentlyViewedWikis
 
 ### Rate Limit
 - ✅ GetRateLimit: Return information about the rate limit currently applied to you: GET /api/v2/rateLimit

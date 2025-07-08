@@ -1,4 +1,5 @@
 mod download_wiki_attachment;
+mod get_recently_viewed_wikis;
 mod get_wiki_attachment_list;
 mod get_wiki_count;
 mod get_wiki_detail;
@@ -9,6 +10,8 @@ mod get_wiki_stars;
 mod get_wiki_tag_list;
 mod wiki_api;
 
+#[cfg(feature = "writable")]
+mod add_recently_viewed_wiki;
 #[cfg(feature = "writable")]
 mod add_wiki;
 #[cfg(feature = "writable")]
@@ -26,6 +29,10 @@ mod update_wiki;
 
 // Export response types (always available)
 pub use download_wiki_attachment::DownloadWikiAttachmentParams;
+pub use get_recently_viewed_wikis::{
+    GetRecentlyViewedWikisParams, GetRecentlyViewedWikisParamsBuilder,
+    GetRecentlyViewedWikisResponse,
+};
 pub use get_wiki_attachment_list::{GetWikiAttachmentListParams, GetWikiAttachmentListResponse};
 pub use get_wiki_count::{GetWikiCountParams, GetWikiCountResponse};
 pub use get_wiki_detail::{GetWikiDetailParams, GetWikiDetailResponse};
@@ -36,6 +43,8 @@ pub use get_wiki_stars::{GetWikiStarsParams, GetWikiStarsResponse};
 pub use get_wiki_tag_list::{GetWikiTagListParams, GetWikiTagListResponse};
 
 // Export writable types with feature gates
+#[cfg(feature = "writable")]
+pub use add_recently_viewed_wiki::{AddRecentlyViewedWikiParams, AddRecentlyViewedWikiResponse};
 #[cfg(feature = "writable")]
 pub use add_wiki::{AddWikiParams, AddWikiResponse};
 #[cfg(feature = "writable")]

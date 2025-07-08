@@ -14,8 +14,9 @@ pub use api::{
     GetProjectIconParams, GetProjectListParams, GetProjectListResponse,
     GetProjectRecentUpdatesParams, GetProjectRecentUpdatesResponse, GetProjectTeamListParams,
     GetProjectTeamListResponse, GetProjectUserListParams, GetProjectUserListResponse,
-    GetResolutionListParams, GetResolutionListResponse, GetStatusListParams, GetStatusListResponse,
-    ProjectApi,
+    GetRecentlyViewedProjectsParams, GetRecentlyViewedProjectsParamsBuilder,
+    GetRecentlyViewedProjectsResponse, GetResolutionListParams, GetResolutionListResponse,
+    GetStatusListParams, GetStatusListResponse, ProjectApi,
 };
 
 #[cfg(feature = "writable")]

@@ -1,16 +1,18 @@
 #[cfg(feature = "writable")]
 use crate::api::{
-    AddWikiParams, AddWikiResponse, AttachFilesToWikiParams, AttachFilesToWikiResponse,
-    DeleteWikiAttachmentParams, DeleteWikiAttachmentResponse, DeleteWikiParams, DeleteWikiResponse,
+    AddRecentlyViewedWikiParams, AddRecentlyViewedWikiResponse, AddWikiParams, AddWikiResponse,
+    AttachFilesToWikiParams, AttachFilesToWikiResponse, DeleteWikiAttachmentParams,
+    DeleteWikiAttachmentResponse, DeleteWikiParams, DeleteWikiResponse,
     LinkSharedFilesToWikiParams, LinkSharedFilesToWikiResponse, UnlinkSharedFileFromWikiParams,
     UnlinkSharedFileFromWikiResponse, UpdateWikiParams, UpdateWikiResponse,
 };
 use crate::api::{
-    DownloadWikiAttachmentParams, GetWikiAttachmentListParams, GetWikiAttachmentListResponse,
-    GetWikiCountParams, GetWikiCountResponse, GetWikiDetailParams, GetWikiDetailResponse,
-    GetWikiHistoryParams, GetWikiHistoryResponse, GetWikiListParams, GetWikiListResponse,
-    GetWikiSharedFileListParams, GetWikiSharedFileListResponse, GetWikiStarsParams,
-    GetWikiStarsResponse, GetWikiTagListParams, GetWikiTagListResponse,
+    DownloadWikiAttachmentParams, GetRecentlyViewedWikisParams, GetRecentlyViewedWikisResponse,
+    GetWikiAttachmentListParams, GetWikiAttachmentListResponse, GetWikiCountParams,
+    GetWikiCountResponse, GetWikiDetailParams, GetWikiDetailResponse, GetWikiHistoryParams,
+    GetWikiHistoryResponse, GetWikiListParams, GetWikiListResponse, GetWikiSharedFileListParams,
+    GetWikiSharedFileListResponse, GetWikiStarsParams, GetWikiStarsResponse, GetWikiTagListParams,
+    GetWikiTagListResponse,
 };
 use backlog_api_core::Result;
 use client::Client;
@@ -92,6 +94,25 @@ impl WikiApi {
     /// Get the list of stars received by a wiki page.
     /// Corresponds to `GET /api/v2/wikis/:wikiId/stars`.
     pub async fn get_wiki_stars(&self, params: GetWikiStarsParams) -> Result<GetWikiStarsResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Get recently viewed wikis
+    /// Corresponds to `GET /api/v2/users/myself/recentlyViewedWikis`.
+    pub async fn get_recently_viewed_wikis(
+        &self,
+        params: GetRecentlyViewedWikisParams,
+    ) -> Result<GetRecentlyViewedWikisResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Add recently viewed wiki
+    /// Corresponds to `POST /api/v2/users/myself/recentlyViewedWikis`.
+    #[cfg(feature = "writable")]
+    pub async fn add_recently_viewed_wiki(
+        &self,
+        params: AddRecentlyViewedWikiParams,
+    ) -> Result<AddRecentlyViewedWikiResponse> {
         self.0.execute(params).await
     }
 
