@@ -2,8 +2,8 @@
 
 ## Summary
 - Total APIs: 149
-- Implemented: 126 (85%)
-- Not implemented: 23 (15%)
+- Implemented: 127 (85%)
+- Not implemented: 22 (15%)
 
 ### Spaces
 - ✅ GetSpace: Returns information about your space: GET /api/v2/space
@@ -208,7 +208,7 @@
 - ❌ (Classic) DeleteTeam: Deletes team. You can’t use this API at new plan space: DELETE /api/v2/teams/:teamId
 
 ### Recent
-- ❌ AddRecentlyViewedIssue: Add an issue which the user viewed recently: POST /api/v2/users/myself/recentlyViewedIssues
+- ✅ AddRecentlyViewedIssue: Add an issue which the user viewed recently: POST /api/v2/users/myself/recentlyViewedIssues
 - ✅ GetListOfRecentlyViewedIssues: Returns list of issues which the user viewed recently: GET /api/v2/users/myself/recentlyViewedIssues
 - ✅ GetListOfRecentlyViewedProjects: Returns list of projects which the user viewed recently: GET /api/v2/users/myself/recentlyViewedProjects
 - ✅ GetListOfRecentlyViewedWikis: Returns list of Wikis which the user viewed recently: GET /api/v2/users/myself/recentlyViewedWikis

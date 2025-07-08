@@ -64,7 +64,9 @@ use backlog_issue::GetRecentlyViewedIssuesParamsBuilder;
 #[cfg(feature = "issue_writable")]
 use backlog_issue::UnlinkSharedFileParams;
 #[cfg(feature = "issue_writable")]
-use backlog_issue::{AddIssueParamsBuilder, UpdateIssueParamsBuilder};
+use backlog_issue::{
+    AddIssueParamsBuilder, AddRecentlyViewedIssueParams, UpdateIssueParamsBuilder,
+};
 #[cfg(feature = "project")]
 use backlog_project::GetProjectRecentUpdatesParams;
 #[cfg(feature = "project_writable")]
@@ -491,6 +493,14 @@ enum IssueCommands {
         /// Offset for pagination
         #[clap(long)]
         offset: Option<u32>,
+    },
+    /// Add an issue to recently viewed list
+    #[cfg(feature = "issue_writable")]
+    #[command(about = "Add an issue to recently viewed list")]
+    AddRecentlyViewed {
+        /// Issue ID or Key (e.g., "PROJECT-123" or "12345")
+        #[clap(name = "ISSUE_ID_OR_KEY")]
+        issue_id_or_key: String,
     },
 }
 
@@ -2767,6 +2777,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error getting recently viewed issues: {e}");
+                    }
+                }
+            }
+            #[cfg(feature = "issue_writable")]
+            IssueCommands::AddRecentlyViewed { issue_id_or_key } => {
+                println!("Adding issue {issue_id_or_key} to recently viewed list");
+
+                let issue_id_or_key = if let Ok(id) = issue_id_or_key.parse::<u32>() {
+                    IssueIdOrKey::Id(id.into())
+                } else {
+                    IssueIdOrKey::Key(IssueKey::from_str(&issue_id_or_key)?)
+                };
+                let params = AddRecentlyViewedIssueParams { issue_id_or_key };
+
+                match client.issue().add_recently_viewed_issue(params).await {
+                    Ok(issue) => {
+                        println!("Successfully added issue to recently viewed list:");
+                        println!("  Issue Key: {}", issue.issue_key);
+                        println!("  Summary: {}", issue.summary);
+                        println!("  Status: {}", issue.status.name);
+                        if let Some(priority) = &issue.priority {
+                            println!("  Priority: {}", priority.name);
+                        }
+                        println!("  Issue Type: {}", issue.issue_type.name);
+                        if let Some(assignee) = &issue.assignee {
+                            println!("  Assignee: {}", assignee.name);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error adding issue to recently viewed list: {e}");
                     }
                 }
             }

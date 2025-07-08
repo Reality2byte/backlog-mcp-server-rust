@@ -3,15 +3,16 @@ use client::{Client, DownloadedFile};
 
 #[cfg(feature = "writable")]
 use super::{
-    AddCommentNotificationParams, AddCommentParams, AddIssueParams, DeleteAttachmentParams,
-    DeleteCommentParams, DeleteIssueParams, LinkSharedFilesToIssueParams, UnlinkSharedFileParams,
-    UpdateCommentParams, UpdateIssueParams,
+    AddCommentNotificationParams, AddCommentParams, AddIssueParams, AddRecentlyViewedIssueParams,
+    DeleteAttachmentParams, DeleteCommentParams, DeleteIssueParams, LinkSharedFilesToIssueParams,
+    UnlinkSharedFileParams, UpdateCommentParams, UpdateIssueParams,
 };
 #[cfg(feature = "writable")]
 use super::{
-    AddCommentNotificationResponse, AddCommentResponse, AddIssueResponse, DeleteAttachmentResponse,
-    DeleteCommentResponse, DeleteIssueResponse, LinkSharedFilesToIssueResponse,
-    UnlinkSharedFileResponse, UpdateCommentResponse, UpdateIssueResponse,
+    AddCommentNotificationResponse, AddCommentResponse, AddIssueResponse,
+    AddRecentlyViewedIssueResponse, DeleteAttachmentResponse, DeleteCommentResponse,
+    DeleteIssueResponse, LinkSharedFilesToIssueResponse, UnlinkSharedFileResponse,
+    UpdateCommentResponse, UpdateIssueResponse,
 };
 use super::{
     CountCommentParams, CountIssueParams, GetAttachmentFileParams, GetAttachmentListParams,
@@ -208,6 +209,17 @@ impl IssueApi {
         &self,
         params: GetRecentlyViewedIssuesParams,
     ) -> Result<GetRecentlyViewedIssuesResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Add an issue to the recently viewed list.
+    ///
+    /// Corresponds to `POST /api/v2/users/myself/recentlyViewedIssues`.
+    #[cfg(feature = "writable")]
+    pub async fn add_recently_viewed_issue(
+        &self,
+        params: AddRecentlyViewedIssueParams,
+    ) -> Result<AddRecentlyViewedIssueResponse> {
         self.0.execute(params).await
     }
 }
