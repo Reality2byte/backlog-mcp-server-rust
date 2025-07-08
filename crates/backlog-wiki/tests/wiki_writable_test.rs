@@ -3,11 +3,13 @@ mod writable_tests {
     use super::common::*;
     use backlog_core::identifier::{AttachmentId, SharedFileId, WikiAttachmentId, WikiId};
     use backlog_wiki::api::{
-        AddWikiParams, AttachFilesToWikiParams, DeleteWikiAttachmentParams, DeleteWikiParams,
-        LinkSharedFilesToWikiParams, UnlinkSharedFileFromWikiParams, UpdateWikiParams,
+        AddRecentlyViewedWikiParams, AddWikiParams, AttachFilesToWikiParams,
+        DeleteWikiAttachmentParams, DeleteWikiParams, LinkSharedFilesToWikiParams,
+        UnlinkSharedFileFromWikiParams, UpdateWikiParams,
     };
     use wiremock::MockServer;
     use wiremock::matchers::{body_string_contains, header, method, path, query_param};
+    use wiremock::{Mock, ResponseTemplate};
 
     #[tokio::test]
     async fn test_update_wiki_success_with_all_params() {
@@ -988,6 +990,125 @@ mod writable_tests {
         let params = UnlinkSharedFileFromWikiParams::new(WikiId::new(123), SharedFileId::new(456));
 
         let result = wiki_api.unlink_shared_file_from_wiki(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_add_recently_viewed_wiki_success() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        let expected_wiki = serde_json::json!({
+            "id": 123,
+            "projectId": 456,
+            "name": "Recently Viewed Wiki",
+            "tags": [
+                {"id": 1, "name": "important"}
+            ],
+            "createdUser": {
+                "id": 1,
+                "userId": "admin",
+                "name": "Admin User",
+                "roleType": 1,
+                "lang": "ja",
+                "mailAddress": "admin@example.com"
+            },
+            "created": "2024-01-01T09:00:00Z",
+            "updatedUser": {
+                "id": 1,
+                "userId": "admin",
+                "name": "Admin User",
+                "roleType": 1,
+                "lang": "ja",
+                "mailAddress": "admin@example.com"
+            },
+            "updated": "2024-01-15T10:30:00Z"
+        });
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/users/myself/recentlyViewedWikis"))
+            .and(header("Content-Type", "application/x-www-form-urlencoded"))
+            .and(body_string_contains("wikiId=123"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_wiki))
+            .mount(&mock_server)
+            .await;
+
+        let params = AddRecentlyViewedWikiParams {
+            wiki_id: WikiId::new(123),
+        };
+
+        let result = wiki_api.add_recently_viewed_wiki(params).await;
+        assert!(result.is_ok());
+        let wiki = result.unwrap();
+        assert_eq!(wiki.id.value(), 123);
+        assert_eq!(wiki.name, "Recently Viewed Wiki");
+        assert_eq!(wiki.project_id.value(), 456);
+    }
+
+    #[tokio::test]
+    async fn test_add_recently_viewed_wiki_not_found() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/users/myself/recentlyViewedWikis"))
+            .and(header("Content-Type", "application/x-www-form-urlencoded"))
+            .and(body_string_contains("wikiId=999"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(serde_json::json!({
+                "errors": [{"message": "Wiki not found"}]
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let params = AddRecentlyViewedWikiParams {
+            wiki_id: WikiId::new(999),
+        };
+
+        let result = wiki_api.add_recently_viewed_wiki(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_add_recently_viewed_wiki_unauthorized() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/users/myself/recentlyViewedWikis"))
+            .and(header("Content-Type", "application/x-www-form-urlencoded"))
+            .and(body_string_contains("wikiId=123"))
+            .respond_with(ResponseTemplate::new(401).set_body_json(serde_json::json!({
+                "errors": [{"message": "Authentication required"}]
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let params = AddRecentlyViewedWikiParams {
+            wiki_id: WikiId::new(123),
+        };
+
+        let result = wiki_api.add_recently_viewed_wiki(params).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_add_recently_viewed_wiki_server_error() {
+        let mock_server = MockServer::start().await;
+        let wiki_api = setup_wiki_api(&mock_server).await;
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/users/myself/recentlyViewedWikis"))
+            .and(header("Content-Type", "application/x-www-form-urlencoded"))
+            .and(body_string_contains("wikiId=123"))
+            .respond_with(ResponseTemplate::new(500).set_body_string("Internal Server Error"))
+            .mount(&mock_server)
+            .await;
+
+        let params = AddRecentlyViewedWikiParams {
+            wiki_id: WikiId::new(123),
+        };
+
+        let result = wiki_api.add_recently_viewed_wiki(params).await;
         assert!(result.is_err());
     }
 }

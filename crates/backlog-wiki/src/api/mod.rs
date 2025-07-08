@@ -11,6 +11,8 @@ mod get_wiki_tag_list;
 mod wiki_api;
 
 #[cfg(feature = "writable")]
+mod add_recently_viewed_wiki;
+#[cfg(feature = "writable")]
 mod add_wiki;
 #[cfg(feature = "writable")]
 mod attach_files_to_wiki;
@@ -41,6 +43,8 @@ pub use get_wiki_stars::{GetWikiStarsParams, GetWikiStarsResponse};
 pub use get_wiki_tag_list::{GetWikiTagListParams, GetWikiTagListResponse};
 
 // Export writable types with feature gates
+#[cfg(feature = "writable")]
+pub use add_recently_viewed_wiki::{AddRecentlyViewedWikiParams, AddRecentlyViewedWikiResponse};
 #[cfg(feature = "writable")]
 pub use add_wiki::{AddWikiParams, AddWikiResponse};
 #[cfg(feature = "writable")]

@@ -1,7 +1,8 @@
 #[cfg(feature = "writable")]
 use crate::api::{
-    AddWikiParams, AddWikiResponse, AttachFilesToWikiParams, AttachFilesToWikiResponse,
-    DeleteWikiAttachmentParams, DeleteWikiAttachmentResponse, DeleteWikiParams, DeleteWikiResponse,
+    AddRecentlyViewedWikiParams, AddRecentlyViewedWikiResponse, AddWikiParams, AddWikiResponse,
+    AttachFilesToWikiParams, AttachFilesToWikiResponse, DeleteWikiAttachmentParams,
+    DeleteWikiAttachmentResponse, DeleteWikiParams, DeleteWikiResponse,
     LinkSharedFilesToWikiParams, LinkSharedFilesToWikiResponse, UnlinkSharedFileFromWikiParams,
     UnlinkSharedFileFromWikiResponse, UpdateWikiParams, UpdateWikiResponse,
 };
@@ -102,6 +103,16 @@ impl WikiApi {
         &self,
         params: GetRecentlyViewedWikisParams,
     ) -> Result<GetRecentlyViewedWikisResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Add recently viewed wiki
+    /// Corresponds to `POST /api/v2/users/myself/recentlyViewedWikis`.
+    #[cfg(feature = "writable")]
+    pub async fn add_recently_viewed_wiki(
+        &self,
+        params: AddRecentlyViewedWikiParams,
+    ) -> Result<AddRecentlyViewedWikiResponse> {
         self.0.execute(params).await
     }
 
