@@ -13,6 +13,7 @@ mod get_comment_notifications;
 mod get_issue;
 mod get_issue_list;
 mod get_participant_list;
+mod get_recently_viewed_issues;
 mod get_shared_file_list;
 
 // Write-only API modules (feature-gated)
@@ -56,6 +57,10 @@ pub use get_comment_notifications::{
 pub use get_issue::{GetIssueParams, GetIssueResponse};
 pub use get_issue_list::{GetIssueListParams, GetIssueListParamsBuilder, GetIssueListResponse};
 pub use get_participant_list::{GetParticipantListParams, GetParticipantListResponse};
+pub use get_recently_viewed_issues::{
+    GetRecentlyViewedIssuesParams, GetRecentlyViewedIssuesParamsBuilder,
+    GetRecentlyViewedIssuesResponse,
+};
 pub use get_shared_file_list::{GetSharedFileListParams, GetSharedFileListResponse};
 
 // Write-only exports (feature-gated)
