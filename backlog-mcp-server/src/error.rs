@@ -40,6 +40,9 @@ pub enum Error {
         project: String,
         allowed_projects: Vec<String>,
     },
+
+    #[error("{0}")]
+    ProjectNotFound(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -109,6 +112,7 @@ impl From<Error> for McpError {
                 McpError::invalid_request(err.to_string(), None) // Or invalid_params
             }
             Error::ProjectAccessDenied { .. } => McpError::invalid_params(err.to_string(), None),
+            Error::ProjectNotFound(_) => McpError::invalid_params(err.to_string(), None),
         }
     }
 }

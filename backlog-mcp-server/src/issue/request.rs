@@ -200,7 +200,7 @@ pub(crate) struct AddIssueRequest {
     #[schemars(
         description = "The project ID or project key to create the issue in. Examples: 'MYPROJECTKEY', '123'."
     )]
-    pub project_id: String,
+    pub project_id_or_key: String,
     #[schemars(description = "The title/summary of the issue.")]
     pub summary: String,
     #[schemars(

@@ -347,13 +347,33 @@ pub(crate) async fn add_issue_impl(
     req: AddIssueRequest,
     access_control: &AccessControl,
 ) -> Result<Issue> {
-    let project_id = ProjectId::from_str(req.project_id.trim())?;
+    let project_id_or_key = ProjectIdOrKey::from_str(req.project_id_or_key.trim())?;
     let issue_type_id = IssueTypeId::new(req.issue_type_id);
     let priority_id = PriorityId::new(req.priority_id);
 
     let client_guard = client.lock().await;
 
-    // Check project access with parsed type
+    // Resolve project ID if a key was provided
+    let project_id = match &project_id_or_key {
+        ProjectIdOrKey::Id(id) => *id,
+        ProjectIdOrKey::Key(key) => {
+            // Get project list and find by key
+            let projects = client_guard
+                .project()
+                .get_project_list(backlog_project::GetProjectListParams::default())
+                .await?;
+            let project = projects
+                .iter()
+                .find(|p| &p.project_key == key)
+                .ok_or_else(|| {
+                    McpError::ProjectNotFound(format!("Project with key '{key}' not found"))
+                })?;
+            project.id
+        }
+        ProjectIdOrKey::EitherIdOrKey(id, _) => *id,
+    };
+
+    // Check project access with resolved ID
     access_control
         .check_project_access_by_id_async(&project_id, &client_guard)
         .await?;
