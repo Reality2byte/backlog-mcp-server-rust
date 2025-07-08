@@ -73,8 +73,8 @@ async fn test_get_project_recent_updates_success() {
     let activity = &activities[0];
     assert_eq!(activity.id.value(), 143592);
     assert_eq!(activity.type_id, 1);
-    // In Phase 1, project is stored as serde_json::Value
-    assert_eq!(activity.project["name"], "Example Project");
+    // Use helper method to access project name
+    assert_eq!(activity.project_name(), Some("Example Project"));
 }
 
 #[tokio::test]

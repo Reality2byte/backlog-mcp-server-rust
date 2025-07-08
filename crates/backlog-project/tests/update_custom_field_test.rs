@@ -220,8 +220,8 @@ mod update_custom_field_tests {
         let custom_field = result.unwrap();
         if let CustomFieldSettings::SingleList(settings) = custom_field.settings {
             assert_eq!(settings.items.len(), 3);
-            assert!(settings.allow_add_item);
-            assert!(!settings.allow_input);
+            assert_eq!(settings.allow_add_item, Some(true));
+            assert_eq!(settings.allow_input, Some(false));
         } else {
             panic!("Expected single list settings");
         }

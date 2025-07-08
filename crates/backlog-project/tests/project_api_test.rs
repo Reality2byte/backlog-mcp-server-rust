@@ -6,7 +6,7 @@ use backlog_core::identifier::{
 };
 use backlog_core::{Language, ProjectIdOrKey, ProjectKey, Role, TextFormattingRule, User};
 pub use backlog_domain_models::Milestone;
-use backlog_issue::{
+use backlog_domain_models::{
     CustomFieldSettings, CustomFieldType, DateSettings, ListItem, ListSettings, NumericSettings,
 };
 use backlog_project::api::{
@@ -694,16 +694,16 @@ async fn test_get_custom_field_list_success() {
             applicable_issue_types: vec![IssueTypeId::new(1), IssueTypeId::new(2)],
             display_order: 2,
             settings: CustomFieldSettings::SingleList(ListSettings {
-                allow_input: false,
-                allow_add_item: true,
+                allow_input: Some(false),
+                allow_add_item: Some(true),
                 items: vec![
                     ListItem {
-                        id: backlog_core::identifier::CustomListItemId::new(1),
+                        id: backlog_core::identifier::CustomFieldItemId::new(1),
                         name: "High".to_string(),
                         display_order: 1,
                     },
                     ListItem {
-                        id: backlog_core::identifier::CustomListItemId::new(2),
+                        id: backlog_core::identifier::CustomFieldItemId::new(2),
                         name: "Medium".to_string(),
                         display_order: 2,
                     },
@@ -769,6 +769,8 @@ async fn test_get_custom_field_list_multiple_types() {
                 min: None,
                 max: None,
                 initial_date: None,
+                initial_value_type: None,
+                initial_shift: None,
             }),
         },
     ];

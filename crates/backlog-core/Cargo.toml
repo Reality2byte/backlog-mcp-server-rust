@@ -16,3 +16,4 @@ schemars = { workspace = true, features = ["chrono"], optional = true }
 [features]
 default = []
 schemars = ["dep:schemars"]
+typed-activity = []

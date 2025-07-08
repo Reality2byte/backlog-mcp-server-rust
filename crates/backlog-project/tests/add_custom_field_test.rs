@@ -125,8 +125,10 @@ mod add_custom_field_tests {
             .with_date_settings(Some(min_date), Some(max_date), Some(1), None, None);
         let result = api.add_custom_field(params).await;
 
-        assert!(result.is_ok());
-        let field = result.unwrap();
+        let field = match result {
+            Ok(field) => field,
+            Err(e) => panic!("Failed to add date custom field: {e:?}"),
+        };
         assert_eq!(field.name, "予定日");
     }
 
@@ -168,8 +170,10 @@ mod add_custom_field_tests {
         .with_allow_add_item(true);
         let result = api.add_custom_field(params).await;
 
-        assert!(result.is_ok());
-        let field = result.unwrap();
+        let field = match result {
+            Ok(field) => field,
+            Err(e) => panic!("Failed to add single list custom field: {e:?}"),
+        };
         assert_eq!(field.name, "優先度");
     }
 

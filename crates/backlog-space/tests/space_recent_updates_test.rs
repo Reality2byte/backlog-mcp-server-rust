@@ -69,7 +69,7 @@ async fn test_get_space_recent_updates_success() {
     let activity = &activities[0];
     assert_eq!(activity.id.value(), 143592);
     assert_eq!(activity.type_id, 1);
-    assert_eq!(activity.project["name"], "Example Project");
+    assert_eq!(activity.project_name(), Some("Example Project"));
 }
 
 #[tokio::test]

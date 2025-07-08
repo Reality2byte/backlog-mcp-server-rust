@@ -2,6 +2,7 @@
 
 ## 更新履歴
 - 2025-07-07: Phase 1 完了 - Kent BeckのTDDプロセスで実装
+- 2025-07-08: Phase 2 完了 - typed-activityフィーチャーフラグとActivityProject/ActivityIssue型の導入、CustomFieldTypeの移動
 
 ## 現状の問題まとめ
 
@@ -206,11 +207,12 @@ default = []
   - [x] NotificationReasonの移動
   - [x] 既存テストの動作確認
 
-- [ ] Phase 2: 型の統合
-  - [ ] Content型の完全統合
-  - [ ] Notification型の完全統合
-  - [ ] 移行用type aliasの追加
-  - [ ] 統合テストの追加
+- [x] Phase 2: 型の統合 ✅ 2025-07-08 実装
+  - [x] ActivityProject/ActivityIssue型の作成
+  - [x] typed-activityフィーチャーフラグの導入
+  - [x] 条件付きコンパイルでActivity型の切り替え
+  - [x] CustomFieldTypeのbacklog-domain-modelsへの移動（完了）
+  - [ ] Notification型の完全統合（Phase 3へ延期）
 
 - [ ] Phase 3: 依存関係の修正
   - [ ] backlog-activityの依存修正
@@ -250,6 +252,38 @@ default = []
 - Activity.projectを`serde_json::Value`から`Project`型への移行（Phase 2）
 - 非推奨警告の解消
 - 未使用関数の削除
+
+## Phase 2 実装詳細
+
+### 実装内容
+1. **新規作成ファイル**
+   - `/crates/backlog-core/src/activity/project.rs` - ActivityProject/ActivityIssue型の定義
+   - `/crates/backlog-domain-models/src/custom_field.rs` - CustomFieldType関連の型定義
+   - `/crates/backlog-domain-models/src/comment.rs` - Comment統合型（一時的に作成、後に削除）
+
+2. **修正ファイル**
+   - `/crates/backlog-core/src/activity/activity_type.rs` - 条件付きコンパイルでActivity型を切り替え
+   - `/crates/backlog-core/Cargo.toml` - typed-activityフィーチャーフラグの追加
+   - `/crates/backlog-issue/src/models/custom_field_type.rs` - 非推奨マークと再エクスポート
+
+3. **typed-activityフィーチャーフラグ**
+   - デフォルト無効（Phase 1互換）
+   - 有効時：ActivityProjectを使用し、型安全性を向上
+   - ヘルパーメソッド（project_id(), project_name()）で統一的なアクセス
+
+### 実装上の工夫
+- **循環依存の完全回避**: ActivityProject/ActivityIssueをbacklog-coreに配置
+- **段階的移行**: フィーチャーフラグで新旧の切り替えが可能
+- **最小限の型定義**: 必要最小限のフィールドでActivityコンテキストに特化
+- **カスタムDeserialize**: typeIdベースのデシリアライズ実装を含めて移動
+- **ヘルパーメソッド**: project_id()とproject_name()で統一的なアクセス
+
+### 解決した課題
+- CustomFieldTypeの依存関係の整理（カスタムDeserializeも含めて完全移行）
+- Project型の簡略版による循環依存の回避
+- テストの条件付き実行で両方のモードをサポート
+- ListItemのid型をCustomFieldItemIdに統一
+- Option<bool>フィールドへの対応
 
 ## 期待される成果
 

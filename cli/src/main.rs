@@ -3675,7 +3675,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                         item.id, item.name, item.display_order
                                     );
                                 }
-                                println!("Allow add item: {}", settings.allow_add_item);
+                                if let Some(allow) = settings.allow_add_item {
+                                    println!("Allow add item: {allow}");
+                                }
                             }
                             backlog_issue::CustomFieldSettings::MultipleList(settings) => {
                                 println!("Type: Multiple Selection List");
@@ -3686,8 +3688,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                         item.id, item.name, item.display_order
                                     );
                                 }
-                                println!("Allow add item: {}", settings.allow_add_item);
-                                println!("Allow input: {}", settings.allow_input);
+                                if let Some(allow) = settings.allow_add_item {
+                                    println!("Allow add item: {allow}");
+                                }
+                                if let Some(allow) = settings.allow_input {
+                                    println!("Allow input: {allow}");
+                                }
                             }
                             _ => {
                                 eprintln!("⚠️  Warning: Custom field is not a list type");
@@ -3747,7 +3753,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                         );
                                     }
                                 }
-                                println!("Allow add item: {}", settings.allow_add_item);
+                                if let Some(allow) = settings.allow_add_item {
+                                    println!("Allow add item: {allow}");
+                                }
                             }
                             backlog_issue::CustomFieldSettings::MultipleList(settings) => {
                                 println!("Type: Multiple Selection List");
@@ -3765,8 +3773,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                         );
                                     }
                                 }
-                                println!("Allow add item: {}", settings.allow_add_item);
-                                println!("Allow input: {}", settings.allow_input);
+                                if let Some(allow) = settings.allow_add_item {
+                                    println!("Allow add item: {allow}");
+                                }
+                                if let Some(allow) = settings.allow_input {
+                                    println!("Allow input: {allow}");
+                                }
                             }
                             _ => {
                                 eprintln!("⚠️  Warning: Custom field is not a list type");
@@ -3815,7 +3827,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                         item.id, item.name, item.display_order
                                     );
                                 }
-                                println!("Allow add item: {}", settings.allow_add_item);
+                                if let Some(allow) = settings.allow_add_item {
+                                    println!("Allow add item: {allow}");
+                                }
                             }
                             backlog_issue::CustomFieldSettings::MultipleList(settings) => {
                                 println!("Type: Multiple Selection List");
@@ -3826,8 +3840,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                         item.id, item.name, item.display_order
                                     );
                                 }
-                                println!("Allow add item: {}", settings.allow_add_item);
-                                println!("Allow input: {}", settings.allow_input);
+                                if let Some(allow) = settings.allow_add_item {
+                                    println!("Allow add item: {allow}");
+                                }
+                                if let Some(allow) = settings.allow_input {
+                                    println!("Allow input: {allow}");
+                                }
                             }
                             _ => {
                                 eprintln!("⚠️  Warning: Custom field is not a list type");
@@ -5637,11 +5655,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 println!("---");
                                 println!("ID: {}", activity.id.value());
                                 println!("Type: {}", activity.type_id);
-                                // In Phase 1, project is stored as serde_json::Value
-                                println!(
-                                    "Project: {}",
-                                    activity.project["name"].as_str().unwrap_or("Unknown")
-                                );
+                                // Use helper method to access project name
+                                let project_name = activity.project_name().unwrap_or("Unknown");
+                                println!("Project: {project_name}");
                                 println!("Created by: {}", activity.created_user.name);
                                 println!(
                                     "Created at: {}",
@@ -5731,11 +5747,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 println!("---");
                                 println!("ID: {}", activity.id.value());
                                 println!("Type: {}", activity.type_id);
-                                // In Phase 1, project is stored as serde_json::Value
-                                println!(
-                                    "Project: {}",
-                                    activity.project["name"].as_str().unwrap_or("Unknown")
-                                );
+                                // Use helper method to access project name
+                                let project_name = activity.project_name().unwrap_or("Unknown");
+                                println!("Project: {project_name}");
                                 println!("Created by: {}", activity.created_user.name);
                                 println!(
                                     "Created at: {}",

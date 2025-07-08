@@ -2,7 +2,7 @@
 mod tests {
     use backlog_core::{
         ProjectKey,
-        identifier::{CustomFieldId, CustomListItemId, Identifier},
+        identifier::{CustomFieldId, CustomFieldItemId, Identifier},
     };
     use backlog_project::{ProjectApi, UpdateListItemToCustomFieldParams};
     use client::Client;
@@ -66,7 +66,7 @@ mod tests {
             let updated_item = settings
                 .items
                 .iter()
-                .find(|i| i.id == CustomListItemId::new(4))
+                .find(|i| i.id == CustomFieldItemId::new(4))
                 .unwrap();
             assert_eq!(updated_item.name, "Critical Updated");
         } else {
@@ -122,7 +122,7 @@ mod tests {
             let updated_item = settings
                 .items
                 .iter()
-                .find(|i| i.id == CustomListItemId::new(10))
+                .find(|i| i.id == CustomFieldItemId::new(10))
                 .unwrap();
             assert_eq!(updated_item.name, "Backend Updated");
             assert_eq!(settings.items.len(), 3);
@@ -175,7 +175,7 @@ mod tests {
             let updated_item = settings
                 .items
                 .iter()
-                .find(|i| i.id == CustomListItemId::new(21))
+                .find(|i| i.id == CustomFieldItemId::new(21))
                 .unwrap();
             assert_eq!(updated_item.name, "Test/QA & Staging");
         }
@@ -225,7 +225,7 @@ mod tests {
             let updated_item = settings
                 .items
                 .iter()
-                .find(|i| i.id == CustomListItemId::new(30))
+                .find(|i| i.id == CustomFieldItemId::new(30))
                 .unwrap();
             assert_eq!(updated_item.name, "東京・関東エリア");
         }
