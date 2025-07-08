@@ -156,7 +156,7 @@ pub struct Notification {
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 pub struct ChangeLog {
     pub field: String,
-    pub new_value: String,
+    pub new_value: Option<String>,
     pub original_value: Option<String>,
 }
 
