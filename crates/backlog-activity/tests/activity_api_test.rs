@@ -68,7 +68,8 @@ mod activity_api_tests {
         assert!(result.is_ok());
         let activity = result.unwrap();
         assert_eq!(activity.id.value(), 12345);
-        assert_eq!(activity.project.id.value(), 101);
+        // In Phase 1, project is stored as serde_json::Value
+        assert_eq!(activity.project["id"], 101);
     }
 
     #[tokio::test]

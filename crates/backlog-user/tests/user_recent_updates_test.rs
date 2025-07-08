@@ -84,7 +84,8 @@ mod user_recent_updates_tests {
         let activities = result.unwrap();
         assert_eq!(activities.len(), 1);
         assert_eq!(activities[0].id.value(), 123);
-        assert_eq!(activities[0].project.id.value(), 101);
+        // In Phase 1, project is stored as serde_json::Value
+        assert_eq!(activities[0].project["id"], 101);
     }
 
     #[tokio::test]

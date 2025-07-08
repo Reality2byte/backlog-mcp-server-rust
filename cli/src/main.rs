@@ -5637,7 +5637,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 println!("---");
                                 println!("ID: {}", activity.id.value());
                                 println!("Type: {}", activity.type_id);
-                                println!("Project: {}", activity.project.name);
+                                // In Phase 1, project is stored as serde_json::Value
+                                println!(
+                                    "Project: {}",
+                                    activity.project["name"].as_str().unwrap_or("Unknown")
+                                );
                                 println!("Created by: {}", activity.created_user.name);
                                 println!(
                                     "Created at: {}",
@@ -5669,6 +5673,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                                 println!("  ... and {} more", users.len() - 3);
                                             }
                                         }
+                                    }
+                                    _ => {
+                                        // Other content types not yet implemented in CLI
+                                        println!("Activity type: {:?}", activity.type_id);
                                     }
                                 }
                             }
@@ -5723,7 +5731,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 println!("---");
                                 println!("ID: {}", activity.id.value());
                                 println!("Type: {}", activity.type_id);
-                                println!("Project: {}", activity.project.name);
+                                // In Phase 1, project is stored as serde_json::Value
+                                println!(
+                                    "Project: {}",
+                                    activity.project["name"].as_str().unwrap_or("Unknown")
+                                );
                                 println!("Created by: {}", activity.created_user.name);
                                 println!(
                                     "Created at: {}",
@@ -5755,6 +5767,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                                 println!("  ... and {} more", users.len() - 3);
                                             }
                                         }
+                                    }
+                                    _ => {
+                                        // Other content types not yet implemented in CLI
+                                        println!("Activity type: {:?}", activity.type_id);
                                     }
                                 }
                             }

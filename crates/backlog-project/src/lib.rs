@@ -8,6 +8,7 @@ pub use backlog_domain_models::{
 };
 
 // re-export activity models
+#[allow(deprecated)]
 pub use models::activity::{Activity, ActivityContent, Content, ReasonId, TypeId};
 
 pub use api::{

@@ -1,4 +1,5 @@
 mod active_type_id;
+pub mod activity;
 mod api_date;
 pub mod date;
 mod error;
