@@ -9,7 +9,6 @@ license.workspace = true
 backlog-api-core = { path = "../backlog-api-core" }
 backlog-core = { path = "../backlog-core" }
 backlog-domain-models = { path = "../backlog-domain-models" }
-backlog-project = { path = "../backlog-project" }
 backlog-api-macros = { path = "../backlog-api-macros" }
 client = { path = "../client" }
 

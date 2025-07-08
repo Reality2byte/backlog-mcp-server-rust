@@ -1,12 +1,10 @@
 use backlog_api_core::IntoRequest;
 use backlog_api_macros::ToFormParams;
+use backlog_core::activity::Activity;
 use backlog_core::identifier::{ActivityTypeId, UserId};
-#[allow(deprecated)]
-use backlog_project::Activity;
 use serde::Serialize;
 
 /// Response type for getting user recent updates
-#[allow(deprecated)]
 pub type GetUserRecentUpdatesResponse = Vec<Activity>;
 
 /// Parameters for getting user recent updates.

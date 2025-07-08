@@ -1,11 +1,9 @@
 use backlog_api_core::IntoRequest;
 use backlog_api_macros::ToFormParams;
+use backlog_core::activity::Activity;
 use backlog_core::identifier::{ActivityId, ActivityTypeId};
-#[allow(deprecated)]
-use backlog_project::Activity;
 use serde::Serialize;
 
-#[allow(deprecated)]
 pub type GetSpaceRecentUpdatesResponse = Vec<Activity>;
 
 #[derive(Debug, Clone, Default, ToFormParams)]

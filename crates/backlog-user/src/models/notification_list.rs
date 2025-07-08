@@ -1,7 +1,8 @@
 use backlog_core::User;
+use backlog_core::activity::NotificationReason;
 use backlog_core::identifier::NotificationId;
 use backlog_domain_models::Project;
-use backlog_issue::{Comment, Issue, NotificationReason};
+use backlog_issue::{Comment, Issue};
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 

@@ -3,6 +3,7 @@
 ## 更新履歴
 - 2025-07-07: Phase 1 完了 - Kent BeckのTDDプロセスで実装
 - 2025-07-08: Phase 2 完了 - typed-activityフィーチャーフラグとActivityProject/ActivityIssue型の導入、CustomFieldTypeの移動
+- 2025-07-08: Phase 3 完了 - 依存関係の修正、backlog-projectへの依存を削除
 
 ## 現状の問題まとめ
 
@@ -214,10 +215,10 @@ default = []
   - [x] CustomFieldTypeのbacklog-domain-modelsへの移動（完了）
   - [ ] Notification型の完全統合（Phase 3へ延期）
 
-- [ ] Phase 3: 依存関係の修正
-  - [ ] backlog-activityの依存修正
-  - [ ] 各クレートの依存見直し
-  - [ ] 循環依存の解消確認
+- [x] Phase 3: 依存関係の修正 ✅ 2025-07-08 完了
+  - [x] backlog-activityの依存修正
+  - [x] 各クレートの依存見直し  
+  - [x] 循環依存の解消確認
 
 - [ ] Phase 4: クリーンアップ
   - [ ] 非推奨マークの追加
@@ -284,6 +285,27 @@ default = []
 - テストの条件付き実行で両方のモードをサポート
 - ListItemのid型をCustomFieldItemIdに統一
 - Option<bool>フィールドへの対応
+
+## Phase 3 実装詳細
+
+### 実装内容
+1. **修正ファイル**
+   - `/crates/backlog-activity/Cargo.toml` - backlog-project依存を削除
+   - `/crates/backlog-space/Cargo.toml` - backlog-project依存を削除
+   - `/crates/backlog-user/Cargo.toml` - backlog-project依存を削除
+   - `/crates/backlog-space/src/api/get_space_recent_updates.rs` - Activity importをbacklog_coreから取得
+   - `/crates/backlog-user/src/api/get_user_recent_updates.rs` - Activity importをbacklog_coreから取得
+   - `/crates/backlog-user/src/models/notification_list.rs` - NotificationReasonをbacklog_coreから取得
+
+2. **依存関係の整理結果**
+   - backlog-activity、backlog-space、backlog-userはbacklog-projectに依存しなくなった
+   - 循環依存は存在しないことを確認
+   - 必要な型は全てbacklog-coreまたはbacklog-domain-modelsから取得
+
+### 実装上の工夫
+- **最小限の変更**: 主にimport文の修正のみで対応
+- **互換性の維持**: APIの動作は変更なし
+- **テスト駆動**: 各ステップでテストを実行して動作確認
 
 ## 期待される成果
 
