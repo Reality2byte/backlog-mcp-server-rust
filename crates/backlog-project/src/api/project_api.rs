@@ -23,13 +23,14 @@ use crate::{
     UpdateVersionParams,
     api::{
         AddCategoryResponse, AddCustomFieldResponse, AddIssueTypeResponse,
-        AddListItemToCustomFieldResponse, AddProjectTeamResponse, AddStatusResponse,
-        DeleteCategoryResponse, DeleteCustomFieldResponse, DeleteIssueTypeResponse,
-        DeleteListItemFromCustomFieldParams, DeleteListItemFromCustomFieldResponse,
-        DeleteProjectTeamResponse, DeleteStatusParams, DeleteStatusResponse, DeleteVersionResponse,
-        UpdateCategoryResponse, UpdateCustomFieldParams, UpdateCustomFieldResponse,
-        UpdateIssueTypeResponse, UpdateListItemToCustomFieldResponse, UpdateStatusOrderParams,
-        UpdateStatusOrderResponse, UpdateStatusParams, UpdateStatusResponse, UpdateVersionResponse,
+        AddListItemToCustomFieldResponse, AddProjectTeamResponse, AddProjectUserParams,
+        AddProjectUserResponse, AddStatusResponse, DeleteCategoryResponse,
+        DeleteCustomFieldResponse, DeleteIssueTypeResponse, DeleteListItemFromCustomFieldParams,
+        DeleteListItemFromCustomFieldResponse, DeleteProjectTeamResponse, DeleteStatusParams,
+        DeleteStatusResponse, DeleteVersionResponse, UpdateCategoryResponse,
+        UpdateCustomFieldParams, UpdateCustomFieldResponse, UpdateIssueTypeResponse,
+        UpdateListItemToCustomFieldResponse, UpdateStatusOrderParams, UpdateStatusOrderResponse,
+        UpdateStatusParams, UpdateStatusResponse, UpdateVersionResponse,
     },
 };
 
@@ -366,6 +367,17 @@ impl ProjectApi {
         &self,
         params: GetProjectTeamListParams,
     ) -> Result<GetProjectTeamListResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Adds a user to a project.
+    ///
+    /// Corresponds to `POST /api/v2/projects/:projectIdOrKey/users`.
+    #[cfg(feature = "writable")]
+    pub async fn add_project_user(
+        &self,
+        params: AddProjectUserParams,
+    ) -> Result<AddProjectUserResponse> {
         self.0.execute(params).await
     }
 

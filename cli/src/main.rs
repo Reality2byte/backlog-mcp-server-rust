@@ -822,6 +822,16 @@ enum ProjectCommands {
         #[clap(name = "PROJECT_ID_OR_KEY")]
         project_id_or_key: String,
     },
+    /// Add a user to a project
+    #[cfg(feature = "project_writable")]
+    UserAdd {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// User ID to add
+        #[clap(short, long)]
+        user_id: u32,
+    },
     /// List custom fields for a project
     CustomFieldList {
         /// Project ID or Key
@@ -3486,6 +3496,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error listing project users: {e}");
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::UserAdd {
+                project_id_or_key,
+                user_id,
+            } => {
+                println!("Adding user {user_id} to project: {project_id_or_key}");
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let params =
+                    backlog_project::api::AddProjectUserParams::new(proj_id_or_key, user_id);
+                match client.project().add_project_user(params).await {
+                    Ok(user) => {
+                        println!(
+                            "Successfully added user: {} ({})",
+                            user.name, user.mail_address
+                        );
+                    }
+                    Err(e) => {
+                        eprintln!("Error adding user: {e}");
                     }
                 }
             }
