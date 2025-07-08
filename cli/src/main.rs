@@ -91,6 +91,8 @@ use backlog_user::{
     GetWatchingCountParams, GetWatchingListParams, NotificationOrder,
     api::{Order as WatchingOrder, StarOrder, WatchingSort},
 };
+#[cfg(feature = "wiki")]
+use backlog_wiki::GetRecentlyViewedWikisParamsBuilder;
 #[cfg(feature = "wiki_writable")]
 use backlog_wiki::{
     AddWikiParams, AttachFilesToWikiParams, DeleteWikiAttachmentParams, DeleteWikiParams,
@@ -1325,6 +1327,18 @@ struct WikiArgs {
 #[cfg(feature = "wiki")]
 #[derive(Parser)]
 enum WikiCommands {
+    /// List recently viewed wikis
+    RecentlyViewed {
+        /// Sort order (asc or desc)
+        #[clap(short, long)]
+        order: Option<String>,
+        /// Number of items to retrieve (1-100)
+        #[clap(short, long)]
+        count: Option<u32>,
+        /// Offset for pagination
+        #[clap(short = 'O', long)]
+        offset: Option<u32>,
+    },
     /// List attachments for a wiki page
     ListAttachments {
         /// Wiki ID
@@ -5135,6 +5149,60 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
         #[cfg(feature = "wiki")]
         Commands::Wiki(wiki_args) => match wiki_args.command {
+            WikiCommands::RecentlyViewed {
+                order,
+                count,
+                offset,
+            } => {
+                println!("Getting recently viewed wikis");
+
+                let mut params_builder = GetRecentlyViewedWikisParamsBuilder::default();
+
+                if let Some(order) = order {
+                    params_builder.order(order);
+                }
+                if let Some(count) = count {
+                    params_builder.count(count);
+                }
+                if let Some(offset) = offset {
+                    params_builder.offset(offset);
+                }
+
+                let params = params_builder.build()?;
+
+                match client.wiki().get_recently_viewed_wikis(params).await {
+                    Ok(wikis) => {
+                        if wikis.is_empty() {
+                            println!("No recently viewed wikis found");
+                        } else {
+                            println!("Recently viewed wikis ({} total):", wikis.len());
+                            for wiki in wikis {
+                                println!("\n[{}] {}", wiki.id.value(), wiki.name);
+                                println!("  Project ID: {}", wiki.project_id.value());
+                                if !wiki.tags.is_empty() {
+                                    let tag_names: Vec<String> =
+                                        wiki.tags.iter().map(|t| t.name.clone()).collect();
+                                    println!("  Tags: {}", tag_names.join(", "));
+                                }
+                                println!(
+                                    "  Created by: {} at {}",
+                                    wiki.created_user.name,
+                                    wiki.created.format("%Y-%m-%d %H:%M:%S")
+                                );
+                                println!(
+                                    "  Updated by: {} at {}",
+                                    wiki.updated_user.name,
+                                    wiki.updated.format("%Y-%m-%d %H:%M:%S")
+                                );
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Failed to get recently viewed wikis: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
             WikiCommands::ListAttachments { wiki_id } => {
                 println!("Listing attachments for wiki ID: {wiki_id}");
 

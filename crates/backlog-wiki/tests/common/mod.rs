@@ -9,6 +9,7 @@ pub async fn setup_wiki_api(mock_server: &MockServer) -> WikiApi {
 }
 
 /// Common imports for tests
+#[allow(unused_imports)]
 pub use backlog_core::identifier::{
     Identifier, ProjectId, SharedFileId, StarId, UserId, WikiAttachmentId, WikiId, WikiTagId,
 };
@@ -16,6 +17,7 @@ pub use backlog_core::{Language, Role, Star, User};
 pub use backlog_file::models::{FileContent, SharedFile};
 pub use backlog_wiki::models::{Wiki, WikiAttachment, WikiDetail, WikiHistory, WikiTag};
 pub use chrono::{TimeZone, Utc};
+#[allow(unused_imports)]
 pub use wiremock::{Mock, ResponseTemplate};
 
 pub fn create_mock_user(id: u32, name: &str) -> User {
@@ -58,6 +60,7 @@ pub fn create_mock_wiki(
     }
 }
 
+#[allow(dead_code)]
 pub fn create_mock_wiki_detail(id: u32, project_id: u32, name: &str) -> WikiDetail {
     let created_time = Utc.with_ymd_and_hms(2024, 1, 1, 10, 0, 0).unwrap();
     let updated_time = Utc.with_ymd_and_hms(2024, 1, 2, 15, 30, 0).unwrap();
