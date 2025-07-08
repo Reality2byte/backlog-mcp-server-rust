@@ -2,7 +2,6 @@ mod attachment;
 mod changelog;
 mod comment;
 mod custom_field;
-mod custom_field_type;
 mod custom_field_type_id;
 mod custom_field_value;
 #[cfg(test)]
@@ -17,7 +16,6 @@ mod initial_date;
 mod issue;
 mod list_item;
 mod notification;
-mod notification_reason;
 mod parent_child;
 mod shared_file;
 
@@ -25,9 +23,6 @@ pub use attachment::Attachment;
 pub use changelog::ChangeLogEntry;
 pub use comment::Comment;
 pub use custom_field::CustomField;
-pub use custom_field_type::{
-    CustomFieldSettings, CustomFieldType, DateSettings, ListSettings, NumericSettings,
-};
 pub use custom_field_type_id::CustomFieldTypeId;
 pub use custom_field_value::{CustomFieldInput, CustomFieldListItem, CustomFieldValue};
 pub use custom_field_with_value::CustomFieldWithValue;
@@ -36,6 +31,5 @@ pub use initial_date::InitialDate;
 pub use issue::Issue;
 pub use list_item::ListItem;
 pub use notification::NotificationForComment;
-pub use notification_reason::NotificationReason;
 pub use parent_child::ParentChildCondition;
 pub use shared_file::{FileContent, SharedFile};

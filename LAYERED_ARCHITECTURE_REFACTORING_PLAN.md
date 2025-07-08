@@ -4,6 +4,7 @@
 - 2025-07-07: Phase 1 完了 - Kent BeckのTDDプロセスで実装
 - 2025-07-08: Phase 2 完了 - typed-activityフィーチャーフラグとActivityProject/ActivityIssue型の導入、CustomFieldTypeの移動
 - 2025-07-08: Phase 3 完了 - 依存関係の修正、backlog-projectへの依存を削除
+- 2025-07-08: Phase 4 完了 - 最終的な削除計画の実行（非推奨マーク追加とマイグレーションガイド作成はスキップ）
 
 ## 現状の問題まとめ
 
@@ -220,10 +221,10 @@ default = []
   - [x] 各クレートの依存見直し  
   - [x] 循環依存の解消確認
 
-- [ ] Phase 4: クリーンアップ
-  - [ ] 非推奨マークの追加
-  - [ ] マイグレーションガイド作成
-  - [ ] 最終的な削除計画の実行
+- [x] Phase 4: クリーンアップ ✅ 2025-07-08 完了
+  - [ ] 非推奨マークの追加（スキップ）
+  - [ ] マイグレーションガイド作成（スキップ）
+  - [x] 最終的な削除計画の実行
 
 ## Phase 1 実装詳細
 
@@ -306,6 +307,32 @@ default = []
 - **最小限の変更**: 主にimport文の修正のみで対応
 - **互換性の維持**: APIの動作は変更なし
 - **テスト駆動**: 各ステップでテストを実行して動作確認
+
+## Phase 4 実装詳細
+
+### 実装内容
+1. **型の移動とインポート修正**
+   - NulabAccountをbacklog-coreに移動
+   - CustomFieldType関連のインポートをbacklog_domain_modelsに統一
+   - NotificationReasonのインポートをbacklog_coreに統一
+   - CLI、MCPサーバーを含む全体のインポートパスを修正
+
+2. **削除したファイル・ディレクトリ**
+   - `/crates/backlog-issue/src/models/notification_reason.rs` - 非推奨の再エクスポートファイル
+   - `/crates/backlog-issue/src/models/custom_field_type.rs` - 非推奨の再エクスポートファイル
+   - `/crates/backlog-activity/src/models/` - modelsディレクトリ全体（空の再エクスポートのみ）
+   - `/crates/backlog-project/src/models/` - modelsディレクトリ全体（一時ファイルのクリーンアップ）
+
+3. **クリーンアップ結果**
+   - すべての非推奨の再エクスポートを削除
+   - 一時的な型定義ファイル（TypeId、ReasonId、ActivityContent等）を削除
+   - #[allow(deprecated)]属性をすべて削除
+   - 依存関係が完全にクリーンになった
+
+### 実装上の工夫
+- **段階的な削除**: インポートエラーを一つずつ解消しながら進行
+- **sedコマンドの活用**: 大量のインポート修正を効率的に実施
+- **即座のテスト実行**: 各変更後にテストを実行して動作確認
 
 ## 期待される成果
 

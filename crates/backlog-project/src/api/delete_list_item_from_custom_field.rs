@@ -5,7 +5,7 @@ use backlog_core::ProjectIdOrKey;
 #[cfg(feature = "writable")]
 use backlog_core::identifier::{CustomFieldId, CustomFieldItemId};
 #[cfg(feature = "writable")]
-use backlog_issue::CustomFieldType;
+use backlog_domain_models::CustomFieldType;
 
 /// Response type for deleting a list item from a custom field.
 #[cfg(feature = "writable")]

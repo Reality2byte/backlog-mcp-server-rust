@@ -107,7 +107,9 @@ pub use backlog_user::{
 
 // Activity module (from backlog_activity)
 #[cfg(feature = "activity")]
-pub use backlog_activity::{Activity, ActivityApi};
+pub use backlog_activity::ActivityApi;
+#[cfg(feature = "activity")]
+pub use backlog_core::activity::Activity;
 
 // Wiki module (from backlog_wiki)
 #[cfg(feature = "wiki")]

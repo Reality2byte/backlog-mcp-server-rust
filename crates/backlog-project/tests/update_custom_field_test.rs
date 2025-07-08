@@ -5,7 +5,7 @@ mod update_custom_field_tests {
         Date, ProjectKey,
         identifier::{CustomFieldId, IssueTypeId, ProjectId},
     };
-    use backlog_issue::CustomFieldSettings;
+    use backlog_domain_models::CustomFieldSettings;
     use backlog_project::api::{ProjectApi, UpdateCustomFieldParams};
     use chrono::NaiveDate;
     use client::test_utils::setup_client;

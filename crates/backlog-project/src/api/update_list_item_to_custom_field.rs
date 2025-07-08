@@ -1,6 +1,6 @@
 use backlog_api_core::{HttpMethod, IntoRequest};
 use backlog_core::{ProjectIdOrKey, identifier::CustomFieldId};
-use backlog_issue::CustomFieldType;
+use backlog_domain_models::CustomFieldType;
 use serde::Serialize;
 
 /// Represents a successful response from updating a list item in a custom field.

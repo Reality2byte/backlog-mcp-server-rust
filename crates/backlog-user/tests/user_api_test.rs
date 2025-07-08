@@ -638,7 +638,7 @@ async fn test_get_notifications_success() {
     assert!(!notifications[0].already_read);
     assert!(matches!(
         notifications[0].reason,
-        backlog_issue::NotificationReason::IssueCommented
+        backlog_core::activity::NotificationReason::IssueCommented
     ));
     assert_eq!(notifications[0].project.name, "Subtasking");
     assert!(notifications[0].issue.is_none());

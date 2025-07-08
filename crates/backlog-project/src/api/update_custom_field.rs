@@ -8,7 +8,7 @@ use backlog_core::{
     identifier::{CustomFieldId, IssueTypeId},
 };
 #[cfg(feature = "writable")]
-use backlog_issue::CustomFieldType;
+use backlog_domain_models::CustomFieldType;
 
 /// Response type for updating a custom field
 #[cfg(feature = "writable")]

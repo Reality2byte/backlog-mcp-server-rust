@@ -1,5 +1,4 @@
-use crate::models::NotificationReason;
-use backlog_core::{User, identifier::NotificationId};
+use backlog_core::{User, activity::NotificationReason, identifier::NotificationId};
 use serde::{Deserialize, Serialize};
 
 // Conditionally import and derive JsonSchema

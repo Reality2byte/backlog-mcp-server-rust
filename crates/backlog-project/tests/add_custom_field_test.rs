@@ -4,7 +4,7 @@ mod add_custom_field_tests {
         Date, ProjectKey,
         identifier::{Identifier, IssueTypeId},
     };
-    use backlog_issue::CustomFieldSettings;
+    use backlog_domain_models::CustomFieldSettings;
     use backlog_project::{AddCustomFieldParams, ProjectApi};
     use client::test_utils::setup_client;
     use std::str::FromStr;

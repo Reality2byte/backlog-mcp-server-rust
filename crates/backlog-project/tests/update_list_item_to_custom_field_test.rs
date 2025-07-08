@@ -62,7 +62,9 @@ mod tests {
         assert_eq!(custom_field.name, "Priority");
 
         // Verify the updated item
-        if let backlog_issue::CustomFieldSettings::SingleList(settings) = custom_field.settings {
+        if let backlog_domain_models::CustomFieldSettings::SingleList(settings) =
+            custom_field.settings
+        {
             let updated_item = settings
                 .items
                 .iter()
@@ -118,7 +120,9 @@ mod tests {
         assert_eq!(custom_field.id.value(), 10);
 
         // Verify the updated item
-        if let backlog_issue::CustomFieldSettings::MultipleList(settings) = custom_field.settings {
+        if let backlog_domain_models::CustomFieldSettings::MultipleList(settings) =
+            custom_field.settings
+        {
             let updated_item = settings
                 .items
                 .iter()
@@ -171,7 +175,9 @@ mod tests {
 
         assert!(result.is_ok());
         let custom_field = result.unwrap();
-        if let backlog_issue::CustomFieldSettings::SingleList(settings) = custom_field.settings {
+        if let backlog_domain_models::CustomFieldSettings::SingleList(settings) =
+            custom_field.settings
+        {
             let updated_item = settings
                 .items
                 .iter()
@@ -221,7 +227,9 @@ mod tests {
         assert!(result.is_ok());
         let custom_field = result.unwrap();
         assert_eq!(custom_field.name, "地域");
-        if let backlog_issue::CustomFieldSettings::SingleList(settings) = custom_field.settings {
+        if let backlog_domain_models::CustomFieldSettings::SingleList(settings) =
+            custom_field.settings
+        {
             let updated_item = settings
                 .items
                 .iter()

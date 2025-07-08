@@ -1,15 +1,10 @@
 pub mod api;
-pub mod models;
 //pub mod tests;
 
 // re-export domain models
 pub use backlog_domain_models::{
     Category, IssueType, Milestone, Priority, Project, Resolution, Status, Team,
 };
-
-// re-export activity models
-#[allow(deprecated)]
-pub use models::activity::{Activity, ActivityContent, Content, ReasonId, TypeId};
 
 pub use api::{
     GetCategoryListParams, GetCategoryListResponse, GetCustomFieldListParams,

@@ -1,6 +1,6 @@
 use backlog_api_core::IntoRequest;
 use backlog_core::ProjectIdOrKey;
-use backlog_issue::CustomFieldType;
+use backlog_domain_models::CustomFieldType;
 use serde::Serialize;
 
 /// Response type for getting custom field list

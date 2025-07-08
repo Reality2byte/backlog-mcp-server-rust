@@ -108,10 +108,10 @@ pub(crate) async fn get_custom_field_list_tool(
 }
 
 fn generate_custom_field_info(
-    field: &backlog_issue::CustomFieldType,
+    field: &backlog_domain_models::CustomFieldType,
 ) -> (i64, Option<serde_json::Value>, serde_json::Value) {
     use backlog_core::identifier::Identifier;
-    use backlog_issue::models::CustomFieldSettings;
+    use backlog_domain_models::CustomFieldSettings;
     use serde_json::json;
 
     match &field.settings {

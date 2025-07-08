@@ -6,10 +6,8 @@ use backlog_core::{
 };
 use serde::Serialize;
 
-#[allow(deprecated)]
-use crate::models::activity::Activity;
+use backlog_core::activity::Activity;
 
-#[allow(deprecated)]
 pub type GetProjectRecentUpdatesResponse = Vec<Activity>;
 
 #[derive(Debug, Clone, ToFormParams)]

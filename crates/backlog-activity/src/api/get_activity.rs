@@ -1,6 +1,5 @@
-use crate::models::Activity;
 use backlog_api_core::IntoRequest;
-use backlog_core::identifier::ActivityId;
+use backlog_core::{activity::Activity, identifier::ActivityId};
 use serde::Serialize;
 
 pub type GetActivityResponse = Activity;

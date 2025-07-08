@@ -4,7 +4,8 @@ use backlog_core::{
     ProjectIdOrKey,
     identifier::{CustomFieldId, CustomFieldItemId, Identifier},
 };
-use backlog_issue::{CustomFieldType, models::CustomFieldInput};
+use backlog_domain_models::CustomFieldType;
+use backlog_issue::models::CustomFieldInput;
 use backlog_project::GetCustomFieldListParams;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -51,7 +52,7 @@ fn convert_value_to_input(
     value: &Value,
     field_name: &str,
 ) -> Result<CustomFieldInput> {
-    use backlog_issue::models::CustomFieldSettings;
+    use backlog_domain_models::CustomFieldSettings;
 
     match &field.settings {
         CustomFieldSettings::Text => match value {

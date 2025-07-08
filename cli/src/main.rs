@@ -3324,18 +3324,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         } else {
                             for field in custom_fields {
                                 let field_type = match field.settings {
-                                    backlog_issue::CustomFieldSettings::Text => "Text",
-                                    backlog_issue::CustomFieldSettings::TextArea => "TextArea",
-                                    backlog_issue::CustomFieldSettings::Numeric(_) => "Numeric",
-                                    backlog_issue::CustomFieldSettings::Date(_) => "Date",
-                                    backlog_issue::CustomFieldSettings::SingleList(_) => {
+                                    backlog_domain_models::CustomFieldSettings::Text => "Text",
+                                    backlog_domain_models::CustomFieldSettings::TextArea => {
+                                        "TextArea"
+                                    }
+                                    backlog_domain_models::CustomFieldSettings::Numeric(_) => {
+                                        "Numeric"
+                                    }
+                                    backlog_domain_models::CustomFieldSettings::Date(_) => "Date",
+                                    backlog_domain_models::CustomFieldSettings::SingleList(_) => {
                                         "SingleList"
                                     }
-                                    backlog_issue::CustomFieldSettings::MultipleList(_) => {
+                                    backlog_domain_models::CustomFieldSettings::MultipleList(_) => {
                                         "MultipleList"
                                     }
-                                    backlog_issue::CustomFieldSettings::Checkbox(_) => "Checkbox",
-                                    backlog_issue::CustomFieldSettings::Radio(_) => "Radio",
+                                    backlog_domain_models::CustomFieldSettings::Checkbox(_) => {
+                                        "Checkbox"
+                                    }
+                                    backlog_domain_models::CustomFieldSettings::Radio(_) => "Radio",
                                 };
                                 let required_str = if field.required {
                                     "Required"
@@ -3578,14 +3584,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("✅ Custom field added successfully:");
                         println!("[{}] {}", field.id, field.name);
                         let field_type = match &field.settings {
-                            backlog_issue::CustomFieldSettings::Text => "Text",
-                            backlog_issue::CustomFieldSettings::TextArea => "TextArea",
-                            backlog_issue::CustomFieldSettings::Numeric(_) => "Numeric",
-                            backlog_issue::CustomFieldSettings::Date(_) => "Date",
-                            backlog_issue::CustomFieldSettings::SingleList(_) => "SingleList",
-                            backlog_issue::CustomFieldSettings::MultipleList(_) => "MultipleList",
-                            backlog_issue::CustomFieldSettings::Checkbox(_) => "Checkbox",
-                            backlog_issue::CustomFieldSettings::Radio(_) => "Radio",
+                            backlog_domain_models::CustomFieldSettings::Text => "Text",
+                            backlog_domain_models::CustomFieldSettings::TextArea => "TextArea",
+                            backlog_domain_models::CustomFieldSettings::Numeric(_) => "Numeric",
+                            backlog_domain_models::CustomFieldSettings::Date(_) => "Date",
+                            backlog_domain_models::CustomFieldSettings::SingleList(_) => {
+                                "SingleList"
+                            }
+                            backlog_domain_models::CustomFieldSettings::MultipleList(_) => {
+                                "MultipleList"
+                            }
+                            backlog_domain_models::CustomFieldSettings::Checkbox(_) => "Checkbox",
+                            backlog_domain_models::CustomFieldSettings::Radio(_) => "Radio",
                         };
                         println!("Type: {field_type}");
                         if !field.description.is_empty() {
@@ -3624,14 +3634,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("✅ Custom field deleted successfully:");
                         println!("[{}] {}", field.id, field.name);
                         let field_type = match &field.settings {
-                            backlog_issue::CustomFieldSettings::Text => "Text",
-                            backlog_issue::CustomFieldSettings::TextArea => "TextArea",
-                            backlog_issue::CustomFieldSettings::Numeric(_) => "Numeric",
-                            backlog_issue::CustomFieldSettings::Date(_) => "Date",
-                            backlog_issue::CustomFieldSettings::SingleList(_) => "SingleList",
-                            backlog_issue::CustomFieldSettings::MultipleList(_) => "MultipleList",
-                            backlog_issue::CustomFieldSettings::Checkbox(_) => "Checkbox",
-                            backlog_issue::CustomFieldSettings::Radio(_) => "Radio",
+                            backlog_domain_models::CustomFieldSettings::Text => "Text",
+                            backlog_domain_models::CustomFieldSettings::TextArea => "TextArea",
+                            backlog_domain_models::CustomFieldSettings::Numeric(_) => "Numeric",
+                            backlog_domain_models::CustomFieldSettings::Date(_) => "Date",
+                            backlog_domain_models::CustomFieldSettings::SingleList(_) => {
+                                "SingleList"
+                            }
+                            backlog_domain_models::CustomFieldSettings::MultipleList(_) => {
+                                "MultipleList"
+                            }
+                            backlog_domain_models::CustomFieldSettings::Checkbox(_) => "Checkbox",
+                            backlog_domain_models::CustomFieldSettings::Radio(_) => "Radio",
                         };
                         println!("Type: {field_type}");
                         if !field.description.is_empty() {
@@ -3666,7 +3680,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                         // Display list items if it's a list type field
                         match &field.settings {
-                            backlog_issue::CustomFieldSettings::SingleList(settings) => {
+                            backlog_domain_models::CustomFieldSettings::SingleList(settings) => {
                                 println!("Type: Single Selection List");
                                 println!("List items:");
                                 for item in &settings.items {
@@ -3679,7 +3693,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     println!("Allow add item: {allow}");
                                 }
                             }
-                            backlog_issue::CustomFieldSettings::MultipleList(settings) => {
+                            backlog_domain_models::CustomFieldSettings::MultipleList(settings) => {
                                 println!("Type: Multiple Selection List");
                                 println!("List items:");
                                 for item in &settings.items {
@@ -3737,7 +3751,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                         // Display list items if it's a list type field
                         match &field.settings {
-                            backlog_issue::CustomFieldSettings::SingleList(settings) => {
+                            backlog_domain_models::CustomFieldSettings::SingleList(settings) => {
                                 println!("Type: Single Selection List");
                                 println!("List items:");
                                 for item in &settings.items {
@@ -3757,7 +3771,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     println!("Allow add item: {allow}");
                                 }
                             }
-                            backlog_issue::CustomFieldSettings::MultipleList(settings) => {
+                            backlog_domain_models::CustomFieldSettings::MultipleList(settings) => {
                                 println!("Type: Multiple Selection List");
                                 println!("List items:");
                                 for item in &settings.items {
@@ -3818,7 +3832,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                         // Display remaining list items
                         match &field.settings {
-                            backlog_issue::CustomFieldSettings::SingleList(settings) => {
+                            backlog_domain_models::CustomFieldSettings::SingleList(settings) => {
                                 println!("Type: Single Selection List");
                                 println!("Remaining list items:");
                                 for item in &settings.items {
@@ -3831,7 +3845,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     println!("Allow add item: {allow}");
                                 }
                             }
-                            backlog_issue::CustomFieldSettings::MultipleList(settings) => {
+                            backlog_domain_models::CustomFieldSettings::MultipleList(settings) => {
                                 println!("Type: Multiple Selection List");
                                 println!("Remaining list items:");
                                 for item in &settings.items {
@@ -5666,7 +5680,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                                 // Display content based on type
                                 match &activity.content {
-                                    backlog_project::Content::Standard {
+                                    backlog_core::activity::Content::Standard {
                                         summary,
                                         description,
                                         ..
@@ -5679,7 +5693,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                             println!("Description: {preview}");
                                         }
                                     }
-                                    backlog_project::Content::UserManagement { users, .. } => {
+                                    backlog_core::activity::Content::UserManagement {
+                                        users,
+                                        ..
+                                    } => {
                                         if let Some(users) = users {
                                             println!("Users involved: {}", users.len());
                                             for user in users.iter().take(3) {
@@ -5758,7 +5775,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                                 // Display content based on type
                                 match &activity.content {
-                                    backlog_project::Content::Standard {
+                                    backlog_core::activity::Content::Standard {
                                         summary,
                                         description,
                                         ..
@@ -5771,7 +5788,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                             println!("Description: {preview}");
                                         }
                                     }
-                                    backlog_project::Content::UserManagement { users, .. } => {
+                                    backlog_core::activity::Content::UserManagement {
+                                        users,
+                                        ..
+                                    } => {
                                         if let Some(users) = users {
                                             println!("Users involved: {}", users.len());
                                             for user in users.iter().take(3) {

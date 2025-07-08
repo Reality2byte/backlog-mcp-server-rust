@@ -5,7 +5,7 @@ use backlog_api_macros::ToFormParams;
 #[cfg(feature = "writable")]
 use backlog_core::{Date, ProjectIdOrKey, identifier::IssueTypeId};
 #[cfg(feature = "writable")]
-use backlog_issue::CustomFieldType;
+use backlog_domain_models::CustomFieldType;
 #[cfg(feature = "writable")]
 use backlog_issue::CustomFieldTypeId;
 
