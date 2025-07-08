@@ -65,7 +65,6 @@ use backlog_issue::GetRecentlyViewedIssuesParamsBuilder;
 use backlog_issue::UnlinkSharedFileParams;
 #[cfg(feature = "issue_writable")]
 use backlog_issue::{AddIssueParamsBuilder, UpdateIssueParamsBuilder};
-use backlog_project::GetProjectListParams;
 #[cfg(feature = "project")]
 use backlog_project::GetProjectRecentUpdatesParams;
 #[cfg(feature = "project_writable")]
@@ -77,6 +76,7 @@ use backlog_project::{
     UpdateListItemToCustomFieldParams, UpdateStatusOrderParams, UpdateStatusParams,
     UpdateVersionParams, api::DeleteListItemFromCustomFieldParams,
 };
+use backlog_project::{GetProjectListParams, GetRecentlyViewedProjectsParamsBuilder};
 use backlog_space::GetLicenceParams;
 use backlog_space::GetSpaceDiskUsageParams;
 use backlog_space::GetSpaceLogoParams;
@@ -769,6 +769,18 @@ enum ProjectCommands {
         /// Project ID or Key
         #[clap(name = "PROJECT_ID_OR_KEY")]
         project_id_or_key: String,
+    },
+    /// List recently viewed projects
+    RecentlyViewed {
+        /// Sort order ("asc" or "desc", default: "desc")
+        #[clap(long)]
+        order: Option<String>,
+        /// Number of results to return (1-100, default: 20)
+        #[clap(long)]
+        count: Option<u32>,
+        /// Offset for pagination
+        #[clap(long)]
+        offset: Option<u32>,
     },
     /// List statuses for a project
     StatusList {
@@ -3240,6 +3252,57 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error getting project: {e}");
+                    }
+                }
+            }
+            ProjectCommands::RecentlyViewed {
+                order,
+                count,
+                offset,
+            } => {
+                println!("Getting recently viewed projects");
+
+                let mut params_builder = GetRecentlyViewedProjectsParamsBuilder::default();
+
+                if let Some(order) = order {
+                    params_builder.order(order);
+                }
+                if let Some(count) = count {
+                    params_builder.count(count);
+                }
+                if let Some(offset) = offset {
+                    params_builder.offset(offset);
+                }
+
+                let params = params_builder.build()?;
+                match client.project().get_recently_viewed_projects(params).await {
+                    Ok(projects) => {
+                        if projects.is_empty() {
+                            println!("No recently viewed projects found");
+                        } else {
+                            println!("\nRecently Viewed Projects:");
+                            println!("{}", "=".repeat(50));
+                            for (i, project) in projects.iter().enumerate() {
+                                println!(
+                                    "\n{}. [{}] {} ({})",
+                                    i + 1,
+                                    project.id,
+                                    project.name,
+                                    project.project_key
+                                );
+                                println!("   Archived: {}", project.archived);
+                                if project.use_wiki {
+                                    println!("   Features: Wiki enabled");
+                                }
+                                if project.use_file_sharing {
+                                    println!("   Features: File sharing enabled");
+                                }
+                            }
+                            println!();
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error getting recently viewed projects: {e}");
                     }
                 }
             }

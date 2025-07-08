@@ -23,6 +23,7 @@ mod get_project_list;
 mod get_project_recent_updates;
 mod get_project_team_list;
 mod get_project_user_list;
+mod get_recently_viewed_projects;
 mod get_resolution_list;
 mod get_status_list;
 mod project_api;
@@ -145,6 +146,10 @@ pub use get_category_list::{GetCategoryListParams, GetCategoryListResponse};
 pub use get_custom_field_list::{GetCustomFieldListParams, GetCustomFieldListResponse};
 pub use get_project_recent_updates::{
     GetProjectRecentUpdatesParams, GetProjectRecentUpdatesResponse,
+};
+pub use get_recently_viewed_projects::{
+    GetRecentlyViewedProjectsParams, GetRecentlyViewedProjectsParamsBuilder,
+    GetRecentlyViewedProjectsResponse,
 };
 pub use get_resolution_list::{GetResolutionListParams, GetResolutionListResponse};
 

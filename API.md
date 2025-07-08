@@ -2,8 +2,8 @@
 
 ## Summary
 - Total APIs: 149
-- Implemented: 125 (84%)
-- Not implemented: 24 (16%)
+- Implemented: 126 (85%)
+- Not implemented: 23 (15%)
 
 ### Spaces
 - ✅ GetSpace: Returns information about your space: GET /api/v2/space
@@ -210,7 +210,7 @@
 ### Recent
 - ❌ AddRecentlyViewedIssue: Add an issue which the user viewed recently: POST /api/v2/users/myself/recentlyViewedIssues
 - ✅ GetListOfRecentlyViewedIssues: Returns list of issues which the user viewed recently: GET /api/v2/users/myself/recentlyViewedIssues
-- ❌ GetListOfRecentlyViewedProjects: Returns list of projects which the user viewed recently: GET /api/v2/users/myself/recentlyViewedProjects
+- ✅ GetListOfRecentlyViewedProjects: Returns list of projects which the user viewed recently: GET /api/v2/users/myself/recentlyViewedProjects
 - ✅ GetListOfRecentlyViewedWikis: Returns list of Wikis which the user viewed recently: GET /api/v2/users/myself/recentlyViewedWikis
 - ❌ AddRecentlyViewedWiki: Add a wiki which the user viewed recently: POST /api/v2/users/myself/recentlyViewedWikis
 

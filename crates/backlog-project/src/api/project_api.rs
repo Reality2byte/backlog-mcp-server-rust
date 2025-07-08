@@ -10,8 +10,8 @@ use crate::api::{
     GetPriorityListResponse, GetProjectDetailParams, GetProjectDetailResponse,
     GetProjectIconParams, GetProjectRecentUpdatesParams, GetProjectRecentUpdatesResponse,
     GetProjectTeamListParams, GetProjectTeamListResponse, GetProjectUserListParams,
-    GetProjectUserListResponse, GetResolutionListParams, GetResolutionListResponse,
-    GetStatusListParams, GetStatusListResponse,
+    GetProjectUserListResponse, GetRecentlyViewedProjectsParams, GetRecentlyViewedProjectsResponse,
+    GetResolutionListParams, GetResolutionListResponse, GetStatusListParams, GetStatusListResponse,
     get_project_list::{GetProjectListParams, GetProjectListResponse},
 };
 #[cfg(feature = "writable")]
@@ -147,6 +147,16 @@ impl ProjectApi {
         &self,
         params: GetProjectRecentUpdatesParams,
     ) -> Result<GetProjectRecentUpdatesResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Gets the list of recently viewed projects.
+    ///
+    /// Corresponds to `GET /api/v2/users/myself/recentlyViewedProjects`.
+    pub async fn get_recently_viewed_projects(
+        &self,
+        params: GetRecentlyViewedProjectsParams,
+    ) -> Result<GetRecentlyViewedProjectsResponse> {
         self.0.execute(params).await
     }
 
