@@ -5,7 +5,8 @@ mod activity_commands;
     feature = "team",
     feature = "star",
     feature = "rate-limit",
-    feature = "watching"
+    feature = "watching",
+    feature = "webhook"
 ))]
 mod commands;
 #[cfg(feature = "project")]
@@ -148,6 +149,9 @@ enum Commands {
     /// Manage watchings
     #[cfg(feature = "watching")]
     Watching(WatchingArgs),
+    /// Manage webhooks
+    #[cfg(feature = "webhook")]
+    Webhook(commands::webhook::WebhookArgs),
 }
 
 #[cfg(feature = "rate-limit")]
@@ -6066,6 +6070,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 command: watching_args.command,
             })
             .await?;
+        }
+        #[cfg(feature = "webhook")]
+        Commands::Webhook(webhook_args) => {
+            commands::webhook::execute(&client, webhook_args).await?;
         }
     }
 

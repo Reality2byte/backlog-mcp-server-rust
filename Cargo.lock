@@ -193,6 +193,7 @@ dependencies = [
  "backlog-team",
  "backlog-user",
  "backlog-watching",
+ "backlog-webhook",
  "backlog-wiki",
  "chrono",
  "client",
@@ -443,6 +444,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "backlog-webhook"
+version = "0.1.0"
+dependencies = [
+ "backlog-api-core",
+ "backlog-api-macros",
+ "backlog-core",
+ "backlog-domain-models",
+ "chrono",
+ "client",
+ "derive_builder",
+ "schemars",
+ "serde",
+ "serde_json",
+ "tokio",
+ "wiremock",
+]
+
+[[package]]
 name = "backlog-wiki"
 version = "0.1.0"
 dependencies = [
@@ -503,6 +522,7 @@ dependencies = [
  "backlog-team",
  "backlog-user",
  "backlog-watching",
+ "backlog-webhook",
  "backlog-wiki",
  "chrono",
  "clap",

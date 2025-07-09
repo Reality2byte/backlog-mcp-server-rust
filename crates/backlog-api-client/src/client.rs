@@ -89,4 +89,9 @@ impl BacklogApiClient {
     pub fn watching(&self) -> backlog_watching::WatchingApi {
         backlog_watching::WatchingApi::new(self.client.clone())
     }
+
+    #[cfg(feature = "webhook")]
+    pub fn webhook(&self) -> backlog_webhook::WebhookApi {
+        backlog_webhook::WebhookApi::new(self.client.clone())
+    }
 }

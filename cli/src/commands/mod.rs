@@ -6,3 +6,5 @@ pub mod star;
 pub mod team;
 #[cfg(feature = "watching")]
 pub mod watching;
+#[cfg(feature = "webhook")]
+pub mod webhook;

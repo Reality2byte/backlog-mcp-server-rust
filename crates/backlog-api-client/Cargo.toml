@@ -5,7 +5,7 @@ edition.workspace = true
 license.workspace = true
 
 [features]
-default = ["issue", "project", "space", "user", "document", "git", "file", "wiki", "team", "star", "rate-limit", "watching"] # Library defaults without writable features
+default = ["issue", "project", "space", "user", "document", "git", "file", "wiki", "team", "star", "rate-limit", "watching", "webhook"] # Library defaults without writable features
 issue = ["backlog-issue"]
 project = ["backlog-project", "backlog-domain-models"]
 space = ["backlog-space"]
@@ -19,6 +19,7 @@ team = ["backlog-team", "backlog-domain-models"]
 star = ["backlog-star", "backlog-domain-models"]
 rate-limit = ["backlog-rate-limit"]
 watching = ["backlog-watching"]
+webhook = ["backlog-webhook"]
 schemars = [ # Added schemars feature to propagate to sub-crates
     "backlog-core/schemars",
     "backlog-domain-models?/schemars",
@@ -32,8 +33,9 @@ schemars = [ # Added schemars feature to propagate to sub-crates
     "backlog-wiki?/schemars",
     "backlog-team?/schemars",
     # "backlog-star?/schemars", # Removed as backlog-star doesn't have this feature
+    "backlog-webhook?/schemars",
 ]
-all_writable = ["issue_writable", "project_writable", "space_writable", "user_writable", "git_writable", "wiki_writable", "team_writable", "star_writable", "watching_writable"]
+all_writable = ["issue_writable", "project_writable", "space_writable", "user_writable", "git_writable", "wiki_writable", "team_writable", "star_writable", "watching_writable", "webhook_writable"]
 issue_writable = ["backlog-issue?/writable", "client/writable"]
 project_writable = ["backlog-project?/writable", "client/writable"]
 space_writable = ["backlog-space?/writable", "client/writable"]
@@ -43,6 +45,7 @@ wiki_writable = ["backlog-wiki?/writable", "client/writable"]
 team_writable = ["backlog-team?/writable", "client/writable"]
 star_writable = ["backlog-star?/writable", "client/writable"]
 watching_writable = ["backlog-watching?/writable", "client/writable"]
+webhook_writable = ["backlog-webhook?/writable", "client/writable"]
 
 [dependencies]
 client = { path = "../client" }
@@ -62,6 +65,7 @@ backlog-team = { path = "../backlog-team", optional = true }
 backlog-star = { path = "../backlog-star", optional = true }
 backlog-rate-limit = { path = "../backlog-rate-limit", optional = true }
 backlog-watching = { path = "../backlog-watching", optional = true }
+backlog-webhook = { path = "../backlog-webhook", optional = true }
 tokio = { workspace = true }
 url = { workspace = true }
 

@@ -150,3 +150,7 @@ pub use backlog_watching::{
 
 #[cfg(all(feature = "watching", feature = "watching_writable"))]
 pub use backlog_watching::{AddWatchingParams, UpdateWatchingParams};
+
+// Webhook module (from backlog_webhook)
+#[cfg(feature = "webhook")]
+pub use backlog_webhook::{GetWebhookListParams, GetWebhookListResponse, Webhook, WebhookApi};

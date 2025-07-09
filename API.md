@@ -109,7 +109,7 @@
 - ✅ UpdateVersionMilestone: Updates information about Version/Milestone: PATCH /api/v2/projects/:projectIdOrKey/versions/:id
 
 ### Webhook
-- ❌ GetListOfWebhooks: Returns list of webhooks: GET /api/v2/projects/:projectIdOrKey/webhooks
+- ✅ GetListOfWebhooks: Returns list of webhooks: GET /api/v2/projects/:projectIdOrKey/webhooks
 - ❌ AddWebhook: Adds new webhook: POST /api/v2/projects/:projectIdOrKey/webhooks
 - ❌ DeleteWebhook: Deletes webhook: DELETE /api/v2/projects/:projectIdOrKey/webhooks/:webhookId
 - ❌ UpdateWebhook: Updates information about webhook: PATCH /api/v2/projects/:projectIdOrKey/webhooks/:webhookId
