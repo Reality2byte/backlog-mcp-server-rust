@@ -2,9 +2,9 @@ mod common;
 
 use backlog_core::{
     ProjectIdOrKey, ProjectKey,
-    id::{ProjectId, UserId},
+    id::{ProjectId, UserId, WebhookId},
 };
-use backlog_webhook::{GetWebhookListParams, Webhook, WebhookApi};
+use backlog_webhook::{GetWebhookListParams, GetWebhookParams, Webhook, WebhookApi};
 use common::*;
 use wiremock::{Mock, ResponseTemplate, matchers};
 
@@ -182,4 +182,95 @@ fn test_webhook_model_fields() {
     assert_eq!(webhook.activity_type_ids, vec![1, 2, 3]);
     assert_eq!(webhook.created_user.id, UserId::new(1));
     assert_eq!(webhook.updated_user.id, UserId::new(1));
+}
+
+#[tokio::test]
+async fn test_get_webhook_params_path() {
+    use backlog_api_core::IntoRequest;
+
+    let params = GetWebhookParams {
+        project_id_or_key: ProjectIdOrKey::from("TEST".parse::<ProjectKey>().unwrap()),
+        webhook_id: WebhookId::new(1),
+    };
+    assert_eq!(params.path(), "/api/v2/projects/TEST/webhooks/1");
+
+    let params_with_id = GetWebhookParams {
+        project_id_or_key: ProjectIdOrKey::from(ProjectId::new(123)),
+        webhook_id: WebhookId::new(456),
+    };
+    assert_eq!(params_with_id.path(), "/api/v2/projects/123/webhooks/456");
+}
+
+#[tokio::test]
+async fn test_get_webhook_success() {
+    let mock_server = setup_mock_server().await;
+    let response_body = mock_single_webhook_response();
+
+    Mock::given(matchers::method("GET"))
+        .and(matchers::path("/api/v2/projects/TEST/webhooks/1"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&response_body))
+        .mount(&mock_server)
+        .await;
+
+    let client = client::Client::new(&mock_server.uri())
+        .unwrap()
+        .with_api_key("test-api-key");
+    let api = WebhookApi::new(client);
+
+    let result = api
+        .get_webhook("TEST".parse::<ProjectKey>().unwrap(), WebhookId::new(1))
+        .await;
+    assert!(result.is_ok());
+
+    let webhook = result.unwrap();
+    assert_eq!(webhook.id, 1);
+    assert_eq!(webhook.name, "webhook1");
+    assert_eq!(webhook.description, "test webhook 1");
+    assert_eq!(webhook.hook_url, "http://example.com/webhook1");
+    assert!(!webhook.all_event);
+    assert_eq!(webhook.activity_type_ids, vec![1, 2, 3, 4, 5]);
+}
+
+#[tokio::test]
+async fn test_get_webhook_with_project_id() {
+    let mock_server = setup_mock_server().await;
+    let response_body = mock_single_webhook_response();
+
+    Mock::given(matchers::method("GET"))
+        .and(matchers::path("/api/v2/projects/123/webhooks/456"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(&response_body))
+        .mount(&mock_server)
+        .await;
+
+    let client = client::Client::new(&mock_server.uri())
+        .unwrap()
+        .with_api_key("test-api-key");
+    let api = WebhookApi::new(client);
+
+    let result = api
+        .get_webhook(ProjectId::new(123), WebhookId::new(456))
+        .await;
+    assert!(result.is_ok());
+}
+
+#[tokio::test]
+async fn test_get_webhook_not_found() {
+    let mock_server = setup_mock_server().await;
+    let response_body = mock_error_response();
+
+    Mock::given(matchers::method("GET"))
+        .and(matchers::path("/api/v2/projects/TEST/webhooks/999"))
+        .respond_with(ResponseTemplate::new(404).set_body_json(&response_body))
+        .mount(&mock_server)
+        .await;
+
+    let client = client::Client::new(&mock_server.uri())
+        .unwrap()
+        .with_api_key("test-api-key");
+    let api = WebhookApi::new(client);
+
+    let result = api
+        .get_webhook("TEST".parse::<ProjectKey>().unwrap(), WebhookId::new(999))
+        .await;
+    assert!(result.is_err());
 }

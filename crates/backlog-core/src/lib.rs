@@ -46,6 +46,6 @@ pub mod id {
         IssueId, IssueTypeId, MilestoneId, NotificationId, PriorityId, ProjectId,
         PullRequestAttachmentId, PullRequestCommentId, PullRequestId, PullRequestNumber,
         RepositoryId, ResolutionId, SharedFileId, SpaceId, StarId, StatusId, SvnRevision, TeamId,
-        UserId, WatchingId, WikiAttachmentId, WikiId, WikiTagId,
+        UserId, WatchingId, WebhookId, WikiAttachmentId, WikiId, WikiTagId,
     };
 }

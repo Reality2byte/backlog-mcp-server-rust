@@ -77,3 +77,32 @@ pub fn mock_error_response() -> serde_json::Value {
         ]
     })
 }
+
+pub fn mock_single_webhook_response() -> serde_json::Value {
+    json!({
+        "id": 1,
+        "name": "webhook1",
+        "description": "test webhook 1",
+        "hookUrl": "http://example.com/webhook1",
+        "allEvent": false,
+        "activityTypeIds": [1, 2, 3, 4, 5],
+        "createdUser": {
+            "id": 1,
+            "userId": "admin",
+            "name": "admin",
+            "roleType": 1,
+            "lang": "ja",
+            "mailAddress": "test@example.com"
+        },
+        "created": "2023-01-01T00:00:00Z",
+        "updatedUser": {
+            "id": 1,
+            "userId": "admin",
+            "name": "admin",
+            "roleType": 1,
+            "lang": "ja",
+            "mailAddress": "test@example.com"
+        },
+        "updated": "2023-01-01T00:00:00Z"
+    })
+}
