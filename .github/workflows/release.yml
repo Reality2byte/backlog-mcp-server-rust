@@ -1,0 +1,264 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            name: x86_64-linux
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            name: aarch64-linux
+            use-cross: true
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            name: x86_64-macos
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            name: aarch64-macos
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            name: x86_64-windows
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      
+      - name: Install cross-compilation dependencies
+        if: matrix.use-cross
+        run: |
+          cargo install cross --git https://github.com/cross-rs/cross
+      
+      - name: Build (native)
+        if: '!matrix.use-cross'
+        run: |
+          cargo build --release --package blg --target ${{ matrix.target }}
+          cargo build --release --package mcp-backlog-server --target ${{ matrix.target }}
+      
+      - name: Build (cross)
+        if: matrix.use-cross
+        run: |
+          cross build --release --package blg --target ${{ matrix.target }}
+          cross build --release --package mcp-backlog-server --target ${{ matrix.target }}
+      
+      - name: Package (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          cd target/${{ matrix.target }}/release
+          tar czf ../../../blg-${VERSION}-${{ matrix.name }}.tar.gz blg
+          tar czf ../../../mcp-backlog-server-${VERSION}-${{ matrix.name }}.tar.gz mcp-backlog-server
+          cd ../../../
+          
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF -replace 'refs/tags/', ''
+          cd target/${{ matrix.target }}/release
+          Compress-Archive -Path blg.exe -DestinationPath ../../../blg-$version-${{ matrix.name }}.zip
+          Compress-Archive -Path mcp-backlog-server.exe -DestinationPath ../../../mcp-backlog-server-$version-${{ matrix.name }}.zip
+          cd ../../../
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-${{ matrix.name }}
+          path: |
+            *.tar.gz
+            *.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Get version
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      
+      - name: List artifacts
+        run: ls -la dist/
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: false
+          prerelease: ${{ contains(github.ref, '-') }}
+          files: dist/*
+          generate_release_notes: true
+          body: |
+            ## Installation
+            
+            ### Homebrew
+            ```bash
+            brew tap safx/tap
+            brew install blg
+            brew install mcp-backlog-server
+            ```
+            
+            ### Manual Download
+            Download the appropriate binary for your platform from the assets below.
+            
+            ## Changes
+            See the full changelog below.
+
+  update-homebrew-tap:
+    needs: release
+    runs-on: ubuntu-latest
+    if: '!contains(github.ref, '-')'  # Skip for pre-releases
+    
+    steps:
+      - name: Checkout tap repository
+        uses: actions/checkout@v4
+        with:
+          repository: safx/homebrew-tap
+          token: ${{ secrets.TAP_GITHUB_TOKEN }}
+          path: homebrew-tap
+      
+      - name: Update Formula
+        run: |
+          cd homebrew-tap
+          VERSION=${{ needs.release.outputs.version }}
+          
+          # Download and calculate SHA256
+          declare -A SHAS
+          
+          for tool in blg mcp-backlog-server; do
+            for platform in aarch64-macos x86_64-macos aarch64-linux x86_64-linux; do
+              URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/${tool}-v${VERSION}-${platform}.tar.gz"
+              echo "Downloading ${tool}-${platform}..."
+              curl -sL "${URL}" -o "${tool}-${platform}.tar.gz"
+              SHA=$(shasum -a 256 "${tool}-${platform}.tar.gz" | awk '{print $1}')
+              SHAS["${tool}-${platform}"]=$SHA
+              rm "${tool}-${platform}.tar.gz"
+            done
+          done
+          
+          # Update blg.rb
+          cat > Formula/blg.rb << EOF
+          class Blg < Formula
+            desc "Command-line interface for Backlog API"
+            homepage "https://github.com/${{ github.repository }}"
+            license "MIT"
+            version "${VERSION}"
+          
+            on_macos do
+              if Hardware::CPU.arm?
+                url "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/blg-v${VERSION}-aarch64-macos.tar.gz"
+                sha256 "${SHAS[blg-aarch64-macos]}"
+              else
+                url "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/blg-v${VERSION}-x86_64-macos.tar.gz"
+                sha256 "${SHAS[blg-x86_64-macos]}"
+              end
+            end
+          
+            on_linux do
+              if Hardware::CPU.arm?
+                url "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/blg-v${VERSION}-aarch64-linux.tar.gz"
+                sha256 "${SHAS[blg-aarch64-linux]}"
+              else
+                url "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/blg-v${VERSION}-x86_64-linux.tar.gz"
+                sha256 "${SHAS[blg-x86_64-linux]}"
+              end
+            end
+          
+            def install
+              bin.install "blg"
+            end
+          
+            test do
+              assert_match version.to_s, shell_output("#{bin}/blg --version 2>&1")
+              assert_match "USAGE", shell_output("#{bin}/blg --help 2>&1")
+            end
+          end
+          EOF
+          
+          # Update mcp-backlog-server.rb
+          cat > Formula/mcp-backlog-server.rb << EOF
+          class McpBacklogServer < Formula
+            desc "Model Context Protocol server for Backlog API"
+            homepage "https://github.com/${{ github.repository }}"
+            license "MIT"
+            version "${VERSION}"
+          
+            on_macos do
+              if Hardware::CPU.arm?
+                url "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/mcp-backlog-server-v${VERSION}-aarch64-macos.tar.gz"
+                sha256 "${SHAS[mcp-backlog-server-aarch64-macos]}"
+              else
+                url "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/mcp-backlog-server-v${VERSION}-x86_64-macos.tar.gz"
+                sha256 "${SHAS[mcp-backlog-server-x86_64-macos]}"
+              end
+            end
+          
+            on_linux do
+              if Hardware::CPU.arm?
+                url "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/mcp-backlog-server-v${VERSION}-aarch64-linux.tar.gz"
+                sha256 "${SHAS[mcp-backlog-server-aarch64-linux]}"
+              else
+                url "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/mcp-backlog-server-v${VERSION}-x86_64-linux.tar.gz"
+                sha256 "${SHAS[mcp-backlog-server-x86_64-linux]}"
+              end
+            end
+          
+            def install
+              bin.install "mcp-backlog-server"
+            end
+          
+            def caveats
+              <<~EOS
+                To use mcp-backlog-server, you need to set the following environment variables:
+                  export BACKLOG_BASE_URL="https://your-space.backlog.com"
+                  export BACKLOG_API_KEY="your-api-key"
+                
+                For MCP client configuration, see:
+                  https://github.com/${{ github.repository }}#mcp-server
+              EOS
+            end
+          
+            test do
+              assert_predicate bin/"mcp-backlog-server", :exist?
+              assert_predicate bin/"mcp-backlog-server", :executable?
+            end
+          end
+          EOF
+          
+      - name: Commit and push
+        run: |
+          cd homebrew-tap
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add Formula/*.rb
+          git commit -m "Update to version ${{ needs.release.outputs.version }}" || echo "No changes to commit"
+          git push
