@@ -98,6 +98,18 @@ pub enum WebhookCommands {
         #[arg(long, value_delimiter = ',')]
         activity_type_ids: Option<Vec<u32>>,
     },
+    /// Delete a webhook
+    #[cfg(feature = "webhook_writable")]
+    #[clap(alias = "rm")]
+    Delete {
+        /// Project ID or key
+        #[arg(short, long)]
+        project: String,
+
+        /// Webhook ID to delete
+        #[arg(short = 'w', long)]
+        webhook_id: u32,
+    },
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -157,6 +169,11 @@ pub async fn execute(client: &BacklogApiClient, args: WebhookArgs) -> Result<(),
             )
             .await
         }
+        #[cfg(feature = "webhook_writable")]
+        WebhookCommands::Delete {
+            project,
+            webhook_id,
+        } => delete_webhook(client, &project, webhook_id).await,
     }
 }
 
@@ -450,6 +467,29 @@ async fn update_webhook(
 
     println!("Webhook updated successfully!");
     display_webhook_table(&updated_webhook);
+
+    Ok(())
+}
+
+#[cfg(feature = "webhook_writable")]
+async fn delete_webhook(
+    client: &BacklogApiClient,
+    project: &str,
+    webhook_id: u32,
+) -> Result<(), Box<dyn Error>> {
+    let project_id_or_key = parse_project_id_or_key(project)?;
+
+    let deleted_webhook = client
+        .webhook()
+        .delete_webhook(project_id_or_key, WebhookId::new(webhook_id))
+        .await?;
+
+    println!("Webhook deleted successfully!");
+    println!(
+        "Deleted webhook '{}' (ID: {})",
+        deleted_webhook.name, deleted_webhook.id
+    );
+    display_webhook_table(&deleted_webhook);
 
     Ok(())
 }

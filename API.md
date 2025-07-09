@@ -2,8 +2,8 @@
 
 ## Summary
 - Total APIs: 149
-- Implemented: 131 (88%)
-- Not implemented: 18 (12%)
+- Implemented: 132 (89%)
+- Not implemented: 17 (11%)
 
 ### Spaces
 - ✅ GetSpace: Returns information about your space: GET /api/v2/space
@@ -111,7 +111,7 @@
 ### Webhook
 - ✅ GetListOfWebhooks: Returns list of webhooks: GET /api/v2/projects/:projectIdOrKey/webhooks
 - ✅ AddWebhook: Adds new webhook: POST /api/v2/projects/:projectIdOrKey/webhooks
-- ❌ DeleteWebhook: Deletes webhook: DELETE /api/v2/projects/:projectIdOrKey/webhooks/:webhookId
+- ✅ DeleteWebhook: Deletes webhook: DELETE /api/v2/projects/:projectIdOrKey/webhooks/:webhookId
 - ✅ UpdateWebhook: Updates information about webhook: PATCH /api/v2/projects/:projectIdOrKey/webhooks/:webhookId
 - ✅ GetWebhook: Returns information about webhook: GET /api/v2/projects/:projectIdOrKey/webhooks/:webhookId
 

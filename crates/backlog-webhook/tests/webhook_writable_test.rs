@@ -401,4 +401,122 @@ mod tests {
         let result = api.execute_add_webhook(params).await;
         assert!(result.is_err());
     }
+
+    // Delete webhook tests
+    #[tokio::test]
+    async fn test_delete_webhook_params_path() {
+        use backlog_webhook::DeleteWebhookParams;
+
+        let params = DeleteWebhookParams::new(
+            ProjectIdOrKey::from("TEST".parse::<ProjectKey>().unwrap()),
+            WebhookId::new(123),
+        );
+        assert_eq!(params.path(), "/api/v2/projects/TEST/webhooks/123");
+
+        let params_with_id = DeleteWebhookParams::new(
+            ProjectIdOrKey::from(ProjectId::new(456)),
+            WebhookId::new(789),
+        );
+        assert_eq!(params_with_id.path(), "/api/v2/projects/456/webhooks/789");
+    }
+
+    #[tokio::test]
+    async fn test_delete_webhook_params_method() {
+        use backlog_api_core::HttpMethod;
+        use backlog_webhook::DeleteWebhookParams;
+
+        let params = DeleteWebhookParams::new(
+            ProjectIdOrKey::from("TEST".parse::<ProjectKey>().unwrap()),
+            WebhookId::new(123),
+        );
+        assert_eq!(params.method(), HttpMethod::Delete);
+    }
+
+    #[tokio::test]
+    async fn test_delete_webhook_success() {
+        let mock_server = setup_mock_server().await;
+        let response_body = mock_single_webhook_response();
+
+        Mock::given(matchers::method("DELETE"))
+            .and(matchers::path("/api/v2/projects/TEST/webhooks/1"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&response_body))
+            .mount(&mock_server)
+            .await;
+
+        let client = client::Client::new(&mock_server.uri())
+            .unwrap()
+            .with_api_key("test-api-key");
+        let api = WebhookApi::new(client);
+
+        let result = api
+            .delete_webhook(
+                ProjectIdOrKey::from("TEST".parse::<ProjectKey>().unwrap()),
+                WebhookId::new(1),
+            )
+            .await;
+        assert!(result.is_ok(), "Error: {:?}", result.err());
+
+        let webhook = result.unwrap();
+        assert_eq!(webhook.id, 1);
+        assert_eq!(webhook.name, "webhook1");
+    }
+
+    #[tokio::test]
+    async fn test_delete_webhook_not_found() {
+        let mock_server = setup_mock_server().await;
+        let response_body = mock_error_response();
+
+        Mock::given(matchers::method("DELETE"))
+            .and(matchers::path("/api/v2/projects/TEST/webhooks/999"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(&response_body))
+            .mount(&mock_server)
+            .await;
+
+        let client = client::Client::new(&mock_server.uri())
+            .unwrap()
+            .with_api_key("test-api-key");
+        let api = WebhookApi::new(client);
+
+        let result = api
+            .delete_webhook(
+                ProjectIdOrKey::from("TEST".parse::<ProjectKey>().unwrap()),
+                WebhookId::new(999),
+            )
+            .await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_delete_webhook_forbidden() {
+        let mock_server = setup_mock_server().await;
+        let response_body = serde_json::json!({
+            "errors": [{
+                "message": "You do not have permission to delete this webhook",
+                "code": 3,
+                "moreInfo": ""
+            }]
+        });
+
+        Mock::given(matchers::method("DELETE"))
+            .and(matchers::path("/api/v2/projects/TEST/webhooks/1"))
+            .respond_with(ResponseTemplate::new(403).set_body_json(&response_body))
+            .mount(&mock_server)
+            .await;
+
+        let client = client::Client::new(&mock_server.uri())
+            .unwrap()
+            .with_api_key("test-api-key");
+        let api = WebhookApi::new(client);
+
+        let result = api
+            .delete_webhook(
+                ProjectIdOrKey::from("TEST".parse::<ProjectKey>().unwrap()),
+                WebhookId::new(1),
+            )
+            .await;
+        assert!(result.is_err());
+        // Verify it's a permission error
+        let err_str = format!("{:?}", result.err());
+        assert!(err_str.contains("403") || err_str.contains("permission"));
+    }
 }

@@ -1,5 +1,7 @@
 #[cfg(feature = "writable")]
 use crate::api::add_webhook::{AddWebhookParams, AddWebhookParamsBuilder, AddWebhookResponse};
+#[cfg(feature = "writable")]
+use crate::api::delete_webhook::{DeleteWebhookParams, DeleteWebhookResponse};
 use crate::api::get_webhook::{GetWebhookParams, GetWebhookResponse};
 use crate::api::get_webhook_list::{GetWebhookListParams, GetWebhookListResponse};
 #[cfg(feature = "writable")]
@@ -84,6 +86,18 @@ impl WebhookApi {
         &self,
         params: AddWebhookParams,
     ) -> Result<AddWebhookResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Delete a webhook from a project.
+    /// Corresponds to `DELETE /api/v2/projects/:projectIdOrKey/webhooks/:webhookId`.
+    #[cfg(feature = "writable")]
+    pub async fn delete_webhook(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        webhook_id: impl Into<WebhookId>,
+    ) -> Result<DeleteWebhookResponse> {
+        let params = DeleteWebhookParams::new(project_id_or_key, webhook_id);
         self.0.execute(params).await
     }
 }
