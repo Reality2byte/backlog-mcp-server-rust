@@ -822,6 +822,12 @@ enum ProjectCommands {
         #[clap(name = "PROJECT_ID_OR_KEY")]
         project_id_or_key: String,
     },
+    /// List administrators for a project
+    AdminList {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+    },
     /// Add a user to a project
     #[cfg(feature = "project_writable")]
     UserAdd {
@@ -3506,6 +3512,40 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error listing project users: {e}");
+                    }
+                }
+            }
+            ProjectCommands::AdminList { project_id_or_key } => {
+                println!("Listing administrators for project: {project_id_or_key}");
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let params =
+                    backlog_project::api::GetProjectAdministratorListParams::new(proj_id_or_key);
+                match client
+                    .project()
+                    .get_project_administrator_list(params)
+                    .await
+                {
+                    Ok(admins) => {
+                        if admins.is_empty() {
+                            println!("No administrators found in this project");
+                        } else {
+                            println!("\nProject Administrators:");
+                            println!("{:-<80}", "");
+                            for admin in admins {
+                                let last_login = match admin.last_login_time {
+                                    Some(time) => time.format("%Y-%m-%d %H:%M:%S").to_string(),
+                                    None => "Never".to_string(),
+                                };
+                                println!(
+                                    "[{}] {} ({}) - Last login: {}",
+                                    admin.id, admin.name, admin.mail_address, last_login
+                                );
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error listing project administrators: {e}");
                     }
                 }
             }

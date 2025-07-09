@@ -7,7 +7,8 @@ use crate::api::{
     GetCategoryListParams, GetCategoryListResponse, GetCustomFieldListParams,
     GetCustomFieldListResponse, GetIssueTypeListParams, GetIssueTypeListResponse,
     GetMilestoneListParams, GetMilestoneListResponse, GetPriorityListParams,
-    GetPriorityListResponse, GetProjectDetailParams, GetProjectDetailResponse,
+    GetPriorityListResponse, GetProjectAdministratorListParams,
+    GetProjectAdministratorListResponse, GetProjectDetailParams, GetProjectDetailResponse,
     GetProjectIconParams, GetProjectRecentUpdatesParams, GetProjectRecentUpdatesResponse,
     GetProjectTeamListParams, GetProjectTeamListResponse, GetProjectUserListParams,
     GetProjectUserListResponse, GetRecentlyViewedProjectsParams, GetRecentlyViewedProjectsResponse,
@@ -128,6 +129,16 @@ impl ProjectApi {
         &self,
         params: GetProjectUserListParams,
     ) -> Result<GetProjectUserListResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Gets the list of project administrators.
+    ///
+    /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/administrators`.
+    pub async fn get_project_administrator_list(
+        &self,
+        params: GetProjectAdministratorListParams,
+    ) -> Result<GetProjectAdministratorListResponse> {
         self.0.execute(params).await
     }
 

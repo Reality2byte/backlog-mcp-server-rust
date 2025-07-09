@@ -19,6 +19,7 @@ mod get_custom_field_list;
 mod get_issue_type_list;
 mod get_milestone_list;
 mod get_priority_list;
+mod get_project_administrator_list;
 mod get_project_detail;
 mod get_project_icon;
 mod get_project_list;
@@ -135,6 +136,9 @@ pub use delete_list_item_from_custom_field::DeleteListItemFromCustomFieldParams;
 #[cfg(feature = "writable")]
 pub use delete_list_item_from_custom_field::DeleteListItemFromCustomFieldResponse;
 
+pub use get_project_administrator_list::{
+    GetProjectAdministratorListParams, GetProjectAdministratorListResponse,
+};
 pub use get_project_detail::{GetProjectDetailParams, GetProjectDetailResponse};
 
 pub use get_project_list::{GetProjectListParams, GetProjectListResponse};
