@@ -5,6 +5,7 @@ pub async fn setup_mock_server() -> MockServer {
     MockServer::start().await
 }
 
+#[allow(dead_code)]
 pub fn mock_webhook_list_response() -> serde_json::Value {
     json!([
         {
@@ -62,6 +63,7 @@ pub fn mock_webhook_list_response() -> serde_json::Value {
     ])
 }
 
+#[allow(dead_code)]
 pub fn mock_empty_webhook_list_response() -> serde_json::Value {
     json!([])
 }

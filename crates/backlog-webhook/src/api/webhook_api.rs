@@ -1,5 +1,9 @@
 use crate::api::get_webhook::{GetWebhookParams, GetWebhookResponse};
 use crate::api::get_webhook_list::{GetWebhookListParams, GetWebhookListResponse};
+#[cfg(feature = "writable")]
+use crate::api::update_webhook::{
+    UpdateWebhookParams, UpdateWebhookParamsBuilder, UpdateWebhookResponse,
+};
 use backlog_api_core::Result;
 use backlog_core::{ProjectIdOrKey, id::WebhookId};
 use client::Client;
@@ -34,6 +38,29 @@ impl WebhookApi {
             project_id_or_key: project_id_or_key.into(),
             webhook_id: webhook_id.into(),
         };
+        self.0.execute(params).await
+    }
+
+    /// Update webhook information.
+    /// Corresponds to `PATCH /api/v2/projects/:projectIdOrKey/webhooks/:webhookId`.
+    #[cfg(feature = "writable")]
+    pub fn update_webhook(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+        webhook_id: impl Into<WebhookId>,
+    ) -> UpdateWebhookParamsBuilder {
+        let mut builder = UpdateWebhookParamsBuilder::default();
+        builder.project_id_or_key(project_id_or_key.into());
+        builder.webhook_id(webhook_id.into());
+        builder
+    }
+
+    /// Execute update webhook request with params.
+    #[cfg(feature = "writable")]
+    pub async fn execute_update_webhook(
+        &self,
+        params: UpdateWebhookParams,
+    ) -> Result<UpdateWebhookResponse> {
         self.0.execute(params).await
     }
 }

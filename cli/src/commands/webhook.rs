@@ -1,5 +1,8 @@
 use backlog_api_client::{Webhook, client::BacklogApiClient};
-use backlog_core::{ProjectIdOrKey, id::WebhookId};
+use backlog_core::{
+    ProjectIdOrKey,
+    id::{ActivityTypeId, WebhookId},
+};
 use clap::{Parser, Subcommand, ValueEnum};
 use prettytable::{Cell, Row, Table, row};
 use std::error::Error;
@@ -37,6 +40,37 @@ pub enum WebhookCommands {
         #[arg(short, long, value_enum, default_value = "table")]
         format: OutputFormat,
     },
+    /// Update webhook settings
+    #[cfg(feature = "webhook_writable")]
+    Update {
+        /// Project ID or key
+        #[arg(short, long)]
+        project: String,
+
+        /// Webhook ID to update
+        #[arg(short = 'w', long)]
+        webhook_id: u32,
+
+        /// New webhook name
+        #[arg(long)]
+        name: Option<String>,
+
+        /// New description
+        #[arg(long)]
+        description: Option<String>,
+
+        /// New hook URL
+        #[arg(long)]
+        hook_url: Option<String>,
+
+        /// Enable/disable all events (true/false)
+        #[arg(long)]
+        all_event: Option<bool>,
+
+        /// Activity type IDs (comma-separated)
+        #[arg(long, value_delimiter = ',')]
+        activity_type_ids: Option<Vec<u32>>,
+    },
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -54,6 +88,28 @@ pub async fn execute(client: &BacklogApiClient, args: WebhookArgs) -> Result<(),
             webhook_id,
             format,
         } => get_webhook(client, &project, webhook_id, format).await,
+        #[cfg(feature = "webhook_writable")]
+        WebhookCommands::Update {
+            project,
+            webhook_id,
+            name,
+            description,
+            hook_url,
+            all_event,
+            activity_type_ids,
+        } => {
+            update_webhook(
+                client,
+                &project,
+                webhook_id,
+                name,
+                description,
+                hook_url,
+                all_event,
+                activity_type_ids,
+            )
+            .await
+        }
     }
 }
 
@@ -257,4 +313,58 @@ fn display_webhook_csv(webhook: &Webhook) {
         webhook.updated_user.name,
         webhook.updated.format("%Y-%m-%d %H:%M:%S"),
     );
+}
+
+#[cfg(feature = "webhook_writable")]
+#[allow(clippy::too_many_arguments)]
+async fn update_webhook(
+    client: &BacklogApiClient,
+    project: &str,
+    webhook_id: u32,
+    name: Option<String>,
+    description: Option<String>,
+    hook_url: Option<String>,
+    all_event: Option<bool>,
+    activity_type_ids: Option<Vec<u32>>,
+) -> Result<(), Box<dyn Error>> {
+    // Check if at least one parameter is provided
+    if name.is_none()
+        && description.is_none()
+        && hook_url.is_none()
+        && all_event.is_none()
+        && activity_type_ids.is_none()
+    {
+        return Err("At least one parameter must be provided to update".into());
+    }
+
+    let project_id_or_key = parse_project_id_or_key(project)?;
+
+    let mut builder = client
+        .webhook()
+        .update_webhook(project_id_or_key, WebhookId::new(webhook_id));
+
+    if let Some(name) = name {
+        builder.name(name);
+    }
+    if let Some(description) = description {
+        builder.description(description);
+    }
+    if let Some(hook_url) = hook_url {
+        builder.hook_url(hook_url);
+    }
+    if let Some(all_event) = all_event {
+        builder.all_event(all_event);
+    }
+    if let Some(ids) = activity_type_ids {
+        let activity_ids: Vec<_> = ids.into_iter().map(ActivityTypeId::new).collect();
+        builder.activity_type_ids(activity_ids);
+    }
+
+    let params = builder.build()?;
+    let updated_webhook = client.webhook().execute_update_webhook(params).await?;
+
+    println!("Webhook updated successfully!");
+    display_webhook_table(&updated_webhook);
+
+    Ok(())
 }
