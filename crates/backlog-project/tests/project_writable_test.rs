@@ -10,7 +10,8 @@ mod writable_tests {
         AddCategoryParams, AddIssueTypeParams, AddMilestoneParams, AddProjectAdministratorParams,
         AddProjectUserParams, AddStatusParams, DeleteCategoryParams,
         DeleteProjectAdministratorParams, DeleteProjectUserParams, DeleteStatusParams, ProjectApi,
-        UpdateCategoryParams, UpdateStatusOrderParams, UpdateStatusParams,
+        TextFormattingRule, UpdateCategoryParams, UpdateProjectParams, UpdateStatusOrderParams,
+        UpdateStatusParams,
     };
     use backlog_project::{Category, IssueType, Milestone, Status};
     use chrono::TimeZone;
@@ -1009,6 +1010,255 @@ mod writable_tests {
                 assert_eq!(status, 404);
             }
             _ => panic!("Expected HttpStatus error with 404"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_update_project_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let expected_project = serde_json::json!({
+            "id": 123,
+            "projectKey": "TEST_PROJECT",
+            "name": "Updated Test Project",
+            "chartEnabled": true,
+            "useResolvedForChart": false,
+            "subtaskingEnabled": true,
+            "projectLeaderCanEditProjectLeader": true,
+            "useWiki": true,
+            "useFileSharing": true,
+            "useWikiTreeView": true,
+            "useSubversion": false,
+            "useGit": true,
+            "useOriginalImageSizeAtWiki": false,
+            "textFormattingRule": "markdown",
+            "archived": false,
+            "displayOrder": 1,
+            "useDevAttributes": true
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/TEST_PROJECT"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_project))
+            .mount(&mock_server)
+            .await;
+
+        let params = UpdateProjectParams::new(ProjectKey::from_str("TEST_PROJECT").unwrap())
+            .name("Updated Test Project")
+            .chart_enabled(true)
+            .use_git(true)
+            .text_formatting_rule(TextFormattingRule::Markdown);
+
+        let result = project_api.update_project(params).await;
+        assert!(result.is_ok());
+        let project = result.unwrap();
+        assert_eq!(project.name, "Updated Test Project");
+        assert_eq!(
+            project.project_key,
+            ProjectKey::from_str("TEST_PROJECT").unwrap()
+        );
+    }
+
+    #[tokio::test]
+    async fn test_update_project_with_project_id() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let expected_project = serde_json::json!({
+            "id": 123,
+            "projectKey": "TEST_PROJECT",
+            "name": "Updated Project Name",
+            "chartEnabled": false,
+            "useResolvedForChart": false,
+            "subtaskingEnabled": false,
+            "projectLeaderCanEditProjectLeader": false,
+            "useWiki": false,
+            "useFileSharing": false,
+            "useWikiTreeView": false,
+            "useSubversion": false,
+            "useGit": false,
+            "useOriginalImageSizeAtWiki": false,
+            "textFormattingRule": "backlog",
+            "archived": true,
+            "displayOrder": 1,
+            "useDevAttributes": false
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/123"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_project))
+            .mount(&mock_server)
+            .await;
+
+        let params = UpdateProjectParams::new(ProjectId::new(123))
+            .name("Updated Project Name")
+            .archived(true)
+            .text_formatting_rule(TextFormattingRule::Backlog);
+
+        let result = project_api.update_project(params).await;
+        assert!(result.is_ok());
+        let project = result.unwrap();
+        assert_eq!(project.name, "Updated Project Name");
+        assert!(project.archived);
+    }
+
+    #[tokio::test]
+    async fn test_update_project_all_params() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let expected_project = serde_json::json!({
+            "id": 123,
+            "projectKey": "NEWKEY",
+            "name": "Complete Update Project",
+            "chartEnabled": true,
+            "useResolvedForChart": true,
+            "subtaskingEnabled": true,
+            "projectLeaderCanEditProjectLeader": true,
+            "useWiki": true,
+            "useFileSharing": true,
+            "useWikiTreeView": true,
+            "useSubversion": true,
+            "useGit": true,
+            "useOriginalImageSizeAtWiki": true,
+            "textFormattingRule": "markdown",
+            "archived": false,
+            "displayOrder": 1,
+            "useDevAttributes": true
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/123"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_project))
+            .mount(&mock_server)
+            .await;
+
+        let params = UpdateProjectParams::new(ProjectId::new(123))
+            .name("Complete Update Project")
+            .key("NEWKEY")
+            .chart_enabled(true)
+            .use_resolved_for_chart(true)
+            .subtasking_enabled(true)
+            .project_leader_can_edit_project_leader(true)
+            .use_wiki(true)
+            .use_file_sharing(true)
+            .use_wiki_tree_view(true)
+            .use_subversion(true)
+            .use_git(true)
+            .use_original_image_size_at_wiki(true)
+            .text_formatting_rule(TextFormattingRule::Markdown)
+            .archived(false)
+            .use_dev_attributes(true);
+
+        let result = project_api.update_project(params).await;
+        assert!(result.is_ok());
+        let project = result.unwrap();
+        assert_eq!(project.name, "Complete Update Project");
+        assert_eq!(project.project_key, ProjectKey::from_str("NEWKEY").unwrap());
+    }
+
+    #[tokio::test]
+    async fn test_update_project_permission_error() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "You do not have permission to update this project",
+                    "code": 6
+                }
+            ]
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/TEST_PROJECT"))
+            .respond_with(ResponseTemplate::new(401).set_body_json(error_response))
+            .mount(&mock_server)
+            .await;
+
+        let params = UpdateProjectParams::new(ProjectKey::from_str("TEST_PROJECT").unwrap())
+            .name("Unauthorized Update");
+
+        let result = project_api.update_project(params).await;
+        assert!(result.is_err());
+        match result {
+            Err(ApiError::HttpStatus { status, .. }) => {
+                assert_eq!(status, 401);
+            }
+            _ => panic!("Expected HttpStatus error with 401"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_update_project_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No project found",
+                    "code": 7
+                }
+            ]
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/INVALID_PROJECT"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(error_response))
+            .mount(&mock_server)
+            .await;
+
+        let params = UpdateProjectParams::new(ProjectKey::from_str("INVALID_PROJECT").unwrap())
+            .name("Not Found Project");
+
+        let result = project_api.update_project(params).await;
+        assert!(result.is_err());
+        match result {
+            Err(ApiError::HttpStatus { status, .. }) => {
+                assert_eq!(status, 404);
+            }
+            _ => panic!("Expected HttpStatus error with 404"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_update_project_duplicate_key() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "Project key already exists",
+                    "code": 10
+                }
+            ]
+        });
+
+        Mock::given(method("PATCH"))
+            .and(path("/api/v2/projects/123"))
+            .respond_with(ResponseTemplate::new(409).set_body_json(error_response))
+            .mount(&mock_server)
+            .await;
+
+        let params = UpdateProjectParams::new(ProjectId::new(123)).key("EXISTING_KEY");
+
+        let result = project_api.update_project(params).await;
+        assert!(result.is_err());
+        match result {
+            Err(ApiError::HttpStatus { status, .. }) => {
+                assert_eq!(status, 409);
+            }
+            _ => panic!("Expected HttpStatus error with 409"),
         }
     }
 }

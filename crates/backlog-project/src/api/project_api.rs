@@ -32,8 +32,9 @@ use crate::{
         DeleteProjectAdministratorResponse, DeleteProjectTeamResponse, DeleteProjectUserParams,
         DeleteProjectUserResponse, DeleteStatusParams, DeleteStatusResponse, DeleteVersionResponse,
         UpdateCategoryResponse, UpdateCustomFieldParams, UpdateCustomFieldResponse,
-        UpdateIssueTypeResponse, UpdateListItemToCustomFieldResponse, UpdateStatusOrderParams,
-        UpdateStatusOrderResponse, UpdateStatusParams, UpdateStatusResponse, UpdateVersionResponse,
+        UpdateIssueTypeResponse, UpdateListItemToCustomFieldResponse, UpdateProjectParams,
+        UpdateProjectResponse, UpdateStatusOrderParams, UpdateStatusOrderResponse,
+        UpdateStatusParams, UpdateStatusResponse, UpdateVersionResponse,
     },
 };
 
@@ -446,6 +447,17 @@ impl ProjectApi {
         &self,
         params: DeleteProjectTeamParams,
     ) -> Result<DeleteProjectTeamResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Updates a project.
+    ///
+    /// Corresponds to `PATCH /api/v2/projects/:projectIdOrKey`.
+    #[cfg(feature = "writable")]
+    pub async fn update_project(
+        &self,
+        params: UpdateProjectParams,
+    ) -> Result<UpdateProjectResponse> {
         self.0.execute(params).await
     }
 }

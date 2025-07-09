@@ -36,6 +36,7 @@ mod update_category;
 mod update_custom_field;
 mod update_issue_type;
 mod update_list_item_to_custom_field;
+mod update_project;
 mod update_status;
 mod update_status_order;
 mod update_version;
@@ -184,3 +185,6 @@ pub use delete_project_user::{DeleteProjectUserParams, DeleteProjectUserResponse
 pub use delete_project_administrator::{
     DeleteProjectAdministratorParams, DeleteProjectAdministratorResponse,
 };
+
+#[cfg(feature = "writable")]
+pub use update_project::{TextFormattingRule, UpdateProjectParams, UpdateProjectResponse};
