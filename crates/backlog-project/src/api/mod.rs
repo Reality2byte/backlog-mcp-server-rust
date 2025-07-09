@@ -3,6 +3,7 @@ mod add_custom_field;
 mod add_issue_type;
 mod add_list_item_to_custom_field;
 mod add_milestone;
+mod add_project;
 mod add_project_administrator;
 mod add_project_team;
 mod add_project_user;
@@ -188,3 +189,6 @@ pub use delete_project_administrator::{
 
 #[cfg(feature = "writable")]
 pub use update_project::{TextFormattingRule, UpdateProjectParams, UpdateProjectResponse};
+
+#[cfg(feature = "writable")]
+pub use add_project::{AddProjectParams, AddProjectResponse};

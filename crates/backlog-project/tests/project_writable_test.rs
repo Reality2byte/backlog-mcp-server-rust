@@ -8,7 +8,7 @@ mod writable_tests {
     };
     use backlog_project::api::{
         AddCategoryParams, AddIssueTypeParams, AddMilestoneParams, AddProjectAdministratorParams,
-        AddProjectUserParams, AddStatusParams, DeleteCategoryParams,
+        AddProjectParams, AddProjectUserParams, AddStatusParams, DeleteCategoryParams,
         DeleteProjectAdministratorParams, DeleteProjectUserParams, DeleteStatusParams, ProjectApi,
         TextFormattingRule, UpdateCategoryParams, UpdateProjectParams, UpdateStatusOrderParams,
         UpdateStatusParams,
@@ -1259,6 +1259,196 @@ mod writable_tests {
                 assert_eq!(status, 409);
             }
             _ => panic!("Expected HttpStatus error with 409"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_add_project_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let expected_project = serde_json::json!({
+            "id": 456,
+            "projectKey": "NEWPROJECT",
+            "name": "New Test Project",
+            "chartEnabled": true,
+            "subtaskingEnabled": true,
+            "projectLeaderCanEditProjectLeader": true,
+            "useWiki": true,
+            "useFileSharing": true,
+            "useWikiTreeView": true,
+            "useOriginalImageSizeAtWiki": false,
+            "textFormattingRule": "markdown",
+            "archived": false,
+            "displayOrder": 1,
+            "useDevAttributes": true
+        });
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/projects"))
+            .respond_with(ResponseTemplate::new(201).set_body_json(&expected_project))
+            .mount(&mock_server)
+            .await;
+
+        let params = AddProjectParams::new("New Test Project", "NEWPROJECT")
+            .chart_enabled(true)
+            .subtasking_enabled(true)
+            .project_leader_can_edit_project_leader(true)
+            .use_wiki(true)
+            .use_file_sharing(true)
+            .use_wiki_tree_view(true)
+            .use_git(true)
+            .text_formatting_rule("markdown")
+            .use_dev_attributes(true);
+
+        let result = project_api.add_project(params).await;
+        assert!(result.is_ok());
+        let project = result.unwrap();
+        assert_eq!(project.name, "New Test Project");
+        assert_eq!(
+            project.project_key,
+            ProjectKey::from_str("NEWPROJECT").unwrap()
+        );
+        assert_eq!(project.id, ProjectId::new(456));
+        assert!(project.chart_enabled);
+        assert!(project.use_wiki);
+    }
+
+    #[tokio::test]
+    async fn test_add_project_minimal_params() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let expected_project = serde_json::json!({
+            "id": 789,
+            "projectKey": "MINIMAL",
+            "name": "Minimal Project",
+            "chartEnabled": false,
+            "subtaskingEnabled": false,
+            "projectLeaderCanEditProjectLeader": false,
+            "useWiki": false,
+            "useFileSharing": false,
+            "useWikiTreeView": false,
+            "useOriginalImageSizeAtWiki": false,
+            "textFormattingRule": "backlog",
+            "archived": false,
+            "displayOrder": 1,
+            "useDevAttributes": false
+        });
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/projects"))
+            .respond_with(ResponseTemplate::new(201).set_body_json(&expected_project))
+            .mount(&mock_server)
+            .await;
+
+        let params = AddProjectParams::new("Minimal Project", "MINIMAL");
+        let result = project_api.add_project(params).await;
+        assert!(result.is_ok());
+        let project = result.unwrap();
+        assert_eq!(project.name, "Minimal Project");
+        assert_eq!(
+            project.project_key,
+            ProjectKey::from_str("MINIMAL").unwrap()
+        );
+        assert_eq!(project.id, ProjectId::new(789));
+    }
+
+    #[tokio::test]
+    async fn test_add_project_duplicate_key_error() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "Project key already exists",
+                    "code": 10
+                }
+            ]
+        });
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/projects"))
+            .respond_with(ResponseTemplate::new(409).set_body_json(error_response))
+            .mount(&mock_server)
+            .await;
+
+        let params = AddProjectParams::new("Duplicate Project", "EXISTING");
+        let result = project_api.add_project(params).await;
+        assert!(result.is_err());
+        match result {
+            Err(ApiError::HttpStatus { status, .. }) => {
+                assert_eq!(status, 409);
+            }
+            _ => panic!("Expected HttpStatus error with 409"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_add_project_permission_error() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "You do not have permission to add projects",
+                    "code": 6
+                }
+            ]
+        });
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/projects"))
+            .respond_with(ResponseTemplate::new(401).set_body_json(error_response))
+            .mount(&mock_server)
+            .await;
+
+        let params = AddProjectParams::new("Unauthorized Project", "UNAUTH");
+        let result = project_api.add_project(params).await;
+        assert!(result.is_err());
+        match result {
+            Err(ApiError::HttpStatus { status, .. }) => {
+                assert_eq!(status, 401);
+            }
+            _ => panic!("Expected HttpStatus error with 401"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_add_project_invalid_key_format() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "Invalid project key format",
+                    "code": 3
+                }
+            ]
+        });
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/projects"))
+            .respond_with(ResponseTemplate::new(400).set_body_json(error_response))
+            .mount(&mock_server)
+            .await;
+
+        let params = AddProjectParams::new("Invalid Key Project", "invalid-key");
+        let result = project_api.add_project(params).await;
+        assert!(result.is_err());
+        match result {
+            Err(ApiError::HttpStatus { status, .. }) => {
+                assert_eq!(status, 400);
+            }
+            _ => panic!("Expected HttpStatus error with 400"),
         }
     }
 }

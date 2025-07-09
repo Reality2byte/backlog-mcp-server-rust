@@ -785,6 +785,52 @@ enum ProjectCommands {
         #[clap(name = "PROJECT_ID_OR_KEY")]
         project_id_or_key: String,
     },
+    /// Add a new project
+    #[cfg(feature = "project_writable")]
+    Add {
+        /// Project name
+        #[clap(short, long)]
+        name: String,
+        /// Project key (uppercase letters, numbers, underscores only)
+        #[clap(short, long)]
+        key: String,
+        /// Enable/disable charts
+        #[clap(long)]
+        chart_enabled: Option<bool>,
+        /// Use resolved for chart
+        #[clap(long)]
+        use_resolved_for_chart: Option<bool>,
+        /// Enable/disable subtasking
+        #[clap(long)]
+        subtasking_enabled: Option<bool>,
+        /// Project leader can edit project leader
+        #[clap(long)]
+        project_leader_can_edit_project_leader: Option<bool>,
+        /// Enable/disable Wiki
+        #[clap(long)]
+        use_wiki: Option<bool>,
+        /// Enable/disable file sharing
+        #[clap(long)]
+        use_file_sharing: Option<bool>,
+        /// Enable/disable Wiki tree view
+        #[clap(long)]
+        use_wiki_tree_view: Option<bool>,
+        /// Enable/disable Subversion
+        #[clap(long)]
+        use_subversion: Option<bool>,
+        /// Enable/disable Git
+        #[clap(long)]
+        use_git: Option<bool>,
+        /// Use original image size at Wiki
+        #[clap(long)]
+        use_original_image_size_at_wiki: Option<bool>,
+        /// Text formatting rule (backlog or markdown)
+        #[clap(long)]
+        text_formatting_rule: Option<String>,
+        /// Use dev attributes
+        #[clap(long)]
+        use_dev_attributes: Option<bool>,
+    },
     /// Update project settings
     #[cfg(feature = "project_writable")]
     Update {
@@ -3399,6 +3445,92 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             #[cfg(feature = "project_writable")]
+            ProjectCommands::Add {
+                name,
+                key,
+                chart_enabled,
+                use_resolved_for_chart,
+                subtasking_enabled,
+                project_leader_can_edit_project_leader,
+                use_wiki,
+                use_file_sharing,
+                use_wiki_tree_view,
+                use_subversion,
+                use_git,
+                use_original_image_size_at_wiki,
+                text_formatting_rule,
+                use_dev_attributes,
+            } => {
+                println!("Adding new project: {name} ({key})");
+
+                let mut params = backlog_project::api::AddProjectParams::new(&name, &key);
+
+                if let Some(enabled) = chart_enabled {
+                    params = params.chart_enabled(enabled);
+                }
+                if let Some(enabled) = use_resolved_for_chart {
+                    params = params.use_resolved_for_chart(enabled);
+                }
+                if let Some(enabled) = subtasking_enabled {
+                    params = params.subtasking_enabled(enabled);
+                }
+                if let Some(enabled) = project_leader_can_edit_project_leader {
+                    params = params.project_leader_can_edit_project_leader(enabled);
+                }
+                if let Some(enabled) = use_wiki {
+                    params = params.use_wiki(enabled);
+                }
+                if let Some(enabled) = use_file_sharing {
+                    params = params.use_file_sharing(enabled);
+                }
+                if let Some(enabled) = use_wiki_tree_view {
+                    params = params.use_wiki_tree_view(enabled);
+                }
+                if let Some(enabled) = use_subversion {
+                    params = params.use_subversion(enabled);
+                }
+                if let Some(enabled) = use_git {
+                    params = params.use_git(enabled);
+                }
+                if let Some(enabled) = use_original_image_size_at_wiki {
+                    params = params.use_original_image_size_at_wiki(enabled);
+                }
+                if let Some(rule) = text_formatting_rule {
+                    params = params.text_formatting_rule(rule);
+                }
+                if let Some(enabled) = use_dev_attributes {
+                    params = params.use_dev_attributes(enabled);
+                }
+
+                match client.project().add_project(params).await {
+                    Ok(project) => {
+                        println!("✅ Project created successfully:");
+                        println!("Project ID: {}", project.id);
+                        println!("Project Key: {}", project.project_key);
+                        println!("Name: {}", project.name);
+                        println!("Chart Enabled: {}", project.chart_enabled);
+                        println!("Subtasking Enabled: {}", project.subtasking_enabled);
+                        println!(
+                            "Project Leader Can Edit Project Leader: {}",
+                            project.project_leader_can_edit_project_leader
+                        );
+                        println!("Use Wiki: {}", project.use_wiki);
+                        println!("Use File Sharing: {}", project.use_file_sharing);
+                        println!("Use Wiki Tree View: {}", project.use_wiki_tree_view);
+                        println!(
+                            "Use Original Image Size at Wiki: {}",
+                            project.use_original_image_size_at_wiki
+                        );
+                        println!("Text Formatting Rule: {:?}", project.text_formatting_rule);
+                        println!("Archived: {}", project.archived);
+                        println!("Use Dev Attributes: {}", project.use_dev_attributes);
+                    }
+                    Err(e) => {
+                        eprintln!("Error creating project: {e}");
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
             ProjectCommands::Update {
                 project_id_or_key,
                 name,
@@ -4901,7 +5033,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             #[cfg(not(feature = "project_writable"))]
-            ProjectCommands::Update { .. }
+            ProjectCommands::Add { .. }
+            | ProjectCommands::Update { .. }
             | ProjectCommands::CategoryAdd { .. }
             | ProjectCommands::CategoryUpdate { .. }
             | ProjectCommands::CategoryDelete { .. }
@@ -4928,7 +5061,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             | ProjectCommands::UserAdd { .. }
             | ProjectCommands::UserRemove { .. } => {
                 eprintln!(
-                    "Project update, user/admin management, category, issue type, version, status, team, and custom field management is not available. Please build with 'project_writable' feature."
+                    "Project creation/update, user/admin management, category, issue type, version, status, team, and custom field management is not available. Please build with 'project_writable' feature."
                 );
             }
             ProjectCommands::PriorityList => {

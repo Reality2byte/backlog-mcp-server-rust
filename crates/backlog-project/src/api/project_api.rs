@@ -25,16 +25,17 @@ use crate::{
     api::{
         AddCategoryResponse, AddCustomFieldResponse, AddIssueTypeResponse,
         AddListItemToCustomFieldResponse, AddProjectAdministratorParams,
-        AddProjectAdministratorResponse, AddProjectTeamResponse, AddProjectUserParams,
-        AddProjectUserResponse, AddStatusResponse, DeleteCategoryResponse,
-        DeleteCustomFieldResponse, DeleteIssueTypeResponse, DeleteListItemFromCustomFieldParams,
-        DeleteListItemFromCustomFieldResponse, DeleteProjectAdministratorParams,
-        DeleteProjectAdministratorResponse, DeleteProjectTeamResponse, DeleteProjectUserParams,
-        DeleteProjectUserResponse, DeleteStatusParams, DeleteStatusResponse, DeleteVersionResponse,
-        UpdateCategoryResponse, UpdateCustomFieldParams, UpdateCustomFieldResponse,
-        UpdateIssueTypeResponse, UpdateListItemToCustomFieldResponse, UpdateProjectParams,
-        UpdateProjectResponse, UpdateStatusOrderParams, UpdateStatusOrderResponse,
-        UpdateStatusParams, UpdateStatusResponse, UpdateVersionResponse,
+        AddProjectAdministratorResponse, AddProjectParams, AddProjectResponse,
+        AddProjectTeamResponse, AddProjectUserParams, AddProjectUserResponse, AddStatusResponse,
+        DeleteCategoryResponse, DeleteCustomFieldResponse, DeleteIssueTypeResponse,
+        DeleteListItemFromCustomFieldParams, DeleteListItemFromCustomFieldResponse,
+        DeleteProjectAdministratorParams, DeleteProjectAdministratorResponse,
+        DeleteProjectTeamResponse, DeleteProjectUserParams, DeleteProjectUserResponse,
+        DeleteStatusParams, DeleteStatusResponse, DeleteVersionResponse, UpdateCategoryResponse,
+        UpdateCustomFieldParams, UpdateCustomFieldResponse, UpdateIssueTypeResponse,
+        UpdateListItemToCustomFieldResponse, UpdateProjectParams, UpdateProjectResponse,
+        UpdateStatusOrderParams, UpdateStatusOrderResponse, UpdateStatusParams,
+        UpdateStatusResponse, UpdateVersionResponse,
     },
 };
 
@@ -458,6 +459,14 @@ impl ProjectApi {
         &self,
         params: UpdateProjectParams,
     ) -> Result<UpdateProjectResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Adds a new project.
+    ///
+    /// Corresponds to `POST /api/v2/projects`.
+    #[cfg(feature = "writable")]
+    pub async fn add_project(&self, params: AddProjectParams) -> Result<AddProjectResponse> {
         self.0.execute(params).await
     }
 }
