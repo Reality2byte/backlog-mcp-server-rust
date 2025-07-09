@@ -336,6 +336,7 @@ dependencies = [
  "backlog-core",
  "backlog-domain-models",
  "backlog-issue",
+ "backlog-space",
  "chrono",
  "client",
  "derive_builder",

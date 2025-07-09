@@ -80,7 +80,9 @@ use backlog_project::{
     UpdateVersionParams,
     api::{DeleteListItemFromCustomFieldParams, DeleteProjectParams, UpdateProjectParams},
 };
-use backlog_project::{GetProjectListParams, GetRecentlyViewedProjectsParamsBuilder};
+use backlog_project::{
+    GetProjectListParams, GetRecentlyViewedProjectsParamsBuilder, api::GetProjectDiskUsageParams,
+};
 use backlog_space::GetLicenceParams;
 use backlog_space::GetSpaceDiskUsageParams;
 use backlog_space::GetSpaceLogoParams;
@@ -926,6 +928,15 @@ enum ProjectCommands {
         #[clap(name = "PROJECT_ID_OR_KEY")]
         project_id_or_key: String,
     },
+    /// Get disk usage for a project
+    DiskUsage {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Show sizes in human-readable format (e.g., 1.2GB)
+        #[clap(short = 'H', long)]
+        human_readable: bool,
+    },
     /// List users for a project
     UserList {
         /// Project ID or Key
@@ -1707,6 +1718,23 @@ fn truncate_text(text: &str, max_length: usize) -> String {
             end -= 1;
         }
         format!("{}...", &text[..end])
+    }
+}
+
+fn format_bytes(bytes: u64) -> String {
+    const UNITS: &[&str] = &["B", "KB", "MB", "GB", "TB"];
+    let mut size = bytes as f64;
+    let mut unit_index = 0;
+
+    while size >= 1024.0 && unit_index < UNITS.len() - 1 {
+        size /= 1024.0;
+        unit_index += 1;
+    }
+
+    if unit_index == 0 {
+        format!("{} {}", size as u64, UNITS[unit_index])
+    } else {
+        format!("{:.1} {}", size, UNITS[unit_index])
     }
 }
 
@@ -3837,6 +3865,67 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error listing categories: {e}");
+                    }
+                }
+            }
+            ProjectCommands::DiskUsage {
+                project_id_or_key,
+                human_readable,
+            } => {
+                println!("Getting disk usage for project: {project_id_or_key}");
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let params = GetProjectDiskUsageParams::new(proj_id_or_key);
+                match client.project().get_disk_usage(params).await {
+                    Ok(disk_usage) => {
+                        let total = disk_usage.issue
+                            + disk_usage.wiki
+                            + disk_usage.document
+                            + disk_usage.file
+                            + disk_usage.subversion
+                            + disk_usage.git
+                            + disk_usage.git_lfs;
+
+                        println!("\nProject Disk Usage (ID: {})", disk_usage.project_id);
+                        println!("┌─────────────┬──────────────┬────────────┐");
+                        println!("│ Component   │ Size         │ Percentage │");
+                        println!("├─────────────┼──────────────┼────────────┤");
+
+                        let components = [
+                            ("Issues", disk_usage.issue),
+                            ("Wiki", disk_usage.wiki),
+                            ("Documents", disk_usage.document),
+                            ("Files", disk_usage.file),
+                            ("Subversion", disk_usage.subversion),
+                            ("Git", disk_usage.git),
+                            ("Git LFS", disk_usage.git_lfs),
+                        ];
+
+                        for (name, size) in components {
+                            let size_str = if human_readable {
+                                format_bytes(size as u64)
+                            } else {
+                                format!("{size} bytes")
+                            };
+                            let percentage = if total > 0 {
+                                (size as f64 / total as f64) * 100.0
+                            } else {
+                                0.0
+                            };
+                            println!("│ {name:<11} │ {size_str:<12} │ {percentage:>9.1}% │");
+                        }
+
+                        println!("├─────────────┼──────────────┼────────────┤");
+                        let total_str = if human_readable {
+                            format_bytes(total as u64)
+                        } else {
+                            format!("{total} bytes")
+                        };
+                        println!("│ Total       │ {total_str:<12} │     100.0% │");
+                        println!("└─────────────┴──────────────┴────────────┘");
+                    }
+                    Err(e) => {
+                        eprintln!("Error getting disk usage: {e}");
                     }
                 }
             }

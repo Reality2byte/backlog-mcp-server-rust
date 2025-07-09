@@ -9,10 +9,11 @@ use crate::api::{
     GetMilestoneListParams, GetMilestoneListResponse, GetPriorityListParams,
     GetPriorityListResponse, GetProjectAdministratorListParams,
     GetProjectAdministratorListResponse, GetProjectDetailParams, GetProjectDetailResponse,
-    GetProjectIconParams, GetProjectRecentUpdatesParams, GetProjectRecentUpdatesResponse,
-    GetProjectTeamListParams, GetProjectTeamListResponse, GetProjectUserListParams,
-    GetProjectUserListResponse, GetRecentlyViewedProjectsParams, GetRecentlyViewedProjectsResponse,
-    GetResolutionListParams, GetResolutionListResponse, GetStatusListParams, GetStatusListResponse,
+    GetProjectDiskUsageParams, GetProjectDiskUsageResponse, GetProjectIconParams,
+    GetProjectRecentUpdatesParams, GetProjectRecentUpdatesResponse, GetProjectTeamListParams,
+    GetProjectTeamListResponse, GetProjectUserListParams, GetProjectUserListResponse,
+    GetRecentlyViewedProjectsParams, GetRecentlyViewedProjectsResponse, GetResolutionListParams,
+    GetResolutionListResponse, GetStatusListParams, GetStatusListResponse,
     get_project_list::{GetProjectListParams, GetProjectListResponse},
 };
 #[cfg(feature = "writable")]
@@ -124,6 +125,16 @@ impl ProjectApi {
     pub async fn get_project_icon(&self, params: GetProjectIconParams) -> Result<Vec<u8>> {
         let downloaded_file = self.0.download_file(params).await?;
         Ok(downloaded_file.bytes.to_vec())
+    }
+
+    /// Gets the disk usage for a project.
+    ///
+    /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/diskUsage`.
+    pub async fn get_disk_usage(
+        &self,
+        params: GetProjectDiskUsageParams,
+    ) -> Result<GetProjectDiskUsageResponse> {
+        self.0.execute(params).await
     }
 
     /// Gets the list of project members.

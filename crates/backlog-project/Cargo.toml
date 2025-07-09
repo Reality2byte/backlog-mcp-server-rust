@@ -16,6 +16,7 @@ backlog-api-core = { path = "../backlog-api-core" }
 backlog-domain-models = { path = "../backlog-domain-models" }
 backlog-api-macros = { path = "../backlog-api-macros" }
 backlog-issue = { path = "../backlog-issue" }
+backlog-space = { path = "../backlog-space" }
 chrono = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -25,6 +26,7 @@ schemars = { workspace = true, optional = true }
 [dev-dependencies]
 client = { path = "../client", features = ["test-utils"] }
 backlog-issue = { path = "../backlog-issue" }
+backlog-space = { path = "../backlog-space" }
 wiremock = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 serde_json = { workspace = true }

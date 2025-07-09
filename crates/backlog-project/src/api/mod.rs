@@ -25,6 +25,7 @@ mod get_milestone_list;
 mod get_priority_list;
 mod get_project_administrator_list;
 mod get_project_detail;
+mod get_project_disk_usage;
 mod get_project_icon;
 mod get_project_list;
 mod get_project_recent_updates;
@@ -145,6 +146,8 @@ pub use get_project_administrator_list::{
     GetProjectAdministratorListParams, GetProjectAdministratorListResponse,
 };
 pub use get_project_detail::{GetProjectDetailParams, GetProjectDetailResponse};
+
+pub use get_project_disk_usage::{GetProjectDiskUsageParams, GetProjectDiskUsageResponse};
 
 pub use get_project_list::{GetProjectListParams, GetProjectListResponse};
 pub use get_project_user_list::{GetProjectUserListParams, GetProjectUserListResponse};
