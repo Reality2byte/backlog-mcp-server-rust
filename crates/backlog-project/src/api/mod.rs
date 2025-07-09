@@ -12,6 +12,7 @@ mod delete_category;
 mod delete_custom_field;
 mod delete_issue_type;
 mod delete_list_item_from_custom_field;
+mod delete_project;
 mod delete_project_administrator;
 mod delete_project_team;
 mod delete_project_user;
@@ -192,3 +193,6 @@ pub use update_project::{TextFormattingRule, UpdateProjectParams, UpdateProjectR
 
 #[cfg(feature = "writable")]
 pub use add_project::{AddProjectParams, AddProjectResponse};
+
+#[cfg(feature = "writable")]
+pub use delete_project::{DeleteProjectParams, DeleteProjectResponse};

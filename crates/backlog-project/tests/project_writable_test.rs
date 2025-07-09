@@ -9,9 +9,9 @@ mod writable_tests {
     use backlog_project::api::{
         AddCategoryParams, AddIssueTypeParams, AddMilestoneParams, AddProjectAdministratorParams,
         AddProjectParams, AddProjectUserParams, AddStatusParams, DeleteCategoryParams,
-        DeleteProjectAdministratorParams, DeleteProjectUserParams, DeleteStatusParams, ProjectApi,
-        TextFormattingRule, UpdateCategoryParams, UpdateProjectParams, UpdateStatusOrderParams,
-        UpdateStatusParams,
+        DeleteProjectAdministratorParams, DeleteProjectParams, DeleteProjectUserParams,
+        DeleteStatusParams, ProjectApi, TextFormattingRule, UpdateCategoryParams,
+        UpdateProjectParams, UpdateStatusOrderParams, UpdateStatusParams,
     };
     use backlog_project::{Category, IssueType, Milestone, Status};
     use chrono::TimeZone;
@@ -1449,6 +1449,109 @@ mod writable_tests {
                 assert_eq!(status, 400);
             }
             _ => panic!("Expected HttpStatus error with 400"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_delete_project_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let deleted_project = serde_json::json!({
+            "id": 123,
+            "projectKey": "TEST_PROJECT",
+            "name": "Test Project",
+            "chartEnabled": true,
+            "useResolvedForChart": false,
+            "subtaskingEnabled": true,
+            "projectLeaderCanEditProjectLeader": true,
+            "useWiki": true,
+            "useFileSharing": true,
+            "useWikiTreeView": true,
+            "useOriginalImageSizeAtWiki": false,
+            "textFormattingRule": "markdown",
+            "archived": false,
+            "displayOrder": 0,
+            "useDevAttributes": true
+        });
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/projects/TEST_PROJECT"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&deleted_project))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteProjectParams::new(ProjectKey::from_str("TEST_PROJECT").unwrap());
+        let result = project_api.delete_project(params).await;
+        assert!(result.is_ok());
+        let project = result.unwrap();
+        assert_eq!(project.id, ProjectId::new(123));
+        assert_eq!(project.project_key.to_string(), "TEST_PROJECT");
+        assert_eq!(project.name, "Test Project");
+    }
+
+    #[tokio::test]
+    async fn test_delete_project_unauthorized() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "You do not have permission to delete this project",
+                    "code": 6
+                }
+            ]
+        });
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/projects/TEST_PROJECT"))
+            .respond_with(ResponseTemplate::new(401).set_body_json(error_response))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteProjectParams::new(ProjectKey::from_str("TEST_PROJECT").unwrap());
+        let result = project_api.delete_project(params).await;
+        assert!(result.is_err());
+        match result {
+            Err(ApiError::HttpStatus { status, .. }) => {
+                assert_eq!(status, 401);
+            }
+            _ => panic!("Expected HttpStatus error with 401"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_delete_project_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No project found",
+                    "code": 7
+                }
+            ]
+        });
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/projects/INVALID_PROJECT"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(error_response))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteProjectParams::new(ProjectKey::from_str("INVALID_PROJECT").unwrap());
+        let result = project_api.delete_project(params).await;
+        assert!(result.is_err());
+        match result {
+            Err(ApiError::HttpStatus { status, .. }) => {
+                assert_eq!(status, 404);
+            }
+            _ => panic!("Expected HttpStatus error with 404"),
         }
     }
 }

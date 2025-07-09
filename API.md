@@ -2,8 +2,8 @@
 
 ## Summary
 - Total APIs: 149
-- Implemented: 140 (94%)
-- Not implemented: 9 (6%)
+- Implemented: 141 (95%)
+- Not implemented: 8 (5%)
 
 ### Spaces
 - ✅ GetSpace: Returns information about your space: GET /api/v2/space
@@ -19,7 +19,7 @@
 - ✅ GetProjectList: Returns list of projects: GET /api/v2/projects
 - ✅ GetProjectIcon: Downloads project icon: GET /api/v2/projects/:projectIdOrKey/image
 - ✅ AddProject: Adds new project: POST /api/v2/projects
-- ❌ DeleteProject: Deletes project: DELETE /api/v2/projects/:projectIdOrKey
+- ✅ DeleteProject: Deletes project: DELETE /api/v2/projects/:projectIdOrKey
 - ❌ GetProjectDiskUsage: Returns information about project disk usage: GET /api/v2/projects/:projectIdOrKey/diskUsage
 - ✅ UpdateProject: Updates information about project: PATCH /api/v2/projects/:projectIdOrKey
 

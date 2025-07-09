@@ -78,7 +78,7 @@ use backlog_project::{
     DeleteVersionParams, UpdateCategoryParams, UpdateCustomFieldParams, UpdateIssueTypeParams,
     UpdateListItemToCustomFieldParams, UpdateStatusOrderParams, UpdateStatusParams,
     UpdateVersionParams,
-    api::{DeleteListItemFromCustomFieldParams, UpdateProjectParams},
+    api::{DeleteListItemFromCustomFieldParams, DeleteProjectParams, UpdateProjectParams},
 };
 use backlog_project::{GetProjectListParams, GetRecentlyViewedProjectsParamsBuilder};
 use backlog_space::GetLicenceParams;
@@ -882,6 +882,13 @@ enum ProjectCommands {
         /// Use dev attributes
         #[clap(long)]
         use_dev_attributes: Option<bool>,
+    },
+    /// Delete a project
+    #[cfg(feature = "project_writable")]
+    Delete {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
     },
     /// List recently viewed projects
     RecentlyViewed {
@@ -3637,6 +3644,39 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error updating project: {e}");
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::Delete { project_id_or_key } => {
+                println!("Deleting project: {project_id_or_key}");
+                println!(
+                    "⚠️  WARNING: This will permanently delete the project and all associated data!"
+                );
+                println!("Are you sure you want to continue? Type 'yes' to confirm:");
+
+                let mut confirmation = String::new();
+                std::io::stdin()
+                    .read_line(&mut confirmation)
+                    .expect("Failed to read confirmation");
+
+                if confirmation.trim() != "yes" {
+                    println!("Project deletion cancelled.");
+                    return Ok(());
+                }
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let params = DeleteProjectParams::new(proj_id_or_key);
+
+                match client.project().delete_project(params).await {
+                    Ok(project) => {
+                        println!("✅ Project deleted successfully:");
+                        println!("Project ID: {}", project.id);
+                        println!("Project Key: {}", project.project_key);
+                        println!("Name: {}", project.name);
+                    }
+                    Err(e) => {
+                        eprintln!("Error deleting project: {e}");
                     }
                 }
             }
