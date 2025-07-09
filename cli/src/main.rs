@@ -838,6 +838,16 @@ enum ProjectCommands {
         #[clap(short, long)]
         user_id: u32,
     },
+    /// Remove an administrator from a project
+    #[cfg(feature = "project_writable")]
+    AdminRemove {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// User ID to remove as administrator
+        #[clap(short, long)]
+        user_id: u32,
+    },
     /// Add a user to a project
     #[cfg(feature = "project_writable")]
     UserAdd {
@@ -3588,6 +3598,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("❌ Error adding project administrator: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::AdminRemove {
+                project_id_or_key,
+                user_id,
+            } => {
+                println!("Removing administrator {user_id} from project: {project_id_or_key}");
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let params = backlog_project::api::DeleteProjectAdministratorParams::new(
+                    proj_id_or_key,
+                    user_id,
+                );
+                match client.project().delete_project_administrator(params).await {
+                    Ok(user) => {
+                        println!("Successfully removed administrator:");
+                        println!("  User ID: {}", user.id);
+                        println!("  Name: {}", user.name);
+                        println!("  Email: {}", user.mail_address);
+                    }
+                    Err(e) => {
+                        eprintln!("Error removing project administrator: {e}");
                         std::process::exit(1);
                     }
                 }

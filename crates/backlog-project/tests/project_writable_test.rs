@@ -8,9 +8,9 @@ mod writable_tests {
     };
     use backlog_project::api::{
         AddCategoryParams, AddIssueTypeParams, AddMilestoneParams, AddProjectAdministratorParams,
-        AddProjectUserParams, AddStatusParams, DeleteCategoryParams, DeleteProjectUserParams,
-        DeleteStatusParams, ProjectApi, UpdateCategoryParams, UpdateStatusOrderParams,
-        UpdateStatusParams,
+        AddProjectUserParams, AddStatusParams, DeleteCategoryParams,
+        DeleteProjectAdministratorParams, DeleteProjectUserParams, DeleteStatusParams, ProjectApi,
+        UpdateCategoryParams, UpdateStatusOrderParams, UpdateStatusParams,
     };
     use backlog_project::{Category, IssueType, Milestone, Status};
     use chrono::TimeZone;
@@ -836,6 +836,173 @@ mod writable_tests {
             999999,
         );
         let result = project_api.add_project_administrator(params).await;
+        assert!(result.is_err());
+        match result {
+            Err(ApiError::HttpStatus { status, .. }) => {
+                assert_eq!(status, 404);
+            }
+            _ => panic!("Expected HttpStatus error with 404"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_delete_project_administrator_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let response_body = serde_json::json!({
+            "id": 1,
+            "userId": "testuser",
+            "name": "Test User",
+            "roleType": 1,
+            "lang": null,
+            "mailAddress": "test@example.com"
+        });
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/projects/TEST_PROJECT/administrators"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(response_body))
+            .mount(&mock_server)
+            .await;
+
+        let params =
+            DeleteProjectAdministratorParams::new(ProjectKey::from_str("TEST_PROJECT").unwrap(), 1);
+        let result = project_api.delete_project_administrator(params).await;
+        assert!(result.is_ok());
+
+        let user = result.unwrap();
+        assert_eq!(user.id, UserId::new(1));
+        assert_eq!(user.user_id, Some("testuser".to_string()));
+        assert_eq!(user.name, "Test User");
+    }
+
+    #[tokio::test]
+    async fn test_delete_project_administrator_unauthorized() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "You do not have permission to delete administrators from this project",
+                    "code": 6
+                }
+            ]
+        });
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/projects/TEST_PROJECT/administrators"))
+            .respond_with(ResponseTemplate::new(401).set_body_json(error_response))
+            .mount(&mock_server)
+            .await;
+
+        let params =
+            DeleteProjectAdministratorParams::new(ProjectKey::from_str("TEST_PROJECT").unwrap(), 1);
+        let result = project_api.delete_project_administrator(params).await;
+        assert!(result.is_err());
+        match result {
+            Err(ApiError::HttpStatus { status, .. }) => {
+                assert_eq!(status, 401);
+            }
+            _ => panic!("Expected HttpStatus error with 401"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_delete_project_administrator_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No project found",
+                    "code": 7
+                }
+            ]
+        });
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/projects/INVALID_PROJECT/administrators"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(error_response))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteProjectAdministratorParams::new(
+            ProjectKey::from_str("INVALID_PROJECT").unwrap(),
+            1,
+        );
+        let result = project_api.delete_project_administrator(params).await;
+        assert!(result.is_err());
+        match result {
+            Err(ApiError::HttpStatus { status, .. }) => {
+                assert_eq!(status, 404);
+            }
+            _ => panic!("Expected HttpStatus error with 404"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_delete_project_administrator_user_not_admin() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "User is not an administrator of this project",
+                    "code": 11
+                }
+            ]
+        });
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/projects/123/administrators"))
+            .respond_with(ResponseTemplate::new(409).set_body_json(error_response))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteProjectAdministratorParams::new(ProjectId::new(123), 1);
+        let result = project_api.delete_project_administrator(params).await;
+        assert!(result.is_err());
+        match result {
+            Err(ApiError::HttpStatus { status, .. }) => {
+                assert_eq!(status, 409);
+            }
+            _ => panic!("Expected HttpStatus error with 409"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_delete_project_administrator_user_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No user found",
+                    "code": 5
+                }
+            ]
+        });
+
+        Mock::given(method("DELETE"))
+            .and(path("/api/v2/projects/TEST_PROJECT/administrators"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(error_response))
+            .mount(&mock_server)
+            .await;
+
+        let params = DeleteProjectAdministratorParams::new(
+            ProjectKey::from_str("TEST_PROJECT").unwrap(),
+            999999,
+        );
+        let result = project_api.delete_project_administrator(params).await;
         assert!(result.is_err());
         match result {
             Err(ApiError::HttpStatus { status, .. }) => {

@@ -28,7 +28,8 @@ use crate::{
         AddProjectAdministratorResponse, AddProjectTeamResponse, AddProjectUserParams,
         AddProjectUserResponse, AddStatusResponse, DeleteCategoryResponse,
         DeleteCustomFieldResponse, DeleteIssueTypeResponse, DeleteListItemFromCustomFieldParams,
-        DeleteListItemFromCustomFieldResponse, DeleteProjectTeamResponse, DeleteProjectUserParams,
+        DeleteListItemFromCustomFieldResponse, DeleteProjectAdministratorParams,
+        DeleteProjectAdministratorResponse, DeleteProjectTeamResponse, DeleteProjectUserParams,
         DeleteProjectUserResponse, DeleteStatusParams, DeleteStatusResponse, DeleteVersionResponse,
         UpdateCategoryResponse, UpdateCustomFieldParams, UpdateCustomFieldResponse,
         UpdateIssueTypeResponse, UpdateListItemToCustomFieldResponse, UpdateStatusOrderParams,
@@ -412,6 +413,17 @@ impl ProjectApi {
         &self,
         params: DeleteProjectUserParams,
     ) -> Result<DeleteProjectUserResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Removes an administrator from a project.
+    ///
+    /// Corresponds to `DELETE /api/v2/projects/:projectIdOrKey/administrators`.
+    #[cfg(feature = "writable")]
+    pub async fn delete_project_administrator(
+        &self,
+        params: DeleteProjectAdministratorParams,
+    ) -> Result<DeleteProjectAdministratorResponse> {
         self.0.execute(params).await
     }
 
