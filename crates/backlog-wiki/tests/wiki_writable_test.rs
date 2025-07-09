@@ -8,7 +8,7 @@ mod writable_tests {
         UnlinkSharedFileFromWikiParams, UpdateWikiParams,
     };
     use wiremock::MockServer;
-    use wiremock::matchers::{body_string_contains, header, method, path, query_param};
+    use wiremock::matchers::{body_string_contains, header, method, path};
     use wiremock::{Mock, ResponseTemplate};
 
     #[tokio::test]
@@ -364,7 +364,7 @@ mod writable_tests {
 
         Mock::given(method("DELETE"))
             .and(path("/api/v2/wikis/456"))
-            .and(query_param("mailNotify", "true"))
+            .and(wiremock::matchers::body_string("mailNotify=true"))
             .respond_with(ResponseTemplate::new(200).set_body_json(&expected_detail))
             .mount(&mock_server)
             .await;
@@ -386,7 +386,7 @@ mod writable_tests {
 
         Mock::given(method("DELETE"))
             .and(path("/api/v2/wikis/789"))
-            .and(query_param("mailNotify", "false"))
+            .and(wiremock::matchers::body_string("mailNotify=false"))
             .respond_with(ResponseTemplate::new(200).set_body_json(&expected_detail))
             .mount(&mock_server)
             .await;

@@ -50,11 +50,11 @@ pub trait IntoRequest {
             .header("Accept", "application/json");
 
         let request = match method {
-            HttpMethod::Get | HttpMethod::Delete => {
+            HttpMethod::Get => {
                 let query = IntoRequest::to_query(&self);
                 request_builder.query(&query).build()?
             }
-            HttpMethod::Post | HttpMethod::Put | HttpMethod::Patch => {
+            HttpMethod::Delete | HttpMethod::Post | HttpMethod::Put | HttpMethod::Patch => {
                 let form = IntoRequest::to_form(&self);
                 request_builder.form(&form).build()?
             }

@@ -26,11 +26,11 @@ use crate::{
         AddListItemToCustomFieldResponse, AddProjectTeamResponse, AddProjectUserParams,
         AddProjectUserResponse, AddStatusResponse, DeleteCategoryResponse,
         DeleteCustomFieldResponse, DeleteIssueTypeResponse, DeleteListItemFromCustomFieldParams,
-        DeleteListItemFromCustomFieldResponse, DeleteProjectTeamResponse, DeleteStatusParams,
-        DeleteStatusResponse, DeleteVersionResponse, UpdateCategoryResponse,
-        UpdateCustomFieldParams, UpdateCustomFieldResponse, UpdateIssueTypeResponse,
-        UpdateListItemToCustomFieldResponse, UpdateStatusOrderParams, UpdateStatusOrderResponse,
-        UpdateStatusParams, UpdateStatusResponse, UpdateVersionResponse,
+        DeleteListItemFromCustomFieldResponse, DeleteProjectTeamResponse, DeleteProjectUserParams,
+        DeleteProjectUserResponse, DeleteStatusParams, DeleteStatusResponse, DeleteVersionResponse,
+        UpdateCategoryResponse, UpdateCustomFieldParams, UpdateCustomFieldResponse,
+        UpdateIssueTypeResponse, UpdateListItemToCustomFieldResponse, UpdateStatusOrderParams,
+        UpdateStatusOrderResponse, UpdateStatusParams, UpdateStatusResponse, UpdateVersionResponse,
     },
 };
 
@@ -378,6 +378,17 @@ impl ProjectApi {
         &self,
         params: AddProjectUserParams,
     ) -> Result<AddProjectUserResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Removes a user from a project.
+    ///
+    /// Corresponds to `DELETE /api/v2/projects/:projectIdOrKey/users`.
+    #[cfg(feature = "writable")]
+    pub async fn delete_project_user(
+        &self,
+        params: DeleteProjectUserParams,
+    ) -> Result<DeleteProjectUserResponse> {
         self.0.execute(params).await
     }
 

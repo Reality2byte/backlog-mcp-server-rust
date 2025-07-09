@@ -2,8 +2,8 @@
 
 ## Summary
 - Total APIs: 149
-- Implemented: 129 (87%)
-- Not implemented: 20 (13%)
+- Implemented: 130 (87%)
+- Not implemented: 19 (13%)
 
 ### Spaces
 - ✅ GetSpace: Returns information about your space: GET /api/v2/space
@@ -26,7 +26,7 @@
 #### Users
 - ✅ GetProjectUserList: Returns list of project members: GET /api/v2/projects/:projectIdOrKey/users
 - ✅ AddProjectUser: Adds user to list of project members: POST /api/v2/projects/:projectIdOrKey/users
-- ❌ DeleteProjectUser: Removes user from list project members: DELETE /api/v2/projects/:projectIdOrKey/users
+- ✅ DeleteProjectUser: Removes user from list project members: DELETE /api/v2/projects/:projectIdOrKey/users
 
 #### Project Admin
 - ❌ GetListOfProjectAdministrators: Returns list of users who has Project Administrator role: GET /api/v2/projects/:projectIdOrKey/administrators

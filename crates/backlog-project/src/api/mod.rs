@@ -11,6 +11,7 @@ mod delete_custom_field;
 mod delete_issue_type;
 mod delete_list_item_from_custom_field;
 mod delete_project_team;
+mod delete_project_user;
 mod delete_status;
 mod delete_version;
 mod get_category_list;
@@ -164,3 +165,6 @@ pub use delete_project_team::{DeleteProjectTeamParams, DeleteProjectTeamResponse
 
 #[cfg(feature = "writable")]
 pub use add_project_user::{AddProjectUserParams, AddProjectUserResponse};
+
+#[cfg(feature = "writable")]
+pub use delete_project_user::{DeleteProjectUserParams, DeleteProjectUserResponse};

@@ -832,6 +832,16 @@ enum ProjectCommands {
         #[clap(short, long)]
         user_id: u32,
     },
+    /// Remove a user from a project
+    #[cfg(feature = "project_writable")]
+    UserRemove {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// User ID to remove
+        #[clap(short, long)]
+        user_id: u32,
+    },
     /// List custom fields for a project
     CustomFieldList {
         /// Project ID or Key
@@ -3518,6 +3528,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error adding user: {e}");
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::UserRemove {
+                project_id_or_key,
+                user_id,
+            } => {
+                println!("Removing user {user_id} from project: {project_id_or_key}");
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let params =
+                    backlog_project::api::DeleteProjectUserParams::new(proj_id_or_key, user_id);
+                match client.project().delete_project_user(params).await {
+                    Ok(user) => {
+                        println!(
+                            "Successfully removed user: {} ({})",
+                            user.name, user.mail_address
+                        );
+                    }
+                    Err(e) => {
+                        eprintln!("Error removing user: {e}");
                     }
                 }
             }

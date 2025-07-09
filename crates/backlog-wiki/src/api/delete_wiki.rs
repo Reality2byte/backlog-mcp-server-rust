@@ -42,15 +42,15 @@ impl IntoRequest for DeleteWikiParams {
         format!("/api/v2/wikis/{}", self.wiki_id)
     }
 
-    fn to_query(&self) -> impl Serialize {
+    fn to_form(&self) -> impl Serialize {
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
-        struct Query {
+        struct Form {
             #[serde(skip_serializing_if = "Option::is_none")]
             mail_notify: Option<bool>,
         }
 
-        Query {
+        Form {
             mail_notify: self.mail_notify,
         }
     }
