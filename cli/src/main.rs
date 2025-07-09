@@ -828,6 +828,16 @@ enum ProjectCommands {
         #[clap(name = "PROJECT_ID_OR_KEY")]
         project_id_or_key: String,
     },
+    /// Add a user as a project administrator
+    #[cfg(feature = "project_writable")]
+    AdminAdd {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// User ID to add as administrator
+        #[clap(short, long)]
+        user_id: u32,
+    },
     /// Add a user to a project
     #[cfg(feature = "project_writable")]
     UserAdd {
@@ -3546,6 +3556,39 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error listing project administrators: {e}");
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::AdminAdd {
+                project_id_or_key,
+                user_id,
+            } => {
+                println!("Adding user {user_id} as administrator to project: {project_id_or_key}");
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let params = backlog_project::api::AddProjectAdministratorParams::new(
+                    proj_id_or_key,
+                    user_id,
+                );
+                match client.project().add_project_administrator(params).await {
+                    Ok(user) => {
+                        println!("✅ Successfully added administrator:");
+                        println!("  User ID: {}", user.id);
+                        println!("  Name: {}", user.name);
+                        println!("  Email: {}", user.mail_address);
+                        let role_str = match user.role_type {
+                            backlog_core::Role::Admin => "Administrator",
+                            backlog_core::Role::User => "User",
+                            backlog_core::Role::Reporter => "Reporter",
+                            backlog_core::Role::Viewer => "Viewer",
+                            backlog_core::Role::Guest => "Guest",
+                        };
+                        println!("  Role: {role_str}");
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Error adding project administrator: {e}");
+                        std::process::exit(1);
                     }
                 }
             }

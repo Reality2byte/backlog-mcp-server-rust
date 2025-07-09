@@ -7,9 +7,10 @@ mod writable_tests {
         identifier::{CategoryId, IssueTypeId, MilestoneId, ProjectId, StatusId, UserId},
     };
     use backlog_project::api::{
-        AddCategoryParams, AddIssueTypeParams, AddMilestoneParams, AddProjectUserParams,
-        AddStatusParams, DeleteCategoryParams, DeleteProjectUserParams, DeleteStatusParams,
-        ProjectApi, UpdateCategoryParams, UpdateStatusOrderParams, UpdateStatusParams,
+        AddCategoryParams, AddIssueTypeParams, AddMilestoneParams, AddProjectAdministratorParams,
+        AddProjectUserParams, AddStatusParams, DeleteCategoryParams, DeleteProjectUserParams,
+        DeleteStatusParams, ProjectApi, UpdateCategoryParams, UpdateStatusOrderParams,
+        UpdateStatusParams,
     };
     use backlog_project::{Category, IssueType, Milestone, Status};
     use chrono::TimeZone;
@@ -638,6 +639,203 @@ mod writable_tests {
 
         let params = DeleteProjectUserParams::new(ProjectId::new(123), 999);
         let result = project_api.delete_project_user(params).await;
+        assert!(result.is_err());
+        match result {
+            Err(ApiError::HttpStatus { status, .. }) => {
+                assert_eq!(status, 404);
+            }
+            _ => panic!("Expected HttpStatus error with 404"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_add_project_administrator_success() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let expected_user = User {
+            id: UserId::new(1),
+            user_id: Some("john.doe".to_string()),
+            name: "John Doe".to_string(),
+            role_type: Role::Admin,
+            lang: Some(backlog_core::Language::Japanese),
+            mail_address: "john.doe@example.com".to_string(),
+            last_login_time: Some(chrono::Utc.with_ymd_and_hms(2023, 12, 1, 10, 0, 0).unwrap()),
+        };
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/projects/TEST_PROJECT/administrators"))
+            .and(wiremock::matchers::body_string("userId=1"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_user))
+            .mount(&mock_server)
+            .await;
+
+        let params =
+            AddProjectAdministratorParams::new(ProjectKey::from_str("TEST_PROJECT").unwrap(), 1);
+        let result = project_api.add_project_administrator(params).await;
+        assert!(result.is_ok());
+        let user = result.unwrap();
+        assert_eq!(user.name, "John Doe");
+        assert_eq!(user.mail_address, "john.doe@example.com");
+        assert_eq!(user.role_type, Role::Admin);
+    }
+
+    #[tokio::test]
+    async fn test_add_project_administrator_with_project_id() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let expected_user = User {
+            id: UserId::new(2),
+            user_id: Some("jane.smith".to_string()),
+            name: "Jane Smith".to_string(),
+            role_type: Role::Admin,
+            lang: Some(backlog_core::Language::English),
+            mail_address: "jane.smith@example.com".to_string(),
+            last_login_time: None,
+        };
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/projects/123/administrators"))
+            .and(wiremock::matchers::body_string("userId=2"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&expected_user))
+            .mount(&mock_server)
+            .await;
+
+        let params = AddProjectAdministratorParams::new(ProjectId::new(123), 2);
+        let result = project_api.add_project_administrator(params).await;
+        assert!(result.is_ok());
+        let user = result.unwrap();
+        assert_eq!(user.name, "Jane Smith");
+        assert_eq!(user.role_type, Role::Admin);
+    }
+
+    #[tokio::test]
+    async fn test_add_project_administrator_permission_error() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "You do not have permission to add administrators to this project",
+                    "code": 6
+                }
+            ]
+        });
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/projects/TEST_PROJECT/administrators"))
+            .respond_with(ResponseTemplate::new(401).set_body_json(error_response))
+            .mount(&mock_server)
+            .await;
+
+        let params =
+            AddProjectAdministratorParams::new(ProjectKey::from_str("TEST_PROJECT").unwrap(), 1);
+        let result = project_api.add_project_administrator(params).await;
+        assert!(result.is_err());
+        match result {
+            Err(ApiError::HttpStatus { status, .. }) => {
+                assert_eq!(status, 401);
+            }
+            _ => panic!("Expected HttpStatus error with 401"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_add_project_administrator_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "No project found",
+                    "code": 7
+                }
+            ]
+        });
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/projects/INVALID_PROJECT/administrators"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(error_response))
+            .mount(&mock_server)
+            .await;
+
+        let params =
+            AddProjectAdministratorParams::new(ProjectKey::from_str("INVALID_PROJECT").unwrap(), 1);
+        let result = project_api.add_project_administrator(params).await;
+        assert!(result.is_err());
+        match result {
+            Err(ApiError::HttpStatus { status, .. }) => {
+                assert_eq!(status, 404);
+            }
+            _ => panic!("Expected HttpStatus error with 404"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_add_project_administrator_already_admin() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "User is already an administrator of this project",
+                    "code": 11
+                }
+            ]
+        });
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/projects/123/administrators"))
+            .respond_with(ResponseTemplate::new(409).set_body_json(error_response))
+            .mount(&mock_server)
+            .await;
+
+        let params = AddProjectAdministratorParams::new(ProjectId::new(123), 1);
+        let result = project_api.add_project_administrator(params).await;
+        assert!(result.is_err());
+        match result {
+            Err(ApiError::HttpStatus { status, .. }) => {
+                assert_eq!(status, 409);
+            }
+            _ => panic!("Expected HttpStatus error with 409"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_add_project_administrator_user_not_found() {
+        let mock_server = MockServer::start().await;
+        let client = setup_client(&mock_server).await;
+        let project_api = ProjectApi::new(client);
+
+        let error_response = serde_json::json!({
+            "errors": [
+                {
+                    "message": "User not found",
+                    "code": 5
+                }
+            ]
+        });
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/projects/TEST_PROJECT/administrators"))
+            .respond_with(ResponseTemplate::new(404).set_body_json(error_response))
+            .mount(&mock_server)
+            .await;
+
+        let params = AddProjectAdministratorParams::new(
+            ProjectKey::from_str("TEST_PROJECT").unwrap(),
+            999999,
+        );
+        let result = project_api.add_project_administrator(params).await;
         assert!(result.is_err());
         match result {
             Err(ApiError::HttpStatus { status, .. }) => {

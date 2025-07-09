@@ -24,7 +24,8 @@ use crate::{
     UpdateVersionParams,
     api::{
         AddCategoryResponse, AddCustomFieldResponse, AddIssueTypeResponse,
-        AddListItemToCustomFieldResponse, AddProjectTeamResponse, AddProjectUserParams,
+        AddListItemToCustomFieldResponse, AddProjectAdministratorParams,
+        AddProjectAdministratorResponse, AddProjectTeamResponse, AddProjectUserParams,
         AddProjectUserResponse, AddStatusResponse, DeleteCategoryResponse,
         DeleteCustomFieldResponse, DeleteIssueTypeResponse, DeleteListItemFromCustomFieldParams,
         DeleteListItemFromCustomFieldResponse, DeleteProjectTeamResponse, DeleteProjectUserParams,
@@ -389,6 +390,17 @@ impl ProjectApi {
         &self,
         params: AddProjectUserParams,
     ) -> Result<AddProjectUserResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Adds a user as a project administrator.
+    ///
+    /// Corresponds to `POST /api/v2/projects/:projectIdOrKey/administrators`.
+    #[cfg(feature = "writable")]
+    pub async fn add_project_administrator(
+        &self,
+        params: AddProjectAdministratorParams,
+    ) -> Result<AddProjectAdministratorResponse> {
         self.0.execute(params).await
     }
 
