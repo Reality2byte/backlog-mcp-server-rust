@@ -3,13 +3,17 @@ mod add_custom_field;
 mod add_issue_type;
 mod add_list_item_to_custom_field;
 mod add_milestone;
+mod add_project_administrator;
 mod add_project_team;
+mod add_project_user;
 mod add_status;
 mod delete_category;
 mod delete_custom_field;
 mod delete_issue_type;
 mod delete_list_item_from_custom_field;
+mod delete_project_administrator;
 mod delete_project_team;
+mod delete_project_user;
 mod delete_status;
 mod delete_version;
 mod get_category_list;
@@ -17,6 +21,7 @@ mod get_custom_field_list;
 mod get_issue_type_list;
 mod get_milestone_list;
 mod get_priority_list;
+mod get_project_administrator_list;
 mod get_project_detail;
 mod get_project_icon;
 mod get_project_list;
@@ -31,6 +36,7 @@ mod update_category;
 mod update_custom_field;
 mod update_issue_type;
 mod update_list_item_to_custom_field;
+mod update_project;
 mod update_status;
 mod update_status_order;
 mod update_version;
@@ -133,6 +139,9 @@ pub use delete_list_item_from_custom_field::DeleteListItemFromCustomFieldParams;
 #[cfg(feature = "writable")]
 pub use delete_list_item_from_custom_field::DeleteListItemFromCustomFieldResponse;
 
+pub use get_project_administrator_list::{
+    GetProjectAdministratorListParams, GetProjectAdministratorListResponse,
+};
 pub use get_project_detail::{GetProjectDetailParams, GetProjectDetailResponse};
 
 pub use get_project_list::{GetProjectListParams, GetProjectListResponse};
@@ -160,3 +169,22 @@ pub use add_project_team::{AddProjectTeamParams, AddProjectTeamResponse};
 
 #[cfg(feature = "writable")]
 pub use delete_project_team::{DeleteProjectTeamParams, DeleteProjectTeamResponse};
+
+#[cfg(feature = "writable")]
+pub use add_project_user::{AddProjectUserParams, AddProjectUserResponse};
+
+#[cfg(feature = "writable")]
+pub use add_project_administrator::{
+    AddProjectAdministratorParams, AddProjectAdministratorResponse,
+};
+
+#[cfg(feature = "writable")]
+pub use delete_project_user::{DeleteProjectUserParams, DeleteProjectUserResponse};
+
+#[cfg(feature = "writable")]
+pub use delete_project_administrator::{
+    DeleteProjectAdministratorParams, DeleteProjectAdministratorResponse,
+};
+
+#[cfg(feature = "writable")]
+pub use update_project::{TextFormattingRule, UpdateProjectParams, UpdateProjectResponse};

@@ -2,8 +2,8 @@
 
 ## Summary
 - Total APIs: 149
-- Implemented: 132 (89%)
-- Not implemented: 17 (11%)
+- Implemented: 139 (89%)
+- Not implemented: 10 (11%)
 
 ### Spaces
 - ✅ GetSpace: Returns information about your space: GET /api/v2/space
@@ -21,17 +21,17 @@
 - ❌ AddProject: Adds new project: POST /api/v2/projects
 - ❌ DeleteProject: Deletes project: DELETE /api/v2/projects/:projectIdOrKey
 - ❌ GetProjectDiskUsage: Returns information about project disk usage: GET /api/v2/projects/:projectIdOrKey/diskUsage
-- ❌ UpdateProject: Updates information about project: PATCH /api/v2/projects/:projectIdOrKey
+- ✅ UpdateProject: Updates information about project: PATCH /api/v2/projects/:projectIdOrKey
 
 #### Users
 - ✅ GetProjectUserList: Returns list of project members: GET /api/v2/projects/:projectIdOrKey/users
-- ❌ AddProjectUser: Adds user to list of project members: POST /api/v2/projects/:projectIdOrKey/users
-- ❌ DeleteProjectUser: Removes user from list project members: DELETE /api/v2/projects/:projectIdOrKey/users
+- ✅ AddProjectUser: Adds user to list of project members: POST /api/v2/projects/:projectIdOrKey/users
+- ✅ DeleteProjectUser: Removes user from list project members: DELETE /api/v2/projects/:projectIdOrKey/users
 
 #### Project Admin
-- ❌ GetListOfProjectAdministrators: Returns list of users who has Project Administrator role: GET /api/v2/projects/:projectIdOrKey/administrators
-- ❌ AddProjectAdministrator: Adds “Project Administrator” role to user: POST /api/v2/projects/:projectIdOrKey/administrators
-- ❌ DeleteProjectAdministrator: Removes Project Administrator role from user: DELETE /api/v2/projects/:projectIdOrKey/administrators
+- ✅ GetListOfProjectAdministrators: Returns list of users who has Project Administrator role: GET /api/v2/projects/:projectIdOrKey/administrators
+- ✅ AddProjectAdministrator: Adds “Project Administrator” role to user: POST /api/v2/projects/:projectIdOrKey/administrators
+- ✅ DeleteProjectAdministrator: Removes Project Administrator role from user: DELETE /api/v2/projects/:projectIdOrKey/administrators
 
 #### Teams
 - ✅ AddProjectTeam: Add team to project: POST /api/v2/projects/:projectIdOrKey/teams

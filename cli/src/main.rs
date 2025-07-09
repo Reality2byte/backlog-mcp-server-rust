@@ -77,7 +77,8 @@ use backlog_project::{
     DeleteCustomFieldParams, DeleteIssueTypeParams, DeleteProjectTeamParams, DeleteStatusParams,
     DeleteVersionParams, UpdateCategoryParams, UpdateCustomFieldParams, UpdateIssueTypeParams,
     UpdateListItemToCustomFieldParams, UpdateStatusOrderParams, UpdateStatusParams,
-    UpdateVersionParams, api::DeleteListItemFromCustomFieldParams,
+    UpdateVersionParams,
+    api::{DeleteListItemFromCustomFieldParams, UpdateProjectParams},
 };
 use backlog_project::{GetProjectListParams, GetRecentlyViewedProjectsParamsBuilder};
 use backlog_space::GetLicenceParams;
@@ -784,6 +785,58 @@ enum ProjectCommands {
         #[clap(name = "PROJECT_ID_OR_KEY")]
         project_id_or_key: String,
     },
+    /// Update project settings
+    #[cfg(feature = "project_writable")]
+    Update {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// Update project name
+        #[clap(long)]
+        name: Option<String>,
+        /// Update project key
+        #[clap(long)]
+        key: Option<String>,
+        /// Enable/disable charts
+        #[clap(long)]
+        chart_enabled: Option<bool>,
+        /// Use resolved for chart
+        #[clap(long)]
+        use_resolved_for_chart: Option<bool>,
+        /// Enable/disable subtasking
+        #[clap(long)]
+        subtasking_enabled: Option<bool>,
+        /// Project leader can edit project leader
+        #[clap(long)]
+        project_leader_can_edit_project_leader: Option<bool>,
+        /// Enable/disable Wiki
+        #[clap(long)]
+        use_wiki: Option<bool>,
+        /// Enable/disable file sharing
+        #[clap(long)]
+        use_file_sharing: Option<bool>,
+        /// Enable/disable Wiki tree view
+        #[clap(long)]
+        use_wiki_tree_view: Option<bool>,
+        /// Enable/disable Subversion
+        #[clap(long)]
+        use_subversion: Option<bool>,
+        /// Enable/disable Git
+        #[clap(long)]
+        use_git: Option<bool>,
+        /// Use original image size at Wiki
+        #[clap(long)]
+        use_original_image_size_at_wiki: Option<bool>,
+        /// Text formatting rule (backlog or markdown)
+        #[clap(long)]
+        text_formatting_rule: Option<String>,
+        /// Archive/unarchive project
+        #[clap(long)]
+        archived: Option<bool>,
+        /// Use dev attributes
+        #[clap(long)]
+        use_dev_attributes: Option<bool>,
+    },
     /// List recently viewed projects
     RecentlyViewed {
         /// Sort order ("asc" or "desc", default: "desc")
@@ -825,6 +878,52 @@ enum ProjectCommands {
         /// Project ID or Key
         #[clap(name = "PROJECT_ID_OR_KEY")]
         project_id_or_key: String,
+    },
+    /// List administrators for a project
+    AdminList {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+    },
+    /// Add a user as a project administrator
+    #[cfg(feature = "project_writable")]
+    AdminAdd {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// User ID to add as administrator
+        #[clap(short, long)]
+        user_id: u32,
+    },
+    /// Remove an administrator from a project
+    #[cfg(feature = "project_writable")]
+    AdminRemove {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// User ID to remove as administrator
+        #[clap(short, long)]
+        user_id: u32,
+    },
+    /// Add a user to a project
+    #[cfg(feature = "project_writable")]
+    UserAdd {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// User ID to add
+        #[clap(short, long)]
+        user_id: u32,
+    },
+    /// Remove a user from a project
+    #[cfg(feature = "project_writable")]
+    UserRemove {
+        /// Project ID or Key
+        #[clap(name = "PROJECT_ID_OR_KEY")]
+        project_id_or_key: String,
+        /// User ID to remove
+        #[clap(short, long)]
+        user_id: u32,
     },
     /// List custom fields for a project
     CustomFieldList {
@@ -3299,6 +3398,116 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::Update {
+                project_id_or_key,
+                name,
+                key,
+                chart_enabled,
+                use_resolved_for_chart,
+                subtasking_enabled,
+                project_leader_can_edit_project_leader,
+                use_wiki,
+                use_file_sharing,
+                use_wiki_tree_view,
+                use_subversion,
+                use_git,
+                use_original_image_size_at_wiki,
+                text_formatting_rule,
+                archived,
+                use_dev_attributes,
+            } => {
+                println!("Updating project: {project_id_or_key}");
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let mut params = UpdateProjectParams::new(proj_id_or_key);
+
+                if let Some(name) = name {
+                    params.name = Some(name);
+                }
+                if let Some(key) = key {
+                    params.key = Some(key);
+                }
+                if let Some(chart_enabled) = chart_enabled {
+                    params.chart_enabled = Some(chart_enabled);
+                }
+                if let Some(use_resolved_for_chart) = use_resolved_for_chart {
+                    params.use_resolved_for_chart = Some(use_resolved_for_chart);
+                }
+                if let Some(subtasking_enabled) = subtasking_enabled {
+                    params.subtasking_enabled = Some(subtasking_enabled);
+                }
+                if let Some(project_leader_can_edit_project_leader) =
+                    project_leader_can_edit_project_leader
+                {
+                    params.project_leader_can_edit_project_leader =
+                        Some(project_leader_can_edit_project_leader);
+                }
+                if let Some(use_wiki) = use_wiki {
+                    params.use_wiki = Some(use_wiki);
+                }
+                if let Some(use_file_sharing) = use_file_sharing {
+                    params.use_file_sharing = Some(use_file_sharing);
+                }
+                if let Some(use_wiki_tree_view) = use_wiki_tree_view {
+                    params.use_wiki_tree_view = Some(use_wiki_tree_view);
+                }
+                if let Some(use_subversion) = use_subversion {
+                    params.use_subversion = Some(use_subversion);
+                }
+                if let Some(use_git) = use_git {
+                    params.use_git = Some(use_git);
+                }
+                if let Some(use_original_image_size_at_wiki) = use_original_image_size_at_wiki {
+                    params.use_original_image_size_at_wiki = Some(use_original_image_size_at_wiki);
+                }
+                if let Some(text_formatting_rule) = text_formatting_rule {
+                    params.text_formatting_rule = Some(match text_formatting_rule.as_str() {
+                        "backlog" => backlog_project::api::TextFormattingRule::Backlog,
+                        "markdown" => backlog_project::api::TextFormattingRule::Markdown,
+                        _ => {
+                            eprintln!(
+                                "Invalid text formatting rule: {text_formatting_rule}. Use 'backlog' or 'markdown'"
+                            );
+                            std::process::exit(1);
+                        }
+                    });
+                }
+                if let Some(archived) = archived {
+                    params.archived = Some(archived);
+                }
+                if let Some(use_dev_attributes) = use_dev_attributes {
+                    params.use_dev_attributes = Some(use_dev_attributes);
+                }
+
+                match client.project().update_project(params).await {
+                    Ok(project) => {
+                        println!("✅ Project updated successfully:");
+                        println!("Project ID: {}", project.id);
+                        println!("Project Key: {}", project.project_key);
+                        println!("Name: {}", project.name);
+                        println!("Chart Enabled: {}", project.chart_enabled);
+                        println!("Subtasking Enabled: {}", project.subtasking_enabled);
+                        println!(
+                            "Project Leader Can Edit Project Leader: {}",
+                            project.project_leader_can_edit_project_leader
+                        );
+                        println!("Use Wiki: {}", project.use_wiki);
+                        println!("Use File Sharing: {}", project.use_file_sharing);
+                        println!("Use Wiki Tree View: {}", project.use_wiki_tree_view);
+                        println!(
+                            "Use Original Image Size at Wiki: {}",
+                            project.use_original_image_size_at_wiki
+                        );
+                        println!("Text Formatting Rule: {:?}", project.text_formatting_rule);
+                        println!("Archived: {}", project.archived);
+                        println!("Use Dev Attributes: {}", project.use_dev_attributes);
+                    }
+                    Err(e) => {
+                        eprintln!("Error updating project: {e}");
+                    }
+                }
+            }
             ProjectCommands::RecentlyViewed {
                 order,
                 count,
@@ -3490,6 +3699,142 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         eprintln!("Error listing project users: {e}");
+                    }
+                }
+            }
+            ProjectCommands::AdminList { project_id_or_key } => {
+                println!("Listing administrators for project: {project_id_or_key}");
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let params =
+                    backlog_project::api::GetProjectAdministratorListParams::new(proj_id_or_key);
+                match client
+                    .project()
+                    .get_project_administrator_list(params)
+                    .await
+                {
+                    Ok(admins) => {
+                        if admins.is_empty() {
+                            println!("No administrators found in this project");
+                        } else {
+                            println!("\nProject Administrators:");
+                            println!("{:-<80}", "");
+                            for admin in admins {
+                                let last_login = match admin.last_login_time {
+                                    Some(time) => time.format("%Y-%m-%d %H:%M:%S").to_string(),
+                                    None => "Never".to_string(),
+                                };
+                                println!(
+                                    "[{}] {} ({}) - Last login: {}",
+                                    admin.id, admin.name, admin.mail_address, last_login
+                                );
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error listing project administrators: {e}");
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::AdminAdd {
+                project_id_or_key,
+                user_id,
+            } => {
+                println!("Adding user {user_id} as administrator to project: {project_id_or_key}");
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let params = backlog_project::api::AddProjectAdministratorParams::new(
+                    proj_id_or_key,
+                    user_id,
+                );
+                match client.project().add_project_administrator(params).await {
+                    Ok(user) => {
+                        println!("✅ Successfully added administrator:");
+                        println!("  User ID: {}", user.id);
+                        println!("  Name: {}", user.name);
+                        println!("  Email: {}", user.mail_address);
+                        let role_str = match user.role_type {
+                            backlog_core::Role::Admin => "Administrator",
+                            backlog_core::Role::User => "User",
+                            backlog_core::Role::Reporter => "Reporter",
+                            backlog_core::Role::Viewer => "Viewer",
+                            backlog_core::Role::Guest => "Guest",
+                        };
+                        println!("  Role: {role_str}");
+                    }
+                    Err(e) => {
+                        eprintln!("❌ Error adding project administrator: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::AdminRemove {
+                project_id_or_key,
+                user_id,
+            } => {
+                println!("Removing administrator {user_id} from project: {project_id_or_key}");
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let params = backlog_project::api::DeleteProjectAdministratorParams::new(
+                    proj_id_or_key,
+                    user_id,
+                );
+                match client.project().delete_project_administrator(params).await {
+                    Ok(user) => {
+                        println!("Successfully removed administrator:");
+                        println!("  User ID: {}", user.id);
+                        println!("  Name: {}", user.name);
+                        println!("  Email: {}", user.mail_address);
+                    }
+                    Err(e) => {
+                        eprintln!("Error removing project administrator: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::UserAdd {
+                project_id_or_key,
+                user_id,
+            } => {
+                println!("Adding user {user_id} to project: {project_id_or_key}");
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let params =
+                    backlog_project::api::AddProjectUserParams::new(proj_id_or_key, user_id);
+                match client.project().add_project_user(params).await {
+                    Ok(user) => {
+                        println!(
+                            "Successfully added user: {} ({})",
+                            user.name, user.mail_address
+                        );
+                    }
+                    Err(e) => {
+                        eprintln!("Error adding user: {e}");
+                    }
+                }
+            }
+            #[cfg(feature = "project_writable")]
+            ProjectCommands::UserRemove {
+                project_id_or_key,
+                user_id,
+            } => {
+                println!("Removing user {user_id} from project: {project_id_or_key}");
+
+                let proj_id_or_key = project_id_or_key.parse::<ProjectIdOrKey>()?;
+                let params =
+                    backlog_project::api::DeleteProjectUserParams::new(proj_id_or_key, user_id);
+                match client.project().delete_project_user(params).await {
+                    Ok(user) => {
+                        println!(
+                            "Successfully removed user: {} ({})",
+                            user.name, user.mail_address
+                        );
+                    }
+                    Err(e) => {
+                        eprintln!("Error removing user: {e}");
                     }
                 }
             }
@@ -4556,7 +4901,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             #[cfg(not(feature = "project_writable"))]
-            ProjectCommands::CategoryAdd { .. }
+            ProjectCommands::Update { .. }
+            | ProjectCommands::CategoryAdd { .. }
             | ProjectCommands::CategoryUpdate { .. }
             | ProjectCommands::CategoryDelete { .. }
             | ProjectCommands::CustomFieldUpdate { .. }
@@ -4576,9 +4922,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             | ProjectCommands::StatusDelete { .. }
             | ProjectCommands::StatusOrderUpdate { .. }
             | ProjectCommands::TeamAdd { .. }
-            | ProjectCommands::TeamDelete { .. } => {
+            | ProjectCommands::TeamDelete { .. }
+            | ProjectCommands::AdminAdd { .. }
+            | ProjectCommands::AdminRemove { .. }
+            | ProjectCommands::UserAdd { .. }
+            | ProjectCommands::UserRemove { .. } => {
                 eprintln!(
-                    "Category, issue type, version, status, team, and custom field management is not available. Please build with 'project_writable' feature."
+                    "Project update, user/admin management, category, issue type, version, status, team, and custom field management is not available. Please build with 'project_writable' feature."
                 );
             }
             ProjectCommands::PriorityList => {

@@ -7,7 +7,8 @@ use crate::api::{
     GetCategoryListParams, GetCategoryListResponse, GetCustomFieldListParams,
     GetCustomFieldListResponse, GetIssueTypeListParams, GetIssueTypeListResponse,
     GetMilestoneListParams, GetMilestoneListResponse, GetPriorityListParams,
-    GetPriorityListResponse, GetProjectDetailParams, GetProjectDetailResponse,
+    GetPriorityListResponse, GetProjectAdministratorListParams,
+    GetProjectAdministratorListResponse, GetProjectDetailParams, GetProjectDetailResponse,
     GetProjectIconParams, GetProjectRecentUpdatesParams, GetProjectRecentUpdatesResponse,
     GetProjectTeamListParams, GetProjectTeamListResponse, GetProjectUserListParams,
     GetProjectUserListResponse, GetRecentlyViewedProjectsParams, GetRecentlyViewedProjectsResponse,
@@ -23,13 +24,17 @@ use crate::{
     UpdateVersionParams,
     api::{
         AddCategoryResponse, AddCustomFieldResponse, AddIssueTypeResponse,
-        AddListItemToCustomFieldResponse, AddProjectTeamResponse, AddStatusResponse,
-        DeleteCategoryResponse, DeleteCustomFieldResponse, DeleteIssueTypeResponse,
-        DeleteListItemFromCustomFieldParams, DeleteListItemFromCustomFieldResponse,
-        DeleteProjectTeamResponse, DeleteStatusParams, DeleteStatusResponse, DeleteVersionResponse,
+        AddListItemToCustomFieldResponse, AddProjectAdministratorParams,
+        AddProjectAdministratorResponse, AddProjectTeamResponse, AddProjectUserParams,
+        AddProjectUserResponse, AddStatusResponse, DeleteCategoryResponse,
+        DeleteCustomFieldResponse, DeleteIssueTypeResponse, DeleteListItemFromCustomFieldParams,
+        DeleteListItemFromCustomFieldResponse, DeleteProjectAdministratorParams,
+        DeleteProjectAdministratorResponse, DeleteProjectTeamResponse, DeleteProjectUserParams,
+        DeleteProjectUserResponse, DeleteStatusParams, DeleteStatusResponse, DeleteVersionResponse,
         UpdateCategoryResponse, UpdateCustomFieldParams, UpdateCustomFieldResponse,
-        UpdateIssueTypeResponse, UpdateListItemToCustomFieldResponse, UpdateStatusOrderParams,
-        UpdateStatusOrderResponse, UpdateStatusParams, UpdateStatusResponse, UpdateVersionResponse,
+        UpdateIssueTypeResponse, UpdateListItemToCustomFieldResponse, UpdateProjectParams,
+        UpdateProjectResponse, UpdateStatusOrderParams, UpdateStatusOrderResponse,
+        UpdateStatusParams, UpdateStatusResponse, UpdateVersionResponse,
     },
 };
 
@@ -127,6 +132,16 @@ impl ProjectApi {
         &self,
         params: GetProjectUserListParams,
     ) -> Result<GetProjectUserListResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Gets the list of project administrators.
+    ///
+    /// Corresponds to `GET /api/v2/projects/:projectIdOrKey/administrators`.
+    pub async fn get_project_administrator_list(
+        &self,
+        params: GetProjectAdministratorListParams,
+    ) -> Result<GetProjectAdministratorListResponse> {
         self.0.execute(params).await
     }
 
@@ -369,6 +384,50 @@ impl ProjectApi {
         self.0.execute(params).await
     }
 
+    /// Adds a user to a project.
+    ///
+    /// Corresponds to `POST /api/v2/projects/:projectIdOrKey/users`.
+    #[cfg(feature = "writable")]
+    pub async fn add_project_user(
+        &self,
+        params: AddProjectUserParams,
+    ) -> Result<AddProjectUserResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Adds a user as a project administrator.
+    ///
+    /// Corresponds to `POST /api/v2/projects/:projectIdOrKey/administrators`.
+    #[cfg(feature = "writable")]
+    pub async fn add_project_administrator(
+        &self,
+        params: AddProjectAdministratorParams,
+    ) -> Result<AddProjectAdministratorResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Removes a user from a project.
+    ///
+    /// Corresponds to `DELETE /api/v2/projects/:projectIdOrKey/users`.
+    #[cfg(feature = "writable")]
+    pub async fn delete_project_user(
+        &self,
+        params: DeleteProjectUserParams,
+    ) -> Result<DeleteProjectUserResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Removes an administrator from a project.
+    ///
+    /// Corresponds to `DELETE /api/v2/projects/:projectIdOrKey/administrators`.
+    #[cfg(feature = "writable")]
+    pub async fn delete_project_administrator(
+        &self,
+        params: DeleteProjectAdministratorParams,
+    ) -> Result<DeleteProjectAdministratorResponse> {
+        self.0.execute(params).await
+    }
+
     /// Adds a team to a project.
     ///
     /// Corresponds to `POST /api/v2/projects/:projectIdOrKey/teams`.
@@ -388,6 +447,17 @@ impl ProjectApi {
         &self,
         params: DeleteProjectTeamParams,
     ) -> Result<DeleteProjectTeamResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Updates a project.
+    ///
+    /// Corresponds to `PATCH /api/v2/projects/:projectIdOrKey`.
+    #[cfg(feature = "writable")]
+    pub async fn update_project(
+        &self,
+        params: UpdateProjectParams,
+    ) -> Result<UpdateProjectResponse> {
         self.0.execute(params).await
     }
 }
