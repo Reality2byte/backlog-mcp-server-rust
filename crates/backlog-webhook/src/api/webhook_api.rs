@@ -1,3 +1,5 @@
+#[cfg(feature = "writable")]
+use crate::api::add_webhook::{AddWebhookParams, AddWebhookParamsBuilder, AddWebhookResponse};
 use crate::api::get_webhook::{GetWebhookParams, GetWebhookResponse};
 use crate::api::get_webhook_list::{GetWebhookListParams, GetWebhookListResponse};
 #[cfg(feature = "writable")]
@@ -61,6 +63,27 @@ impl WebhookApi {
         &self,
         params: UpdateWebhookParams,
     ) -> Result<UpdateWebhookResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Add a new webhook to a project.
+    /// Corresponds to `POST /api/v2/projects/:projectIdOrKey/webhooks`.
+    #[cfg(feature = "writable")]
+    pub fn add_webhook(
+        &self,
+        project_id_or_key: impl Into<ProjectIdOrKey>,
+    ) -> AddWebhookParamsBuilder {
+        let mut builder = AddWebhookParamsBuilder::default();
+        builder.project_id_or_key(project_id_or_key.into());
+        builder
+    }
+
+    /// Execute add webhook request with params.
+    #[cfg(feature = "writable")]
+    pub async fn execute_add_webhook(
+        &self,
+        params: AddWebhookParams,
+    ) -> Result<AddWebhookResponse> {
         self.0.execute(params).await
     }
 }

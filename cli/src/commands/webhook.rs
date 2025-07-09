@@ -40,6 +40,33 @@ pub enum WebhookCommands {
         #[arg(short, long, value_enum, default_value = "table")]
         format: OutputFormat,
     },
+    /// Add a new webhook
+    #[cfg(feature = "webhook_writable")]
+    Add {
+        /// Project ID or key
+        #[arg(short, long)]
+        project: String,
+
+        /// Webhook name
+        #[arg(short, long)]
+        name: String,
+
+        /// Hook URL to receive notifications
+        #[arg(short = 'u', long)]
+        hook_url: String,
+
+        /// Description of the webhook
+        #[arg(short, long)]
+        description: Option<String>,
+
+        /// Enable all events (true/false)
+        #[arg(long)]
+        all_event: Option<bool>,
+
+        /// Activity type IDs (comma-separated)
+        #[arg(long, value_delimiter = ',')]
+        activity_type_ids: Option<Vec<u32>>,
+    },
     /// Update webhook settings
     #[cfg(feature = "webhook_writable")]
     Update {
@@ -88,6 +115,26 @@ pub async fn execute(client: &BacklogApiClient, args: WebhookArgs) -> Result<(),
             webhook_id,
             format,
         } => get_webhook(client, &project, webhook_id, format).await,
+        #[cfg(feature = "webhook_writable")]
+        WebhookCommands::Add {
+            project,
+            name,
+            hook_url,
+            description,
+            all_event,
+            activity_type_ids,
+        } => {
+            add_webhook(
+                client,
+                &project,
+                name,
+                hook_url,
+                description,
+                all_event,
+                activity_type_ids,
+            )
+            .await
+        }
         #[cfg(feature = "webhook_writable")]
         WebhookCommands::Update {
             project,
@@ -313,6 +360,44 @@ fn display_webhook_csv(webhook: &Webhook) {
         webhook.updated_user.name,
         webhook.updated.format("%Y-%m-%d %H:%M:%S"),
     );
+}
+
+#[cfg(feature = "webhook_writable")]
+#[allow(clippy::too_many_arguments)]
+async fn add_webhook(
+    client: &BacklogApiClient,
+    project: &str,
+    name: String,
+    hook_url: String,
+    description: Option<String>,
+    all_event: Option<bool>,
+    activity_type_ids: Option<Vec<u32>>,
+) -> Result<(), Box<dyn Error>> {
+    let project_id_or_key = parse_project_id_or_key(project)?;
+
+    let mut builder = client.webhook().add_webhook(project_id_or_key);
+
+    builder.name(name);
+    builder.hook_url(hook_url);
+
+    if let Some(description) = description {
+        builder.description(description);
+    }
+    if let Some(all_event) = all_event {
+        builder.all_event(all_event);
+    }
+    if let Some(ids) = activity_type_ids {
+        let activity_ids: Vec<_> = ids.into_iter().map(ActivityTypeId::new).collect();
+        builder.activity_type_ids(activity_ids);
+    }
+
+    let params = builder.build()?;
+    let webhook = client.webhook().execute_add_webhook(params).await?;
+
+    println!("Webhook created successfully!");
+    display_webhook_table(&webhook);
+
+    Ok(())
 }
 
 #[cfg(feature = "webhook_writable")]
