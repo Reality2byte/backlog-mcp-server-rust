@@ -1,6 +1,6 @@
 use backlog_api_client::{DownloadedFile, bytes};
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64_STANDARD};
-use rmcp::{ErrorData as McpError, model::Content};
+use rmcp::{ErrorData as McpError, model::ContentBlock};
 
 #[derive(Debug, Clone)]
 pub enum FileFormat {
@@ -192,16 +192,16 @@ impl SerializableFile {
     }
 }
 
-impl TryFrom<SerializableFile> for Content {
+impl TryFrom<SerializableFile> for ContentBlock {
     type Error = McpError;
     fn try_from(file: SerializableFile) -> Result<Self, Self::Error> {
         match file.content {
-            SerializableFileContent::Text(text) => Ok(Content::text(text)),
-            SerializableFileContent::Image(bytes) => Ok(Content::image(
+            SerializableFileContent::Text(text) => Ok(ContentBlock::text(text)),
+            SerializableFileContent::Image(bytes) => Ok(ContentBlock::image(
                 BASE64_STANDARD.encode(bytes),
                 file.content_type,
             )),
-            SerializableFileContent::Raw(bytes) => Ok(Content::json(serde_json::json!({
+            SerializableFileContent::Raw(bytes) => Ok(ContentBlock::json(serde_json::json!({
                 "filename": file.filename,
                 "content_type": file.content_type,
                 "content": BASE64_STANDARD.encode(bytes),

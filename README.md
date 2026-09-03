@@ -188,8 +188,8 @@ The server includes both **read operations** for information gathering and **wri
 All file download tools (`document_attachment_download`, `issue_attachment_download`, `git_pr_attachment_download`, `wiki_attachment_download`, and `file_shared_download`) support format detection and handling:
 
 ### Format Detection
-- **Images**: Files with `image/*` content type are detected and returned as base64-encoded images via `rmcp::model::Content::image`
-- **Text**: Files with text-based content types (`text/*`, `application/json`, `application/xml`, etc.) or files that contain valid UTF-8 text are returned as plain text via `rmcp::model::Content::text`
+- **Images**: Files with `image/*` content type are detected and returned as base64-encoded images via `rmcp::model::ContentBlock::image`
+- **Text**: Files with text-based content types (`text/*`, `application/json`, `application/xml`, etc.) or files that contain valid UTF-8 text are returned as plain text via `rmcp::model::ContentBlock::text`
 - **Raw bytes**: All other files are returned as JSON objects with base64-encoded content, filename, and MIME type
 
 ### Manual Format Override

@@ -68,7 +68,7 @@ use rmcp::handler::server::router::tool;
 use rmcp::{
     ErrorData as McpError,
     handler::server::{tool::ToolRouter, wrapper::Parameters},
-    model::{CallToolResult, Content, ServerCapabilities, ServerInfo},
+    model::{CallToolResult, ContentBlock, ServerCapabilities, ServerInfo},
     tool, tool_handler, tool_router,
 };
 use std::env;
@@ -134,7 +134,9 @@ impl Server {
         let repositories =
             git::bridge::get_repository_list(self.client.clone(), request.0, &self.access_control)
                 .await?;
-        Ok(CallToolResult::success(vec![Content::json(repositories)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(
+            repositories,
+        )?]))
     }
 
     #[tool(
@@ -147,7 +149,9 @@ impl Server {
         let repository =
             git::bridge::get_repository(self.client.clone(), request.0, &self.access_control)
                 .await?;
-        Ok(CallToolResult::success(vec![Content::json(repository)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(
+            repository,
+        )?]))
     }
 
     #[tool(
@@ -160,7 +164,9 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(pull_requests)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(
+            pull_requests,
+        )?]))
     }
 
     #[tool(
@@ -173,7 +179,9 @@ impl Server {
         let pull_request =
             git::bridge::get_pull_request(self.client.clone(), request.0, &self.access_control)
                 .await?;
-        Ok(CallToolResult::success(vec![Content::json(pull_request)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(
+            pull_request,
+        )?]))
     }
 
     #[tool(
@@ -184,7 +192,7 @@ impl Server {
             issue::bridge::get_issue_details(self.client.clone(), request.0, &self.access_control)
                 .await?;
         let issue_response = IssueResponse::from(issue);
-        Ok(CallToolResult::success(vec![Content::json(
+        Ok(CallToolResult::success(vec![ContentBlock::json(
             issue_response,
         )?]))
     }
@@ -203,7 +211,7 @@ impl Server {
         )
         .await?;
 
-        Ok(CallToolResult::success(vec![Content::json(document)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(document)?]))
     }
 
     #[tool(
@@ -241,7 +249,7 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(
+        Ok(CallToolResult::success(vec![ContentBlock::json(
             document_tree.active_tree,
         )?]))
     }
@@ -259,7 +267,9 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(milestones)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(
+            milestones,
+        )?]))
     }
 
     #[tool(
@@ -277,7 +287,7 @@ impl Server {
         .await?;
         let issue_responses: Vec<IssueResponse> =
             issues.into_iter().map(IssueResponse::from).collect();
-        Ok(CallToolResult::success(vec![Content::json(
+        Ok(CallToolResult::success(vec![ContentBlock::json(
             issue_responses,
         )?]))
     }
@@ -291,7 +301,7 @@ impl Server {
             issue::bridge::update_issue_impl(self.client.clone(), request.0, &self.access_control)
                 .await?;
         let issue_response = IssueResponse::from(updated_issue);
-        Ok(CallToolResult::success(vec![Content::json(
+        Ok(CallToolResult::success(vec![ContentBlock::json(
             issue_response,
         )?]))
     }
@@ -304,7 +314,7 @@ impl Server {
         let comment =
             issue::bridge::add_comment_impl(self.client.clone(), request.0, &self.access_control)
                 .await?;
-        Ok(CallToolResult::success(vec![Content::json(comment)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(comment)?]))
     }
 
     #[cfg(feature = "issue_writable")]
@@ -318,7 +328,7 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(comment)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(comment)?]))
     }
 
     #[cfg(feature = "issue_writable")]
@@ -330,7 +340,7 @@ impl Server {
             issue::bridge::add_issue_impl(self.client.clone(), request.0, &self.access_control)
                 .await?;
         let issue_response = IssueResponse::from(issue);
-        Ok(CallToolResult::success(vec![Content::json(
+        Ok(CallToolResult::success(vec![ContentBlock::json(
             issue_response,
         )?]))
     }
@@ -349,7 +359,7 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(comments)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(comments)?]))
     }
 
     #[tool(
@@ -366,7 +376,9 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(attachments)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(
+            attachments,
+        )?]))
     }
 
     #[tool(
@@ -383,7 +395,9 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(shared_files)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(
+            shared_files,
+        )?]))
     }
 
     #[tool(
@@ -400,7 +414,7 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(response)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(response)?]))
     }
 
     #[cfg(feature = "issue_writable")]
@@ -418,7 +432,7 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(
+        Ok(CallToolResult::success(vec![ContentBlock::json(
             RelatedIssueResponse::from(related),
         )?]))
     }
@@ -438,7 +452,7 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(
+        Ok(CallToolResult::success(vec![ContentBlock::json(
             RelatedIssueResponse::from(related),
         )?]))
     }
@@ -448,7 +462,7 @@ impl Server {
     )]
     async fn user_list_get(&self, request: Parameters<GetUserListRequest>) -> McpResult {
         let users = user::bridge::get_user_list_bridge(self.client.clone(), request.0).await?;
-        Ok(CallToolResult::success(vec![Content::json(users)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(users)?]))
     }
 
     #[tool(
@@ -489,7 +503,7 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(statuses)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(statuses)?]))
     }
 
     #[tool(
@@ -505,7 +519,9 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(issue_types)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(
+            issue_types,
+        )?]))
     }
 
     #[tool(
@@ -517,7 +533,9 @@ impl Server {
     ) -> McpResult {
         let priorities =
             project::bridge::get_priorities_tool(self.client.clone(), request.0).await?;
-        Ok(CallToolResult::success(vec![Content::json(priorities)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(
+            priorities,
+        )?]))
     }
 
     #[tool(
@@ -533,7 +551,9 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(custom_fields)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(
+            custom_fields,
+        )?]))
     }
 
     #[tool(
@@ -549,7 +569,7 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(files)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(files)?]))
     }
 
     #[tool(
@@ -590,7 +610,9 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(attachments)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(
+            attachments,
+        )?]))
     }
 
     #[tool(
@@ -631,7 +653,7 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(comments)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(comments)?]))
     }
 
     #[tool(
@@ -642,7 +664,7 @@ impl Server {
         let detail =
             wiki::bridge::get_wiki_detail(&client, request.0, &self.access_control).await?;
 
-        Ok(CallToolResult::success(vec![Content::json(detail)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(detail)?]))
     }
 
     #[tool(
@@ -652,7 +674,7 @@ impl Server {
         let client = self.client.lock().await;
         let wikis = wiki::bridge::get_wiki_list(&client, request.0, &self.access_control).await?;
 
-        Ok(CallToolResult::success(vec![Content::json(wikis)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(wikis)?]))
     }
 
     #[tool(
@@ -666,7 +688,9 @@ impl Server {
         let attachments =
             wiki::bridge::get_wiki_attachment_list(&client, request.0, &self.access_control)
                 .await?;
-        Ok(CallToolResult::success(vec![Content::json(attachments)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(
+            attachments,
+        )?]))
     }
 
     #[tool(
@@ -699,7 +723,9 @@ impl Server {
         let client = self.client.lock().await;
         let wiki_detail =
             wiki::bridge::update_wiki(&client, request.0, &self.access_control).await?;
-        Ok(CallToolResult::success(vec![Content::json(wiki_detail)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(
+            wiki_detail,
+        )?]))
     }
 
     #[cfg(feature = "git_writable")]
@@ -716,7 +742,7 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(comment)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(comment)?]))
     }
 
     #[cfg(feature = "document_writable")]
@@ -730,7 +756,7 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(document)?]))
+        Ok(CallToolResult::success(vec![ContentBlock::json(document)?]))
     }
 
     #[cfg(feature = "document_writable")]
@@ -744,23 +770,20 @@ impl Server {
             &self.access_control,
         )
         .await?;
-        Ok(CallToolResult::success(vec![Content::json(
+        Ok(CallToolResult::success(vec![ContentBlock::json(
             deleted_document,
         )?]))
     }
 }
 
-#[tool_handler]
+#[tool_handler(router = self.tool_router)]
 impl rmcp::ServerHandler for Server {
     fn get_info(&self) -> ServerInfo {
         let instructions = "Backlog MCP Server\n\n\
 This server provides tools to interact with Backlog, a project management service.
 "
         .to_string();
-        ServerInfo {
-            instructions: Some(instructions),
-            capabilities: ServerCapabilities::builder().enable_tools().build(),
-            ..Default::default()
-        }
+        ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
+            .with_instructions(instructions)
     }
 }

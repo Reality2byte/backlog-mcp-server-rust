@@ -326,7 +326,7 @@ pub use get_issues::{GetIssuesParams, GetIssuesParamsBuilder};
 ### Error Handling
 - Use `ApiError` from `backlog-api-core`
 - Domain-specific errors wrap core types
-- MCP server converts to `rmcp::Error`
+- MCP server converts to `rmcp::ErrorData`
 
 ### Type Safety
 - Use strongly-typed identifiers (`ProjectId`, `IssueKey`, etc.)
