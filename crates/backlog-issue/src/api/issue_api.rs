@@ -4,26 +4,29 @@ use client::{Client, DownloadedFile};
 #[cfg(feature = "writable")]
 use super::{
     AddCommentNotificationParams, AddCommentParams, AddIssueParams, AddRecentlyViewedIssueParams,
-    DeleteAttachmentParams, DeleteCommentParams, DeleteIssueParams, LinkSharedFilesToIssueParams,
-    UnlinkSharedFileParams, UpdateCommentParams, UpdateIssueParams,
+    AddRelatedIssueParams, DeleteAttachmentParams, DeleteCommentParams, DeleteIssueParams,
+    DeleteRelatedIssueParams, LinkSharedFilesToIssueParams, UnlinkSharedFileParams,
+    UpdateCommentParams, UpdateIssueParams,
 };
 #[cfg(feature = "writable")]
 use super::{
     AddCommentNotificationResponse, AddCommentResponse, AddIssueResponse,
-    AddRecentlyViewedIssueResponse, DeleteAttachmentResponse, DeleteCommentResponse,
-    DeleteIssueResponse, LinkSharedFilesToIssueResponse, UnlinkSharedFileResponse,
-    UpdateCommentResponse, UpdateIssueResponse,
+    AddRecentlyViewedIssueResponse, AddRelatedIssueResponse, DeleteAttachmentResponse,
+    DeleteCommentResponse, DeleteIssueResponse, DeleteRelatedIssueResponse,
+    LinkSharedFilesToIssueResponse, UnlinkSharedFileResponse, UpdateCommentResponse,
+    UpdateIssueResponse,
 };
 use super::{
     CountCommentParams, CountIssueParams, GetAttachmentFileParams, GetAttachmentListParams,
     GetCommentListParams, GetCommentNotificationsParams, GetCommentParams, GetIssueListParams,
     GetIssueParams, GetParticipantListParams, GetRecentlyViewedIssuesParams,
-    GetSharedFileListParams,
+    GetRelatedIssuesParams, GetSharedFileListParams,
 };
 use super::{
     CountCommentResponse, CountIssueResponse, GetAttachmentListResponse, GetCommentListResponse,
     GetCommentNotificationsResponse, GetCommentResponse, GetIssueListResponse, GetIssueResponse,
-    GetParticipantListResponse, GetRecentlyViewedIssuesResponse, GetSharedFileListResponse,
+    GetParticipantListResponse, GetRecentlyViewedIssuesResponse, GetRelatedIssuesResponse,
+    GetSharedFileListResponse,
 };
 
 pub struct IssueApi(Client);
@@ -191,6 +194,38 @@ impl IssueApi {
         &self,
         params: UnlinkSharedFileParams,
     ) -> Result<UnlinkSharedFileResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Get a list of related issues.
+    ///
+    /// Corresponds to `GET /api/v2/issues/:issueIdOrKey/relatedIssues`.
+    pub async fn get_related_issues(
+        &self,
+        params: GetRelatedIssuesParams,
+    ) -> Result<GetRelatedIssuesResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Add a related issue.
+    ///
+    /// Corresponds to `POST /api/v2/issues/:issueIdOrKey/relatedIssues`.
+    #[cfg(feature = "writable")]
+    pub async fn add_related_issue(
+        &self,
+        params: AddRelatedIssueParams,
+    ) -> Result<AddRelatedIssueResponse> {
+        self.0.execute(params).await
+    }
+
+    /// Remove a related issue.
+    ///
+    /// Corresponds to `DELETE /api/v2/issues/:issueIdOrKey/relatedIssues/:relatedIssueId`.
+    #[cfg(feature = "writable")]
+    pub async fn delete_related_issue(
+        &self,
+        params: DeleteRelatedIssueParams,
+    ) -> Result<DeleteRelatedIssueResponse> {
         self.0.execute(params).await
     }
 

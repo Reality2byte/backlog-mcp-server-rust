@@ -47,7 +47,7 @@ pub use backlog_file::{FileApi, GetSharedFilesListParams, GetSharedFilesListResp
 pub use backlog_issue::{
     Attachment, ChangeLogEntry, Comment, CommentOrder, GetCommentListParams,
     GetCommentListParamsBuilder, GetCommentNotificationsParams, GetIssueListParams,
-    GetIssueListParamsBuilder, Issue, IssueApi, SharedFile as IssueSharedFile,
+    GetIssueListParamsBuilder, Issue, IssueApi, RelatedIssue, SharedFile as IssueSharedFile,
 };
 
 #[cfg(all(feature = "issue", feature = "issue_writable"))]

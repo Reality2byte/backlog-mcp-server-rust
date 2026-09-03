@@ -1,8 +1,8 @@
 # Backlog API Implementation Status
 
 ## Summary
-- Total APIs: 149
-- Implemented: 142 (95%)
+- Total APIs: 152
+- Implemented: 145 (95%)
 - Not implemented: 7 (5%)
 
 ### Spaces
@@ -56,6 +56,11 @@
 - ✅ GetListOfLinkedSharedFiles: Returns the list of linked Shared Files to issues: GET /api/v2/issues/:issueIdOrKey/sharedFiles
 - ✅ LinkSharedFilesToIssue: Links shared files to issue: POST /api/v2/issues/:issueIdOrKey/sharedFiles
 - ✅ RemoveLinkToSharedFileFromIssue: Removes link to shared file from issue: DELETE /api/v2/issues/:issueIdOrKey/sharedFiles/:id
+
+#### Related issues
+- ✅ GetListOfRelatedIssues: Returns the list of related issues: GET /api/v2/issues/:issueIdOrKey/relatedIssues
+- ✅ AddRelatedIssue: Adds a related issue: POST /api/v2/issues/:issueIdOrKey/relatedIssues
+- ✅ RemoveRelatedIssue: Removes a related issue: DELETE /api/v2/issues/:issueIdOrKey/relatedIssues/:relatedIssueId
 
 ### Comment
 - ✅ UpdateComment: Updates content of comment: PATCH /api/v2/issues/:issueIdOrKey/comments/:commentId

@@ -194,6 +194,40 @@ pub(crate) struct GetIssueSharedFilesRequest {
     pub issue_id_or_key: String,
 }
 
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct GetRelatedIssuesRequest {
+    #[schemars(
+        description = "The issue ID or issue key for which to retrieve related issues. Examples: 'MYPROJECTKEY-123', '12345'."
+    )]
+    pub issue_id_or_key: String,
+}
+
+#[cfg(feature = "issue_writable")]
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct AddRelatedIssueRequest {
+    #[schemars(
+        description = "The issue ID or issue key to add the relation to. Examples: 'MYPROJECTKEY-123', '12345'."
+    )]
+    pub issue_id_or_key: String,
+    #[schemars(
+        description = "The issue ID or issue key to relate. Examples: 'MYPROJECTKEY-456', '67890'."
+    )]
+    pub target_issue_id_or_key: String,
+}
+
+#[cfg(feature = "issue_writable")]
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+pub(crate) struct RemoveRelatedIssueRequest {
+    #[schemars(
+        description = "The issue ID or issue key to remove the relation from. Examples: 'MYPROJECTKEY-123', '12345'."
+    )]
+    pub issue_id_or_key: String,
+    #[schemars(
+        description = "The related issue ID or issue key to remove. Examples: 'MYPROJECTKEY-456', '67890'."
+    )]
+    pub related_issue_id_or_key: String,
+}
+
 #[cfg(feature = "issue_writable")]
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
 pub(crate) struct AddIssueRequest {

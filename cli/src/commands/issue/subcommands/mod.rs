@@ -7,10 +7,12 @@
 //! - `attachments`: Attachment management operations
 //! - `shared_files`: Shared file linking operations
 //! - `participants`: Participant listing operations
+//! - `related_issues`: Related issue operations
 
 pub mod attachments;
 pub mod comments;
 pub mod crud;
 pub mod list;
 pub mod participants;
+pub mod related_issues;
 pub mod shared_files;

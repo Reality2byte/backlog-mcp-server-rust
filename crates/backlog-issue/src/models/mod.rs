@@ -17,6 +17,7 @@ mod issue;
 mod list_item;
 mod notification;
 mod parent_child;
+mod related_issue;
 mod shared_file;
 
 pub use attachment::Attachment;
@@ -33,4 +34,5 @@ pub use issue::Issue;
 pub use list_item::ListItem;
 pub use notification::NotificationForComment;
 pub use parent_child::ParentChildCondition;
+pub use related_issue::RelatedIssue;
 pub use shared_file::SharedFile;

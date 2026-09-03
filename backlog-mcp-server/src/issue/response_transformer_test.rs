@@ -204,3 +204,23 @@ fn test_custom_field_info_serialization() {
     let serialized = serde_json::to_value(&field_info_with_other).unwrap();
     assert_eq!(serialized["otherValue"], "Custom");
 }
+
+#[test]
+fn test_related_issue_list_response_serialization() {
+    let issue = create_test_issue();
+    let expected_key = issue.issue_key.to_string();
+    let related = backlog_issue::models::RelatedIssue {
+        issue,
+        relation_type: "RELATES".to_string(),
+    };
+    let response = RelatedIssueListResponse {
+        issues: vec![RelatedIssueResponse::from(related)],
+        omitted_count: 2,
+    };
+
+    let value = serde_json::to_value(&response).unwrap();
+    assert_eq!(value["omittedCount"], json!(2));
+    assert_eq!(value["issues"][0]["relationType"], json!("RELATES"));
+    assert_eq!(value["issues"][0]["issueKey"], json!(expected_key));
+    assert!(value["issues"][0].get("customFields").is_some());
+}

@@ -1,6 +1,6 @@
 use backlog_core::identifier::Identifier;
 use backlog_core::{IssueKey, Star, User};
-use backlog_issue::models::{Attachment, ExternalFileLink, Issue, SharedFile};
+use backlog_issue::models::{Attachment, ExternalFileLink, Issue, RelatedIssue, SharedFile};
 use backlog_project::{Category, IssueType, Milestone, Priority, Resolution, Status};
 use serde::Serialize;
 use serde_json::Value;
@@ -104,6 +104,33 @@ impl From<Issue> for IssueResponse {
             stars: issue.stars,
         }
     }
+}
+
+/// Related issue with relation type
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RelatedIssueResponse {
+    #[serde(flatten)]
+    pub issue: IssueResponse,
+    pub relation_type: String,
+}
+
+impl From<RelatedIssue> for RelatedIssueResponse {
+    fn from(related: RelatedIssue) -> Self {
+        Self {
+            issue: IssueResponse::from(related.issue),
+            relation_type: related.relation_type,
+        }
+    }
+}
+
+/// Related issues visible under access control
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RelatedIssueListResponse {
+    pub issues: Vec<RelatedIssueResponse>,
+    /// Issues hidden by BACKLOG_PROJECTS
+    pub omitted_count: usize,
 }
 
 #[cfg(test)]

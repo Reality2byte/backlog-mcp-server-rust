@@ -161,6 +161,12 @@ blg issue list-shared-files MYPROJ-101
 
 # Link shared files to an issue (requires issue_writable feature)
 blg issue link-shared-files MYPROJ-101 --file-ids 123,456,789
+
+# List related issues
+blg issue list-related-issues MYPROJ-101
+
+# Add a related issue (requires issue_writable feature)
+blg issue add-related-issue MYPROJ-101 MYPROJ-102
 ```
 
 **Repository Management:**
@@ -337,6 +343,9 @@ The `blg` CLI currently supports the following commands:
 - `issue download-attachment <ISSUE_ID_OR_KEY> <ATTACHMENT_ID> --output <FILE_PATH>` - Download an issue attachment
 - `issue list-shared-files <ISSUE_ID_OR_KEY>` - List shared files linked to an issue
 - `issue link-shared-files <ISSUE_ID_OR_KEY> --file-ids <FILE_ID1,FILE_ID2>` - Link shared files to an issue (requires `issue_writable` feature)
+- `issue list-related-issues <ISSUE_ID_OR_KEY>` - List related issues of an issue
+- `issue add-related-issue <ISSUE_ID_OR_KEY> <TARGET_ISSUE_ID_OR_KEY>` - Add a related issue (requires `issue_writable` feature)
+- `issue remove-related-issue <ISSUE_ID_OR_KEY> <RELATED_ISSUE_ID_OR_KEY>` - Remove a related issue (requires `issue_writable` feature)
 
 ### Repository Commands
 - `repo list --project-id <PROJECT_ID_OR_KEY>` - List repositories in a project

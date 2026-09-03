@@ -1,10 +1,14 @@
 use super::request::{
     AddCommentRequest, DownloadAttachmentRequest, GetAttachmentListRequest,
     GetIssueCommentsRequest, GetIssueDetailsRequest, GetIssueSharedFilesRequest,
-    GetIssuesByMilestoneNameRequest, GetVersionMilestoneListRequest, UpdateIssueRequest,
+    GetIssuesByMilestoneNameRequest, GetRelatedIssuesRequest, GetVersionMilestoneListRequest,
+    UpdateIssueRequest,
 };
 #[cfg(feature = "issue_writable")]
-use super::request::{AddIssueRequest, UpdateCommentRequest};
+use super::request::{
+    AddIssueRequest, AddRelatedIssueRequest, RemoveRelatedIssueRequest, UpdateCommentRequest,
+};
+use super::response_transformer::{RelatedIssueListResponse, RelatedIssueResponse};
 use crate::access_control::AccessControl;
 use crate::error::{Error as McpError, Result};
 use crate::util::{MatchResult, find_by_name_from_array};
@@ -320,6 +324,96 @@ pub(crate) async fn get_issue_shared_files_impl(
         ))
         .await?;
     Ok(shared_files)
+}
+
+/// Fetch issue and check project access
+async fn fetch_checked_issue(
+    client: &BacklogApiClient,
+    issue_id_or_key: &str,
+    access_control: &AccessControl,
+) -> Result<Issue> {
+    let parsed = IssueIdOrKey::from_str(issue_id_or_key.trim())?;
+    let issue = client
+        .issue()
+        .get_issue(backlog_issue::GetIssueParams::new(parsed))
+        .await?;
+    access_control
+        .check_project_access_by_id_async(&issue.project_id, client)
+        .await?;
+    Ok(issue)
+}
+
+pub(crate) async fn get_related_issues_impl(
+    client: Arc<Mutex<BacklogApiClient>>,
+    req: GetRelatedIssuesRequest,
+    access_control: &AccessControl,
+) -> Result<RelatedIssueListResponse> {
+    let client_guard = client.lock().await;
+    let issue = fetch_checked_issue(&client_guard, &req.issue_id_or_key, access_control).await?;
+
+    let related = client_guard
+        .issue()
+        .get_related_issues(backlog_issue::GetRelatedIssuesParams::new(issue.id))
+        .await?;
+
+    let mut issues = Vec::with_capacity(related.len());
+    let mut omitted_count = 0;
+    for item in related {
+        let allowed = access_control
+            .check_project_access_by_id_async(&item.issue.project_id, &client_guard)
+            .await
+            .is_ok();
+        if allowed {
+            issues.push(RelatedIssueResponse::from(item));
+        } else {
+            omitted_count += 1;
+        }
+    }
+    Ok(RelatedIssueListResponse {
+        issues,
+        omitted_count,
+    })
+}
+
+#[cfg(feature = "issue_writable")]
+pub(crate) async fn add_related_issue_impl(
+    client: Arc<Mutex<BacklogApiClient>>,
+    req: AddRelatedIssueRequest,
+    access_control: &AccessControl,
+) -> Result<backlog_issue::RelatedIssue> {
+    let client_guard = client.lock().await;
+    let issue = fetch_checked_issue(&client_guard, &req.issue_id_or_key, access_control).await?;
+    let target =
+        fetch_checked_issue(&client_guard, &req.target_issue_id_or_key, access_control).await?;
+
+    let related = client_guard
+        .issue()
+        .add_related_issue(backlog_issue::AddRelatedIssueParams::new(
+            issue.id, target.id,
+        ))
+        .await?;
+    Ok(related)
+}
+
+#[cfg(feature = "issue_writable")]
+pub(crate) async fn remove_related_issue_impl(
+    client: Arc<Mutex<BacklogApiClient>>,
+    req: RemoveRelatedIssueRequest,
+    access_control: &AccessControl,
+) -> Result<backlog_issue::RelatedIssue> {
+    let client_guard = client.lock().await;
+    let issue = fetch_checked_issue(&client_guard, &req.issue_id_or_key, access_control).await?;
+    let related_issue =
+        fetch_checked_issue(&client_guard, &req.related_issue_id_or_key, access_control).await?;
+
+    let related = client_guard
+        .issue()
+        .delete_related_issue(backlog_issue::DeleteRelatedIssueParams::new(
+            issue.id,
+            related_issue.id,
+        ))
+        .await?;
+    Ok(related)
 }
 
 #[cfg(feature = "issue_writable")]

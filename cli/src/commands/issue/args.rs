@@ -121,6 +121,35 @@ pub enum IssueCommands {
         #[clap(name = "ISSUE_ID_OR_KEY")]
         issue_id_or_key: String,
     },
+    /// List related issues of an issue
+    #[command(about = "List related issues of an issue")]
+    ListRelatedIssues {
+        /// Issue ID or Key (e.g., "PROJECT-123" or "12345")
+        #[clap(name = "ISSUE_ID_OR_KEY")]
+        issue_id_or_key: String,
+    },
+    /// Add a related issue to an issue
+    #[cfg(feature = "issue_writable")]
+    #[command(about = "Add a related issue to an issue")]
+    AddRelatedIssue {
+        /// Issue ID or Key (e.g., "PROJECT-123" or "12345")
+        #[clap(name = "ISSUE_ID_OR_KEY")]
+        issue_id_or_key: String,
+        /// Issue ID or Key to relate (e.g., "PROJECT-456" or "67890")
+        #[clap(name = "TARGET_ISSUE_ID_OR_KEY")]
+        target_issue_id_or_key: String,
+    },
+    /// Remove a related issue from an issue
+    #[cfg(feature = "issue_writable")]
+    #[command(about = "Remove a related issue from an issue")]
+    RemoveRelatedIssue {
+        /// Issue ID or Key (e.g., "PROJECT-123" or "12345")
+        #[clap(name = "ISSUE_ID_OR_KEY")]
+        issue_id_or_key: String,
+        /// Related issue ID or Key to remove (e.g., "PROJECT-456" or "67890")
+        #[clap(name = "RELATED_ISSUE_ID_OR_KEY")]
+        related_issue_id_or_key: String,
+    },
 }
 
 #[derive(Args, Debug)]

@@ -116,11 +116,11 @@ The following tools are grouped by their respective modules:
 
 ### Tool Summary
 
-With the default configuration, you have access to **36 tools** for Backlog automation:
+With the default configuration, you have access to **39 tools** for Backlog automation:
 
 - **Documents** (5 tools): View document trees, get details, download attachments, add documents, delete documents
 - **Git/Pull Requests** (8 tools): Manage repositories, PRs, comments, and attachments
-- **Issues** (12 tools): View, create, update issues, manage comments, attachments, shared files, and priorities
+- **Issues** (15 tools): View, create, update issues, manage comments, attachments, shared files, related issues, and priorities
 - **Projects** (3 tools): Get project status, issue types, and custom field definitions
 - **Shared Files** (2 tools): Browse and download project shared files
 - **Users** (1 tool): List space users
@@ -156,6 +156,9 @@ The server includes both **read operations** for information gathering and **wri
 -   **`issue_attachment_list_get`**: Get a list of attachments for a specified issue
 -   **`issue_attachment_download`**: Download an issue attachment
 -   **`issue_shared_file_list_get`**: Get a list of shared files linked to a specified issue
+-   **`issue_related_issue_list_get`**: Get related issues of a specified issue (hidden issues are reported as `omittedCount`)
+-   **`issue_related_issue_add`**: Add a related issue to a Backlog issue
+-   **`issue_related_issue_remove`**: Remove a related issue from a Backlog issue
 -   **`issue_comment_update`**: Update an existing comment on a Backlog issue
 -   **`issue_add`**: Create a new issue in a Backlog project with support for custom fields
 -   **`issue_comment_add`**: Add a comment to a specific issue

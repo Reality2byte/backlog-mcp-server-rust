@@ -113,6 +113,35 @@ pub async fn execute(client: &BacklogApiClient, args: IssueArgs) -> CliResult<()
             subcommands::participants::list_participants(client, issue_id_or_key).await?
         }
 
+        // Related issues (from subcommands::related_issues)
+        IssueCommands::ListRelatedIssues { issue_id_or_key } => {
+            subcommands::related_issues::list_related_issues(client, issue_id_or_key).await?
+        }
+        #[cfg(feature = "issue_writable")]
+        IssueCommands::AddRelatedIssue {
+            issue_id_or_key,
+            target_issue_id_or_key,
+        } => {
+            subcommands::related_issues::add_related_issue(
+                client,
+                issue_id_or_key,
+                target_issue_id_or_key,
+            )
+            .await?
+        }
+        #[cfg(feature = "issue_writable")]
+        IssueCommands::RemoveRelatedIssue {
+            issue_id_or_key,
+            related_issue_id_or_key,
+        } => {
+            subcommands::related_issues::remove_related_issue(
+                client,
+                issue_id_or_key,
+                related_issue_id_or_key,
+            )
+            .await?
+        }
+
         // Recently Viewed Write (from subcommands::list)
         #[cfg(feature = "issue_writable")]
         IssueCommands::AddRecentlyViewed { issue_id_or_key } => {

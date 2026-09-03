@@ -14,6 +14,7 @@ mod get_issue;
 mod get_issue_list;
 mod get_participant_list;
 mod get_recently_viewed_issues;
+mod get_related_issues;
 mod get_shared_file_list;
 
 // Write-only API modules (feature-gated)
@@ -28,6 +29,8 @@ mod add_issue_with_api_date;
 #[cfg(feature = "writable")]
 mod add_recently_viewed_issue;
 #[cfg(feature = "writable")]
+mod add_related_issue;
+#[cfg(feature = "writable")]
 mod custom_field_utils;
 #[cfg(feature = "writable")]
 mod delete_attachment;
@@ -35,6 +38,8 @@ mod delete_attachment;
 mod delete_comment;
 #[cfg(feature = "writable")]
 mod delete_issue;
+#[cfg(feature = "writable")]
+mod delete_related_issue;
 #[cfg(feature = "writable")]
 mod link_shared_files;
 #[cfg(feature = "writable")]
@@ -65,6 +70,7 @@ pub use get_recently_viewed_issues::{
     GetRecentlyViewedIssuesParams, GetRecentlyViewedIssuesParamsBuilder,
     GetRecentlyViewedIssuesResponse,
 };
+pub use get_related_issues::{GetRelatedIssuesParams, GetRelatedIssuesResponse};
 pub use get_shared_file_list::{GetSharedFileListParams, GetSharedFileListResponse};
 
 // Write-only exports (feature-gated)
@@ -81,11 +87,15 @@ pub use add_issue_with_api_date::{
 #[cfg(feature = "writable")]
 pub use add_recently_viewed_issue::{AddRecentlyViewedIssueParams, AddRecentlyViewedIssueResponse};
 #[cfg(feature = "writable")]
+pub use add_related_issue::{AddRelatedIssueParams, AddRelatedIssueResponse};
+#[cfg(feature = "writable")]
 pub use delete_attachment::{DeleteAttachmentParams, DeleteAttachmentResponse};
 #[cfg(feature = "writable")]
 pub use delete_comment::{DeleteCommentParams, DeleteCommentResponse};
 #[cfg(feature = "writable")]
 pub use delete_issue::{DeleteIssueParams, DeleteIssueResponse};
+#[cfg(feature = "writable")]
+pub use delete_related_issue::{DeleteRelatedIssueParams, DeleteRelatedIssueResponse};
 #[cfg(feature = "writable")]
 pub use link_shared_files::{
     LinkSharedFilesToIssueParams, LinkSharedFilesToIssueParamsBuilder,

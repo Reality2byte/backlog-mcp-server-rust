@@ -2,11 +2,14 @@
 
 use crate::file_utils::{FileFormat, SerializableFile};
 #[cfg(feature = "issue_writable")]
-use crate::issue::request::{AddIssueRequest, UpdateCommentRequest};
 use crate::issue::request::{
-    GetIssueCommentsRequest, GetIssueSharedFilesRequest, UpdateIssueRequest,
+    AddIssueRequest, AddRelatedIssueRequest, RemoveRelatedIssueRequest, UpdateCommentRequest,
 };
-use crate::issue::response_transformer::IssueResponse;
+use crate::issue::request::{
+    GetIssueCommentsRequest, GetIssueSharedFilesRequest, GetRelatedIssuesRequest,
+    UpdateIssueRequest,
+};
+use crate::issue::response_transformer::{IssueResponse, RelatedIssueResponse};
 use crate::{
     document::{
         self,
@@ -381,6 +384,63 @@ impl Server {
         )
         .await?;
         Ok(CallToolResult::success(vec![Content::json(shared_files)?]))
+    }
+
+    #[tool(
+        name = "issue_related_issue_list_get",
+        description = "Get related issues of a specified issue. Requires issue_id_or_key parameter. Returns visible related issues and omittedCount, the number of related issues hidden by project access control."
+    )]
+    async fn issue_related_issue_list_get(
+        &self,
+        request: Parameters<GetRelatedIssuesRequest>,
+    ) -> McpResult {
+        let response = issue::bridge::get_related_issues_impl(
+            self.client.clone(),
+            request.0,
+            &self.access_control,
+        )
+        .await?;
+        Ok(CallToolResult::success(vec![Content::json(response)?]))
+    }
+
+    #[cfg(feature = "issue_writable")]
+    #[tool(
+        name = "issue_related_issue_add",
+        description = "Add a related issue to a Backlog issue. Requires issue_id_or_key and target_issue_id_or_key. Up to 50 related issues per issue; adding an existing relation returns the current issue without error."
+    )]
+    async fn issue_related_issue_add(
+        &self,
+        request: Parameters<AddRelatedIssueRequest>,
+    ) -> McpResult {
+        let related = issue::bridge::add_related_issue_impl(
+            self.client.clone(),
+            request.0,
+            &self.access_control,
+        )
+        .await?;
+        Ok(CallToolResult::success(vec![Content::json(
+            RelatedIssueResponse::from(related),
+        )?]))
+    }
+
+    #[cfg(feature = "issue_writable")]
+    #[tool(
+        name = "issue_related_issue_remove",
+        description = "Remove a related issue from a Backlog issue. Requires issue_id_or_key and related_issue_id_or_key. Fails if the relation does not exist."
+    )]
+    async fn issue_related_issue_remove(
+        &self,
+        request: Parameters<RemoveRelatedIssueRequest>,
+    ) -> McpResult {
+        let related = issue::bridge::remove_related_issue_impl(
+            self.client.clone(),
+            request.0,
+            &self.access_control,
+        )
+        .await?;
+        Ok(CallToolResult::success(vec![Content::json(
+            RelatedIssueResponse::from(related),
+        )?]))
     }
 
     #[tool(
